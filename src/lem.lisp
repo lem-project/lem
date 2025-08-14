@@ -8,18 +8,6 @@
 (defvar *in-the-editor* nil)
 
 (defvar *syntax-scan-window-recursive-p* nil)
-(defvar *help* "Usage: lem [ OPTION-OR-FILENAME ] ...
-Options:
-        -q, --no-init-file        do not load ~/.lem/init.lisp
-        --slime PORT              start slime on PORT
-        --eval EXPR               evaluate lisp expression EXPR
-        --debug                   enable debugger
-        --log-filename FILENAME   file name of the log file
-        --kill                    immediately exit
-        -i, --interface INTERFACE interface to use, either sdl2 or ncurses
-        -v, --version             print the version number and exit
-        -h, --help                display this help and exit"
-"Help output for cli")
 
 (defun syntax-scan-window (window)
   (check-type window window)
@@ -86,98 +74,6 @@ Options:
 (defun teardown ()
   (teardown-frames))
 
-(defstruct command-line-arguments
-  args
-  (debug nil)
-  (log-filename nil)
-  (no-init-file nil)
-  (interface nil))
-
-(defun parse-args (args)
-  (let ((parsed-args
-          (make-command-line-arguments))
-        (file-count 0))
-    (setf (command-line-arguments-args parsed-args)
-          `(,@(loop :while args
-                    :for arg := (pop args)
-                    :when (cond ((member arg '("-h" "--help") :test #'equal)
-				 (format t "~a~%" *help*)
-				 (uiop:quit))
-				((member arg '("-q" "--no-init-file") :test #'equal)
-                                 (setf (command-line-arguments-no-init-file parsed-args)
-                                       t)
-                                 nil)
-                                ((equal arg "--slime")
-                                 (let ((host-port (pop args)))
-                                   ;; TODO: handle incorrect input
-                                   (destructuring-bind (host port)
-                                       (uiop:split-string (string-trim " " host-port) :separator ":")
-                                     `(uiop:symbol-call :lem-lisp-mode :slime-connect ,host ,(parse-integer port) nil))))
-                                ((equal arg "--eval")
-                                 `(eval ,(read-from-string (pop args))))
-                                ((equal arg "--debug")
-                                 (setf (command-line-arguments-debug parsed-args)
-                                       t))
-                                ((equal arg "--log-filename")
-                                 (let ((filename (pop args)))
-                                   (unless filename
-                                     (error "Please, specify a filename to log to."))
-                                   (setf (command-line-arguments-log-filename parsed-args)
-                                         filename)))
-                                ((member arg '("-i" "--interface") :test #'equal)
-                                 (let ((interface (pop args)))
-                                   (if (and interface (plusp (length interface)))
-                                       (setf (command-line-arguments-interface parsed-args)
-                                             (alexandria:make-keyword (string-upcase interface)))
-                                       (write-line "Please specify an interface to use."
-                                                   *error-output*))))
-                                ((equal arg "--kill")
-                                 `(uiop:quit))
-                                ((member arg '("-v" "--version") :test #'equal)
-                                 (format t "~A~%" (get-version-string))
-                                 (uiop:quit)
-                                 nil)
-                                ((or (stringp arg) (pathnamep arg))
-                                 (incf file-count)
-                                 `(uiop:symbol-call :lem :find-file ,(merge-pathnames arg (uiop:getcwd))))
-                                (t
-                                 arg))
-                    :collect it)
-            ,@(and (zerop file-count)
-                   *splash-function*
-                   `((funcall ,*splash-function*)))))
-    parsed-args))
-
-(defun apply-args (args)
-  (mapc #'eval (command-line-arguments-args args)))
-
-(defvar *original-home* (user-homedir-pathname))
-
-(defun init-quicklisp (path)
-  (macrolet ((ql-symbol-value (symbol)
-               `(symbol-value (uiop:find-symbol* ,symbol :quicklisp))))
-    (symbol-macrolet
-        ((ql-home (ql-symbol-value :*quicklisp-home*))
-         (ql-local-dir (ql-symbol-value :*local-project-directories*))
-         (ql-dist-url (ql-symbol-value :*initial-dist-url*)))
-      (flet ((replace-homedir (x)
-               (let ((subpath (uiop:subpathp x *original-home*)))
-                 (if subpath
-                     (merge-pathnames subpath (user-homedir-pathname))
-                     x)))
-             (qmerge (pathname)
-               (uiop:symbol-call :quicklisp :qmerge pathname))
-             (ql-install-dist (url &key (prompt t))
-               (uiop:symbol-call :quicklisp :install-dist url :prompt prompt)))
-        (setf ql-home (ensure-directories-exist path)
-              ql-local-dir (mapcar #'replace-homedir ql-local-dir)
-              asdf:*central-registry* (mapcar #'replace-homedir asdf:*central-registry*)
-              asdf:*user-cache* (replace-homedir asdf:*user-cache*))
-        (asdf:initialize-source-registry)
-        (asdf:clear-output-translations)
-        (unless (uiop:directory-exists-p (qmerge (format nil "dists/~A/" (pathname-name ql-dist-url))))
-          (ql-install-dist ql-dist-url :prompt nil))))))
-
 (defun load-init-file ()
   (flet ((maybe-load (path)
            (when (probe-file path)
@@ -211,12 +107,8 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
       (load file))))
 
 (defun init (args)
-  (unless (equal (funcall 'user-homedir-pathname) ;; funcall for sbcl optimization
-                 *original-home*)
-    (when (uiop:featurep :quicklisp)
-      (init-quicklisp (merge-pathnames "quicklisp/" (lem-home)))))
   (run-hooks *before-init-hook*)
-  (unless (command-line-arguments-no-init-file args)
+  (unless (command-line-arguments-without-init-file args)
     (load-init-file))
   (run-hooks *after-init-hook*)
   (apply-args args))
@@ -242,14 +134,23 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
         :test #'equal
         :key #'bt2:thread-name))
 
-(defun lem (&rest args)
+;; NOTE: so that it can be processed during compilation.
+(defvar *version* (get-version-string))
 
+(defun launch (args)
+  (check-type args command-line-arguments)
   ;; for sbcl, set the default file encoding to utf-8
   ;; (on windows, the default is determined by code page (e.g. :cp932))
   #+sbcl
   (setf sb-impl::*default-external-format* :utf-8)
 
-  (setf args (parse-args args))
+  (when (command-line-arguments-help args)
+    (show-help)
+    (return-from launch))
+
+  (when (command-line-arguments-version args)
+    (uiop:println *version*)
+    (return-from launch))
 
   (cond
     ((command-line-arguments-log-filename args)
@@ -267,21 +168,22 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
   (cond (*in-the-editor*
          (apply-args args))
         (t
-         (let ((implementation
-                (get-default-implementation
-                 :errorp nil
-                 :implementation
-                 (or (command-line-arguments-interface args)
-                     (if (interactive-stream-p *standard-input*)
-                         :ncurses
-                         :sdl2)))))
+         (let* ((implementation-keyword (or (command-line-arguments-interface args)
+                                            (if (interactive-stream-p *standard-input*)
+                                                :ncurses
+                                                :sdl2)))
+                (implementation (get-default-implementation
+                                 :implementation
+                                 implementation-keyword)))
            (unless implementation
-             (maybe-load-systems :lem-ncurses)
-             (setf implementation (get-default-implementation)))
+             (error "implementation ~A not found" implementation-keyword))
            (invoke-frontend
             (lambda (&optional initialize finalize)
               (run-editor-thread initialize args finalize))
             :implementation implementation)))))
+
+(defun lem (&rest args)
+  (launch (parse-args args)))
 
 (defun main (&optional (args (uiop:command-line-arguments)))
   (apply #'lem args))

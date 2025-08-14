@@ -89,6 +89,10 @@
     :reader completion-item-focus-action
     :type (or null function))))
 
+(defmethod print-object ((obj completion-item) stream)
+  (print-unreadable-object (obj stream :type t)
+    (format stream "label: ~a" (completion-item-label obj))))
+
 (defun make-completion-item (&rest initargs
                              &key label chunks detail start end focus-action)
   (declare (ignore label chunks detail start end focus-action))
@@ -112,6 +116,8 @@
 (define-key *completion-mode-keymap* "Space"    'completion-insert-space-and-cancel)
 (define-key *completion-mode-keymap* 'delete-previous-char 'completion-delete-previous-char)
 (define-key *completion-mode-keymap* 'backward-delete-word 'completion-backward-delete-word)
+(define-key *completion-mode-keymap* "Up" 'completion-previous-line)
+(define-key *completion-mode-keymap* "Down" 'completion-next-line)
 
 (define-attribute detail-attribute
   (t :foreground :base03))

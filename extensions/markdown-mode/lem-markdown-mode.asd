@@ -1,5 +1,5 @@
 (defsystem "lem-markdown-mode"
-  :depends-on ("lem"
+  :depends-on ("lem/core"
                "3bmd"
                "3bmd-ext-code-blocks"
                "lisp-preprocessor"
@@ -18,4 +18,5 @@
                 :serial t
                 :components ((:file "preview")
                              (:file "external-browser")
-                             (:file "html-buffer")))))
+                             (:file "html-buffer")))
+               (:file "interactive")))

@@ -6,7 +6,7 @@
                "trivia"
                "uiop"
                "lem-lisp-syntax"
-               "lem"
+               "lem/core"
                "lem-process"
                "lem-lsp-mode")
   :serial t

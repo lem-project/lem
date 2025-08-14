@@ -1,6 +1,6 @@
-(defpackage :lem/tests/file
+(defpackage :lem-tests/file
   (:use :cl :rove))
-(in-package :lem/tests/file)
+(in-package :lem-tests/file)
 
 (deftest get-file-mode
   (ok (equal 'lem-posix-shell-mode:posix-shell-mode

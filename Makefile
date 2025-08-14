@@ -22,6 +22,16 @@ server:
 	$(LISP) --load .qlot/setup.lisp \
 		--load scripts/build-server.lisp
 
+client:
+	qlot install
+	$(LISP) --load .qlot/setup.lisp \
+		--load scripts/build-client.lisp
+
+webview:
+	qlot install
+	$(LISP) --load .qlot/setup.lisp \
+		--load scripts/build-webview.lisp
+
 lem: sdl2
 
 install-bin: $(VARIANT)
@@ -112,3 +122,6 @@ lint:
 	.qlot/bin/sblint extensions/xml-mode/lem-xml-mode.asd
 	.qlot/bin/sblint extensions/yaml-mode/lem-yaml-mode.asd
 	.qlot/bin/sblint extensions/ruby-mode/lem-ruby-mode.asd
+
+AppImage:
+	docker buildx build -f docker/Dockerfile-AppImage --progress=plain --target artifact --output type=local,dest=./artifacts .

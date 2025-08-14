@@ -166,7 +166,7 @@
               (log:debug "Read timeout")
               (return nil))
             (setf info (read-message connection))
-            (log:debug "Received" info)
+            (log:debug "Received: ~A" info)
             (when (eq (car info) :return)
               (log:debug "Exiting from read-return-message")
               (return info))))
@@ -178,7 +178,7 @@
 
   (loop :for message := (read-message connection)
         :repeat 1000 ;; avoid infinite loop just in case
-        :do (log:debug "Received" message)
+        :do (log:debug "Received: ~A" message)
             (when (eq (first message) :return)
               (let* ((info message)
                      (data (getf (getf info :return) :ok))
@@ -207,7 +207,7 @@
                       (getf data :system-file-patterns)))
               (return)))
 
-  (log:debug "Creating the REPL" connection)
+  (log:debug "Creating the REPL: ~A" connection)
   (remote-eval-from-string connection "(micros/repl:create-repl nil :coding-system \"utf-8-unix\")")
   ;; Wait for startup
   (read-return-message connection)
@@ -291,7 +291,7 @@ to check if input is available."
                           (connection-package connection))
                       (or thread t)
                       request-id)))
-    (log:debug "Sending string to Swank"
+    (log:debug "Sending string to Swank (msg:~A, continuation:~A, thread:~A, package:~A)"
                msg
                continuation
                thread

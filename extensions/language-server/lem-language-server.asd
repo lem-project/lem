@@ -10,7 +10,7 @@
                "cl-change-case"
                "async-process"
                "micros"
-               "lem"
+               "lem/core"
                "lem-lisp-syntax"
                "lem-lsp-base")
   :serial t

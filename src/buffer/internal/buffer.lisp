@@ -107,12 +107,6 @@
 (defmethod buffer-mark-p ((buffer buffer))
   (mark-active-p (buffer-mark-object buffer)))
 
-;; workaround for windows
-#+win32
-(defmethod initialize-instance :after ((buffer buffer) &rest initargs)
-  "set default buffer encoding to utf-8"
-  (setf (buffer-encoding buffer) (encoding :utf-8 :lf)))
-
 (setf (documentation 'buffer-point 'function) "Returns the current `point` of `buffer`.")
 (setf (documentation 'buffer-mark 'function)
       "Returns the `point` of the current mark in the `buffer`")
@@ -250,16 +244,6 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
   (when (buffer-mark-p buffer)
     (mark-cancel (buffer-mark-object buffer))
     (run-hooks *buffer-mark-deactivate-hook* buffer)))
-
-(defun buffer-attributes (buffer)
-  (concatenate 'string
-               " "
-               (cond ((buffer-read-only-p buffer)
-                      "% ")
-                     ((buffer-modified-p buffer)
-                      "* ")
-                     (t
-                      "  "))))
 
 (defun check-read-only-buffer (buffer)
   (when (buffer-read-only-p buffer)

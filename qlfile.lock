@@ -9,7 +9,7 @@
 ("micros" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/micros.git")
-  :version "git-7bb942a39682d4c70b772312147287d465dd13c8"))
+  :version "git-e1d3857400a9bf7d1c6c2852d9c7017a0dc52217"))
 ("lem-mailbox" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/lem-mailbox.git")
@@ -41,12 +41,16 @@
 ("jsonrpc" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/cxxxr/jsonrpc.git")
-  :version "git-2af1e0fad429ee8c706b86c4a853248cdd1be933"))
+  :version "git-42fa96ec34f6b6be77a6f12f7c4e84f375eff019"))
+("lem-extension-manager" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/lem-project/lem-extension-manager.git")
+  :version "git-cb19321345d6fd13dc3ca59d4d5b9a6b14cc00b1"))
+("webview" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/lem-project/webview.git")
+  :version "git-bff8a0fab9352945e72a430454578d658e1b35d9"))
 ("cl-template" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/alpha123/cl-template")
   :version "git-46193a9a389bb950530e579eae7e6e5a18184832"))
-("lem-extension-manager" .
- (:class qlot/source/git:source-git
-  :initargs (:remote-url "https://github.com/lem-project/lem-extension-manager.git")
-  :version "git-13e0e1d476d1e1c827360b9a789fd7df2cb1ef1c"))

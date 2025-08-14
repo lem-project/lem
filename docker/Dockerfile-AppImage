@@ -1,0 +1,37 @@
+FROM ubuntu:22.04 AS build
+
+RUN apt-get update && apt-get install -y curl bzip2 git libzstd-dev file libncurses-dev build-essential
+
+# development
+#RUN apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev
+
+# production
+RUN apt-get install -y libgtk-4-1 libwebkitgtk-6.0-4
+
+RUN apt-get install -y libwebkit2gtk-4.1-0
+
+WORKDIR /opt
+RUN curl -L -O https://github.com/roswell/sbcl_bin/releases/download/2.5.7/sbcl-2.5.7-x86-64-linux-binary.tar.bz2
+RUN tar xf sbcl-2.5.7-x86-64-linux-binary.tar.bz2
+RUN cd sbcl-2.5.7-x86-64-linux && INSTALL_ROOT=/sbcl sh install.sh
+ENV PATH="/sbcl/bin:$PATH"
+RUN echo $PATH
+RUN ls -l /sbcl/bin
+RUN curl -L https://qlot.tech/installer | bash
+
+WORKDIR /usr/local/bin
+RUN curl -L -O https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20250213-2/linuxdeploy-x86_64.AppImage
+RUN curl -L -O https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+RUN chmod u+x linuxdeploy-x86_64.AppImage appimagetool-x86_64.AppImage
+
+WORKDIR /app
+COPY . . 
+RUN qlot install
+RUN qlot exec sbcl --eval '(ql:quickload :lem)' --eval '(asdf:make :lem)'
+RUN bash -ex docker/make_appdir.sh
+
+RUN mkdir -p /artifacts
+RUN mv /app/Lem-x86_64.AppImage /artifacts/
+
+FROM scratch AS artifact
+COPY --from=build /artifacts/ /

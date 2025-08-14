@@ -10,6 +10,10 @@
 (defvar *prompt-file-completion-function* nil)
 (defvar *prompt-command-completion-function* 'completion-command)
 
+(defvar *automatic-tab-completion* nil
+  "When set to true, the completion list is opened instantly.
+When set to false, the completion list only opens when the user presses TAB")
+
 (defgeneric caller-of-prompt-window (prompt))
 (defgeneric prompt-active-p (prompt))
 (defgeneric active-prompt-window ())
@@ -151,10 +155,13 @@
        (completion str (all-command-names)))
    #'string-lessp))
 
-(defun prompt-for-command (prompt)
+(defun prompt-for-command (prompt &key candidates)
   (prompt-for-string
    prompt
-   :completion-function *prompt-command-completion-function*
+   :completion-function (if candidates
+                            (lambda (input)
+                              (funcall *prompt-command-completion-function* input :candidates candidates))
+                            *prompt-command-completion-function*)
    :test-function 'exist-command-p
    :history-symbol 'mh-execute-command
    :syntax-table *prompt-syntax-table*))

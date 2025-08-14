@@ -1,10 +1,10 @@
 (defsystem "lem-server"
-  :depends-on ("lem"
+  :depends-on ("lem/core"
                "lem/extensions"
                "jsonrpc"
                "jsonrpc/transport/stdio"
                "jsonrpc/transport/websocket"
-               "jsonrpc/transport/local-domain-socket"
+               #-os-windows "jsonrpc/transport/local-domain-socket"
                "command-line-arguments")
   :serial t
   :components ((:file "jsonrpc-stdio-patch")
@@ -12,4 +12,6 @@
                (:file "utils")
                (:file "view")
                (:file "mouse")
-               (:file "main")))
+               (:file "icon")
+               (:file "main")
+               (:file "color-picker")))

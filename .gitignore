@@ -26,6 +26,7 @@ GIT_IGNORE.*
 lem
 lem-ncurses
 lem-server
+lem-client
 
 *.abcl
 build/*
@@ -37,3 +38,4 @@ build/*
 /result
 
 TODO
+artifacts/

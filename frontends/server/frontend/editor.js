@@ -24,7 +24,6 @@ function isMacOS() {
 }
 
 function computeFontSize(font) {
-
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   ctx.font = font;
@@ -71,58 +70,24 @@ function drawHorizontalLine({ ctx, x, y, width, style, lineWidth = 1 }) {
 
 class Option {
   constructor({ fontName, fontSize }) {
-    const font = fontSize + 'px ' + fontName;
-    this.font = font;
-    const [width, height] = computeFontSize(font);
-    this.fontWidth = width;
-    this.fontHeight = height;
+    this.setFont(fontName, fontSize);
     this.foreground = '#333';
     this.background = '#ccc';
+  }
+
+  setFont(fontName, fontSize) {
+    const font = fontSize + 'px ' + fontName;
+    const [width, height] = computeFontSize(font);
+    this.fontName = fontName;
+    this.fontSize = fontSize;
+    this.fontWidth = width;
+    this.fontHeight = height;
+    this.font = font;
   }
 }
 
 function getLemEditorElement() {
   return document.getElementById('lem-editor');
-}
-
-class Cursor {
-  constructor(editor, name, color) {
-    this.editor = editor;
-    this.name = name;
-    this.color = color;
-
-    this.span = document.createElement('span');
-    this.span.style.all = 'none';
-    this.span.style.position = 'absolute';
-    this.span.style.zIndex = '';
-    this.span.style.top = '0';
-    this.span.style.left = '0';
-    this.span.style.fontFamily = editor.option.font;
-    this.span.style.backgroundColor = color;
-    this.span.style.color = 'white';
-    this.span.innerHTML = '';
-    document.body.appendChild(this.span);
-
-    this.timerId = null;
-  }
-
-  move(x, y) {
-    const [x0, y0] = this.editor.getDisplayRectangle();
-    this.span.style.visibility = 'visible';
-    this.span.textContent = this.name;
-    this.span.style.left = (x + x0) + 'px';
-    this.span.style.top = (y + y0) + 'px';
-    this.span.style.padding = '3px 1%'
-    if (this.timerId) {
-      clearTimeout(this.timerId);
-    }
-    this.timerId = setTimeout(
-      () => {
-        this.span.style.visibility = 'hidden';
-      },
-      500,
-    );
-  }
 }
 
 function addMouseEventListeners({dom, editor, isDraggable, draggableStyle}) {
@@ -154,6 +119,7 @@ function addMouseEventListeners({dom, editor, isDraggable, draggableStyle}) {
 
   dom.addEventListener('mousedown', (event) => {
     if (isDraggable) document.body.style.cursor = draggableStyle;
+    editor.focusHiddenInput();
     handleMouseDownUp(event, 'mousedown');
   });
 
@@ -243,10 +209,8 @@ class BaseSurface {
 
     if (isFloating && border) {
       this.wrapper = document.createElement('div');
+      this.wrapper.className = 'lem-editor__floating-window--bordered';
       this.wrapper.style.position = 'absolute';
-      this.wrapper.style.padding = '10px';
-      this.wrapper.style.border = '1px solid';
-      this.wrapper.style.borderColor = this.editor.option.foreground;
       this.wrapper.style.backgroundColor = this.editor.option.background;
       this.wrapper.appendChild(dom);
       getLemEditorElement().appendChild(this.wrapper);
@@ -270,16 +234,12 @@ class BaseSurface {
     }
   }
 
-  resize(width, height) {
+  _resize(width, height) {
     const ratio = window.devicePixelRatio || 1;
     this.mainDOM.width = width * this.editor.option.fontWidth * ratio;
     this.mainDOM.height = height * this.editor.option.fontHeight * ratio;
     this.mainDOM.style.width = width * this.editor.option.fontWidth + 'px';
     this.mainDOM.style.height = height * this.editor.option.fontHeight + 'px';
-
-    const ctx = this.mainDOM.getContext('2d');
-    ctx.scale(ratio, ratio);
-
     if (this.wrapper) {
       this.wrapper.style.width = width * this.editor.option.fontWidth + borderOffsetX * 2 + 'px';
       this.wrapper.style.height = height * this.editor.option.fontHeight + borderOffsetY * 2 + 'px';
@@ -323,6 +283,13 @@ class CanvasSurface extends BaseSurface {
     return canvas;
   }
 
+  resize(width, height) {
+    this._resize(width, height);
+    const ratio = window.devicePixelRatio || 1;
+    const ctx = this.mainDOM.getContext('2d');
+    ctx.scale(ratio, ratio);
+  }
+
   drawBlock(x, y, width, height, color) {
     const option = this.editor.option;
     this.drawingQueue.push(function(ctx) {
@@ -337,9 +304,10 @@ class CanvasSurface extends BaseSurface {
     });
   }
 
-  drawText(x, y, text, textWidth, attribute) {
+  drawText(x, y, text, textWidth, attribute, font) {
     const option = this.editor.option;
     this.drawingQueue.push(function(ctx) {
+      font = font ? `${option.fontSize}px ${font}` : option.font;
       if (!attribute) {
         drawBlock({
           ctx,
@@ -355,7 +323,7 @@ class CanvasSurface extends BaseSurface {
           y: y * option.fontHeight,
           text: text,
           style: option.foreground,
-          font: option.font,
+          font: font,
           option,
         });
       } else {
@@ -387,7 +355,7 @@ class CanvasSurface extends BaseSurface {
           y: gy,
           text: text,
           style: foreground,
-          font: bold ? ('bold ' + option.font) : option.font,
+          font: bold ? ('bold ' + font) : font,
           option,
         });
         if (underline) {
@@ -423,11 +391,21 @@ class HTMLSurface extends BaseSurface {
     iframe.style.backgroundColor = 'white';
     iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
     iframe.srcdoc = html;
+    iframe.addEventListener('load', () => {
+      const win = iframe.contentWindow;
+      win.invokeLem = (method, args) => parent.postMessage(
+        { type: 'invoke-lem', method, args }
+      );
+    });
 
     this.iframe = iframe;
 
     this.move(x, y);
     this.resize(width, height);
+  }
+
+  resize(width, height) {
+    this._resize(width, height);
   }
 
   update(content) {
@@ -449,10 +427,12 @@ class VerticalBorder {
     this.option = option;
     this.editor = editor;
     this.line = document.createElement('div');
-    this.line.style.backgroundColor = option.foreground;
-    this.line.style.width = '5px';
+    this.line.style.background = 'linear-gradient(to right, rgba(128, 128, 128, 0.3), rgba(128, 128, 128, 0.6), rgba(128, 128, 128, 0.3))';
+    this.line.style.width = '1px';
     this.line.style.height = height * option.fontHeight + 'px';
     this.line.style.position = 'absolute';
+    this.line.style.boxShadow = '0 0 3px rgba(128, 128, 128, 0.2)';
+    this.line.style.borderRadius = '0.5px';
 
     getLemEditorElement().appendChild(this.line);
 
@@ -533,7 +513,7 @@ class View {
         break;
       case 'floating':
         this.mainSurface = this.makeSurface(type, content);
-        console.log(borderShape);
+        //console.log(borderShape);
         if (borderShape === 'left-border') {
           this.leftSideBar = new VerticalBorder({
             x: x,
@@ -618,13 +598,14 @@ class View {
     );
   }
 
-  print(x, y, text, textWidth, attribute) {
+  print(x, y, text, textWidth, attribute, font) {
     this.mainSurface.drawText(
       x,
       y,
       text,
       textWidth,
       attribute,
+      font,
     );
   }
 
@@ -920,23 +901,15 @@ export class Editor {
     getDisplayRectangle = getDisplayRectangleDefault,
     fontName,
     fontSize,
-    onLoaded,
     url,
     onExit,
     onClosed,
-    onRestart,
-    onUserInput,
-    onSwitchFile,
   }) {
     this.getDisplayRectangle = getDisplayRectangle;
 
     this.option = new Option({ fontName, fontSize });
 
     this.onExit = onExit;
-    this.onLoaded = onLoaded;
-    this.onRestart = onRestart;
-    this.onUserInput = onUserInput;
-    this.onSwitchFile = onSwitchFile;
     this.inputEnabled = true;
 
     this.input = new Input(this);
@@ -952,7 +925,6 @@ export class Editor {
 
     this.messageTable = new MessageTable();
     this.messageTable.register(this.jsonrpc, {
-      'startup': this.startup.bind(this),
       'update-foreground': this.updateForeground.bind(this),
       'update-background': this.updateBackground.bind(this),
       'make-view': this.makeView.bind(this),
@@ -971,16 +943,19 @@ export class Editor {
       'resize-display': this.resizeDisplay.bind(this),
       'bulk': this.bulk.bind(this),
       'exit': this.exitEditor.bind(this),
-      'user-input': this.userInput.bind(this),
-      'switch-file': this.switchFile.bind(this),
       'get-clipboard-text': this.getClipboardText.bind(this),
       'set-clipboard-text': this.setClipboardText.bind(this),
       'js-eval': this.jsEval.bind(this),
+      'set-font': this.setFont.bind(this),
+      'get-font': this.getFont.bind(this),
+      'get-display-size': this.getDisplaySize.bind(this),
+      'load-css': this.loadCSS.bind(this),
     });
 
     this.login();
 
     this.boundedHandleResize = this.handleResize.bind(this);
+    this.focusHiddenInput = this.focusHiddenInput.bind(this);
   }
 
   init() {
@@ -1006,6 +981,9 @@ export class Editor {
       return;
     }
 
+    if (key.key === 'Unidentified') {
+      return;
+    }
     this.jsonrpc.notify('input', { kind: 'key', value: key });
   }
 
@@ -1026,6 +1004,19 @@ export class Editor {
     }
   }
 
+  focusHiddenInput() {
+    const el = this.input?.input;
+    if (!el) return;
+    try { window.focus(); } catch (_) {}
+    // mousedown 内で即座に focus() するとブラウザのデフォルト処理に負けることがある
+    requestAnimationFrame(() => {
+      // 一部環境ではさらに 1tick 遅らせると安定する
+      setTimeout(() => {
+        el.focus({ preventScroll: true });
+      }, 0);
+    });
+  }
+
   enableInput() {
     this.inputEnabled = true;
   }
@@ -1044,8 +1035,8 @@ export class Editor {
 
   getDisplaySize() {
     const [_x, _y, displayWidth, displayHeight] = this.getDisplayRectangle();
-    const width = Math.round(displayWidth / this.option.fontWidth);
-    const height = Math.round(displayHeight / this.option.fontHeight);
+    const width = Math.floor(displayWidth / this.option.fontWidth);
+    const height = Math.floor(displayHeight / this.option.fontHeight);
     return { width, height };
   }
 
@@ -1072,17 +1063,7 @@ export class Editor {
       }
 
       this.jsonrpc.notify('redraw', { size: this.getDisplaySize() });
-
-      this.jsonrpc.request('user-file-map', {}, response => {
-        this.onSwitchFile(response);
-      });
     });
-  }
-
-  startup() {
-    if (this.onRestart) {
-      this.onRestart();
-    }
   }
 
   updateForeground(color) {
@@ -1152,22 +1133,9 @@ export class Editor {
     view.clearEob(x, y);
   }
 
-  put({ viewInfo: { id }, x, y, text, textWidth, attribute, cursorInfo }) {
+  put({ viewInfo: { id }, x, y, text, textWidth, attribute, font }) {
     const view = this.findViewById(id);
-    view.print(x, y, text, textWidth, attribute);
-    if (cursorInfo) {
-      const { name, color } = cursorInfo;
-      let cursor = this.cursors.get(name);
-      if (!cursor) {
-        cursor = new Cursor(this, name, color);
-        this.cursors.set(name, cursor);
-      }
-
-      cursor.move(
-        (view.x + x) * this.option.fontWidth,
-        (view.y + y - 1) * this.option.fontHeight,
-      );
-    }
+    view.print(x, y, text, textWidth, attribute, font);
   }
 
   modelinePut({ viewInfo: { id }, x, y, text, textWidth, attribute }) {
@@ -1205,10 +1173,6 @@ export class Editor {
   }
 
   bulk(messages) {
-    if (this.onLoaded) {
-      this.onLoaded();
-      this.onLoaded = null;
-    }
     for (const { method, argument } of messages) {
       this.callMessage(method, argument);
     }
@@ -1217,18 +1181,6 @@ export class Editor {
   exitEditor() {
     if (this.onExit) {
       this.onExit();
-    }
-  }
-
-  userInput({ value }) {
-    if (this.onUserInput) {
-      this.onUserInput(value);
-    }
-  }
-
-  switchFile(userFileMap) {
-    if (this.onSwitchFile) {
-      this.onSwitchFile(userFileMap);
     }
   }
 
@@ -1251,5 +1203,29 @@ export class Editor {
       return result.toString();
     }
     return result;
+  }
+
+  setFont({ fontName, fontSize }) {
+    this.option.setFont(
+      fontName || this.option.fontName,
+      fontSize || this.option.fontSize,
+    );
+  }
+
+  getFont() {
+    return {
+      name: this.option.fontName,
+      size: this.option.fontSize,
+    };
+  }
+
+  loadCSS({ content }) {
+    const style = document.createElement('style');
+    style.textContent = content;
+    document.head.appendChild(style);
+  }
+
+  notifyToServer(method, args) {
+    this.jsonrpc.notify('invoke', { method, args });
   }
 }

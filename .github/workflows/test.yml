@@ -20,6 +20,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl bzip2 git libzstd-dev file libgtk-4-1 libwebkitgtk-6.0-4 libwebkit2gtk-4.1-0
       - name: Install Roswell
         env:
           LISP: ${{ matrix.lisp }}

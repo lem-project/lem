@@ -7,8 +7,7 @@
   ()
   (:default-initargs
    :name :sdl2
-   :redraw-after-modifying-floating-window nil))
-
-(setf (lem-core:variable-value 'lem-core:highlight-line :global) t)
+   :redraw-after-modifying-floating-window nil
+   :underline-color-support t))
 
 (pushnew :lem-sdl2 *features*)

@@ -1,6 +1,6 @@
 
 (defsystem "lem-elixir-mode"
-  :depends-on ("lem"
+  :depends-on ("lem/core"
                "lem-lsp-mode"
                #+#.(cl:if (asdf:find-system :async-process cl:nil) '(and) '(or)) "lem-process")
   :serial t

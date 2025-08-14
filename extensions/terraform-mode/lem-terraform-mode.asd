@@ -1,5 +1,5 @@
 (defsystem "lem-terraform-mode"
-  :depends-on ("lem")
+  :depends-on ("lem/core")
   :serial t
   :components ((:file "indent")
                (:file "terraform-mode")

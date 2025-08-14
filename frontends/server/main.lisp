@@ -5,7 +5,8 @@
   (:local-nicknames (:display :lem-core/display)
                     (:queue :lem/common/queue)
                     (:mouse :lem-server/mouse))
-  (:export :run-tcp-server
+  (:export :register-method
+           :run-tcp-server
            :run-stdio-server
            :run-websocket-server
            :main))
@@ -24,25 +25,47 @@
          :reader websocket-server-runner-host)))
 
 (defmethod server-listen ((runner websocket-server-runner) server)
-  (jsonrpc:server-listen server
-                         :mode :websocket
-                         :port (websocket-server-runner-port runner)
-                         :host (websocket-server-runner-host runner)
-                         :clack-handler 'clack-handler))
+  (let* ((null-stream (make-broadcast-stream))
+         (*trace-output* null-stream)
+         (*error-output* null-stream))
+    (jsonrpc:server-listen server
+                           :mode :websocket
+                           :port (websocket-server-runner-port runner)
+                           :host (websocket-server-runner-host runner)
+                           :debug nil
+                           :silent t
+                           :clack-handler 'clack-handler)))
+
+(defun collect-files (directory)
+  (append (uiop:directory-files directory)
+          (mapcan #'collect-files (uiop:subdirectories directory))))
+
+(defun dump-files ()
+  (loop :for file :in (collect-files (asdf:system-relative-pathname :lem-server #p"frontend/dist/"))
+        :collect (cons (enough-namestring file (asdf:system-source-directory :lem-server))
+                       (alexandria:read-file-into-byte-vector file))))
+
+(defvar *dist* (dump-files))
+
+(defun find-dist-by-path (path)
+  (cdr (assoc path *dist* :test #'equal)))
 
 (defun clack-handler (env)
   (unless (wsd:websocket-p env)
     (let ((path (getf env :path-info)))
       (cond ((string= "/" path)
              `(200 (:content-type "text/html")
-                   ,(asdf:system-relative-pathname :lem-server
-                                                    #p"frontend/dist/index.html")))
+                   ,(find-dist-by-path "frontend/dist/index.html")))
             ((alexandria:starts-with-subseq "/assets/" path)
-             `(200 (:content-type "application/javascript")
-                   ,(asdf:system-relative-pathname :lem-server
-                                                   (format nil
-                                                           "frontend/dist/~A"
-                                                           (string-left-trim "/" path)))))
+             `(200 (:content-type ,(hunchentoot:mime-type path))
+                   ,(find-dist-by-path (format nil
+                                               "frontend/dist/~A"
+                                               (string-left-trim "/" path)))))
+            ((alexandria:starts-with-subseq "/local/" path)
+             (let* ((file (pathname (subseq path (length "/local"))))
+                    (mime-type (hunchentoot:mime-type file)))
+               `(200 (:content-type ,mime-type)
+                     ,file)))
             (t
              '(200 () ("ok")))))))
 
@@ -81,7 +104,9 @@
   (:default-initargs
    :name :jsonrpc
    :redraw-after-modifying-floating-window t
-   :window-left-margin 1))
+   :window-left-margin 1
+   :html-support t
+   :underline-color-support t))
 
 (defun get-all-views ()
   (if (null (lem:current-frame))
@@ -155,13 +180,23 @@
                         (lem-core::adjust-all-window-size)
                         (lem:redraw-display :force t))))))
 
+(defvar *invoke-method-table* (make-hash-table :test 'equal))
+
+(defun register-method (method function)
+  (setf (gethash method *invoke-method-table*) function))
+
+(defun invoke (params)
+  (alexandria:when-let ((method (gethash "method" params))
+                        (args (gethash "args" params)))
+    (funcall (gethash method *invoke-method-table*)
+             args)))
+
 (defmethod lem-if:invoke ((jsonrpc jsonrpc) function)
   (let ((ready nil))
     (setf (jsonrpc-editor-thread jsonrpc)
           (funcall function
                    (lambda ()
-                     (loop :until ready)
-                     (notify jsonrpc "startup" nil))))
+                     (loop :until ready))))
     (jsonrpc:expose (jsonrpc-server jsonrpc)
                     "login"
                     (login jsonrpc
@@ -177,6 +212,9 @@
     (jsonrpc:expose (jsonrpc-server jsonrpc)
                     "got-clipboard-text"
                     'got-clipboard-text)
+    (jsonrpc:expose (jsonrpc-server jsonrpc)
+                    "invoke"
+                    'invoke)
 
     (lem:add-hook lem:*exit-editor-hook*
                   (lambda ()
@@ -226,6 +264,13 @@
 (defmethod lem-if:set-display-fullscreen-p ((jsonrpc jsonrpc) fullscreen-p)
   ;; TODO
   )
+
+(defmethod lem-if:update-screen-size ((jsonrpc jsonrpc))
+  (let* ((response (call "get-display-size" nil))
+         (width (gethash "width" response))
+         (height (gethash "height" response)))
+    (resize-display jsonrpc width height)
+    (lem:send-event :resize)))
 
 (defmethod lem-if:make-view ((jsonrpc jsonrpc) window x y width height use-modeline)
   (let ((view (make-view :window window
@@ -315,12 +360,13 @@
   (notify jsonrpc "set-clipboard-text" (hash "text" text)))
 
 (defmethod lem-if:increase-font-size ((jsonrpc jsonrpc))
-  ;; TODO
-  )
+  (let ((size (nth-value 1 (lem-if:get-font jsonrpc))))
+    (lem:set-font-size (1+ size))))
 
 (defmethod lem-if:decrease-font-size ((jsonrpc jsonrpc))
-  ;; TODO
-  )
+  (let ((size (nth-value 1 (lem-if:get-font jsonrpc))))
+    (when (< 0 size)
+      (lem:set-font-size (1- size)))))
 
 (defmethod lem-if:resize-display-before ((jsonrpc jsonrpc))
   )
@@ -338,34 +384,50 @@
   ;; TODO
   1)
 
+(defun call (method params)
+  (let ((mailbox (sb-concurrency:make-mailbox :name "lem-server-call-async")))
+    (loop :for connection
+          :in (jsonrpc/server::server-client-connections
+               (jsonrpc-server (lem:implementation)))
+          :do (jsonrpc:call-async-to
+               (jsonrpc-server (lem:implementation))
+               connection
+               method
+               params
+               (lambda (res)
+                 (sb-concurrency:send-message mailbox (list t res)))
+               (lambda (message code)
+                 (sb-concurrency:send-message
+                  mailbox
+                  (list nil
+                        (make-condition 'jsonrpc/errors:jsonrpc-callback-error
+                                        :message message
+                                        :code code))))))
+    (destructuring-bind (ok value)
+        (sb-concurrency:receive-message mailbox)
+      (if ok
+          value
+          (error value)))))
+
 (defmethod lem-if:js-eval ((jsonrpc jsonrpc) view code &key wait)
   (let ((params (hash "viewInfo" view "code" code)))
     (if wait
-        (let ((mailbox (sb-concurrency:make-mailbox :name "js-eval-mailbox")))
-          (apply #'values
-                 (loop :for connection
-                       :in (jsonrpc/server::server-client-connections
-                            (jsonrpc-server (lem:implementation)))
-                       :do (jsonrpc:call-async-to
-                            (jsonrpc-server (lem:implementation))
-                            connection
-                            "js-eval"
-                            params
-                            (lambda (res)
-                              (sb-concurrency:send-message mailbox (list t res)))
-                            (lambda (message code)
-                              (sb-concurrency:send-message
-                               mailbox
-                               (list nil
-                                     (make-condition 'jsonrpc/errors:jsonrpc-callback-error
-                                                     :message message
-                                                     :code code)))))))
-          (destructuring-bind (ok value)
-              (sb-concurrency:receive-message mailbox)
-            (if ok
-                value
-                (error value))))
+        (call "js-eval" params)
         (notify (lem:implementation) "js-eval" params))))
+
+(defmethod lem-if:set-font-name ((jsonrpc jsonrpc) font-name)
+  (notify (lem:implementation) "set-font" (hash "fontName" font-name)))
+
+(defmethod lem-if:set-font-size ((jsonrpc jsonrpc) font-size)
+  (notify (lem:implementation) "set-font" (hash "fontSize" font-size)))
+
+(defmethod lem-if:get-font ((jsonrpc jsonrpc))
+  (let ((response (call "get-font" nil)))
+    (values (gethash "name" response)
+            (gethash "size" response))))
+
+(defun load-css (css-content)
+  (notify (lem:implementation) "load-css" (hash "content" css-content)))
 
 (lem:add-hook lem:*switch-to-buffer-hook* 'on-switch-to-buffer)
 
@@ -431,7 +493,7 @@
   0)
 
 (defmethod object-width ((drawing-object display:line-end-object))
-  0)
+  (lem-core:string-width (lem-core/display:text-object-string drawing-object)))
 
 (defmethod object-width ((drawing-object display:image-object))
   0)
@@ -450,7 +512,7 @@
       (setf attribute (lem:make-attribute :background lem-if:*background-color-of-drawing-window*)))
     attribute))
 
-(defun put (jsonrpc view x y string attribute)
+(defun put (jsonrpc view x y string attribute &key font)
   (with-error-handler ()
     (notify* jsonrpc
              (ecase *put-target*
@@ -461,14 +523,36 @@
                    "y" y
                    "text" string
                    "textWidth" (lem:string-width string)
-                   "attribute" (ensure-attribute attribute)))))
+                   "attribute" (ensure-attribute attribute)
+                   "font" font))))
 
 (defmethod draw-object (jsonrpc (object display:text-object) x y view)
   (let* ((string (display:text-object-string object))
-         (attribute (display:text-object-attribute object)))
+         (attribute (display:text-object-attribute object))
+         (type (display:text-object-type object)))
     (when (and attribute (lem-core:cursor-attribute-p attribute))
       (lem-core::set-last-print-cursor (view-window view) x y))
-    (put jsonrpc view x y string attribute)))
+    (put jsonrpc
+         view
+         x
+         y
+         string
+         attribute)))
+
+(defmethod draw-object (jsonrpc (object display:icon-object) x y view)
+  (let* ((string (display:text-object-string object))
+         (attribute (display:text-object-attribute object))
+         (type (display:text-object-type object)))
+    (when (and attribute (lem-core:cursor-attribute-p attribute))
+      (lem-core::set-last-print-cursor (view-window view) x y))
+    (put jsonrpc
+         view
+         x
+         y
+         string
+         attribute
+         :font (lem:icon-value (char-code (char string 0))
+                               :font))))
 
 (defmethod draw-object (jsonrpc (object display:eol-cursor-object) x y view)
   (lem-core::set-last-print-cursor (view-window view) x y)
@@ -549,11 +633,6 @@
 
 
 ;;;
-(defconstant +abort+ 0)
-(defconstant +keyevent+ 1)
-(defconstant +resize+ 2)
-(defconstant +input-string+ 3)
-
 (defun convert-keyevent (e)
   (let ((key (gethash "key" e))
         (ctrl (gethash "ctrl" e))
@@ -588,9 +667,6 @@
            (lem:send-abort-event (jsonrpc-editor-thread jsonrpc) nil))
           ("key"
            (when value
-             (notify jsonrpc
-                     "user-input"
-                     (hash "value" value))
              (let ((key (convert-keyevent value)))
                (lem:send-event key))))
           ("clipboard-paste"
@@ -662,9 +738,6 @@
                            (gethash "height" value))
            (lem:send-event :resize))
           ("input-string"
-           (notify jsonrpc
-                   "user-input"
-                   (hash "value" value))
            (loop :for c :across value
                  :for key := (convert-keyevent
                               (alexandria:plist-hash-table (list "key" (string c))
@@ -684,21 +757,21 @@
     ("host" :type string :optional t)
     ("address" :type string :optional t :documentation "address of \"local-domain-socket\"")))
 
-(defun run-websocket-server (&key (port 50000) (hostname "127.0.0.1"))
+(defun run-websocket-server (&key (port 50000) (hostname "127.0.0.1") args)
   (let ((*server-runner*
           (make-instance 'websocket-server-runner
                          :port port
                          :host hostname)))
-    (lem:lem)))
+    (apply #'lem:lem (append args (list "--interface" "JSONRPC")))))
 
 (defun run-stdio-server ()
   (let ((*server-runner* (make-instance 'stdio-server-runner)))
-    (lem:lem)))
+    (lem:lem "--interface" "JSONRPC")))
 
 (defun run-local-domain-socket-server (&key address)
   (let ((*server-runner* (make-instance 'local-domain-socket-server-runner
                                         :address address)))
-    (lem:lem)))
+    (lem:lem "--interface" "JSONRPC")))
 
 (defun check-port-specified (port)
   (unless port

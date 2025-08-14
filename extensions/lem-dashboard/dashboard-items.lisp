@@ -143,7 +143,7 @@
 (defmethod draw-dashboard-item ((item dashboard-recent-files) point)
   (let* ((title (format nil "~A Recent Files (f)" (icon-string "file-text")))
          (title-line (create-centered-string title))
-         (recent-files (reverse (history:history-data-list (file:file-history)))))
+         (recent-files (lem-core/commands/file:recent-files)))
     (insert-string point title-line :attribute 'document-header1-attribute)
     (insert-character point #\Newline)
     (insert-character point #\Newline)

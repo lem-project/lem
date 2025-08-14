@@ -1,0 +1,194 @@
+name: Nightly Builds
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      linux:
+        description: 'Run Linux build'
+        type: boolean
+        default: true
+      mac:
+        description: 'Run macOS build'
+        type: boolean
+        default: true
+      force:
+        description: 'Force build even if no changes since last nightly'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency: nightly-${{ github.workflow }}
+
+env:
+  NIGHTLY_TAG: nightly-latest
+
+jobs:
+  linux:
+    name: Nightly Build (Linux)
+    if: github.event_name == 'schedule' || inputs.linux == true
+    runs-on: ubuntu-latest
+    outputs:
+      built: ${{ steps.flag.outputs.built }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Fetch tags
+        run: git fetch --tags --force
+
+      - name: Check changes since last nightly
+        id: diff
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.force != true)
+        run: |
+          TAG="${{ env.NIGHTLY_TAG }}"
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            if git diff --quiet "$TAG"...HEAD -- .; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: No changes — skip build
+        if: steps.diff.outputs.skip == 'true'
+        run: echo "No changes since last nightly. Skipping."
+
+      - name: Set up Docker Buildx
+        if: steps.diff.outputs.skip != 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build AppImage
+        if: steps.diff.outputs.skip != 'true'
+        run: |
+          make AppImage
+          mkdir -p dist
+          cp artifacts/Lem-x86_64.AppImage dist/Lem-x86_64.AppImage
+
+      - name: Upload artifact (Linux)
+        if: steps.diff.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lem-linux
+          path: dist/Lem-x86_64.AppImage
+          if-no-files-found: error
+
+      - name: Flag built
+        id: flag
+        run: echo "built=true" >> "$GITHUB_OUTPUT"
+
+  macos:
+    name: Nightly Build (macOS)
+    if: github.event_name == 'schedule' || inputs.mac == true
+    runs-on: macos-latest
+    outputs:
+      built: ${{ steps.flag.outputs.built }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Fetch tags
+        run: git fetch --tags --force
+
+      - name: Check changes since last nightly
+        id: diff
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.force != true)
+        run: |
+          TAG="${{ env.NIGHTLY_TAG }}"
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            if git diff --quiet "$TAG"...HEAD -- .; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: No changes — skip build
+        if: steps.diff.outputs.skip == 'true'
+        run: echo "No changes since last nightly. Skipping."
+
+      - name: Set up Common Lisp environment
+        if: steps.diff.outputs.skip != 'true'
+        run: |
+          brew install sbcl
+          curl -O https://beta.quicklisp.org/quicklisp.lisp
+          sbcl --non-interactive --load quicklisp.lisp --eval "(quicklisp-quickstart:install)"
+          curl -L https://qlot.tech/installer | sh
+          echo "$HOME/.qlot/bin" >> $GITHUB_PATH
+
+      - name: Build Lem executable
+        if: steps.diff.outputs.skip != 'true'
+        run: |
+          scripts/macos-deploy.bash
+          test -f lem-macos.zip
+
+      - name: Upload artifact (macOS)
+        if: steps.diff.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lem-macos
+          path: lem-macos.zip
+          if-no-files-found: error
+
+      - name: Flag built
+        id: flag
+        run: echo "built=true" >> "$GITHUB_OUTPUT"
+
+  publish:
+    name: Publish unified Nightly pre-release
+    runs-on: ubuntu-latest
+    needs: [linux, macos]
+    if: |
+      needs.linux.result != 'cancelled' || needs.macos.result != 'cancelled'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Fetch tags
+        run: git fetch --tags --force
+
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y%m%d-%H%M')" >> "$GITHUB_OUTPUT"
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: lem-*
+          path: download
+          merge-multiple: true
+
+      - name: Collect files
+        id: collect
+        shell: bash
+        run: |
+          files=""
+          [ -f download/Lem-x86_64.AppImage ] && files="$files"$'\n'"download/Lem-x86_64.AppImage"
+          [ -f download/lem-macos.zip ] && files="$files"$'\n'"download/lem-macos.zip"
+          files="${files#"${files%%[!$'\n']*}"}"
+          echo "files<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$files" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+          if [ -z "$files" ]; then
+            echo "No artifacts found to release."
+            exit 78
+          fi
+
+      - name: Move/update nightly tag to current commit
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f "${{ env.NIGHTLY_TAG }}"
+          git push -f origin "${{ env.NIGHTLY_TAG }}"
+
+      - name: Create/Update unified nightly pre-release
+        uses: softprops/action-gh-release@v2
+        if: steps.collect.outputs.files != ''
+        with:
+          tag_name: ${{ env.NIGHTLY_TAG }}
+          name: Nightly Build - ${{ steps.date.outputs.date }}
+          prerelease: true
+          generate_release_notes: false
+          files: ${{ steps.collect.outputs.files }}

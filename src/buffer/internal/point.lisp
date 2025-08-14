@@ -29,6 +29,10 @@ It has a `buffer` slot, a `line` number, and `charpos` is an offset from the beg
 - when `kind` is `:left-inserting` or `:right-inserting`, and if you insert content before the point, then the point position is adjusted by the length of your edit.
  If you insert content at the point position, with `:right-inserting` the original position is unchanged, and with `:left-inserting` the position is moved.
 When using `:left-inserting` or `:right-inserting`, you must explicitly delete the point after use with `delete-point`. For this reason, you should use `with-point`.
+
+Use `with-points` to define points to use in the macro body, to ensure they are deleted.
+
+Use `save-excursion` to move around the given point in the macro body, and come back to it once done.
 "))
 
 (setf (documentation 'point-buffer 'function)

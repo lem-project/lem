@@ -32,7 +32,11 @@
            :transpose-characters
            :undo
            :redo
-           :delete-trailing-whitespace)
+           :delete-trailing-whitespace
+           :mark-and-forward-char
+           :mark-and-backward-char
+           :mark-and-previous-line
+           :mark-and-next-line)
   #+sbcl
   (:lock t))
 (in-package :lem-core/commands/edit)
@@ -59,6 +63,11 @@
 (define-key *global-keymap* "C-\\" 'undo)
 (define-key *global-keymap* "C-_" 'redo)
 (define-key *global-keymap* "C-/" 'redo)
+(define-key *global-keymap* "Shift-Left" 'mark-and-backward-char)
+(define-key *global-keymap* "Shift-Right" 'mark-and-forward-char)
+(define-key *global-keymap* "Shift-Up" 'mark-and-previous-line)
+(define-key *global-keymap* "Shift-Down" 'mark-and-next-line)
+
 
 (define-editor-variable self-insert-before-hook '())
 (define-editor-variable self-insert-after-hook '())
@@ -469,3 +478,27 @@ current line."
 
 (defmethod lem-core:paste-using-mode (mode text)
   (yank-string (current-point) text))
+
+(define-command mark-and-forward-char (n) (:universal)
+  "Sets a mark if none is set, then moves cursor forward by n characters"
+  (unless (buffer-mark-p (current-buffer))
+    (set-cursor-mark (current-point) (current-point)))
+  (character-offset (current-point) n))
+
+(define-command mark-and-backward-char (n) (:universal)
+  "Sets a mark if none is set, then moves cursor backward by n characters"
+  (unless (buffer-mark-p (current-buffer))
+    (set-cursor-mark (current-point) (current-point)))
+  (character-offset (current-point) (- n)))
+
+(define-command mark-and-previous-line (n) (:universal)
+  "Sets a mark if none is set, then moves cursor up by n lines"
+  (unless (buffer-mark-p (current-buffer))
+    (set-cursor-mark (current-point) (current-point)))
+  (next-line (- n)))
+
+(define-command mark-and-next-line (n) (:universal)
+  "Sets a mark if none is set, then moves cursor down by n lines"
+  (unless (buffer-mark-p (current-buffer))
+    (set-cursor-mark (current-point) (current-point)))
+  (next-line n))

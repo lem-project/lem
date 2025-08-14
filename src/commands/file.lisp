@@ -23,9 +23,11 @@
            :prompt-for-files-recursively
            :format-current-buffer
            :file-history
+           :find-recent-file
            :find-history-file
            :*file-history-limit*
            :get-file-mode
+           :recent-files
            :format-current-buffer)
   #+sbcl
   (:lock t))
@@ -35,7 +37,7 @@
 (define-key *global-keymap* "C-x C-r" 'read-file)
 (define-key *global-keymap* "C-x C-s" 'save-current-buffer)
 (define-key *global-keymap* "C-x C-w" 'write-file)
-(define-key *global-keymap* "C-x C-h" 'find-history-file)
+(define-key *global-keymap* "C-x C-h" 'find-recent-file)
 (define-key *global-keymap* "C-x Tab" 'insert-file)
 (define-key *global-keymap* "C-x s" 'save-some-buffers)
 
@@ -439,15 +441,29 @@ Supported modes include: c-mode with clang-format, go-mode with gofmt, js-mode a
 
 (add-hook *find-file-hook* 'add-to-file-history)
 
-(define-command find-history-file () ()
-  "Prompt for a file from the file history and open it."
-  (let* ((history (file-history))
-         (candidates (lem/common/history:history-data-list history)))
+(defun recent-files ()
+  "Return a list of the recent files (as strings), the last accessed first.
+
+  For an interactive command, see `find-recent-file`."
+  (reverse
+   (lem/common/history:history-data-list (file-history))))
+
+
+(define-command find-recent-file () ()
+  "Open a recently accessed file."
+  (let ((candidates (recent-files)))
     (if candidates
         (let ((filename (prompt-for-string
                          "File: "
-                         :completion-function (lambda (x) (completion-strings x (reverse candidates)))
+                         :completion-function (lambda (x) (completion-strings x candidates))
                          :test-function (lambda (name) (member name candidates :test #'string=)))))
           (when filename
             (find-file filename)))
         (editor-error "No file history."))))
+
+;; deprecated command, name changed <2025-08-12>
+(define-command find-history-file () ()
+  "Open a recently accessed file.
+
+  Alias for `find-recent-file`."
+  (find-recent-file))

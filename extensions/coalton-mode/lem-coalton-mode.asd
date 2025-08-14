@@ -1,5 +1,5 @@
 (defsystem "lem-coalton-mode"
-  :depends-on ("lem"
+  :depends-on ("lem/core"
                "lem-lisp-mode"
                "micros")
   :components

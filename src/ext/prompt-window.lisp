@@ -6,7 +6,9 @@
   (:lock t)
   (:export :prompt-attribute
            :*prompt-completion-window-shape*
-           :current-prompt-window))
+           :*automatic-tab-completion*
+           :current-prompt-window
+           :find-command-keybindings-in-keymap))
 (in-package :lem/prompt-window)
 
 (defconstant +border-size+ 1)
@@ -68,7 +70,8 @@
     (:name "prompt"
      :keymap *prompt-mode-keymap*)
   (setf (not-switchable-buffer-p (current-buffer)) t)
-  (setf (variable-value 'line-wrap :buffer (current-buffer)) nil))
+  (setf (variable-value 'line-wrap :buffer (current-buffer)) nil)
+  (setf (variable-value 'highlight-line :buffer (current-buffer)) nil))
 
 (define-attribute prompt-attribute
   (t :foreground :base07 :bold t))
@@ -77,6 +80,8 @@
 (define-key *prompt-mode-keymap* "Tab" 'prompt-completion)
 (define-key *prompt-mode-keymap* "M-p" 'prompt-previous-history)
 (define-key *prompt-mode-keymap* "M-n" 'prompt-next-history)
+(define-key *prompt-mode-keymap* "Up" 'prompt-previous-history)
+(define-key *prompt-mode-keymap* "Down" 'prompt-next-history)
 (define-key *prompt-mode-keymap* 'delete-active-window 'prompt-quit)
 
 (defun current-prompt-window ()
@@ -133,7 +138,7 @@
 (defvar *prompt-completion-window-shape* :drop-curtain)
 (defvar *prompt-completion-window-gravity* :horizontally-adjacent-window)
 
-(define-command prompt-completion () ()
+(defun open-prompt-completion ()
   (alexandria:when-let (completion-fn (prompt-window-completion-function (current-prompt-window)))
     (with-point ((start (current-prompt-start-point)))
       (lem/completion-mode:run-completion
@@ -155,6 +160,10 @@
        :style `(:gravity ,*prompt-completion-window-gravity*
                 :offset-y -1
                 :shape ,*prompt-completion-window-shape*)))))
+
+(define-command prompt-completion () ()
+  (open-prompt-completion))
+
 
 (define-command prompt-previous-history () ()
   (let ((history (prompt-window-history (current-prompt-window))))
@@ -297,6 +306,10 @@
                    gensyms
                    bindings)))))
 
+(defun exit-prompt (old-window)
+  (declare (ignore old-window))
+  (error 'editor-abort :message nil))
+
 (defun prompt-for-aux (&key (prompt-string (alexandria:required-argument :prompt-string))
                             (initial-string (alexandria:required-argument :initial-string))
                             (parameters (alexandria:required-argument :parameters))
@@ -307,14 +320,18 @@
   (when (frame-floating-prompt-window (current-frame))
     (editor-error "recursive use of prompt window"))
   (run-hooks *prompt-activate-hook*)
+
   (with-current-window (current-window)
     (let* ((prompt-window (create-prompt prompt-string
                                          initial-string
                                          parameters)))
       (switch-to-prompt-window prompt-window)
+
+      (add-hook (window-leave-hook prompt-window) #'exit-prompt)
       (handler-case
           (with-unwind-setf (((frame-floating-prompt-window (current-frame))
                               prompt-window))
+
               (let ((*post-command-hook* *post-command-hook*))
                 (when edit-callback
                   (add-hook *post-command-hook*
@@ -322,12 +339,16 @@
                               (when (typep (this-command) 'lem:editable-advice)
                                 (funcall edit-callback (get-input-string))))))
                 (run-hooks *prompt-after-activate-hook*)
+                (when *automatic-tab-completion*
+                  (open-prompt-completion))
                 (with-special-keymap (special-keymap)
                   (if syntax-table
                       (with-current-syntax syntax-table
                         (funcall body-function))
                       (funcall body-function))))
+          
             (lem/completion-mode:completion-end)
+            (remove-hook (window-leave-hook prompt-window) #'exit-prompt)
             (delete-prompt prompt-window)
             (run-hooks *prompt-deactivate-hook*))
         (execute-condition (e)
@@ -430,38 +451,61 @@
                     :start s
                     :end (line-end e)))))
 
-(defun collect-command-all-keybindings (buffer command)
-  (let ((command-name (command-name command)))
-    (flet ((find-keybindings (keymap)
-             (alexandria:when-let (keybindings (collect-command-keybindings command-name keymap))
-               (mapcar (lambda (keybinding)
-                         (format nil "~{~A~^ ~}" keybinding))
-                       keybindings))))
-      (format nil "~{~A~^, ~}"
-              (append (find-keybindings (mode-keymap (buffer-major-mode buffer)))
-                      (loop :for mode :in (buffer-minor-modes buffer)
-                            :for keymap := (mode-keymap mode)
-                            :when keymap
-                            :append (find-keybindings keymap))
-                      (find-keybindings *global-keymap*))))))
+(declaim (inline find-command-keybindings-in-keymap))
+(defun find-command-keybindings-in-keymap (command &optional (keymap *global-keymap*))
+  "Return a list of keybindings (strings) for a COMMAND (command object or string).
 
-(defun prompt-command-completion (string)
-  (let ((items (loop :for name :in (all-command-names)
-                     :collect (lem/completion-mode:make-completion-item
-                               :label name
-                               :detail (collect-command-all-keybindings
-                                        (current-buffer)
-                                        (find-command name))))))
-    (sort
-     (if (find #\- string)
-         (completion-hyphen string
-                            items
-                            :key #'lem/completion-mode:completion-item-label)
-         (completion string
-                     items
-                     :key #'lem/completion-mode:completion-item-label))
-     #'string-lessp
-     :key #'lem/completion-mode:completion-item-label)))
+  Search in the given KEYMAP. See also collect-command-all-keybindings."
+  (when (stringp command)
+    (setf command (find-command command)))
+  (alexandria:when-let (keybindings (collect-command-keybindings (command-name command) keymap))
+    (mapcar (lambda (keybinding)
+              (format nil "~{~A~^ ~}" keybinding))
+            keybindings)))
+
+(defun collect-command-all-keybindings (buffer command)
+  (format nil "~{~A~^, ~}"
+          (append (find-command-keybindings-in-keymap command (mode-keymap (buffer-major-mode buffer)))
+                  (loop :for mode :in (buffer-minor-modes buffer)
+                        :for keymap := (mode-keymap mode)
+                        :when keymap
+                        :append (find-command-keybindings-in-keymap command keymap))
+                  (find-command-keybindings-in-keymap command *global-keymap*))))
+
+(defun prompt-command-completion (string &key candidates)
+  "Filter the list of commands from an input string and return a list of command completion items.
+
+  For each command, find and display its available keybindings for the current keymaps.
+  Display CANDIDATES command names (list of strings) before the rest of all commands.
+  The rest of commands are sorted by name."
+  (flet ((collect-items (candidates)
+           (loop :for name :in candidates
+                 :for command := (find-command name)
+                 ;; avoid commands created in a REPL session but now non-existent.
+                 :unless (null command)
+                 :collect (lem/completion-mode:make-completion-item
+                           :label name
+                           :detail (collect-command-all-keybindings
+                                    (current-buffer)
+                                    command))))
+
+         (filter-items (items)
+           (if (find #\- string)
+               (completion-hyphen string
+                                  items
+                                  :key #'lem/completion-mode:completion-item-label)
+               (completion string
+                           items
+                           :key #'lem/completion-mode:completion-item-label))))
+
+    (let* ((all-items (collect-items (sort (all-command-names) #'string<)))
+           (candidate-items (collect-items candidates))
+           (items (remove-duplicates
+                   (append candidate-items all-items)
+                   :test #'equal
+                   :key #'lem/completion-mode:completion-item-label
+                   :from-end t)))
+      (filter-items items))))
 
 (setf *prompt-file-completion-function* 'prompt-file-completion)
 (setf *prompt-buffer-completion-function* 'prompt-buffer-completion)

@@ -60,6 +60,7 @@
   (remhash name (command-table-table command-table)))
 
 (defun all-command-names (&optional (command-table *command-table*))
+  "Return all existing command names."
   (alexandria:hash-table-keys (command-table-table command-table)))
 
 (defun all-commands (&optional (command-table *command-table*))

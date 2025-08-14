@@ -1,5 +1,5 @@
 (defsystem "lem-tests"
-  :depends-on ("lem"
+  :depends-on ("lem/core"
                "lem-fake-interface"
                "lem-lisp-syntax"
                "lem-lisp-mode"
@@ -15,7 +15,7 @@
                              (:file "killring")
                              (:file "history")
                              (:file "timer")))
-	       #+sbcl
+               #+sbcl
                (:module "language-server"
                 :components ((:file "utils")
                              (:file "micros-tests")
@@ -37,6 +37,7 @@
                (:file "interp")
                (:file "file")
                (:file "scala-mode")
-               (:file "completion"))
+               (:file "completion")
+               (:file "command-line-arguments"))
   :perform (test-op (o c)
                     (symbol-call :rove :run c)))

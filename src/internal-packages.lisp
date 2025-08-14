@@ -248,6 +248,7 @@
    :*prompt-buffer-completion-function*
    :*prompt-file-completion-function*
    :*prompt-command-completion-function*
+   :*automatic-tab-completion*
    :caller-of-prompt-window
    :prompt-active-p
    :active-prompt-window
@@ -592,6 +593,7 @@
    :find-editor-thread
    :init-at-build-time
    :lem
+   :launch
    :main)
   ;; command-advices.lisp
   (:export
@@ -613,13 +615,15 @@
    :compute-wrap-left-area-content)
   ;; display/logical-line.lisp
   (:export
-    :make-region-overlays-using-global-mode)
+   :make-region-overlays-using-global-mode)
   ;; interface.lisp
   (:export
    :with-implementation
    :implementation
    :redraw-after-modifying-floating-window
    :support-floating-window
+   :html-support-p
+   :underline-color-support-p
    :set-foreground
    :set-background
    :display-width
@@ -631,7 +635,11 @@
    :attribute-foreground-with-reverse
    :attribute-background-with-reverse
    :cursor-type
-   :display-background-mode)
+   :display-background-mode
+   :get-font
+   :set-font
+   :set-font-name
+   :set-font-size)
   ;; color-theme.lisp
   (:export
    :color-theme-names
@@ -669,7 +677,20 @@
   ;; site-init.lisp
   (:export
    :*inits-directory-name*
-   :load-site-init))
+   :load-site-init)
+  ;; system.lisp
+  (:export 
+   :exec-path)
+  ;; command-line-arguments
+  (:export
+   :parse-args
+   :command-line-arguments-help
+   :command-line-arguments-debug
+   :command-line-arguments-version
+   :command-line-arguments-without-init-file
+   :command-line-arguments-log-filename
+   :command-line-arguments-interface
+   :command-line-arguments-filenames))
 #+sbcl
 (sb-ext:lock-package :lem-core)
 
@@ -727,14 +748,15 @@
    :display-context-menu
    :clipboard-paste
    :clipboard-copy
+   :update-screen-size
    :increase-font-size
    :decrease-font-size
+   :set-font-name
    :set-font-size
    :resize-display-before
    :get-font-list
    :get-font-by-name-and-style
-   :set-font-with-implementation
-   :set-font-name
+   :get-font
    :get-mouse-position
    :get-char-width
    :get-char-height

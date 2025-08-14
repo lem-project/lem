@@ -63,32 +63,49 @@ https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Lexical_grammar
         `(:sequence ,boundary ,alternation ,boundary)
         alternation)))
 
+(defun make-tm-patterns-js ()
+  (let ((base-patterns
+          (list
+           (make-tm-region "//" "$" :name 'syntax-comment-attribute)
+           (make-tm-region "/\\*" "\\*/" :name 'syntax-comment-attribute)
+           (make-tm-match (tokens :word-boundary *js-key-words*)
+                          :name 'syntax-keyword-attribute)
+           (make-tm-match (tokens :word-boundary *js-future-key-words*)
+                          :name 'syntax-keyword-attribute)
+           (make-tm-match (tokens nil  *js-builtin-operators*)
+                          :name 'syntax-builtin-attribute)
+           (make-tm-string-region "\"")
+           (make-tm-string-region "'")
+           (make-tm-match *js-undefined-literals*
+                          :name 'syntax-constant-attribute)
+           (make-tm-match *js-boolean-literals*
+                          :name 'syntax-constant-attribute)
+           (make-tm-match *js-null-literals*
+                          :name 'syntax-constant-attribute)
+           (make-tm-match *js-nan-literals*
+                          :name 'syntax-constant-attribute)
+           (make-tm-match *js-integer-literals*
+                          :name 'syntax-constant-attribute)
+           (make-tm-match *js-floating-point-literals*
+                          :name 'syntax-constant-attribute))))
+    (apply #'make-tm-patterns
+           (append
+            base-patterns
+            (list (make-tm-region "`" "`"
+                                  :name 'syntax-string-attribute
+                                  :patterns (make-tm-patterns
+                                             (make-tm-region
+                                              "\\${"
+                                              "}"
+                                              :begin-captures #(syntax-constant-attribute)
+                                              :end-captures #(syntax-constant-attribute)
+                                              :patterns (apply #'make-tm-patterns
+                                                               base-patterns)))))))))
+
 (defun make-tmlanguage-js ()
-  (let* ((patterns (make-tm-patterns
-                    (make-tm-region "//" "$" :name 'syntax-comment-attribute)
-                    (make-tm-region "/\\*" "\\*/" :name 'syntax-comment-attribute)
-                    (make-tm-match (tokens :word-boundary *js-key-words*)
-                                   :name 'syntax-keyword-attribute)
-                    (make-tm-match (tokens :word-boundary *js-future-key-words*)
-                                   :name 'syntax-keyword-attribute)
-                    (make-tm-match (tokens nil  *js-builtin-operators*)
-                                   :name 'syntax-builtin-attribute)
-                    (make-tm-string-region "\"")
-                    (make-tm-string-region "'")
-                    (make-tm-string-region "`")
-                    (make-tm-match *js-undefined-literals*
-                                   :name 'syntax-constant-attribute)
-                    (make-tm-match *js-boolean-literals*
-                                   :name 'syntax-constant-attribute)
-                    (make-tm-match *js-null-literals*
-                                   :name 'syntax-constant-attribute)
-                    (make-tm-match *js-nan-literals*
-                                   :name 'syntax-constant-attribute)
-                    (make-tm-match *js-integer-literals*
-                                   :name 'syntax-constant-attribute)
-                    (make-tm-match *js-floating-point-literals*
-                                   :name 'syntax-constant-attribute))))
-    (make-tmlanguage :patterns patterns)))
+  (let* ((js-patterns (make-tm-patterns-js))
+         (tmlanguage (make-tmlanguage :patterns js-patterns)))
+    tmlanguage))
 
 (defvar *js-syntax-table*
   (let ((table (make-syntax-table

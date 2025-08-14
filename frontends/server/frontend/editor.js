@@ -97,6 +97,7 @@ function addMouseEventListeners({dom, editor, isDraggable, draggableStyle}) {
 
   const handleMouseDownUp = (event, eventName) => {
     event.preventDefault();
+
     const [displayX, displayY] = editor.getDisplayRectangle();
 
     const pixelX = (event.clientX - displayX);
@@ -186,6 +187,15 @@ function addMouseEventListeners({dom, editor, isDraggable, draggableStyle}) {
   });
 }
 
+const zIndexTable = {
+  'floating-window': 200,
+  'modeline': 100,
+};
+
+function zindex(type) {
+  return zIndexTable[type] || 0;
+}
+
 const borderOffsetX = 5;
 const borderOffsetY = 10;
 
@@ -204,21 +214,21 @@ class BaseSurface {
     }
   }
 
-  setupDOM({ dom, isFloating, border }) {
+  setupDOM({ dom, isFloating, border, cssClassName }) {
     this.mainDOM = dom;
 
     if (isFloating && border) {
       this.wrapper = document.createElement('div');
+      if (cssClassName) this.wrapper.className = cssClassName;
       this.wrapper.style.position = 'absolute';
-      this.wrapper.style.padding = '10px';
-      this.wrapper.style.border = 'none';
-      this.wrapper.style.borderRadius = '8px';
-      this.wrapper.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 1), 0 0 0 1px rgba(128, 128, 128, 0.2)';
-      this.wrapper.style.backdropFilter = 'blur(8px)';
       this.wrapper.style.backgroundColor = this.editor.option.background;
+      this.wrapper.style.zIndex = zindex('floating-window');
       this.wrapper.appendChild(dom);
       getLemEditorElement().appendChild(this.wrapper);
     } else {
+      if (cssClassName) {
+        dom.className = cssClassName;
+      }
       getLemEditorElement().appendChild(dom);
     }
   }
@@ -263,11 +273,11 @@ class BaseSurface {
 }
 
 class CanvasSurface extends BaseSurface {
-  constructor({ editor, view, x, y, width, height, styles, isFloating, border }) {
+  constructor({ editor, view, x, y, width, height, styles, isFloating, border, cssClassName }) {
     super({ editor });
 
     const canvas = this.setupCanvas(styles);
-    this.setupDOM({ dom: canvas, isFloating, border });
+    this.setupDOM({ dom: canvas, isFloating, border, cssClassName });
     this.move(x, y);
     this.resize(width, height);
 
@@ -383,16 +393,24 @@ class CanvasSurface extends BaseSurface {
     }
     this.drawingQueue = [];
   }
+
+  activate() {
+    this.mainDOM.dataset.store = 'active';
+  }
+
+  deactivate() {
+    this.mainDOM.dataset.store = 'inactive';
+  }
 }
 
 class HTMLSurface extends BaseSurface {
-  constructor({ editor, x, y, width, height, styles, isFloating, border, html }) {
+  constructor({ editor, x, y, width, height, styles, option, isFloating, border, html }) {
     super({ editor });
 
     const iframe = document.createElement('iframe');
     this.setupDOM({ dom: iframe, isFloating, border });
     iframe.style.position = 'absolute';
-    iframe.style.backgroundColor = 'white';
+    iframe.style.backgroundColor = option.background;
     iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
     iframe.srcdoc = html;
     iframe.addEventListener('load', () => {
@@ -431,18 +449,20 @@ class VerticalBorder {
     this.option = option;
     this.editor = editor;
     this.line = document.createElement('div');
-    this.line.style.background = 'linear-gradient(to right, rgba(128, 128, 128, 0.3), rgba(128, 128, 128, 0.6), rgba(128, 128, 128, 0.3))';
-    this.line.style.width = '1px';
+    this.line.className = 'lem-editor__vertical-border';
     this.line.style.height = height * option.fontHeight + 'px';
     this.line.style.position = 'absolute';
-    this.line.style.boxShadow = '0 0 3px rgba(128, 128, 128, 0.2)';
-    this.line.style.borderRadius = '0.5px';
 
     getLemEditorElement().appendChild(this.line);
 
     this.move(x, y);
 
-    addMouseEventListeners({dom:this.line, editor, isDraggable: true, draggableStyle: 'col-resize'});
+    addMouseEventListeners({
+      dom:this.line,
+      editor,
+      isDraggable: true,
+      draggableStyle: 'col-resize',
+    });
   }
 
   delete() {
@@ -625,10 +645,15 @@ class View {
     }
   }
 
-  touch() {
+  touch(isActive) {
     this.mainSurface.touch();
     if (this.modelineSurface) {
       this.modelineSurface.touch();
+      if (isActive) {
+        this.modelineSurface.activate();
+      } else {
+        this.modelineSurface.deactivate();
+      }
     }
   }
 
@@ -651,6 +676,7 @@ class View {
       width: this.width,
       height: this.height,
       styles: getViewStyle(this.kind, this.option),
+      option: this.option,
       isFloating: this.kind === 'floating',
       border: this.border,
       html: content,
@@ -658,6 +684,9 @@ class View {
   }
 
   makeEditorSurface() {
+    const border = this.borderShape === 'left-border' ? 0 : this.border;
+    const isFloating = this.kind === 'floating';
+
     return new CanvasSurface({
       option: this.editor.option,
       x: this.x,
@@ -666,10 +695,11 @@ class View {
       height: this.height,
       styles: getViewStyle(this.kind, this.option),
       editor: this.editor,
-      border: this.borderShape === 'left-border' ? 0 : this.border,
-      isFloating: this.kind === 'floating',
+      border,
+      isFloating,
       view: this,
-    })
+      cssClassName: ((isFloating && border) ? 'lem-editor__floating-window--bordered' : null),
+    });
   }
 
   makeModelineSurface() {
@@ -681,6 +711,8 @@ class View {
       height: 1,
       editor: this.editor,
       view: this,
+      styles: { zIndex: zindex('modeline') },
+      cssClassName: 'lem-editor__mode-line',
     });
     addMouseEventListeners({
       dom: surface.mainDOM,
@@ -953,6 +985,7 @@ export class Editor {
       'set-font': this.setFont.bind(this),
       'get-font': this.getFont.bind(this),
       'get-display-size': this.getDisplaySize.bind(this),
+      'load-css': this.loadCSS.bind(this),
     });
 
     this.login();
@@ -1116,9 +1149,9 @@ export class Editor {
     view.move(x, y);
   }
 
-  redrawViewAfter({ viewInfo: { id }, html }) {
+  redrawViewAfter({ viewInfo: { id }, isActive }) {
     const view = this.findViewById(id);
-    view.touch();
+    view.touch(isActive);
   }
 
   clear({ viewInfo: { id } }) {
@@ -1220,6 +1253,12 @@ export class Editor {
       name: this.option.fontName,
       size: this.option.fontSize,
     };
+  }
+
+  loadCSS({ content }) {
+    const style = document.createElement('style');
+    style.textContent = content;
+    document.head.appendChild(style);
   }
 
   notifyToServer(method, args) {

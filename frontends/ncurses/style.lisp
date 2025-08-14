@@ -11,7 +11,8 @@
            :border-left
            :border-vertical-and-right
            :border-vertical-and-left
-           :border-attribute))
+           :border-attribute
+           :character-ligature-p))
 (in-package :lem-ncurses/style)
 
 (define-attribute space-border-color
@@ -24,7 +25,8 @@
 (defstruct style
   border-shapes
   border-attribute
-  window-separator)
+  window-separator
+  character-ligature)
 
 (defstruct (border-shapes (:type list))
   upleft
@@ -39,9 +41,10 @@
   vertical-and-left)
 
 (defparameter *single-border-style*
-  (make-style :border-shapes '("┌" "─" "┐" "│" "┘" "─" "└" "│" "├" "┤")
+  (make-style :border-shapes '("┌" "─" "┐" "│" "┘" "━" "└" "│" "├" "┤")
               :border-attribute 'ruled-border-color
-              :window-separator "║"))
+              :window-separator "║"
+              :character-ligature t))
 
 (defparameter *single-border-roundly-style*
   (make-style :border-shapes '("╭" "─" "╮" "│" "╯" "─" "╰" "│" "├" "┤")
@@ -71,3 +74,4 @@
 (defun border-vertical-and-right () (border-shapes-vertical-and-right (style-border-shapes *style*)))
 (defun border-vertical-and-left () (border-shapes-vertical-and-left (style-border-shapes *style*)))
 (defun border-attribute () (style-border-attribute *style*))
+(defun character-ligature-p () (style-character-ligature *style*))

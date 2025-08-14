@@ -1,0 +1,19 @@
+.lem-editor__floating-window--bordered {
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 4px 4px 16px rgba(0, 0, 0, 1), 0 0 0 1px rgba(128, 128, 128, 0.2);
+  backdrop-filter: blur(8px);
+}
+
+.lem-editor__mode-line {
+  border: none;
+  border-radius: 4px;
+  box-shadow: 0px 4px 4px 4px rgba(32, 32, 32, 0.8), 0 0 0 2px rgba(128, 128, 128, 0.1);
+  /* transition: all 0.1s ease-out; */
+}
+
+.lem-editor__vertical-border {
+  width: 10px;
+  background: linear-gradient(to right, transparent 4px, rgba(128, 128, 128, 0.5) 4px 6px, transparent 5px);
+}

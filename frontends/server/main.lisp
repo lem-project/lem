@@ -57,7 +57,7 @@
              `(200 (:content-type "text/html")
                    ,(find-dist-by-path "frontend/dist/index.html")))
             ((alexandria:starts-with-subseq "/assets/" path)
-             `(200 (:content-type "application/javascript")
+             `(200 (:content-type ,(hunchentoot:mime-type path))
                    ,(find-dist-by-path (format nil
                                                "frontend/dist/~A"
                                                (string-left-trim "/" path)))))
@@ -426,30 +426,36 @@
     (values (gethash "name" response)
             (gethash "size" response))))
 
+(defun load-css (css-content)
+  (notify (lem:implementation) "load-css" (hash "content" css-content)))
+
 (lem:add-hook lem:*switch-to-buffer-hook* 'on-switch-to-buffer)
 
 (defun on-switch-to-buffer (buffer)
   (cond ((and (typep buffer 'lem:html-buffer)
               (lem:html-buffer-updated-p buffer))
          (lem:invalidate-html-buffer-updated buffer)
-         (notify* (lem:implementation)
-                  "change-view"
-                  (hash "viewInfo" (lem:window-view (lem:current-window))
-                        "type" "html"
-                        "content" (lem:html-buffer-html buffer))))
+         (change-view-to-html (lem:current-window) (lem:html-buffer-html buffer)))
         ((and (typep (lem:current-buffer) 'lem:html-buffer)
               (not (typep buffer 'lem:html-buffer)))
-         (notify* (lem:implementation)
-                  "change-view"
-                  (hash "viewInfo" (lem:window-view (lem:current-window))
-                        "type" "editor")))
+         (change-view-to-editor (lem:current-window)))
         ((and (not (typep (lem:current-buffer) 'lem:html-buffer))
               (typep buffer 'lem:html-buffer))
-         (notify* (lem:implementation)
-                  "change-view"
-                  (hash "viewInfo" (lem:window-view (lem:current-window))
-                        "type" "html"
-                        "content" (lem:html-buffer-html buffer))))))
+         (change-view-to-html (lem:current-window) (lem:html-buffer-html buffer)))))
+
+(defun change-view-to-editor (window)
+  (notify* (lem:implementation)
+           "change-view"
+           (hash "viewInfo" (lem:window-view window)
+                 "type" "editor")))
+
+(defun change-view-to-html (window content)
+  (notify* (lem:implementation)
+           "change-view"
+           (hash "viewInfo" (lem:window-view window)
+                 "type" "html"
+                 "content" content)))
+
 ;;;;
 (defun bool (x) (if x 'yason:true 'yason:false))
 
@@ -747,33 +753,41 @@
                 (let ((stream (yason:make-json-output-stream stream)))
                   (yason:encode args stream)))))))
 
-;;;
-(defparameter +command-line-spec+
-  '(("mode" :type string :optional t :documentation "\"websocket\", \"stdio\", \"local-domain-socket\"")
-    ("port" :type integer :optional nil :documentation "port of \"websocket\"")
-    ("host" :type string :optional t)
-    ("address" :type string :optional t :documentation "address of \"local-domain-socket\"")))
+(defun init ()
+  ;; TODO: Fix this problem: frame-multiplexer cannot be used with lem-server, disable them for now.
+  (lem:remove-hook lem:*after-init-hook* 'lem/frame-multiplexer::enable-frame-multiplexer)
+  ;; Enable tabbar instead of the above issue
+  (lem:add-hook lem:*after-init-hook* (find-symbol "ENABLE-TABBAR" :lem/tabbar)))
 
 (defun run-websocket-server (&key (port 50000) (hostname "127.0.0.1") args)
   (let ((*server-runner*
           (make-instance 'websocket-server-runner
                          :port port
                          :host hostname)))
+    (init)
     (apply #'lem:lem (append args (list "--interface" "JSONRPC")))))
 
 (defun run-stdio-server ()
   (let ((*server-runner* (make-instance 'stdio-server-runner)))
+    (init)
     (lem:lem "--interface" "JSONRPC")))
 
 (defun run-local-domain-socket-server (&key address)
   (let ((*server-runner* (make-instance 'local-domain-socket-server-runner
                                         :address address)))
+    (init)
     (lem:lem "--interface" "JSONRPC")))
 
 (defun check-port-specified (port)
   (unless port
     (command-line-arguments:show-option-help +command-line-spec+)
     (uiop:quit 1)))
+
+(defparameter +command-line-spec+
+  '(("mode" :type string :optional t :documentation "\"websocket\", \"stdio\", \"local-domain-socket\"")
+    ("port" :type integer :optional nil :documentation "port of \"websocket\"")
+    ("host" :type string :optional t)
+    ("address" :type string :optional t :documentation "address of \"local-domain-socket\"")))
 
 (defun main (&optional (args (uiop:command-line-arguments)))
   (command-line-arguments:handle-command-line

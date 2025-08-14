@@ -435,24 +435,27 @@
   (cond ((and (typep buffer 'lem:html-buffer)
               (lem:html-buffer-updated-p buffer))
          (lem:invalidate-html-buffer-updated buffer)
-         (notify* (lem:implementation)
-                  "change-view"
-                  (hash "viewInfo" (lem:window-view (lem:current-window))
-                        "type" "html"
-                        "content" (lem:html-buffer-html buffer))))
+         (change-view-to-html (lem:current-window) (lem:html-buffer-html buffer)))
         ((and (typep (lem:current-buffer) 'lem:html-buffer)
               (not (typep buffer 'lem:html-buffer)))
-         (notify* (lem:implementation)
-                  "change-view"
-                  (hash "viewInfo" (lem:window-view (lem:current-window))
-                        "type" "editor")))
+         (change-view-to-editor (lem:current-window)))
         ((and (not (typep (lem:current-buffer) 'lem:html-buffer))
               (typep buffer 'lem:html-buffer))
-         (notify* (lem:implementation)
-                  "change-view"
-                  (hash "viewInfo" (lem:window-view (lem:current-window))
-                        "type" "html"
-                        "content" (lem:html-buffer-html buffer))))))
+         (change-view-to-html (lem:current-window) (lem:html-buffer-html buffer)))))
+
+(defun change-view-to-editor (window)
+  (notify* (lem:implementation)
+           "change-view"
+           (hash "viewInfo" (lem:window-view window)
+                 "type" "editor")))
+
+(defun change-view-to-html (window content)
+  (notify* (lem:implementation)
+           "change-view"
+           (hash "viewInfo" (lem:window-view window)
+                 "type" "html"
+                 "content" content)))
+
 ;;;;
 (defun bool (x) (if x 'yason:true 'yason:false))
 

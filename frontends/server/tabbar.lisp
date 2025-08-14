@@ -23,7 +23,9 @@
     :accessor tabbar-buffer)
    (need-update
     :initform nil
-    :accessor tabbar-need-update-p)))
+    :accessor tabbar-need-update-p)
+   (buffer-list
+    :accessor tabbar-window-buffer-list)))
 
 (defvar *tabbar* nil)
 
@@ -31,6 +33,22 @@
   (let ((buffer (make-buffer "*tabbar*" :temporary t :enable-undo-p nil)))
     (change-class buffer 'html-buffer :html "")
     (setf *tabbar* (make-instance 'tabbar-window :buffer buffer))))
+
+(defun get-tabbar-buffers ()
+  (handler-case
+      (progn
+        (unless (slot-boundp *tabbar* 'buffer-list)
+          (setf (tabbar-window-buffer-list *tabbar*) (buffer-list))
+          (return-from get-tabbar-buffers
+            (tabbar-window-buffer-list *tabbar*)))
+        (let ((buffer-list (tabbar-window-buffer-list *tabbar*)))
+          (dolist (removed-buffer (set-difference buffer-list (buffer-list)))
+            (setf buffer-list (remove removed-buffer buffer-list)))
+          (setf buffer-list (append buffer-list (set-exclusive-or buffer-list (buffer-list))))
+          (setf (tabbar-window-buffer-list *tabbar*) buffer-list)
+          buffer-list))
+    (error (e)
+      (message "~A" e))))
 
 (defun generate-html ()
   (with-output-to-string (out)
@@ -179,7 +197,7 @@ html, body {
     (format out "</head>~%")
     (format out "<body>~%")
     (format out "<div class='lem-editor__tabbar'>~%")
-    (loop :for buffer :in (buffer-list)
+    (loop :for buffer :in (get-tabbar-buffers)
           :do (if (eq buffer (current-buffer))
                   (format out
                           "<button class=\"lem-editor__tabbar-button active\">~A</button>~%"
@@ -223,8 +241,15 @@ for (const button of buttons) {
  (lambda (buffer-name)
    (send-event (lambda ()
                  (alexandria:when-let (buffer (get-buffer buffer-name))
-                   (switch-to-buffer buffer)
+                   (change-to-buffer buffer)
                    (redraw-display))))))
+
+(defun change-to-buffer (buffer)
+  (dolist (window (window-list))
+    (when (eq (window-buffer window) buffer)
+      (switch-to-window window)
+      (return-from change-to-buffer)))
+  (switch-to-buffer buffer))
 
 (defun update (&rest args)
   (declare (ignore args))
@@ -260,26 +285,20 @@ for (const button of buttons) {
   (setf (variable-value 'tabbar :global)
         (not (variable-value 'tabbar :global))))
 
-;(define-key *global-keymap* "Shift-PageDown" 'tabbar-next)
-;(define-key *global-keymap* "Shift-PageUp" 'tabbar-prev)
+(define-key *global-keymap* "Shift-PageDown" 'tabbar-next)
+(define-key *global-keymap* "Shift-PageUp" 'tabbar-prev)
 
-(define-command tabbar-next (n) (:universal)
-  (let ((p (buffer-point (tabbar-buffer *tabbar*))))
-    (dotimes (_ n)
-      (forward-button p))
-    (let ((button (button-at p)))
-      (when button
-        (move-point p (button-end button))
-        (character-offset p -1)
-        (button-action button)))))
+(define-command tabbar-next () ()
+  (let ((buffers (get-tabbar-buffers)))
+    (alexandria:when-let (buffer (or (cadr (member (current-buffer) buffers))
+                                     (first buffers)))
+      (change-to-buffer buffer))))
 
-(define-command tabbar-prev (n) (:universal)
-  (let ((p (buffer-point (tabbar-buffer *tabbar*))))
-    (dotimes (_ n)
-      (backward-button p))
-    (let ((button (button-at p)))
-      (when button
-        (button-action button)))))
+(define-command tabbar-prev () ()
+  (let ((buffers (reverse (get-tabbar-buffers))))
+    (alexandria:when-let (buffer (or (cadr (member (current-buffer) buffers))
+                                     (first buffers)))
+      (change-to-buffer buffer))))
 
 (defun enable-tabbar ()
   (setf (variable-value 'tabbar :global) t))

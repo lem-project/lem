@@ -93,7 +93,8 @@
    :*buffer-mark-deactivate-hook*
    ;; TODO: delete ugly exports
    :%buffer-clear-keep-binfo
-   :%buffer-keep-binfo)
+   :%buffer-keep-binfo
+   :buffer-empty-p)
   ;; undo.lisp
   (:export
    :with-inhibit-undo)
@@ -323,7 +324,7 @@
   (:use :cl
         :lem/buffer/internal
         :lem/buffer/encodings
-	:lem/common/hooks
+        :lem/common/hooks
         :lem/common/var)
   (:export
    :*find-file-hook*

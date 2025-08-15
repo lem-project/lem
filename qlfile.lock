@@ -50,3 +50,7 @@
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/webview.git")
   :version "git-bff8a0fab9352945e72a430454578d658e1b35d9"))
+("cl-template" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/alpha123/cl-template")
+  :version "git-46193a9a389bb950530e579eae7e6e5a18184832"))

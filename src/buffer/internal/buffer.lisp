@@ -408,3 +408,8 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
 (defun clear-buffer-edit-history (buffer)
   (setf (buffer-edit-history buffer)
         (make-array 0 :adjustable t :fill-pointer 0)))
+
+(defun buffer-empty-p (buffer)
+  "If start and end points are equal, buffer is empty."
+  (point= (buffer-start-point buffer)
+          (buffer-end-point buffer)))

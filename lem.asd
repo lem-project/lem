@@ -225,6 +225,7 @@
 
 (defsystem "lem/extensions"
   :depends-on (#+sbcl
+               "lem-template"
                "lem-welcome"
                "lem-lsp-mode"
                "lem-vi-mode"

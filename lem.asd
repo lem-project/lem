@@ -36,7 +36,8 @@
                #+sbcl
                sb-concurrency
                "lem-mailbox"
-               "lem-extension-manager")
+               "lem-extension-manager"
+               "flx")
   :pathname "src"
   :serial t
   :components ((:module "common"

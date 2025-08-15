@@ -10,3 +10,4 @@ git cl-sdl2-image https://github.com/lem-project/cl-sdl2-image.git
 git jsonrpc https://github.com/cxxxr/jsonrpc.git
 git lem-extension-manager https://github.com/lem-project/lem-extension-manager.git
 git webview https://github.com/lem-project/webview.git
+git cl-flx https://github.com/the-flx/cl-flx.git

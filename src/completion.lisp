@@ -28,28 +28,37 @@
               :while pos))))
 
 (defun completion (name elements &key (test #'search) separator key rank)
-  "Perform completion on ELEMENTS matching NAME. Returns matching elements, 
+  "Perform completion on ELEMENTS matching NAME. Returns matching elements,
    optionally sorted by RANK function."
-  (labels ((apply-key (elt) (if key (funcall key elt) elt))
-           (test-with-separator (elt)
-             (let* ((elt (apply-key elt))
-                    (parts1 (explode-string name separator))
-                    (parts2 (explode-string elt separator)))
-               (and (<= (length parts1) (length parts2))
-                    (loop :for p1 :in parts1
-                          :for p2 :in parts2
-                          :always (funcall test p1 p2)))))
-           (test-without-separator (elt)
-             (funcall test name (apply-key elt))))
-    (let ((filtered-elements
-            (remove-if-not (if separator
-                               #'test-with-separator
-                               #'test-without-separator)
-                           elements)))
-      (if rank
-          (sort filtered-elements #'< :key (lambda (elt) (funcall rank name (apply-key elt))))
-          filtered-elements))))
+  (declare (ignorable rank key test separator))
+  (assert (stringp name))
+  (assert (listp elements))
+  ;; (assert (stringp (first elements)))
 
+  ;; (labels ((apply-key (elt) (if key (funcall key elt) elt))
+  ;;          (test-with-separator (elt)
+  ;;            (let* ((elt (apply-key elt))
+  ;;                   (parts1 (explode-string name separator))
+  ;;                   (parts2 (explode-string elt separator)))
+  ;;              (and (<= (length parts1) (length parts2))
+  ;;                   (loop :for p1 :in parts1
+  ;;                         :for p2 :in parts2
+  ;;                         :always (funcall test p1 p2)))))
+  ;;          (test-without-separator (elt)
+  ;;            (funcall test name (apply-key elt))))
+  ;;   (let ((filtered-elements
+  ;;           (remove-if-not (if separator
+  ;;                              #'test-with-separator
+  ;;                              #'test-without-separator)
+  ;;                          elements)))
+  ;;     (if rank
+  ;;         (sort filtered-elements #'< :key (lambda (elt) (funcall rank name (apply-key elt))))
+  ;;         filtered-elements)))
+
+  ;; devel
+  (lem/fuzzy-match:fuzzy-match name elements :key key :threshold 0.1)
+
+  )
 (defun string-completion-rank (name elt)
   (cond
     ; Exact match

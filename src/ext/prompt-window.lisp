@@ -13,7 +13,6 @@
 (in-package :lem/prompt-window)
 
 (defconstant +border-size+ 1)
-(defconstant +min-width+   10)
 (defconstant +min-height+  1)
 
 (defvar *fill-width* nil)
@@ -182,7 +181,7 @@
 (defun min-width ()
   (if *fill-width*
       (1- (display-width))
-      +min-width+))
+      (round (* (display-width) 2/3))))
 
 (defun compute-window-rectangle (buffer &key gravity source-window child-completion-window)
   (destructuring-bind (width height) (lem/popup-window::compute-buffer-size buffer)

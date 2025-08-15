@@ -334,7 +334,7 @@
   (when *completion-reverse*
     (ignore-errors (completion-end-of-buffer))))
 
-(defun run-completion (completion-spec &key style)
+(defun run-completion (completion-spec &key style then)
   (let* ((spec (ensure-completion-spec completion-spec))
          (context (make-instance 'completion-context :spec spec)))
     (setf *completion-context* context)
@@ -344,9 +344,15 @@
        (if (spec-async-p (context-spec context))
            (lambda (items)
              (when (point= before-point (current-point))
-               (start-completion context items style)))
+               (start-completion context items style)
+               (when then
+                 (funcall then))))
            (lambda (items)
              (when items
-               (if (alexandria:length= items 1)
-                   (completion-insert (current-point) (first items))
-                   (start-completion context items style)))))))))
+               (cond
+                 ((alexandria:length= items 1)
+                  (completion-insert (current-point) (first items)))
+                 (t
+                  (start-completion context items style)
+                  (when then
+                    (funcall then)))))))))))

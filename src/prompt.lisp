@@ -1,6 +1,6 @@
 (in-package :lem-core)
 
-(defparameter *default-prompt-gravity* :center)
+(defparameter *default-prompt-gravity* :top))
 
 (defvar *prompt-activate-hook* '())
 (defvar *prompt-after-activate-hook* '())

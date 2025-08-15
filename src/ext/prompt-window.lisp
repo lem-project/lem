@@ -1,7 +1,8 @@
 (defpackage :lem/prompt-window
   (:use :cl :lem)
   (:import-from :alexandria
-                :when-let)
+                :when-let
+                :when-let*)
   #+sbcl
   (:lock t)
   (:export :prompt-attribute
@@ -12,7 +13,6 @@
 (in-package :lem/prompt-window)
 
 (defconstant +border-size+ 1)
-(defconstant +min-width+   10)
 (defconstant +min-height+  1)
 
 (defvar *fill-width* nil)
@@ -159,7 +159,9 @@
                    :collect :it))))
        :style `(:gravity ,*prompt-completion-window-gravity*
                 :offset-y -1
-                :shape ,*prompt-completion-window-shape*)))))
+                :shape ,*prompt-completion-window-shape*)
+       :then (lambda ()
+               (update-prompt-window (current-prompt-window)))))))
 
 (define-command prompt-completion () ()
   (open-prompt-completion))
@@ -179,10 +181,15 @@
 (defun min-width ()
   (if *fill-width*
       (1- (display-width))
-      +min-width+))
+      (round (* (display-width) 2/3))))
 
-(defun compute-window-rectangle (buffer &key gravity source-window)
+(defun compute-window-rectangle (buffer &key gravity source-window child-completion-window)
   (destructuring-bind (width height) (lem/popup-window::compute-buffer-size buffer)
+    (when child-completion-window
+      (destructuring-bind (child-width child-height)
+          (lem/popup-window::compute-buffer-size (window-buffer child-completion-window))
+        (declare (ignore child-height))
+        (setf width (max width child-width))))
     (lem/popup-window::compute-popup-window-rectangle
      (lem/popup-window::ensure-gravity gravity)
      :source-window source-window
@@ -210,26 +217,30 @@
                    :gravity (prompt-gravity parameters)
                    :border (if (prompt-use-border-p parameters) +border-size+ 0))))
 
-(defun get-child-window-width ()
-  (let* ((context lem/completion-mode::*completion-context*)
-         (popup-menu (and context (lem/completion-mode::context-popup-menu context))))
-    (if popup-menu
-        (window-width (lem/popup-menu::popup-menu-window popup-menu))
-        0)))
+(defun get-child-completion-window ()
+  (when-let* ((context lem/completion-mode::*completion-context*)
+              (popup-menu (lem/completion-mode::context-popup-menu context)))
+    (when popup-menu
+      (lem/popup-menu::popup-menu-window popup-menu))))
 
 (defmethod update-prompt-window ((window floating-prompt))
-  (let ((child-width (get-child-window-width)))
+  (let ((child-window (get-child-completion-window)))
     (destructuring-bind (x y width height)
         (compute-window-rectangle (window-buffer window)
                                   :gravity (prompt-gravity window)
-                                  :source-window (prompt-window-caller-of-prompt-window window))
+                                  :source-window (prompt-window-caller-of-prompt-window window)
+                                  :child-completion-window child-window)
       (unless (and (= x (window-x window))
                    (= y (window-y window)))
         (window-set-pos window x y))
-      (let ((width (max width child-width)))
+      (let ((width (max width (if child-window (window-width child-window) 0))))
         (unless (and (= width (window-width window))
                      (= height (window-height window)))
-          (window-set-size window width height))))))
+          (window-set-size window width height)))
+      (when child-window
+        (window-set-pos child-window
+                        x
+                        (window-y child-window))))))
 
 (defun initialize-prompt-buffer (buffer)
   (let ((*inhibit-read-only* t)

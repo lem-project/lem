@@ -75,11 +75,11 @@
                                       :source-window (popup-window-source-window popup-window)
                                       :width (popup-window-base-width popup-window)
                                       :height (popup-window-base-height popup-window)
-                                      :border-size (floating-window-border popup-window))
+                                      :border-size (window-border popup-window))
     (lem-core::window-set-size popup-window width height)
     (lem-core::window-set-pos popup-window
-                              (+ x (floating-window-border popup-window))
-                              (+ y (floating-window-border popup-window)))))
+                              (+ x (window-border popup-window))
+                              (+ y (window-border popup-window)))))
 
 (defmethod compute-popup-window-rectangle :around ((gravity gravity) &key &allow-other-keys)
   (destructuring-bind (x y width height)

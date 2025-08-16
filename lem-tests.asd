@@ -38,6 +38,7 @@
                (:file "file")
                (:file "scala-mode")
                (:file "completion")
-               (:file "command-line-arguments"))
+               (:file "command-line-arguments")
+               (:file "window"))
   :perform (test-op (o c)
                     (symbol-call :rove :run c)))

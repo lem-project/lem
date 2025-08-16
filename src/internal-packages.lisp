@@ -281,6 +281,7 @@
    :*switch-to-window-hook*
    :*default-split-action*
    :window-parent
+   :window-border
    :scroll
    :window-view-point
    :window
@@ -335,6 +336,8 @@
    :floating-window-border-shape
    :floating-window-focusable-p
    :floating-window-p
+   :attached-window-p
+   :attach-buffer
    :update-on-display-resized
    :covered-with-floating-window-p
    :redraw-display

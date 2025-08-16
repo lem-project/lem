@@ -279,11 +279,11 @@
                          :width width
                          :height height
                          :use-modeline use-modeline
-                         :kind (if (lem:floating-window-p window)
+                         :kind (if (or (lem:floating-window-p window)
+                                       (lem:attached-window-p window))
                                    "floating"
                                    "tile")
-                         :border (and (lem:floating-window-p window)
-                                      (lem:floating-window-border window))
+                         :border (lem:window-border window)
                          :border-shape (and (lem:floating-window-p window)
                                             (lem:floating-window-border-shape window)))))
     (notify* jsonrpc "make-view" view)

@@ -279,7 +279,8 @@
                #-os-windows "lem-terminal"
                "lem-legit"
                "lem-dashboard"
-               "lem-copilot"))
+               "lem-copilot"
+               "lem-intelligence"))
 
 (defsystem "lem"
   :version "2.3.0"

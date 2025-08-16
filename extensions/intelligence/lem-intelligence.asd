@@ -2,7 +2,7 @@
   :depends-on ("yason"
                "dexador"
                "babel"
-               "lem")
+               "lem/core")
   :serial t
   :components ((:file "ollama")
                (:file "main")))

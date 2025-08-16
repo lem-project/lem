@@ -74,15 +74,12 @@
 
 (defstruct session
   process
-  thread
-  response-mailbox
-  prompt-mailbox)
+  thread)
 
 (defun receive-message (process)
   (check-type process async-process::process)
   (loop :with buffer := ""
         :do (let ((data (async-process:process-receive-output process)))
-              ;; (format t "output: ~A~%" data)
               (unless data
                 (return))
               (setf buffer (concatenate 'string buffer data))
@@ -95,34 +92,19 @@
             (sleep 0.1)
         :while (async-process:process-alive-p process)))
 
-(defun query (prompt &optional (options (make-options)))
-  (let* ((response-mailbox (sb-concurrency:make-mailbox :name "Claude Code response-mailbox"))
-         (prompt-mailbox (sb-concurrency:make-mailbox :name "Claude Code prompt-mailbox"))
-         (process
+(defun query (prompt &key (options (make-options)) callback)
+  (let* ((process
            (async-process:create-process
             (construct-command prompt options))))
     (make-session
      :process process
-     :response-mailbox response-mailbox
-     :prompt-mailbox prompt-mailbox
      :thread (bt2:make-thread
               (lambda ()
                 (loop
-                  :do (when-let (message (sb-concurrency:receive-message-no-hang
-                                          prompt-mailbox))
-                        ;; (format t "send-message: ~A~%" message)
-                        (async-process:process-send-input process message))
-                      (when-let ((value (receive-message process)))
-                        ;; (format t "receive-message: ~A~%" value)
-                        (sb-concurrency:send-message response-mailbox value))
+                  :do (when-let ((value (receive-message process)))
+                        (funcall callback value))
                   :while (async-process:process-alive-p process)))
               :name "Claude Code thread"))))
-
-(defmethod receive ((session session) &key (wait t) timeout)
-  (cond (wait
-         (sb-concurrency:receive-message (session-response-mailbox session) :timeout timeout))
-        (t
-         (sb-concurrency:receive-message-no-hang (session-response-mailbox session)))))
 
 ;; example
 (eval-when ()

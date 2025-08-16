@@ -224,23 +224,23 @@
       (lem/popup-menu::popup-menu-window popup-menu))))
 
 (defmethod update-prompt-window ((window floating-prompt))
-  (let ((child-window (get-child-completion-window)))
+  (let ((completion-window (get-child-completion-window)))
     (destructuring-bind (x y width height)
         (compute-window-rectangle (window-buffer window)
                                   :gravity (prompt-gravity window)
                                   :source-window (prompt-window-caller-of-prompt-window window)
-                                  :child-completion-window child-window)
+                                  :child-completion-window completion-window)
       (unless (and (= x (window-x window))
                    (= y (window-y window)))
         (window-set-pos window x y))
-      (let ((width (max width (if child-window (window-width child-window) 0))))
+      (let ((width (max width (if completion-window (window-width completion-window) 0))))
         (unless (and (= width (window-width window))
                      (= height (window-height window)))
           (window-set-size window width height)))
-      (when child-window
-        (window-set-pos child-window
+      (when completion-window
+        (window-set-pos completion-window
                         x
-                        (window-y child-window))))))
+                        (window-y completion-window))))))
 
 (defun initialize-prompt-buffer (buffer)
   (let ((*inhibit-read-only* t)

@@ -131,7 +131,7 @@
   (let ((package-name (ensure-keyword package-name)))
     (with-buffer-read-only buffer nil
       (erase-buffer buffer)
-      (with-open-stream (stream (make-buffer-output-stream (buffer-point buffer) nil))
+      (with-open-stream (stream (make-buffer-output-stream (buffer-point buffer)))
         (let ((*print-case* :downcase))
           (dolist (form (list `(defpackage ,package-name
                                  (:use :cl))

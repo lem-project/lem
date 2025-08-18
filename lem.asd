@@ -185,6 +185,7 @@
                              (:file "button")
                              (:file "loading-spinner")
                              (:file "listener-mode")
+                             (:file "interactive-mode")
                              (:file "universal-argument")
                              (:file "kbdmacro")
                              (:file "isearch")

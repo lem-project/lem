@@ -101,8 +101,8 @@
         (view-y view) y))
 
 (defmethod draw-window-border (view display (window lem:floating-window))
-  (when (and (lem:floating-window-border window)
-             (< 0 (lem:floating-window-border window)))
+  (when (and (lem:window-border window)
+             (< 0 (lem:window-border window)))
     (sdl2:set-render-target (display:display-renderer display) (display:display-texture display))
     (display:render-border display
                            (lem:window-x window)

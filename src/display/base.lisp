@@ -26,7 +26,9 @@ Used to prevent recursive `redraw-display` calls.")
 
 (defgeneric window-redraw (window force)
   (:method (window force)
-    (redraw-buffer (implementation) (window-buffer window) window force)))
+    (redraw-buffer (implementation) (window-buffer window) window force)
+    (when (window-attached-window window)
+      (window-redraw (window-attached-window window) force))))
 
 (defun redraw-current-window (window force)
   (assert (eq window (current-window)))

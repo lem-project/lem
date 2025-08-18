@@ -112,7 +112,8 @@
                              (:file "virtual-line")
                              (:file "floating-window")
                              (:file "header-window")
-                             (:file "side-window")))
+                             (:file "side-window")
+                             (:file "attached-window")))
                (:file "buffer-ext") ; TODO
                (:file "popup")
                (:file "modeline")

@@ -328,21 +328,20 @@
 (defmethod lem-if:make-view
     ((implementation ncurses) window x y width height use-modeline)
   (make-ncurses-view
-   :border (when (and (floating-window-p window)
-                      (floating-window-border window)
-                      (< 0 (floating-window-border window)))
+   :border (when (and (window-border window)
+                      (< 0 (window-border window)))
              (destructuring-bind (x y)
                  (compute-border-window-position x
                                                  y
-                                                 (floating-window-border window))
+                                                 (window-border window))
                (destructuring-bind (width height)
                    (compute-border-window-size width
                                                height
-                                               (floating-window-border window))
+                                               (window-border window))
                  (make-border :win charms/ll:*stdscr*
                               :width width
                               :height height
-                              :size (floating-window-border window)))))
+                              :size (window-border window)))))
    :scrwin charms/ll:*stdscr*
    :modeline-scrwin (if use-modeline charms/ll:*stdscr* nil)
    :x x

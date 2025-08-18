@@ -112,8 +112,8 @@
 (defun all-active-modes (buffer)
   (mapcar #'ensure-mode-object
           (append (buffer-minor-modes buffer)
-                  (active-global-minor-modes)
                   (list (buffer-major-mode buffer))
+                  (active-global-minor-modes)
                   (list (current-global-mode)))))
 
 (defun mode-active-p (buffer mode)

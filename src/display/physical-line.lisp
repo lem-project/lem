@@ -282,17 +282,21 @@
          (objects-per-physical-line
            (separate-objects-by-width (create-drawing-objects logical-line)
                                       (- (window-view-width window) left-side-width)
-                                      (window-buffer window))))
+                                      (window-buffer window)))
+         (wrapped-left-side-objects
+           (when (rest objects-per-physical-line)
+             (copy-list (compute-wrap-left-area-content
+                         *active-modes*
+                         left-side-width
+                         left-side-characters)))))
     (loop :for objects :in objects-per-physical-line
           :for all-objects := (append left-side-objects objects)
           :for height := (max-height-of-objects all-objects)
           :do (render-line-with-caching window 0 y all-objects height)
               (incf y height)
-              (setq left-side-objects (copy-list (compute-wrap-left-area-content
-                                                  *active-modes*
-                                                  left-side-width
-                                                  left-side-characters)))
-          :sum height)))
+              (setq left-side-objects wrapped-left-side-objects)
+          :sum height
+          :while (< y (window-height window)))))
 
 (defun find-cursor-object (objects)
   (loop :for object :in objects

@@ -44,7 +44,7 @@
                            :width (compute-attached-window-width parent-window)
                            :height 1)))
       (set-window-attached-window attached-window parent-window)
-      (attach-buffer (buffer-attached-buffer (window-buffer parent-window)) buffer)
+      (attach-buffer (window-buffer parent-window) buffer)
       attached-window)))
 
 (defun adjust-attached-window-size (parent-window)

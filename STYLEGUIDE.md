@@ -18,7 +18,7 @@ Try to not use `alexandria:curry` and prefer higher-order functions.
 
 ## Dynamic bindings, functional style
 
-Avoid dynamic symbol calls (`uiop:symbol-call`) but rething your architecture instead.
+Avoid dynamic symbol calls (`uiop:symbol-call`) but rethink your architecture instead.
 
 Use `defvar` and `defparameter` for user-facing variables, but avoid
 using them as global variables that store state and that are used from

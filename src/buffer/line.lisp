@@ -129,23 +129,43 @@
        (iter:collect (list start1 end1 value1))))))
 
 (defun normalization-elements (elements)
-  (flet ((start (elt) (first elt))
-         (end (elt) (second elt))
-         (value (elt) (third elt)))
-    (setf elements (sort elements #'< :key #'first))
-    (iter:iter (iter:until (null elements))
-      (cond
-        ((and (eql (end (first elements))
-                   (start (second elements)))
-              (equal (value (first elements))
-                     (value (second elements))))
-         (iter:collect (list (start (first elements))
-                             (end (second elements))
-                             (value (first elements))))
-         (setf elements (cddr elements)))
-        (t
-         (iter:collect (first elements))
-         (setf elements (cdr elements)))))))
+  (declare (optimize (speed 3) (safety 1)))
+  ;; Early exit for empty or single-element lists
+  (cond
+    ((null elements) nil)
+    ((null (cdr elements)) elements)
+    (t
+     ;; Check if already sorted to avoid unnecessary sorting
+     (unless (sorted-elements-p elements)
+       (setf elements (sort (copy-list elements) #'< :key #'first)))
+     ;; Optimized merge loop using direct list manipulation
+     (normalize-sorted-elements elements))))
+
+(defun sorted-elements-p (elements)
+  "Check if elements are already sorted by start position"
+  (declare (optimize (speed 3) (safety 1)))
+  (loop for (current next) on elements
+        while next
+        always (<= (first current) (first next))))
+
+(defun normalize-sorted-elements (elements)
+  "Normalize sorted elements by merging adjacent ones with same values"
+  (declare (optimize (speed 3) (safety 1)))
+  (loop with result = '()
+        with current = (first elements)
+        for next in (rest elements)
+        do (if (and (eql (second current) (first next))
+                   (equal (third current) (third next)))
+               ;; Merge adjacent elements with same value
+               (setf current (list (first current)
+                                  (second next)
+                                  (third current)))
+               ;; Different values or non-adjacent, add current and move to next
+               (progn
+                 (push current result)
+                 (setf current next)))
+        finally (push current result)
+                (return (nreverse result))))
 
 (defun subseq-elements (elements start end)
   (iter:iter (iter:for (start1 end1 value1) iter:in elements)
@@ -164,9 +184,77 @@
     (iter:collect (list (+ n start1) (+ n end1) value1))))
 
 (defun put-elements (elements start end value &optional contp)
-  (normalization-elements
-   (cons (list start end value contp)
-         (remove-elements elements start end))))
+  (declare (optimize (speed 3) (safety 1))
+           (type fixnum start end))
+  ;; Fast path: if elements is empty or already normalized and we're appending at end
+  (cond
+    ;; Empty case - no normalization needed
+    ((null elements)
+     (list (list start end value contp)))
+    ;; Single element case - check if we can merge
+    ((null (cdr elements))
+     (let ((elem (first elements)))
+       (if (and (eql (second elem) start)
+                (equal (third elem) value)
+                (eql (fourth elem) contp))
+           ;; Can merge with single element
+           (list (list (first elem) end value contp))
+           ;; Need to insert and potentially sort
+           (put-elements-general elements start end value contp))))
+    ;; Multiple elements - use optimized path
+    (t (put-elements-general elements start end value contp))))
+
+(defun put-elements-general (elements start end value &optional contp)
+  "General case for put-elements with optimization for pre-sorted input"
+  (declare (optimize (speed 3) (safety 1)))
+  (let ((new-element (list start end value contp))
+        (removed (remove-elements elements start end)))
+    ;; Check if we can avoid full normalization
+    (if (and removed
+             (sorted-elements-p removed)
+             (can-insert-without-normalization-p removed new-element))
+        (insert-sorted-element removed new-element)
+        (normalization-elements (cons new-element removed)))))
+
+(defun can-insert-without-normalization-p (sorted-elements new-element)
+  "Check if new element can be inserted without full normalization"
+  (declare (optimize (speed 3) (safety 1)))
+  (let ((new-start (first new-element))
+        (new-end (second new-element))
+        (new-value (third new-element)))
+    ;; Find insertion position and check for merge possibilities
+    (loop for elem in sorted-elements
+          for elem-start = (first elem)
+          for elem-end = (second elem)
+          for elem-value = (third elem)
+          when (> elem-start new-end)
+            return t  ;; Can insert before this element
+          when (and (eql elem-end new-start) (equal elem-value new-value))
+            return nil  ;; Would need merging
+          when (and (eql new-end elem-start) (equal new-value elem-value))
+            return nil  ;; Would need merging
+          finally (return t))))
+
+(defun insert-sorted-element (sorted-elements new-element)
+  "Insert element into sorted list maintaining order"
+  (declare (optimize (speed 3) (safety 1)))
+  (let ((new-start (first new-element)))
+    (cond
+      ;; Insert at beginning
+      ((<= new-start (first (first sorted-elements)))
+       (cons new-element sorted-elements))
+      ;; Insert at end
+      ((>= new-start (first (car (last sorted-elements))))
+       (append sorted-elements (list new-element)))
+      ;; Insert in middle
+      (t (loop with result = '()
+               with inserted = nil
+               for elem in sorted-elements
+               when (and (null inserted) (< new-start (first elem)))
+                 do (push new-element result)
+                    (setf inserted t)
+               do (push elem result)
+               finally (return (nreverse result)))))))
 
 (defun merge-plist (plist1 plist2)
   (let ((new-plist '()))

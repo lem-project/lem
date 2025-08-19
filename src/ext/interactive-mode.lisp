@@ -8,7 +8,9 @@
            :start-loading
            :stop-loading
            :run
-           :with-output-stream))
+           :with-output-stream
+           :with-attribute
+           :prompt-region-p))
 (in-package :lem/interactive-mode)
 
 (define-buffer-accessor session)
@@ -41,14 +43,15 @@
 (defmethod start-loading ((session session) loading-message)
   (let* ((buffer (session-output-buffer session))
          (point (buffer-point buffer)))
-    (buffer-end point)
-    (skip-whitespace-backward point)
-    (insert-character point #\newline)
-    (delete-between-points point (buffer-end-point buffer))
-    (setf (session-output-loading-spinner session)
-          (lem/loading-spinner:start-loading-spinner :line
-                                                     :loading-message loading-message
-                                                     :point point))))
+    (with-buffer-read-only buffer nil
+      (buffer-end point)
+      (skip-whitespace-backward point)
+      (insert-character point #\newline)
+      (delete-between-points point (buffer-end-point buffer))
+      (setf (session-output-loading-spinner session)
+            (lem/loading-spinner:start-loading-spinner :line
+                                                       :loading-message loading-message
+                                                       :point point)))))
 
 (defmethod stop-loading ((session session))
   (lem/loading-spinner:stop-loading-spinner (session-output-loading-spinner session)))
@@ -67,12 +70,9 @@
 
 (defun call-with-attribute (session attribute function)
   (with-point ((start (buffer-point (session-output-buffer session)))
-               (first-line-end (buffer-point (session-output-buffer session)))
                (end (buffer-point (session-output-buffer session)) :left-inserting))
     (funcall function)
-    (put-text-property start end :attribute attribute)
-    (line-end first-line-end)
-    (put-text-property start first-line-end 'first-output-line t)))
+    (put-text-property start end :attribute attribute)))
 
 (defmacro with-attribute ((session attribute) &body body)
   `(call-with-attribute ,session ,attribute (lambda () ,@body)))
@@ -139,11 +139,12 @@
   (assert (current-session))
   (let ((input (buffer-text (current-buffer)))
         (session (current-session)))
-    (copy-input-buffer-to-output-buffer session :copy-prompt (copy-prompt-to-output-buffer (current-buffer)))
-    (erase-buffer (session-input-buffer session))
-    (execute-input (session (current-buffer))
-                   (ensure-mode-object (buffer-major-mode (current-buffer)))
-                   input)))
+    (with-buffer-read-only (session-output-buffer session) nil
+      (copy-input-buffer-to-output-buffer session :copy-prompt (copy-prompt-to-output-buffer (current-buffer)))
+      (erase-buffer (session-input-buffer session))
+      (execute-input (session (current-buffer))
+                     (ensure-mode-object (buffer-major-mode (current-buffer)))
+                     input))))
 
 ;;;
 (defun run (&key buffer-name

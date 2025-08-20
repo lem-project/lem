@@ -246,14 +246,11 @@
 
 (defun invalidate-cache (window y height)
   (setf (drawing-cache window)
-        (remove-if-not (lambda (elt)
-                         (destructuring-bind (cache-y cache-height cache-logical-line) elt
-                           (declare (ignore cache-logical-line))
-                           (or (< (+ y height)
-                                  cache-y)
-                               (<= (+ cache-y cache-height)
-                                   y))))
-                       (drawing-cache window))))
+        (remove-if (lambda (elt)
+                     (destructuring-bind (cache-y cache-height drawing-objects) elt
+                       (declare (ignore drawing-objects))
+                       (<= cache-y y (+ y height) (+ cache-y cache-height))))
+                   (drawing-cache window))))
 
 (defun update-and-validate-cache-p (window y height objects)
   (cond ((validate-cache-p window y height objects) t)

@@ -15,7 +15,7 @@
   (setf (window-parameter window 'redrawing-cache) value))
 
 (defclass drawing-object ()
-  ())
+  ((width :initform nil :accessor drawing-object-width)))
 
 (defclass void-object (drawing-object) ())
 
@@ -99,7 +99,9 @@
   nil)
 
 (defun object-width (drawing-object)
-  (lem-if:object-width (implementation) drawing-object))
+  (or (drawing-object-width drawing-object)
+      (setf (drawing-object-width drawing-object)
+            (lem-if:object-width (implementation) drawing-object))))
 
 (defun object-height (drawing-object)
   (lem-if:object-height (implementation) drawing-object))

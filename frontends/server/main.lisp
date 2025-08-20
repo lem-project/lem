@@ -104,7 +104,7 @@
   (:default-initargs
    :name :jsonrpc
    :redraw-after-modifying-floating-window t
-   :window-left-margin 1
+   :window-left-margin 0
    :html-support t
    :underline-color-support t))
 

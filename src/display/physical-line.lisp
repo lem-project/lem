@@ -214,26 +214,24 @@
                              (text-object-attribute text-object) char-type)))))
     (let ((wrap-line-character (variable-value 'wrap-line-character :default buffer))
           (wrap-line-attribute (variable-value 'wrap-line-attribute :default buffer)))
-      (loop
-        :until (null objects)
-        :collect (loop :with total-width := 0
-                       :and physical-line-objects := '()
-                       :for object := (pop objects)
-                       :while object
-                       :do (cond ((and (typep object 'text-object)
-                                       (<= view-width (+ total-width (object-width object))))
-                                  (cond ((< 1 (length (text-object-string object)))
-                                         (setf objects (nconc (explode-object object) objects)))
-                                        (t
-                                         (push object objects)
-                                         (push (make-letter-object wrap-line-character
-                                                                   wrap-line-attribute)
-                                               physical-line-objects)
-                                         (return (nreverse physical-line-objects)))))
-                                 (t
-                                  (incf total-width (object-width object))
-                                  (push object physical-line-objects)))
-                       :finally (return (nreverse physical-line-objects)))))))
+      (loop :with total-width := 0
+            :and physical-line-objects := '()
+            :for object := (pop objects)
+            :while object
+            :do (cond ((and (typep object 'text-object)
+                            (<= view-width (+ total-width (object-width object))))
+                       (cond ((< 1 (length (text-object-string object)))
+                              (setf objects (nconc (explode-object object) objects)))
+                             (t
+                              (push object objects)
+                              (push (make-letter-object wrap-line-character
+                                                        wrap-line-attribute)
+                                    physical-line-objects)
+                              (return (values (nreverse physical-line-objects) objects)))))
+                      (t
+                       (incf total-width (object-width object))
+                       (push object physical-line-objects)))
+            :finally (return (nreverse physical-line-objects))))))
 
 (defun render-line (view x y objects height)
   (lem-if:render-line (implementation) view x y objects height))
@@ -277,25 +275,34 @@
                                                left-side-width)
   (let* ((left-side-characters (loop :for obj :in left-side-objects
                                      :when (typep obj 'text-object)
-                                     :sum (length (text-object-string obj))))
-         (objects-per-physical-line
-           (separate-objects-by-width (create-drawing-objects logical-line)
-                                      (- (window-view-width window) left-side-width)
-                                      (window-buffer window)))
-         (wrapped-left-side-objects
-           (when (rest objects-per-physical-line)
-             (copy-list (compute-wrap-left-area-content
-                         *active-modes*
-                         left-side-width
-                         left-side-characters)))))
-    (loop :for objects :in objects-per-physical-line
-          :for all-objects := (append left-side-objects objects)
-          :for height := (max-height-of-objects all-objects)
-          :do (render-line-with-caching window 0 y all-objects height)
+                                     :sum (length (text-object-string obj)))))
+    (multiple-value-bind (first-line-objects rest-line-objects)
+        (separate-objects-by-width (create-drawing-objects logical-line)
+                                   (- (window-view-width window) left-side-width)
+                                   (window-buffer window))
+      (let ((wrapped-left-side-objects
+              (when rest-line-objects
+                (copy-list (compute-wrap-left-area-content
+                            *active-modes*
+                            left-side-width
+                            left-side-characters)))))
+        (let ((total-height 0)
+              (objects first-line-objects))
+          (loop
+            (unless objects (return))
+            (let* ((all-objects (append left-side-objects objects))
+                   (height (max-height-of-objects all-objects)))
+              (render-line-with-caching window 0 y all-objects height)
               (incf y height)
               (setq left-side-objects wrapped-left-side-objects)
-          :sum height
-          :while (< y (window-height window)))))
+              (incf total-height height)
+              (unless (< y (window-height window))
+                (return)))
+            (setf (values objects rest-line-objects)
+                  (separate-objects-by-width rest-line-objects
+                                             (- (window-view-width window) left-side-width)
+                                             (window-buffer window))))
+          total-height)))))
 
 (defun find-cursor-object (objects)
   (loop :for object :in objects

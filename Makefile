@@ -34,7 +34,7 @@ webview:
 
 lem: sdl2
 
-install-bin: $(VARIANT)
+install-bin:
 	install -m 755 lem $(PREFIX)/bin
 
 # TODO: on the fly edit lem.desktop depends on $(PREFIX)

@@ -37,6 +37,8 @@ Used to prevent recursive `redraw-display` calls.")
   (window-redraw window force))
 
 (defun redraw-display (&key force)
+  (when (no-force-needed-p (implementation))
+    (setf force nil))
   (when *in-redraw-display*
     (log:warn "redraw-display is called recursively")
     (return-from redraw-display))

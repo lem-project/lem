@@ -72,6 +72,8 @@ When set to false, the completion list only opens when the user presses TAB")
 
 (defun prompt-for-string (prompt &rest args
                                  &key initial-value
+                                      candidate-function
+                                      filter-function
                                       completion-function
                                       test-function
                                       (history-symbol nil)
@@ -82,6 +84,8 @@ When set to false, the completion list only opens when the user presses TAB")
                                       use-border
                                       default)
   (declare (ignore initial-value
+                   candidate-function
+                   filter-function
                    completion-function
                    test-function
                    history-symbol
@@ -110,9 +114,14 @@ When set to false, the completion list only opens when the user presses TAB")
                       :history-symbol 'prompt-for-integer
                       :gravity gravity)))
 
+(defun buffer-candidates (prompt-value)
+  (declare (ignore prompt-value))
+  (sort (mapcar #'buffer-name (buffer-list)) #'string< ))
+
 (defun prompt-for-buffer (prompt &key default existing (gravity *default-prompt-gravity*))
   (let ((result (prompt-for-string prompt
-                 :completion-function *prompt-buffer-completion-function*
+                 :candidate-function (lambda (x) ( buffer-candidates x))
+                 ;:completion-function *prompt-buffer-completion-function*
                  :test-function (and existing
                                      (lambda (name)
                                        (or (alexandria:emptyp name)

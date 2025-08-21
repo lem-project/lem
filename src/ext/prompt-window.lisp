@@ -17,7 +17,7 @@
 
 (defvar *fill-width* nil)
 (defvar *history-table* (make-hash-table))
-
+ 
 (defvar *special-paths*
   #+unix '(("//" . "/")
            ("~/" . "~/"))
@@ -29,10 +29,18 @@
     :reader execute-input)))
 
 (defclass prompt-parameters ()
-  ((completion-function
+  ((candidate-function
+    :initarg :candidate-function
+    :initform nil
+    :reader prompt-window-candidate-function)
+   (completion-function
     :initarg :completion-function
     :initform nil
     :reader prompt-window-completion-function)
+   (filter-function
+    :initarg :filter-function
+    :initform nil
+    :reader prompt-window-filter-function)
    (existing-test-function
     :initarg :existing-test-function
     :initform nil
@@ -144,7 +152,7 @@
 (defvar *prompt-completion-window-gravity* :horizontally-adjacent-window)
 
 (defun open-prompt-completion ()
-  (alexandria:when-let (completion-fn (prompt-window-completion-function (current-prompt-window)))
+  (alexandria:if-let (completion-fn (prompt-window-completion-function (current-prompt-window)))
     (with-point ((start (current-prompt-start-point)))
       (lem/completion-mode:run-completion
        (lambda (point)
@@ -164,7 +172,35 @@
                    :collect :it))))
        :style `(:gravity ,*prompt-completion-window-gravity*
                 :offset-y -1
-                :shape ,*prompt-completion-window-shape*)))))
+                :shape ,*prompt-completion-window-shape*)))
+    (let ((candidate-fn (prompt-window-candidate-function (current-prompt-window)))
+          (filter-fn (prompt-window-filter-function (current-prompt-window))))
+      (with-point ((start (current-prompt-start-point)))
+        (lem/completion-mode:run-completion
+         (lambda (point)
+           (with-point ((start start)
+                        (end point))
+
+             (let* ((prompt-string (points-to-string start
+                                                     (buffer-end-point 
+                                                      (point-buffer end))))                     
+                    (candidate-items
+                        (funcall filter-fn prompt-string
+                                 (funcall candidate-fn prompt-string)))
+                    (filtered-items
+                      (completion-score )))
+               (loop for item in items
+                     do (let ((it ((flx:score (item))))))
+               (loop for item in items
+                     collect (multiple-value-bind (label chunks) item
+                                (lem/completion-mode:make-completion-item :label label
+                                                                          :chunks chunks
+                                                                          :start start
+                                                                          :end end)))))))
+         :style `(:gravity ,*prompt-completion-window-gravity*
+                  :offset-y -1
+                  :shape ,*prompt-completion-window-shape*))))))
+
 
 (define-command prompt-completion () ()
   (open-prompt-completion))
@@ -210,6 +246,8 @@
                    :width width
                    :height height
                    :use-modeline-p nil
+                   :candidate-function (prompt-window-candidate-function parameters)
+                   :filter-function (prompt-window-filter-function parameters) 
                    :completion-function (prompt-window-completion-function parameters)
                    :existing-test-function (prompt-window-existing-test-function parameters)
                    :caller-of-prompt-window (prompt-window-caller-of-prompt-window parameters)
@@ -327,7 +365,6 @@
   (when (frame-floating-prompt-window (current-frame))
     (editor-error "recursive use of prompt window"))
   (run-hooks *prompt-activate-hook*)
-
   (with-current-window (current-window)
     (let* ((prompt-window (create-prompt prompt-string
                                          (if *automatic-tab-completion*
@@ -341,7 +378,6 @@
                                                      ;; (prompt-default parameters)))
                                          parameters)))
       (switch-to-prompt-window prompt-window)
-
       (add-hook (window-leave-hook prompt-window) #'exit-prompt)
       (handler-case
           (with-unwind-setf (((frame-floating-prompt-window (current-frame))
@@ -392,8 +428,10 @@
                      (invoke-restart 'lem-restart:message))))
     (command-loop)))
 
-(defmethod lem-core::%prompt-for-line (prompt-string
+(defmethod lem-core::%prompt-for-line  (prompt-string
                                        &key initial-value
+                                            candidate-function
+                                            filter-function
                                             completion-function
                                             test-function
                                             history-symbol
@@ -406,6 +444,8 @@
   (prompt-for-aux :prompt-string prompt-string
                   :initial-string initial-value
                   :parameters (make-instance 'prompt-parameters
+                                             :candidate-function candidate-function
+                                             :filter-function filter-function
                                              :completion-function completion-function
                                              :existing-test-function test-function
                                              :caller-of-prompt-window (current-window)

@@ -7,26 +7,6 @@
 
 (defvar *in-the-editor* nil)
 
-(defvar *syntax-scan-window-recursive-p* nil)
-
-(defun syntax-scan-window (window)
-  (check-type window window)
-  (when (and (enable-syntax-highlight-p (window-buffer window))
-             (null *syntax-scan-window-recursive-p*))
-    (let ((*syntax-scan-window-recursive-p* t))
-      (with-point ((start (window-view-point window))
-                   (end (window-view-point window)))
-        (line-start start)
-        (unless (move-to-next-virtual-line-n end window (window-height window))
-          (buffer-end end))
-        (syntax-scan-region start end)))))
-
-(defun syntax-scan-buffer (buffer)
-  (check-type buffer buffer)
-  (syntax-scan-region
-   (buffer-start-point buffer)
-   (buffer-end-point buffer)))
-
 (defun setup-first-frame ()
   (let ((frame (make-frame nil)))
     (map-frame (implementation) frame)
@@ -43,31 +23,9 @@
     (setup-first-frame)
     (unless once
       (setf once t)
-      (start-timer (make-idle-timer (lambda ()
-                                      (syntax-scan-window (current-window)))
-                                    :name "syntax-scan")
-                   100 :repeat t)
-      (add-hook *window-scroll-functions*
-                (lambda (window)
-                  (syntax-scan-window window)))
-      (add-hook *window-size-change-functions*
-                (lambda (window)
-                  (syntax-scan-window window)))
-      (add-hook *window-show-buffer-functions*
-                (lambda (window)
-                  (syntax-scan-window window)))
-      (add-hook (variable-value 'after-change-functions :global)
-                (lambda (start end old-len)
-                  (declare (ignore old-len))
-                  (syntax-scan-region start end)))
-      (add-hook *find-file-hook*
-                (lambda (buffer)
-                  (process-file buffer)
-                  (syntax-scan-buffer buffer))
-                5000)
-      (add-hook (variable-value 'before-save-hook :global)
-                (lambda (buffer)
-                  (process-file buffer)))
+      (init-syntax-scanner)
+      (add-hook *find-file-hook* 'process-file 5000)
+      (add-hook (variable-value 'before-save-hook :global) 'process-file)
       (add-hook *input-hook*
                 (lambda (event)
                   (push event *this-command-keys*))))))

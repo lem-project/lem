@@ -198,7 +198,8 @@
 
 (defmethod execute :after ((mode peek-source-mode) command argument)
   (when (eq (current-window) *peek-window*)
-    (show-matched-line)))
+    (start-timer (make-idle-timer (lambda () (show-matched-line)))
+                 100)))
 
 (defun highlight-matched-line (point)
   (let ((overlay (make-line-overlay point 'highlight)))

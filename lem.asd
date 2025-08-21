@@ -138,6 +138,7 @@
                (:file "command-advices")
                (:file "interface")
                (:file "highlight-line")
+               (:file "syntax-scanner")
                (:file "html-buffer")
                (:file "site-init")
                (:file "command-line-arguments")

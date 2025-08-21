@@ -2,17 +2,31 @@
 
 (defvar *syntax-scan-window-recursive-p* nil)
 
+(defun buffer-modified-tick-during-syntax-scan (buffer)
+  (buffer-value buffer 'tick-during-syntax-scan))
+
+(defun update-modified-tick-during-syntax-scan (buffer)
+  (setf (buffer-value buffer 'tick-during-syntax-scan)
+        (buffer-modified-tick buffer)))
+
+(defun need-syntax-scan-p (buffer)
+  (not (eql (buffer-modified-tick-during-syntax-scan buffer)
+            (buffer-modified-tick buffer))))
+
 (defun syntax-scan-window (window)
   (check-type window window)
-  (when (and (enable-syntax-highlight-p (window-buffer window))
-             (null *syntax-scan-window-recursive-p*))
-    (let ((*syntax-scan-window-recursive-p* t))
-      (with-point ((start (window-view-point window))
-                   (end (window-view-point window)))
-        (line-start start)
-        (unless (move-to-next-virtual-line-n end window (window-height window))
-          (buffer-end end))
-        (syntax-scan-region start end)))))
+  (let ((buffer (window-buffer window)))
+    (when (and (need-syntax-scan-p buffer)
+               (enable-syntax-highlight-p buffer)
+               (null *syntax-scan-window-recursive-p*))
+      (update-modified-tick-during-syntax-scan buffer)
+      (let ((*syntax-scan-window-recursive-p* t))
+        (with-point ((start (window-view-point window))
+                     (end (window-view-point window)))
+          (line-start start)
+          (unless (move-to-next-virtual-line-n end window (window-height window))
+            (buffer-end end))
+          (syntax-scan-region start end))))))
 
 (defun syntax-scan-buffer (buffer)
   (check-type buffer buffer)
@@ -30,7 +44,9 @@
 
 (defun syntax-scan-when-buffer-edited (start end old-len)
   (declare (ignore old-len))
-  (syntax-scan-region start end))
+  (syntax-scan-region start end)
+  (let ((buffer (point-buffer start)))
+    (update-modified-tick-during-syntax-scan buffer)))
 
 (defvar *syntax-scan-timer* nil)
 

@@ -169,7 +169,6 @@
     (handle-login jsonrpc logged-in-callback params)))
 
 (defun redraw (args)
-  (log:info "redraw: ~A" (pretty-json args))
   (with-error-handler ()
     (let ((size (and args (gethash "size" args))))
       (when size

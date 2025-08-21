@@ -106,7 +106,8 @@
    :redraw-after-modifying-floating-window t
    :window-left-margin 0
    :html-support t
-   :underline-color-support t))
+   :underline-color-support t
+   :no-force-needed t))
 
 (defun get-all-views ()
   (if (null (lem:current-frame))
@@ -168,7 +169,6 @@
     (handle-login jsonrpc logged-in-callback params)))
 
 (defun redraw (args)
-  (log:info "redraw: ~A" (pretty-json args))
   (with-error-handler ()
     (let ((size (and args (gethash "size" args))))
       (when size

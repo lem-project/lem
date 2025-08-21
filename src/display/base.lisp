@@ -42,7 +42,10 @@ Used to prevent recursive `redraw-display` calls.")
   (when *in-redraw-display*
     (log:warn "redraw-display is called recursively")
     (return-from redraw-display))
-  (let ((*in-redraw-display* t))
+  (let ((*in-redraw-display* t)
+        (redraw-after-modifying-floating-window
+          (and (not (no-force-needed-p (implementation)))
+               (redraw-after-modifying-floating-window (implementation)))))
     (labels ((redraw-window-list (force)
                (dolist (window (window-list))
                  (unless (eq window (current-window))
@@ -54,11 +57,11 @@ Used to prevent recursive `redraw-display` calls.")
                    (window-redraw window force))))
              (redraw-floating-windows ()
                (dolist (window (frame-floating-windows (current-frame)))
-                 (window-redraw window (redraw-after-modifying-floating-window (implementation)))))
+                 (window-redraw window redraw-after-modifying-floating-window)))
              (redraw-all-windows ()
                (redraw-header-windows force)
                (redraw-window-list
-                (if (redraw-after-modifying-floating-window (implementation))
+                (if redraw-after-modifying-floating-window
                     (or (frame-require-redisplay-windows (current-frame))
                         ;; floating-windowが変更されたら、その下のウィンドウは再描画する必要がある
                         (frame-modified-floating-windows (current-frame))

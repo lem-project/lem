@@ -1,5 +1,7 @@
 (in-package :lem-core)
 
+(defvar *active-modes*)
+
 (defstruct logical-line
   string
   attributes
@@ -19,25 +21,28 @@
 
 (defun expand-tab (string attributes tab-width)
   (setf attributes (copy-tree attributes))
-  (values (with-output-to-string (out)
-            (loop :with i := 0
-                  :for c :across string
-                  :do (cond ((char= c #\tab)
-                             (let ((n (- tab-width (mod i tab-width))))
-                               (loop :for elt :in attributes
-                                     :do (cond ((< i (first elt))
-                                                (incf (first elt) (1- n))
-                                                (incf (second elt) (1- n)))
-                                               ((and (< i (second elt))
-                                                     (not (cursor-attribute-p (third elt))))
-                                                (incf (second elt) (1- n)))))
-                               (loop :repeat n
-                                     :do (write-char #\space out))
-                               (incf i n)))
-                            (t
-                             (write-char c out)
-                             (incf i)))))
-          attributes))
+  (if (not (find #\tab string))
+      (values string attributes)
+      ;; TODO: optimize
+      (values (with-output-to-string (out)
+                (loop :with i := 0
+                      :for c :across string
+                      :do (cond ((char= c #\tab)
+                                 (let ((n (- tab-width (mod i tab-width))))
+                                   (loop :for elt :in attributes
+                                         :do (cond ((< i (first elt))
+                                                    (incf (first elt) (1- n))
+                                                    (incf (second elt) (1- n)))
+                                                   ((and (< i (second elt))
+                                                         (not (cursor-attribute-p (third elt))))
+                                                    (incf (second elt) (1- n)))))
+                                   (loop :repeat n
+                                         :do (write-char #\space out))
+                                   (incf i n)))
+                                (t
+                                 (write-char c out)
+                                 (incf i)))))
+              attributes)))
 
 (defun overlay-attributes (under-attributes over-start over-end over-attribute)
   ;; under-attributes := ((start-charpos end-charpos attribute) ...)
@@ -281,8 +286,9 @@
 
 (defun call-do-logical-line (window function)
   (with-point ((point (window-view-point window)))
-    (let ((overlays (get-window-overlays window))
-          (active-modes (get-active-modes-class-instance (window-buffer window))))
+    (let* ((overlays (get-window-overlays window))
+           (active-modes (get-active-modes-class-instance (window-buffer window)))
+           (*active-modes* active-modes))
       (loop :for logical-line := (create-logical-line point overlays active-modes)
             :do (funcall function logical-line)
                 (unless (line-offset point 1)

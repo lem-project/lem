@@ -43,11 +43,11 @@
                               width
                               height
                               :modeline use-modeline
-                              :type (if (lem:floating-window-p window)
-                                        :tile
-                                        :floating)
-                              :border (and (lem:floating-window-p window)
-                                           (lem:floating-window-border window))
+                              :type (if (or (lem:floating-window-p window)
+                                            (lem:attached-window-p window))
+                                        :floating
+                                        :tile)
+                              :border (lem:window-border window)
                               :border-shape (and (lem:floating-window-p window)
                                                  (lem:floating-window-border-shape window))
                               :cursor-invisible (lem:window-cursor-invisible-p window)))

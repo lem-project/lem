@@ -120,7 +120,6 @@
 (defmethod %syntax-scan-region ((tmlanguage tmlanguage) start end)
   (tm-syntax-scan-region start end))
 
-
 (defun set-syntax-context (line x)
   (setf (line:line-syntax-context line) x))
 
@@ -300,18 +299,28 @@
         (setf best (tm-get-best-result best end-result))
         (loop
           (cond ((null best)
-                 (line:line-add-property (point-line point) start1 (line:line-length (point-line point))
-                                    :attribute (tm-rule-name rule)
-                                    t)
+                 (alexandria:when-let ((rule-name (tm-rule-name rule)))
+                   (line:line-add-property (point-line point) start1
+                                           (line:line-length (point-line point))
+                                           :attribute rule-name
+                                           t))
+                 (tm-apply-content-name rule point start1 (line:line-length (point-line point)) t)
+                 (tm-scan-line point
+                               (tm-region-patterns rule)
+                               start2
+                               (line:line-length (point-line point)))
                  (tm-apply-begin-captures rule point begin-result start-line-p)
-                 (tm-apply-content-name rule point start2 (line:line-length (point-line point)) t)
                  (set-syntax-context (point-line point) (cons rule begin-result))
                  (line-end point)
                  (return))
                 ((and best end-result (tm-result= best end-result))
                  (line:line-add-property (point-line point) start1 (tm-result-end end-result)
-                                    :attribute (tm-rule-name rule)
-                                    nil)
+                                         :attribute (tm-rule-name rule)
+                                         nil)
+                 (tm-scan-line point
+                               (tm-region-patterns rule)
+                               start2
+                               (tm-result-start end-result))
                  (tm-apply-begin-captures rule point begin-result start-line-p)
                  (tm-apply-end-captures rule point end-result)
                  (tm-apply-content-name rule point start1 (tm-result-start end-result) nil)

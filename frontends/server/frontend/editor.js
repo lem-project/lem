@@ -763,7 +763,7 @@ class Input {
     this.span.style.color = option.foreground;
     this.span.style.backgroundColor = option.background;
     this.span.style.position = 'absolute';
-    this.span.style.zIndex = '';
+    this.span.style.zIndex = 1000000;
     this.span.style.top = '0';
     this.span.style.left = '0';
     this.span.style.font = option.font;

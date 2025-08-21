@@ -23,6 +23,14 @@
     :initform nil
     :initarg :html-support
     :reader html-support-p)
+   (no-force-needed
+    :initform nil
+    :initarg :no-force-needed
+    :reader no-force-needed-p
+    :documentation "When no-force-needed-p is T, the force argument of redraw-display is ignored.
+In environments like ncurses, when the upper window is modified, the lower window needs to be redrawn.
+In that case, set the force of redraw-display to T.
+When rendering the DOM and a window in a one-to-one manner, no redraw is required.")
    (underline-color-support
     :initform nil
     :initarg :underline-color-support

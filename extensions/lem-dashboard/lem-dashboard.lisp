@@ -93,6 +93,7 @@
          (old-column (point-column (buffer-point buffer)))
          (window (or (first (get-buffer-windows (get-buffer *dashboard-buffer-name*)))
                      (current-window))))
+    (assert (not (deleted-window-p window)))
     (with-current-window window
       (with-buffer-read-only buffer nil
         (erase-buffer buffer)

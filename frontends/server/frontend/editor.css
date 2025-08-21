@@ -9,7 +9,8 @@
 .lem-editor__mode-line {
   border: none;
   border-radius: 4px;
-  box-shadow: 0px 4px 4px 4px rgba(32, 32, 32, 0.8), 0 0 0 2px rgba(128, 128, 128, 0.1);
+  box-shadow: 0px 0px 0px 1px rgba(128, 128, 128, 0.5);
+  /* box-shadow: 0px 4px 4px 4px rgba(32, 32, 32, 0.8), 0 0 0 2px rgba(128, 128, 128, 0.1); */
   /* transition: all 0.1s ease-out; */
 }
 

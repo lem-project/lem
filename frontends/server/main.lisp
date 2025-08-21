@@ -104,9 +104,10 @@
   (:default-initargs
    :name :jsonrpc
    :redraw-after-modifying-floating-window t
-   :window-left-margin 1
+   :window-left-margin 0
    :html-support t
-   :underline-color-support t))
+   :underline-color-support t
+   :no-force-needed t))
 
 (defun get-all-views ()
   (if (null (lem:current-frame))
@@ -168,7 +169,6 @@
     (handle-login jsonrpc logged-in-callback params)))
 
 (defun redraw (args)
-  (log:info "redraw: ~A" (pretty-json args))
   (with-error-handler ()
     (let ((size (and args (gethash "size" args))))
       (when size
@@ -279,11 +279,11 @@
                          :width width
                          :height height
                          :use-modeline use-modeline
-                         :kind (if (lem:floating-window-p window)
+                         :kind (if (or (lem:floating-window-p window)
+                                       (lem:attached-window-p window))
                                    "floating"
                                    "tile")
-                         :border (and (lem:floating-window-p window)
-                                      (lem:floating-window-border window))
+                         :border (lem:window-border window)
                          :border-shape (and (lem:floating-window-p window)
                                             (lem:floating-window-border-shape window)))))
     (notify* jsonrpc "make-view" view)

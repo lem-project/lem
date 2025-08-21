@@ -203,11 +203,13 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
                           ;; リストの後ろにあるウィンドウほど手前に出てくるという前提
                           (reverse (frame-floating-windows frame))
                           (window-list frame)))
-    (when (within-window-p window x y)
-      (let ((overlay-x-offset (window-left-width window)))
-        (return (values window
-                        (- x (window-x window) overlay-x-offset)
-                        (- y (window-y window))))))))
+    (dolist (target (list (window-attached-window window) window))
+      (when (and target (within-window-p target x y))
+        (let ((overlay-x-offset (window-left-width target)))
+          (return-from focus-window-position
+            (values target
+                    (- x (window-x target) overlay-x-offset)
+                    (- y (window-y target)))))))))
 
 (defun focus-separator-position (frame x y)
   (when (and (frame-leftside-window frame)

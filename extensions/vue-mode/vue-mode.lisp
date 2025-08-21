@@ -16,12 +16,27 @@
   #+windows (merge-pathnames "npm/node_modules/@vue/language-server/" (uiop:getenv "APPDATA"))
   "The location of the language server source code files for \"@vue/language-server\"")
 
+(defun make-tmlanguage-vue ()
+  (lem-html-mode::make-tmlanguage-html))
+
+(defparameter *vue-syntax-table*
+  (let ((syntax-table (make-syntax-table
+                       :space-chars lem-js-mode::*js-spaces*
+                       :paren-pairs '((#\( . #\))
+                                      (#\{ . #\})
+                                      (#\[ . #\]))
+                       :string-quote-chars '(#\" #\' #\`)
+                       :line-comment-string "//"
+                       :block-comment-pairs '(("/*" . "*/"))))
+        (tmlanguage (make-tmlanguage-vue)))
+    (set-syntax-parser syntax-table tmlanguage)
+    syntax-table))
+
 (define-major-mode vue-mode language-mode
     (:name "Vue"
      :mode-hook *vue-mode-hook*
-     :keymap *vue-mode-keymap*
-     :formatter 'lem-js-mode::prettier
-     :syntax-table lem-js-mode::*js-syntax-table*)
+     :syntax-table *vue-syntax-table*
+     :keymap *vue-mode-keymap*)
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'indent-tabs-mode) nil
         (variable-value 'tab-width) 2

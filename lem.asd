@@ -32,12 +32,14 @@
                "str"
                "dexador"
                "cl-mustache"
+               "flx"
                ;; "lem-encodings"
                #+sbcl
                sb-concurrency
                "lem-mailbox"
                "lem-extension-manager"
-               "flx")
+               #+sbcl
+               "sb-sprof")
   :pathname "src"
   :serial t
   :components ((:module "common"
@@ -113,7 +115,8 @@
                              (:file "virtual-line")
                              (:file "floating-window")
                              (:file "header-window")
-                             (:file "side-window")))
+                             (:file "side-window")
+                             (:file "attached-window")))
                (:file "buffer-ext") ; TODO
                (:file "popup")
                (:file "modeline")
@@ -159,7 +162,8 @@
                              (:file "help")
                              (:file "font")
                              (:file "other" :depends-on ("file"))
-                             (:file "frame")))
+                             (:file "frame")
+                             #+sbcl (:file "sprof")))
 
                (:module "display"
                 :serial t
@@ -185,6 +189,7 @@
                              (:file "button")
                              (:file "loading-spinner")
                              (:file "listener-mode")
+                             (:file "interactive-mode")
                              (:file "universal-argument")
                              (:file "kbdmacro")
                              (:file "isearch")
@@ -236,15 +241,15 @@
                "lem-swift-mode"
 
                "lem-c-mode"
-               "lem-xml-mode"
-               "lem-html-mode"
                "lem-python-mode"
                "lem-posix-shell-mode"
+               "lem-xml-mode"
                "lem-js-mode"
+               "lem-css-mode"
+               "lem-html-mode"
                "lem-vue-mode"
                "lem-typescript-mode"
                "lem-json-mode"
-               "lem-css-mode"
                "lem-rust-mode"
                "lem-paredit-mode"
                "lem-nim-mode"
@@ -280,7 +285,8 @@
                #-os-windows "lem-terminal"
                "lem-legit"
                "lem-dashboard"
-               "lem-copilot"))
+               "lem-copilot"
+               "lem-claude-code"))
 
 (defsystem "lem"
   :version "2.3.0"

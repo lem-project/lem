@@ -15,7 +15,7 @@
   (setf (window-parameter window 'redrawing-cache) value))
 
 (defclass drawing-object ()
-  ())
+  ((width :initform nil :accessor drawing-object-width)))
 
 (defclass void-object (drawing-object) ())
 
@@ -25,6 +25,13 @@
    (attribute :initarg :attribute :reader text-object-attribute)
    (type :initarg :type :reader text-object-type)
    (within-cursor :initform nil :initarg :within-cursor :reader text-object-within-cursor-p)))
+
+(defmethod print-object ((drawing-object text-object) stream)
+  (print-unreadable-object (drawing-object stream :type t)
+    (format stream
+            "~S ~S"
+            (text-object-string drawing-object)
+            (text-object-attribute drawing-object))))
 
 (defclass control-character-object (text-object) ())
 
@@ -96,10 +103,83 @@
               (line-end-object-offset drawing-object-2))))
 
 (defmethod drawing-object-equal ((drawing-object-1 image-object) (drawing-object-2 image-object))
+  (and (eq (image-object-image drawing-object-1) (image-object-image drawing-object-1))
+       (equal (image-object-width drawing-object-1) (image-object-width drawing-object-1))
+       (equal (image-object-height drawing-object-1) (image-object-height drawing-object-1))))
+
+
+(defgeneric drawing-object-mergable-p (drawing-object-1 drawing-object-2))
+
+(defmethod drawing-object-mergable-p (drawing-object-1 drawing-object-2)
   nil)
 
+(defmethod drawing-object-mergable-p ((drawing-object-1 void-object) (drawing-object-2 void-object))
+  t)
+
+(defmethod drawing-object-mergable-p ((drawing-object-1 text-object) (drawing-object-2 text-object))
+  (and (attribute-equal (text-object-attribute drawing-object-1)
+                        (text-object-attribute drawing-object-2))
+       (eq (text-object-type drawing-object-1)
+           (text-object-type drawing-object-2))
+       (eq (text-object-within-cursor-p drawing-object-1)
+           (text-object-within-cursor-p drawing-object-2))))
+
+(defmethod drawing-object-mergable-p ((drawing-object-1 eol-cursor-object) (drawing-object-2 eol-cursor-object))
+  (equal (eol-cursor-object-color drawing-object-1)
+         (eol-cursor-object-color drawing-object-2)))
+
+(defmethod drawing-object-mergable-p ((drawing-object-1 extend-to-eol-object) (drawing-object-2 extend-to-eol-object))
+  (equal (extend-to-eol-object-color drawing-object-1)
+         (extend-to-eol-object-color drawing-object-2)))
+
+(defmethod drawing-object-mergable-p ((drawing-object-1 line-end-object) (drawing-object-2 line-end-object))
+  (and (call-next-method)
+       (equal (line-end-object-offset drawing-object-1)
+              (line-end-object-offset drawing-object-2))))
+
+(defmethod drawing-object-mergable-p ((drawing-object-1 image-object) (drawing-object-2 image-object))
+  (and (eq (image-object-image drawing-object-1) (image-object-image drawing-object-1))
+       (equal (image-object-width drawing-object-1) (image-object-width drawing-object-1))
+       (equal (image-object-height drawing-object-1) (image-object-height drawing-object-1))))
+
+
+(defgeneric drawing-object-merge (drawing-object-1 drawing-object-2))
+
+(defmethod drawing-object-merge ((drawing-object-1 void-object) (drawing-object-2 void-object))
+  drawing-object-1)
+
+(defmethod drawing-object-merge ((drawing-object-1 text-object) (drawing-object-2 text-object))
+  (make-instance 'text-object
+                 :string (str:concat (text-object-string drawing-object-1)
+                                     (text-object-string drawing-object-2))
+                 :attribute (text-object-attribute drawing-object-1)
+                 :type (text-object-type drawing-object-1)
+                 :within-cursor (text-object-within-cursor-p drawing-object-1)))
+
+(defmethod drawing-object-merge ((drawing-object-1 eol-cursor-object) (drawing-object-2 eol-cursor-object))
+  drawing-object-1)
+
+(defmethod drawing-object-merge ((drawing-object-1 extend-to-eol-object) (drawing-object-2 extend-to-eol-object))
+  drawing-object-1)
+
+(defmethod drawing-object-merge ((drawing-object-1 line-end-object) (drawing-object-2 line-end-object))
+  (make-instance 'line-end-object
+                 :string (str:concat (text-object-string drawing-object-1)
+                                     (text-object-string drawing-object-2))
+                 :attribute (text-object-attribute drawing-object-1)
+                 :type (text-object-type drawing-object-1)
+                 :within-cursor (text-object-within-cursor-p drawing-object-1)
+                 :offset (line-end-object-offset drawing-object-1)))
+
+(defmethod drawing-object-merge ((drawing-object-1 image-object) (drawing-object-2 image-object))
+  drawing-object-1)
+
+
+
 (defun object-width (drawing-object)
-  (lem-if:object-width (implementation) drawing-object))
+  (or (drawing-object-width drawing-object)
+      (setf (drawing-object-width drawing-object)
+            (lem-if:object-width (implementation) drawing-object))))
 
 (defun object-height (drawing-object)
   (lem-if:object-height (implementation) drawing-object))
@@ -212,48 +292,78 @@
                              (text-object-attribute text-object) char-type)))))
     (let ((wrap-line-character (variable-value 'wrap-line-character :default buffer))
           (wrap-line-attribute (variable-value 'wrap-line-attribute :default buffer)))
-      (loop
-        :until (null objects)
-        :collect (loop :with total-width := 0
-                       :and physical-line-objects := '()
-                       :for object := (pop objects)
-                       :while object
-                       :do (cond ((and (typep object 'text-object)
-                                       (<= view-width (+ total-width (object-width object))))
-                                  (cond ((< 1 (length (text-object-string object)))
-                                         (setf objects (nconc (explode-object object) objects)))
-                                        (t
-                                         (push object objects)
-                                         (push (make-letter-object wrap-line-character
-                                                                   wrap-line-attribute)
-                                               physical-line-objects)
-                                         (return (nreverse physical-line-objects)))))
-                                 (t
-                                  (incf total-width (object-width object))
-                                  (push object physical-line-objects)))
-                       :finally (return (nreverse physical-line-objects)))))))
+      (loop :with total-width := 0
+            :and physical-line-objects := '()
+            :for object := (pop objects)
+            :while object
+            :do (cond ((and (typep object 'text-object)
+                            (<= view-width (+ total-width (object-width object))))
+                       (cond ((< 1 (length (text-object-string object)))
+                              (setf objects (nconc (explode-object object) objects)))
+                             (t
+                              (push object objects)
+                              (push (make-letter-object wrap-line-character
+                                                        wrap-line-attribute)
+                                    physical-line-objects)
+                              (return (values (nreverse physical-line-objects) objects)))))
+                      (t
+                       (incf total-width (object-width object))
+                       (push object physical-line-objects)))
+            :finally (return (nreverse physical-line-objects))))))
 
 (defun render-line (view x y objects height)
   (lem-if:render-line (implementation) view x y objects height))
+
+(defun reduce-list (list
+                    &key (test (alexandria:required-argument :test))
+                         (merge (alexandria:required-argument :merge)))
+  (let ((new '())
+        (list (copy-list list)))
+    (loop :for current-list := list
+          :for (current next rest) := current-list
+          :do (cond ((alexandria:length= current-list 0)
+                     (return))
+                    ((alexandria:length= current-list 1)
+                     (push current new)
+                     (return))
+                    ((funcall test current next)
+                     (setf (car current-list)
+                           (funcall merge current next))
+                     (setf (cdr current-list)
+                           (cddr current-list)))
+                    (t
+                     (push current new)
+                     (pop list))))
+    (nreverse new)))
+
+(defun reduce-objects (objects)
+  (reduce-list objects
+               :test #'drawing-object-mergable-p
+               :merge #'drawing-object-merge))
+
+(defun drawing-objects-equal (objects1 objects2)
+  (let ((objects1 (reduce-objects objects1))
+        (objects2 (reduce-objects objects2)))
+    (when (alexandria:length= objects1 objects2)
+      (loop :for obj1 :in objects1
+            :for obj2 :in objects2
+            :always (drawing-object-equal obj1 obj2)))))
 
 (defun validate-cache-p (window y height objects)
   (loop :for (cache-y cache-height cache-objects) :in (drawing-cache window)
         :when (and (= y cache-y)
                    (= height cache-height)
-                   (alexandria:length= objects cache-objects)
-                   (every #'drawing-object-equal objects cache-objects))
+                   (drawing-objects-equal objects cache-objects))
         :return t))
 
 (defun invalidate-cache (window y height)
   (setf (drawing-cache window)
-        (remove-if-not (lambda (elt)
-                         (destructuring-bind (cache-y cache-height cache-logical-line) elt
-                           (declare (ignore cache-logical-line))
-                           (or (< (+ y height)
-                                  cache-y)
-                               (<= (+ cache-y cache-height)
-                                   y))))
-                       (drawing-cache window))))
+        (remove-if (lambda (elt)
+                     (destructuring-bind (cache-y cache-height drawing-objects) elt
+                       (declare (ignore drawing-objects))
+                       (and (<= cache-y y)
+                            (<= (+ y height) (+ cache-y cache-height)))))
+                   (drawing-cache window))))
 
 (defun update-and-validate-cache-p (window y height objects)
   (cond ((validate-cache-p window y height objects) t)
@@ -278,19 +388,34 @@
                                                left-side-width)
   (let* ((left-side-characters (loop :for obj :in left-side-objects
                                      :when (typep obj 'text-object)
-                                     :sum (length (text-object-string obj))))
-         (objects-per-physical-line
-           (separate-objects-by-width (create-drawing-objects logical-line)
-                                      (- (window-view-width window) left-side-width)
-                                      (window-buffer window))))
-    (loop :for objects :in objects-per-physical-line
-          :for all-objects := (append left-side-objects objects)
-          :for height := (max-height-of-objects all-objects)
-          :do (render-line-with-caching window 0 y all-objects height)
+                                     :sum (length (text-object-string obj)))))
+    (multiple-value-bind (first-line-objects rest-line-objects)
+        (separate-objects-by-width (create-drawing-objects logical-line)
+                                   (- (window-view-width window) left-side-width)
+                                   (window-buffer window))
+      (let ((wrapped-left-side-objects
+              (when rest-line-objects
+                (copy-list (compute-wrap-left-area-content
+                            *active-modes*
+                            left-side-width
+                            left-side-characters)))))
+        (let ((total-height 0)
+              (objects first-line-objects))
+          (loop
+            (unless objects (return))
+            (let* ((all-objects (append left-side-objects objects))
+                   (height (max-height-of-objects all-objects)))
+              (render-line-with-caching window 0 y all-objects height)
               (incf y height)
-              (setq left-side-objects (copy-list (compute-wrap-left-area-content
-                                                  left-side-width left-side-characters)))
-          :sum height)))
+              (setq left-side-objects wrapped-left-side-objects)
+              (incf total-height height)
+              (unless (< y (window-height window))
+                (return)))
+            (setf (values objects rest-line-objects)
+                  (separate-objects-by-width rest-line-objects
+                                             (- (window-view-width window) left-side-width)
+                                             (window-buffer window))))
+          total-height)))))
 
 (defun find-cursor-object (objects)
   (loop :for object :in objects

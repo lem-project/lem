@@ -18,6 +18,9 @@
     :initform nil
     :accessor floating-window-focusable-p)))
 
+(defmethod window-border ((window floating-window))
+  (floating-window-border window))
+
 (defmethod initialize-instance :before ((floating-window floating-window) &rest initargs)
   (declare (ignore initargs))
   (unless (support-floating-window (implementation))

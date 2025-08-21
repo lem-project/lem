@@ -14,11 +14,12 @@
   (when (and (enable-syntax-highlight-p (window-buffer window))
              (null *syntax-scan-window-recursive-p*))
     (let ((*syntax-scan-window-recursive-p* t))
-      (syntax-scan-region
-       (line-start (copy-point (window-view-point window) :temporary))
-       (or (line-offset (copy-point (window-view-point window) :temporary)
-                        (window-height window))
-           (buffer-end-point (window-buffer window)))))))
+      (with-point ((start (window-view-point window))
+                   (end (window-view-point window)))
+        (line-start start)
+        (unless (move-to-next-virtual-line-n end window (window-height window))
+          (buffer-end end))
+        (syntax-scan-region start end)))))
 
 (defun syntax-scan-buffer (buffer)
   (check-type buffer buffer)
@@ -161,7 +162,8 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
              (if (command-line-arguments-debug args)
                  :debug
                  :info))))
-    (t (log:config :off)))
+    (t
+     (log:config :sane :daily (merge-pathnames "debug.log" (lem-home)) :info)))
 
   (log:info "Starting Lem")
 

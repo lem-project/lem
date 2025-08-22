@@ -595,15 +595,26 @@
             (convert-remote-to-local-file fastfile))))))
 
 (defun show-compile-result (notes secs successp)
-  (display-message (format nil "~{~A~^ ~}"
-                           (remove-if #'null
-                                      (list (if successp
-                                                "Compilation finished"
-                                                "Compilation failed")
-                                            (unless notes
-                                              "(No warnings)")
-                                            (when secs
-                                              (format nil "[~,2f secs]" secs)))))))
+  (let ((buffer (make-buffer "*lisp-compiled-result*" :temporary t)))
+    (setf (variable-value 'line-wrap :buffer buffer) nil)
+    (with-point ((point (buffer-point buffer) :left-inserting))
+      (insert-string point
+                     (if successp
+                         (if notes
+                             (format nil "Compilation warning~P" (length notes))
+                             "Compilation finished")
+                         "Compilation failed")
+                     :attribute (if successp
+                                    (if notes
+                                        (make-attribute :foreground "yellow")
+                                        (make-attribute :foreground "green"))
+                                    (make-attribute :foreground "red")))
+      (when notes
+        (insert-string point (format nil " (~D warning~:P)" (length notes))))
+      (when secs
+        (insert-string point (format nil " [~,2f secs]" secs)))
+      (buffer-start (buffer-point buffer))
+      (show-message buffer))))
 
 (defun make-highlight-overlay (pos buffer message source-context)
   (with-point ((point (buffer-point buffer)))

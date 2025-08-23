@@ -90,10 +90,10 @@
 
 (defun initialize-source-registry ()
   (asdf:initialize-source-registry
-   `(:source-registry
+   (list :source-registry
      :inherit-configuration
      (:also-exclude ".qlot")
-     (:tree ,(asdf:system-source-directory :lem)))))
+     (:tree (asdf:system-source-directory :lem)))))
 
 (defun init-at-build-time ()
   "This function is called when an lem executable file is built.

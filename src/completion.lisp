@@ -5,7 +5,10 @@
 (defun flex-filter (candidates elt)
   (if (= (length elt) 0)
       (mapcar (lambda (x) (list x)) candidates)
-      (mapcar (lambda (x) (cons (car x) (cddr x)))
+      (mapcar (lambda (x) (cons (car x) 
+                                (mapcar 
+                                 (lambda (pos) (cons pos (+ pos 1)))
+                                 (cddr x))))
               (sort (loop for candidate in candidates
                           for score = (flx:score candidate elt) 
                           when (car score)

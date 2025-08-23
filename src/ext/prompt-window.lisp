@@ -182,7 +182,7 @@
          (lambda (point)
            (with-point ((start start)
                         (end point))
-
+             
              (let* ((prompt-string (points-to-string start
                                                      (buffer-end-point 
                                                       (point-buffer end))))                     
@@ -192,8 +192,9 @@
                                prompt-string )))
                (loop :for item :in items
                      collect (lem/completion-mode:make-completion-item :label (car item)
-                                                                        :start start
-                                                                        :end end)))))
+                                                                       :chunks (cdr item)
+                                                                       :start start
+                                                                       :end end)))))
          :style `(:gravity ,*prompt-completion-window-gravity*
                   :offset-y -1
                   :shape ,*prompt-completion-window-shape*)

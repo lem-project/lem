@@ -190,6 +190,7 @@ function addMouseEventListeners({ dom, editor, isDraggable, draggableStyle }) {
 const zIndexTable = {
   'floating-window': 200,
   'modeline': 100,
+  'vertical-border': 100,
 };
 
 function zindex(type) {
@@ -452,6 +453,7 @@ class VerticalBorder {
     this.line.className = 'lem-editor__vertical-border';
     this.line.style.height = height * option.fontHeight + 'px';
     this.line.style.position = 'absolute';
+    this.line.style.zIndex = zindex('vertical-border');
 
     getLemEditorElement().appendChild(this.line);
 

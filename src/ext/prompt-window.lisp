@@ -174,7 +174,32 @@
                 :offset-y -1
                 :shape ,*prompt-completion-window-shape*)
        :then (lambda ()
-               (update-prompt-window (current-prompt-window)))))))
+               (update-prompt-window (current-prompt-window)))))
+    (let ((candidate-fn (prompt-window-candidate-function (current-prompt-window)))
+          (filter-fn (prompt-window-filter-function (current-prompt-window))))
+      (with-point ((start (current-prompt-start-point)))
+        (lem/completion-mode:run-completion
+         (lambda (point)
+           (with-point ((start start)
+                        (end point))
+
+             (let* ((prompt-string (points-to-string start
+                                                     (buffer-end-point 
+                                                      (point-buffer end))))                     
+                    (items
+                      (funcall filter-fn 
+                               (funcall candidate-fn prompt-string)
+                               prompt-string )))
+               (loop :for item :in items
+                     collect (lem/completion-mode:make-completion-item :label (car item)
+                                                                        :start start
+                                                                        :end end)))))
+         :style `(:gravity ,*prompt-completion-window-gravity*
+                  :offset-y -1
+                  :shape ,*prompt-completion-window-shape*)
+         :then (lambda ()
+                 (update-prompt-window (current-prompt-window)))
+         )))))
 
 (define-command prompt-completion () ()
   (open-prompt-completion))

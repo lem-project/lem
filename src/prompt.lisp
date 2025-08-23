@@ -121,6 +121,7 @@ When set to false, the completion list only opens when the user presses TAB")
 (defun prompt-for-buffer (prompt &key default existing (gravity *default-prompt-gravity*))
   (let ((result (prompt-for-string prompt
                  :candidate-function (lambda (x) ( buffer-candidates x))
+                 :filter-function #'flex-filterq
                  ;:completion-function *prompt-buffer-completion-function*
                  :test-function (and existing
                                      (lambda (name)

@@ -63,7 +63,8 @@
 
 (defun maybe-balance-windows ()
   (when *balance-after-split-window*
-    (balance-windows)))
+    (let ((lem-core::*update-only-when-state-changed* t))
+      (balance-windows))))
 
 (eval-when (:compile-toplevel :load-toplevel)
   (defmacro define-next-window-command (command prompt documentation)
@@ -211,10 +212,11 @@
 
 (define-command delete-active-window () ()
   "Delete the active window."
-  (delete-window (if (attached-window-p (current-window))
-                     (lem-core::attached-window-parent-window (current-window))
-                     (current-window)))
-  (maybe-balance-windows))
+  (let ((lem-core::*update-only-when-state-changed* t))
+    (delete-window (if (attached-window-p (current-window))
+                       (lem-core::attached-window-parent-window (current-window))
+                       (current-window)))
+    (maybe-balance-windows)))
 
 (define-command quit-active-window (&optional kill-buffer) (:universal-nil)
   "Quit the active window. This is a command for a popped-up window."

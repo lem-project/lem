@@ -679,7 +679,8 @@
                     (mode (lem:ensure-mode-object
                            (lem:current-major-mode-at-point
                             (lem:current-point)))))
-                (lem:paste-using-mode mode text)))))
+                (when text
+                  (lem:paste-using-mode mode text))))))
           ("mousedown"
            (let ((x (gethash "x" value))
                  (y (gethash "y" value))

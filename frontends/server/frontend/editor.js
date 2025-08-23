@@ -744,8 +744,7 @@ class View {
 
 function isPasteKeyEvent(event) {
   if (isMacOS()) {
-    // TODO
-    return false;
+    return (event.metaKey && event.key === 'v');
   } else {
     return (event.ctrlKey && event.shiftKey && event.key === 'V');
   }
@@ -798,10 +797,36 @@ class Input {
       }
     });
 
+    this.input.addEventListener('paste', async (event) => {
+      event.preventDefault(); // Block only the native insertion
+      const cd = event.clipboardData || window.Clipboard.data;
+      const textFromEvent = cd?.getData('text') ?? cd?.getData('text/plain');
+
+      if (textFromEvent && textFromEvent.length > 0) {
+        this.editor.emitInputString(textFromEvent);
+        return;
+      }
+
+      // Fallback: Clipboard API (requires HTTPS/localhost & focus)
+      try {
+        if (navigator.clipboard?.readText) {
+          const text = await navigator.clipboard.readText();
+          if (text && text.length > 0) {
+            this.editor.emitInputString(text);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('clipboard.readText() failed:', e);
+      }
+
+      alert("Paste failed (permission/environment restriction");
+    });
+
     this.input.addEventListener('keydown', (event) => {
-      //console.log('keydown', event, event.isComposing, this.composition);
       if (isPasteKeyEvent(event)) {
-        this.editor.jsonrpc.notify('input', { kind: 'clipboard-paste' });
+        // Do nothing here (do not call preventDefault)
+        // Let the browser fire the paste event
         return;
       }
 
@@ -849,25 +874,25 @@ class Input {
 
     this.input.addEventListener('compositionstart', (event) => {
       //console.log('compositionstart', event);
-        this.composition = true;
-        this.span.innerHTML = this.input.value;
-        this.input.style.width = this.span.offsetWidth + 'px';
+      this.composition = true;
+      this.span.innerHTML = this.input.value;
+      this.input.style.width = this.span.offsetWidth + 'px';
     });
 
     this.input.addEventListener('compositionupdate', (event) => {
       //console.log('compositionupdate', event);
-        this.span.innerHTML = event.data;
-        this.input.style.width = this.span.offsetWidth + 'px';
+      this.span.innerHTML = event.data;
+      this.input.style.width = this.span.offsetWidth + 'px';
     });
 
     this.input.addEventListener('compositionend', (event) => {
       //console.log('compositionend', event);
-        this.composition = false;
-        this.editor.emitInputString(this.input.value);
-        this.input.value = '';
-        this.span.innerHTML = this.input.value;
-        this.input.style.width = '0';
-        this.ignoreKeydownAfterCompositionend = true;
+      this.composition = false;
+      this.editor.emitInputString(this.input.value);
+      this.input.value = '';
+      this.span.innerHTML = this.input.value;
+      this.input.style.width = '0';
+      this.ignoreKeydownAfterCompositionend = true;
     });
 
     document.body.appendChild(this.input);
@@ -1199,7 +1224,7 @@ export class Editor {
   }
 
   getClipboardText() {
-    navigator.clipboard.readText().then(text => {
+    navigator.clipboard?.readText().then(text => {
       this.jsonrpc.notify('got-clipboard-text', { text });
     });
   }

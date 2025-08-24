@@ -71,7 +71,7 @@
   (lem-ncurses/view:redraw-view-after view))
 
 (defmethod lem-if:update-display ((implementation ncurses))
-  (lem-ncurses/view:update-cursor (lem:window-view (lem:current-window))))
+  (lem-ncurses/view:update-display (lem:window-view (lem:current-window))))
 
 (defmethod lem-if:clipboard-paste ((implementation ncurses))
   (lem-ncurses/clipboard:paste))

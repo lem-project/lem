@@ -188,15 +188,16 @@
                                                       (point-buffer end))))
                     (candidates (funcall candidate-fn prompt-string))
                     (default (prompt-default (current-prompt-window)))
-                    (items
-                      (funcall filter-fn 
-                               (if default (cons default (remove default candidates)))
-                               prompt-string )))
-               (loop :for item :in items
-                     collect (lem/completion-mode:make-completion-item :label (car item)
-                                                                       :chunks (cdr item)
-                                                                       :start start
-                                                                       :end end)))))
+                    (history (lem/common/history:history-data-list (prompt-window-history (current-prompt-window))))
+                    (items (remove-duplicates
+                                 (append (when default (list default)) history candidates)
+                                 :test #'equal
+                                 :from-end t)))
+                (loop for item in (funcall filter-fn items prompt-string)
+                      collect (lem/completion-mode:make-completion-item :label (car item)
+                                                                        :chunks (cdr item)
+                                                                        :start start
+                                                                        :end end)))))
          :style `(:gravity ,*prompt-completion-window-gravity*
                   :offset-y -1
                   :shape ,*prompt-completion-window-shape*)

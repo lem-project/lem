@@ -512,7 +512,7 @@ class HorizontalBorder {
   move(x, y) {
     const [x0, y0] = this.editor.getDisplayRectangle();
     this.line.style.left = (x0 + x * this.option.fontWidth) + 'px';
-    this.line.style.top = Math.floor(y0 + y * this.option.fontHeight) + 'px';
+    this.line.style.top = Math.floor(y0 + y * this.option.fontHeight - 4) + 'px';
   }
 
   resize(width) {

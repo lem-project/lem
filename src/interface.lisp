@@ -19,6 +19,10 @@
     :initform 1
     :initarg :window-left-margin
     :reader window-left-margin)
+   (window-bottom-margin
+    :initform 1
+    :initarg :window-bottom-margin
+    :reader window-bottom-margin)
    (html-support
     :initform nil
     :initarg :html-support

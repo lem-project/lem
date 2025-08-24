@@ -48,6 +48,8 @@
 (defvar *dist* (dump-files))
 
 (defun find-dist-by-path (path)
+  (asdf:system-relative-pathname :lem-server path)
+  #+(or)
   (cdr (assoc path *dist* :test #'equal)))
 
 (defun clack-handler (env)
@@ -105,6 +107,7 @@
    :name :jsonrpc
    :redraw-after-modifying-floating-window t
    :window-left-margin 0
+   :window-bottom-margin 0
    :html-support t
    :underline-color-support t
    :no-force-needed t))

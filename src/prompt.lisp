@@ -129,7 +129,8 @@ When set to false, the completion list only opens when the user presses TAB")
                                            (get-buffer name))))
                  :history-symbol 'prompt-for-buffer
                  :gravity gravity
-                 :default default)))
+                 :default default
+                 )))
     (if (string= result "")
         default
         result)))

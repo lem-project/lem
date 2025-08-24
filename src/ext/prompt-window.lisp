@@ -185,10 +185,12 @@
              
              (let* ((prompt-string (points-to-string start
                                                      (buffer-end-point 
-                                                      (point-buffer end))))                     
+                                                      (point-buffer end))))
+                    (candidates (funcall candidate-fn prompt-string))
+                    (default (prompt-default (current-prompt-window)))
                     (items
                       (funcall filter-fn 
-                               (funcall candidate-fn prompt-string)
+                               (if default (cons default (remove default candidates)))
                                prompt-string )))
                (loop :for item :in items
                      collect (lem/completion-mode:make-completion-item :label (car item)
@@ -257,6 +259,7 @@
                    :existing-test-function (prompt-window-existing-test-function parameters)
                    :caller-of-prompt-window (prompt-window-caller-of-prompt-window parameters)
                    :history (prompt-window-history parameters)
+                   :default (prompt-default parameters)
                    :gravity (prompt-gravity parameters)
                    :border (if (prompt-use-border-p parameters) +border-size+ 0))))
 

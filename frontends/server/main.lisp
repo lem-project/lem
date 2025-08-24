@@ -138,7 +138,6 @@
     (notify jsonrpc "bulk" argument)))
 
 (defun handle-login (jsonrpc logged-in-callback params)
-  (log:info "ready: ~A ~A" jsonrpc/connection:*connection* (pretty-json params))
   (with-error-handler ()
     (let* ((size (gethash "size" params))
            (foreground (gethash "foreground" params))
@@ -161,7 +160,6 @@
                             "background" (lem-core::background-color)
                             "size" (hash "width" (lem:display-width)
                                          "height" (lem:display-height)))))
-        (log:info "login response: ~A" (pretty-json response))
         response))))
 
 (defun login (jsonrpc logged-in-callback)
@@ -279,10 +277,13 @@
                          :width width
                          :height height
                          :use-modeline use-modeline
-                         :kind (if (or (lem:floating-window-p window)
-                                       (lem:attached-window-p window))
-                                   "floating"
-                                   "tile")
+                         :kind (cond ((or (lem:floating-window-p window)
+                                          (lem:attached-window-p window))
+                                      "floating")
+                                     ((lem:header-window-p window)
+                                      "header")
+                                     (t
+                                      "tile"))
                          :border (lem:window-border window)
                          :border-shape (and (lem:floating-window-p window)
                                             (lem:floating-window-border-shape window)))))

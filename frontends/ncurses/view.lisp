@@ -173,15 +173,11 @@
                    :do (charms/ll:mvwaddstr win
                                             0
                                             x
-                                            (if (and (evenp x) (character-ligature-p))
-                                                (border-horizontal)
-                                                (border-horizontal)))
+                                            (border-horizontal))
                        (charms/ll:mvwaddstr win
                                             (1- (border-height border))
                                             x
-                                            (if (and (evenp x) (character-ligature-p))
-                                                (border-horizontal)
-                                                (border-horizontal))))
+                                            (border-horizontal)))
              (loop :for y :from 1 :below h
                    :do (charms/ll:mvwaddstr win y 0 (border-vertical))
                        (charms/ll:mvwaddstr win y w (border-vertical)))))

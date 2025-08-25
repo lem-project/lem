@@ -12,8 +12,7 @@
            :border-vertical-and-horizontal
            :border-up-and-horizontal
            :border-down-and-horizontal
-           :border-attribute
-           :character-ligature-p))
+           :border-attribute))
 (in-package :lem-ncurses/style)
 
 (define-attribute space-border-color
@@ -24,8 +23,7 @@
 
 (defstruct style
   border-shapes
-  border-attribute
-  character-ligature)
+  border-attribute)
 
 (defstruct box-shapes
   (horizontal "─")
@@ -42,8 +40,7 @@
 
 (defparameter *style*
   (make-style :border-shapes (make-box-shapes)
-              :border-attribute 'ruled-border-color
-              :character-ligature t))
+              :border-attribute 'ruled-border-color))
 
 (defun border-horizontal () (box-shapes-horizontal (style-border-shapes *style*)))
 (defun border-vertical () (box-shapes-vertical (style-border-shapes *style*)))
@@ -57,4 +54,3 @@
 (defun border-up-and-horizontal () (box-shapes-up-and-horizontal (style-border-shapes *style*)))
 (defun border-down-and-horizontal () (box-shapes-down-and-horizontal (style-border-shapes *style*)))
 (defun border-attribute () (style-border-attribute *style*))
-(defun character-ligature-p () (style-character-ligature *style*))

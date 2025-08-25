@@ -179,31 +179,32 @@
           (filter-fn (prompt-window-filter-function (current-prompt-window))))
       (with-point ((start (current-prompt-start-point)))
         (lem/completion-mode:run-completion
-         (lambda (point)
-           (with-point ((start start)
-                        (end point))
+         (lem/completion-mode:make-completion-spec
+          (lambda (point)
+            (with-point ((start start)
+                         (end point))
              
-             (let* ((prompt-string (points-to-string start
-                                                     (buffer-end-point 
-                                                      (point-buffer end))))
-                    (candidates (funcall candidate-fn prompt-string))
-                    (default (prompt-default (current-prompt-window)))
-                    (history (lem/common/history:history-data-list (prompt-window-history (current-prompt-window))))
-                    (items (remove-duplicates
-                                 (append (when default (list default)) history candidates)
-                                 :test #'equal
-                                 :from-end t)))
+              (let* ((prompt-string (points-to-string start
+                                                      (buffer-end-point 
+                                                       (point-buffer end))))
+                     (candidates (funcall candidate-fn prompt-string))
+                     (default (prompt-default (current-prompt-window)))
+                     (history (lem/common/history:history-data-list (prompt-window-history (current-prompt-window))))
+                     (items (remove-duplicates
+                             (append (when default (list default)) history candidates)
+                             :test #'equal
+                             :from-end t)))
                 (loop for item in (funcall filter-fn items prompt-string)
                       collect (lem/completion-mode:make-completion-item :label (car item)
                                                                         :chunks (cdr item)
                                                                         :start start
                                                                         :end end)))))
+          :completion-selected (lambda () (prompt-execute)))
          :style `(:gravity ,*prompt-completion-window-gravity*
-                  :offset-y -1
-                  :shape ,*prompt-completion-window-shape*)
+                   :offset-y -1
+                   :shape ,*prompt-completion-window-shape*)
          :then (lambda ()
-                 (update-prompt-window (current-prompt-window)))
-         )))))
+                 (update-prompt-window (current-prompt-window))))))))
 
 (define-command prompt-completion () ()
   (open-prompt-completion))

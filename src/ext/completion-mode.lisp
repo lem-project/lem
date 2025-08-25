@@ -37,10 +37,15 @@
    (async
     :initarg :async
     :initform nil
-    :reader spec-async-p)))
+    :reader spec-async-p)
+   (completion-selected
+    :initarg :completion-selected
+    :initform nil
+    :accessor spec-completion-selected)))
 
-(defun make-completion-spec (function &key async)
-  (make-instance 'completion-spec :function function :async async))
+(defun make-completion-spec (function &key async completion-selected)
+  (make-instance 'completion-spec :function function :async async
+                 :completion-selected completion-selected))
 
 (defun ensure-completion-spec (completion-spec)
   (typecase completion-spec
@@ -222,7 +227,11 @@
   (call-focus-action))
 
 (define-command completion-select () ()
-  (popup-menu-select (context-popup-menu *completion-context*)))
+  (let ((completion-selected (spec-completion-selected 
+                              (context-spec *completion-context*))))
+    (popup-menu-select (context-popup-menu *completion-context*))
+  (when completion-selected 
+    (funcall completion-selected))))
 
 (define-command completion-insert-space-and-cancel () ()
   (insert-character (current-point) #\space)

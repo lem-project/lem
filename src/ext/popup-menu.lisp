@@ -1,4 +1,4 @@
-(defpackage :lem/popup-menu
+q(defpackage :lem/popup-menu
   (:use :cl :lem)
   (:export :write-header
            :get-focus-item

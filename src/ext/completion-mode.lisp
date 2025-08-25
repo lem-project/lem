@@ -106,7 +106,7 @@
 
 (define-key *completion-mode-keymap* 'next-line 'completion-next-line)
 (define-key *completion-mode-keymap* "M-n"    'completion-next-line)
-(define-key *completion-mode-keymap* "Tab"    'completion-narrowing-down-or-next-line)
+(define-key *completion-mode-keymap* "Tab"    'completion-narrowing-down-or-insert)
 (define-key *completion-mode-keymap* "Shift-Tab"    'completion-previous-line)
 (define-key *completion-mode-keymap* 'previous-line 'completion-previous-line)
 (define-key *completion-mode-keymap* "M-p"    'completion-previous-line)
@@ -275,12 +275,13 @@
               (t
                nil))))))
 
-(define-command completion-narrowing-down-or-next-line () ()
+(define-command completion-narrowing-down-or-insert () ()
   (or (narrowing-down *completion-context* (context-last-items *completion-context*))
-      (if *completion-reverse*
-          (completion-previous-line)
-          (completion-next-line))))
-
+      (let ((item (lem/popup-menu:get-focus-item 
+                   (context-popup-menu *completion-context*))))
+        (completion-insert (current-point) item)
+        (completion-refresh))))
+  
 (defun limitation-items (items)
   (let ((result (if (and *limit-number-of-items*
                          (< *limit-number-of-items* (length items)))

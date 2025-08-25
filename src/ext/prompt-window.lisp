@@ -1,4 +1,4 @@
-(defpackage :lem/prompt-window
+ (defpackage :lem/prompt-window
   (:use :cl :lem)
   (:import-from :alexandria
                 :when-let
@@ -209,7 +209,11 @@
   (open-prompt-completion))
 
 (define-command prompt-clear () ()
-  (replace-prompt-input ""))
+  (apply #'delete-between-points (get-between-input-points))
+  (when *automatic-tab-completion*
+    (progn
+    (open-prompt-completion))
+    (lem/completion-mode:completion-refresh))) 
 
 (define-command prompt-previous-history () ()
   (let ((history (prompt-window-history (current-prompt-window))))
@@ -403,8 +407,9 @@
                               (when (typep (this-command) 'lem:editable-advice)
                                 (funcall edit-callback (get-input-string))))))
                 (run-hooks *prompt-after-activate-hook*)
-                (when *automatic-tab-completion*
-                  (open-prompt-completion))
+                (when (and *automatic-tab-completion*
+                           (prompt-window-filter-function parameters))
+                           (open-prompt-completion))
                 (with-special-keymap (special-keymap)
                   (if syntax-table
                       (with-current-syntax syntax-table

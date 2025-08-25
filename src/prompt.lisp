@@ -10,7 +10,7 @@
 (defvar *prompt-file-completion-function* nil)
 (defvar *prompt-command-completion-function* 'completion-command)
 
-(defvar *automatic-tab-completion* nil
+(defvar *automatic-tab-completion* t
   "When set to true, the completion list is opened instantly.
 When set to false, the completion list only opens when the user presses TAB")
 

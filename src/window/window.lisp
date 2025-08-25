@@ -126,6 +126,12 @@
     :initarg :buffer-switchable
     :accessor window-buffer-switchable-p)))
 
+(defmethod window-use-modeline-p ((window window))
+  (and (not (header-window-p window))
+       (not (floating-window-p window))
+       (not (attached-window-p window))
+       (frame-enable-window-modeline-per-window (current-frame))))
+
 (defun need-to-redraw (window)
   (setf (window-need-to-redraw-p window) t))
 
@@ -405,9 +411,11 @@ height, or close to it."
   (let ((new-window
           (make-window (window-buffer window)
                        (window-x window)
-                       (+ (window-y window) height)
+                       (+ (frame-window-bottom-margin (current-frame))
+                          (window-y window)
+                          height)
                        (window-width window)
-                       (- (window-height window) height)
+                       (- (window-height window) height (frame-window-bottom-margin (current-frame)))
                        t)))
     (set-window-height height window)
     (split-window-after window new-window :vsplit)))
@@ -434,7 +442,8 @@ close to it."
   (let ((new-window
           (make-window (window-buffer window)
                        (+ (frame-window-left-margin (current-frame))
-                          (window-x window) width)
+                          (window-x window)
+                          width)
                        (window-y window)
                        (- (window-width window)
                           width

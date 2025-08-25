@@ -191,6 +191,7 @@ const zIndexTable = {
   'floating-window': 200,
   'modeline': 100,
   'vertical-border': 100,
+  'horizontal-border': 101,
 };
 
 function zindex(type) {
@@ -482,7 +483,45 @@ class VerticalBorder {
   }
 }
 
+class HorizontalBorder {
+  constructor({ x, y, width, option, editor }) {
+    this.option = option;
+    this.editor = editor;
+    this.line = document.createElement('div');
+    this.line.className = 'lem-editor__horizontal-border';
+    this.line.style.width = width * option.fontWidth + 'px';
+    this.line.style.position = 'absolute';
+    this.line.style.zIndex = zindex('horizontal-border');
+
+    getLemEditorElement().appendChild(this.line);
+
+    this.move(x, y);
+
+    addMouseEventListeners({
+      dom: this.line,
+      editor,
+      isDraggable: true,
+      draggableStyle: 'row-resize',
+    });
+  }
+
+  delete() {
+    this.line.parentNode.removeChild(this.line);
+  }
+
+  move(x, y) {
+    const [x0, y0] = this.editor.getDisplayRectangle();
+    this.line.style.left = (x0 + x * this.option.fontWidth) + 'px';
+    this.line.style.top = Math.floor(y0 + y * this.option.fontHeight - 4) + 'px';
+  }
+
+  resize(width) {
+    this.line.style.width = (width * this.option.fontWidth) + 'px';
+  }
+}
+
 const viewStyles = {
+  header: () => { },
   tile: () => { },
   floating: (option) => ({
     boxSizing: 'border-box',
@@ -524,6 +563,7 @@ class View {
     this.borderShape = borderShape;
     this.editor = editor;
 
+    this.bottomBar = null;
     this.leftsideBar = null;
 
     switch (kind) {
@@ -536,10 +576,21 @@ class View {
           option: option,
           editor: editor,
         });
+        if (!useModeline) {
+          this.bottomBar = new HorizontalBorder({
+            x: x,
+            y: y + height - 1,
+            width: width,
+            option: option,
+            editor: editor,
+          });
+        }
+        break;
+      case 'header':
+        this.mainSurface = this.makeSurface(type, content);
         break;
       case 'floating':
         this.mainSurface = this.makeSurface(type, content);
-        //console.log(borderShape);
         if (borderShape === 'left-border') {
           this.leftSideBar = new VerticalBorder({
             x: x,
@@ -563,6 +614,9 @@ class View {
     if (this.leftSideBar) {
       this.leftSideBar.delete();
     }
+    if (this.bottomBar) {
+      this.bottomBar.delete();
+    }
   }
 
   move(x, y) {
@@ -575,6 +629,9 @@ class View {
     }
     if (this.leftSideBar) {
       this.leftSideBar.move(x, y);
+    }
+    if (this.bottomBar) {
+      this.bottomBar.move(x, y + this.height);
     }
   }
 
@@ -590,7 +647,10 @@ class View {
       this.modelineSurface.resize(width, 1);
     }
     if (this.leftSideBar) {
-      this.leftSideBar.resize(height + 1);
+      this.leftSideBar.resize(height + (this.modelineSurface ? 1 : 0));
+    }
+    if (this.bottomBar) {
+      this.bottomBar.resize(width);
     }
   }
 

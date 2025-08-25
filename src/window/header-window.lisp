@@ -15,3 +15,6 @@
 (defmethod %delete-window ((window header-window))
   (remove-header-window (current-frame) window)
   (notify-header-window-modified (current-frame)))
+
+(defun header-window-p (window)
+  (typep window 'header-window))

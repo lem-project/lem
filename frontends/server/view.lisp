@@ -27,7 +27,7 @@
   width
   height
   use-modeline
-  kind ; "tile" / "floating"
+  kind ; "tile" / "floating" / "header"
   border
   (border-shape nil :type border-shape))
 

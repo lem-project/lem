@@ -369,7 +369,8 @@
    :window-scroll)
   ;; header-window.lisp
   (:export
-   :header-window)
+   :header-window
+   :header-window-p)
   ;; side-window.lisp
   (:export
    :side-window

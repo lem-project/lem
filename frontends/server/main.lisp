@@ -48,6 +48,8 @@
 (defvar *dist* (dump-files))
 
 (defun find-dist-by-path (path)
+  (asdf:system-relative-pathname :lem-server path)
+  #+(or)
   (cdr (assoc path *dist* :test #'equal)))
 
 (defun clack-handler (env)
@@ -105,6 +107,7 @@
    :name :jsonrpc
    :redraw-after-modifying-floating-window t
    :window-left-margin 0
+   :window-bottom-margin 0
    :html-support t
    :underline-color-support t
    :no-force-needed t))
@@ -138,7 +141,6 @@
     (notify jsonrpc "bulk" argument)))
 
 (defun handle-login (jsonrpc logged-in-callback params)
-  (log:info "ready: ~A ~A" jsonrpc/connection:*connection* (pretty-json params))
   (with-error-handler ()
     (let* ((size (gethash "size" params))
            (foreground (gethash "foreground" params))
@@ -161,7 +163,6 @@
                             "background" (lem-core::background-color)
                             "size" (hash "width" (lem:display-width)
                                          "height" (lem:display-height)))))
-        (log:info "login response: ~A" (pretty-json response))
         response))))
 
 (defun login (jsonrpc logged-in-callback)
@@ -279,10 +280,13 @@
                          :width width
                          :height height
                          :use-modeline use-modeline
-                         :kind (if (or (lem:floating-window-p window)
-                                       (lem:attached-window-p window))
-                                   "floating"
-                                   "tile")
+                         :kind (cond ((or (lem:floating-window-p window)
+                                          (lem:attached-window-p window))
+                                      "floating")
+                                     ((lem:header-window-p window)
+                                      "header")
+                                     (t
+                                      "tile"))
                          :border (lem:window-border window)
                          :border-shape (and (lem:floating-window-p window)
                                             (lem:floating-window-border-shape window)))))

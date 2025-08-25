@@ -10,6 +10,10 @@
   ((window-left-margin
     :initarg :window-left-margin
     :reader frame-window-left-margin)
+   (enable-modeline-per-window
+    :initarg :enable-modeline-per-window
+    :initform t
+    :reader frame-enable-window-modeline-per-window)
    (current-window
     :initarg :current-window
     :initform nil
@@ -71,6 +75,11 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
     :initform nil
     :accessor frame-rightside-window)))
 
+(defmethod frame-window-bottom-margin ((frame frame))
+  (if (frame-enable-window-modeline-per-window frame)
+      0
+      (window-bottom-margin (implementation))))
+
 (defmethod notify-floating-window-modified ((frame frame))
   (set-frame-modified-floating-windows t frame))
 
@@ -96,7 +105,9 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
     (prompt-active-p prompt)))
 
 (defun make-frame (&optional (old-frame (current-frame)))
-  (let ((frame (make-instance 'frame :window-left-margin (window-left-margin (implementation)))))
+  (let ((frame (make-instance 'frame
+                              :window-left-margin (window-left-margin (implementation))
+                              :enable-modeline-per-window t)))
     (push frame *frames*)
     (when old-frame
       (dolist (window (frame-header-windows old-frame))

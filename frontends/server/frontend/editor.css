@@ -18,3 +18,8 @@
   width: 10px;
   background: linear-gradient(to right, transparent 4px, rgba(128, 128, 128, 0.5) 4px 6px, transparent 5px);
 }
+
+.lem-editor__horizontal-border {
+  height: 10px;
+  background: linear-gradient(to bottom, transparent 0px, rgba(128, 128, 128, 0.5) 3px 5px, transparent 2px);
+}

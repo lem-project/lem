@@ -204,7 +204,7 @@
                              :test #'equal
                              :from-end t)))
                 (loop for item in items
-                      collect (lem/completion-mode:make-completion-item :label (car item)o
+                      collect (lem/completion-mode:make-completion-item :label (car item)
                                                                         :chunks (cdr item)
                                                                         :start start
                                                                         :end end)))))

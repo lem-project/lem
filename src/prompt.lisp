@@ -84,6 +84,7 @@ When set to false, the completion list only opens when the user presses TAB")
                                       candidate-function
                                       history-candidates
                                       filter-function
+                                      annotate-function
                                       completion-function
                                       test-function
                                       (history-symbol nil)
@@ -97,6 +98,7 @@ When set to false, the completion list only opens when the user presses TAB")
                    candidate-function
                    history-candidates
                    filter-function
+                   annotate-function
                    completion-function
                    test-function
                    history-symbol
@@ -171,6 +173,27 @@ When set to false, the completion list only opens when the user presses TAB")
        ;; (completion str (all-command-names)))
    ;; #'string-lessp))
 
+(declaim (inline find-command-keybindings-in-keymap))
+(defun find-command-keybindings-in-keymap (command &optional (keymap *global-keymap*))
+  "Return a list of keybindings (strings) for a COMMAND (command object or string).
+
+  Search in the given KEYMAP. See also collect-command-all-keybindings."
+  (when (stringp command)
+    (setf command (find-command command)))
+  (alexandria:when-let (keybindings (collect-command-keybindings (command-name command) keymap))
+    (mapcar (lambda (keybinding)
+              (format nil "~{~A~^ ~}" keybinding))
+            keybindings)))
+
+(defun collect-command-all-keybindings (buffer command)
+  (format nil "~{~A~^, ~}"
+          (append (find-command-keybindings-in-keymap command (mode-keymap (buffer-major-mode buffer)))
+                  (loop :for mode :in (buffer-minor-modes buffer)
+                        :for keymap := (mode-keymap mode)
+                        :when keymap
+                        :append (find-command-keybindings-in-keymap command keymap))
+                  (find-command-keybindings-in-keymap command *global-keymap*))))
+
 (defun prompt-for-command (prompt &key candidates)
   (prompt-for-string
    prompt
@@ -178,6 +201,9 @@ When set to false, the completion list only opens when the user presses TAB")
    :candidate-function (lambda (x)
                          (declare (ignore x))
                          (sort (all-command-names) #'string<))
+   :annotate-function (lambda (name) (collect-command-all-keybindings
+                                     (current-buffer)
+                                     (find-command name)))
    :history-candidates candidates
      ;; :completion-function (if candidates
                             ;; (lambda (input)

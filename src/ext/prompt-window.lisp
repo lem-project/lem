@@ -28,8 +28,6 @@
     :initarg :input
     :reader execute-input)))
 
-
-
 (defclass prompt-parameters ()
   ((candidate-function
     :initarg :candidate-function
@@ -46,6 +44,10 @@
     :initarg :filter-function
     :initform nil
     :reader prompt-window-filter-function)
+   (annotate-function
+    :initarg :annotate-function
+    :initform nil
+    :reader prompt-window-annotate-function)
    (existing-test-function
     :initarg :existing-test-function
     :initform nil
@@ -194,6 +196,7 @@
                                                       (buffer-end-point 
                                                        (point-buffer end))))
                      (candidates (funcall candidate-fn prompt-string))
+                     (annotate-fn (prompt-window-annotate-function prompt-window))
                      (default (prompt-default prompt-window))
                      (history (prompt-window-history-candidates prompt-window))
                      (items (remove-duplicates 
@@ -206,10 +209,15 @@
                              :test #'equal
                              :from-end t)))
                 (loop for item in items
-                      collect (lem/completion-mode:make-completion-item :label (car item)
-                                                                        :chunks (cdr item)
-                                                                        :start start
-                                                                        :end end)))))
+                      for label = (car item)
+                      collect (lem/completion-mode:make-completion-item 
+                               :label label
+                               :chunks (cdr item)
+                               :detail (when annotate-fn
+                                         (funcall annotate-fn
+                                                  label))
+                               :start start
+                               :end end)))))
           :completion-selected (lambda () (unless lem:*prompt-tab-completion*
                                             (prompt-execute)))
           :tab-completion lem:*prompt-tab-completion*)
@@ -276,7 +284,8 @@
                    :use-modeline-p nil
                    :candidate-function (prompt-window-candidate-function parameters)
                    :history-candidates (prompt-window-history-candidates parameters)
-                   :filter-function (prompt-window-filter-function parameters) 
+                   :filter-function (prompt-window-filter-function parameters)
+                   :annotate-function (prompt-window-annotate-function parameters)
                    :completion-function (prompt-window-completion-function parameters)
                    :existing-test-function (prompt-window-existing-test-function parameters)
                    :caller-of-prompt-window (prompt-window-caller-of-prompt-window parameters)
@@ -468,6 +477,7 @@
                                             candidate-function
                                             history-candidates
                                             filter-function
+                                            annotate-function
                                             completion-function
                                             test-function
                                             history-symbol
@@ -483,6 +493,7 @@
                                              :candidate-function candidate-function
                                              :history-candidates history-candidates
                                              :filter-function filter-function
+                                             :annotate-function annotate-function
                                              :completion-function completion-function
                                              :existing-test-function test-function
                                              :caller-of-prompt-window (current-window)
@@ -545,61 +556,40 @@
                     :start s
                     :end (line-end e)))))
 
-(declaim (inline find-command-keybindings-in-keymap))
-(defun find-command-keybindings-in-keymap (command &optional (keymap *global-keymap*))
-  "Return a list of keybindings (strings) for a COMMAND (command object or string).
+;; (defun prompt-command-completion (string &key candidates)
+  ;; "Filter the list of commands from an input string and return a list of command completion items.
 
-  Search in the given KEYMAP. See also collect-command-all-keybindings."
-  (when (stringp command)
-    (setf command (find-command command)))
-  (alexandria:when-let (keybindings (collect-command-keybindings (command-name command) keymap))
-    (mapcar (lambda (keybinding)
-              (format nil "~{~A~^ ~}" keybinding))
-            keybindings)))
+  ;; For each command, find and display its available keybindings for the current keymaps.
+  ;; Display CANDIDATES command names (list of strings) before the rest of all commands.
+  ;; The rest of commands are sorted by name."
+  ;; (flet ((collect-items (candidates)
+           ;; (loop :for name :in candidates
+                 ;; :for command := (find-command name)
+                 ;; ;; avoid commands created in a REPL session but now non-existent.
+                 ;; :unless (null command)
+                 ;; :collect (lem/completion-mode:make-completion-item
+                           ;; :label name
+                           ;; :detail (collect-command-all-keybindings
+                                    ;; (current-buffer)
+                                    ;; command))))
 
-(defun collect-command-all-keybindings (buffer command)
-  (format nil "~{~A~^, ~}"
-          (append (find-command-keybindings-in-keymap command (mode-keymap (buffer-major-mode buffer)))
-                  (loop :for mode :in (buffer-minor-modes buffer)
-                        :for keymap := (mode-keymap mode)
-                        :when keymap
-                        :append (find-command-keybindings-in-keymap command keymap))
-                  (find-command-keybindings-in-keymap command *global-keymap*))))
+         ;; (filter-items (items)
+           ;; (if (find #\- string)
+               ;; (completion-hyphen string
+                                  ;; items
+                                  ;; :key #'lem/completion-mode:completion-item-label)
+               ;; (completion string
+                           ;; items
+                           ;; :key #'lem/completion-mode:completion-item-label))))
 
-(defun prompt-command-completion (string &key candidates)
-  "Filter the list of commands from an input string and return a list of command completion items.
-
-  For each command, find and display its available keybindings for the current keymaps.
-  Display CANDIDATES command names (list of strings) before the rest of all commands.
-  The rest of commands are sorted by name."
-  (flet ((collect-items (candidates)
-           (loop :for name :in candidates
-                 :for command := (find-command name)
-                 ;; avoid commands created in a REPL session but now non-existent.
-                 :unless (null command)
-                 :collect (lem/completion-mode:make-completion-item
-                           :label name
-                           :detail (collect-command-all-keybindings
-                                    (current-buffer)
-                                    command))))
-
-         (filter-items (items)
-           (if (find #\- string)
-               (completion-hyphen string
-                                  items
-                                  :key #'lem/completion-mode:completion-item-label)
-               (completion string
-                           items
-                           :key #'lem/completion-mode:completion-item-label))))
-
-    (let* ((all-items (collect-items (sort (all-command-names) #'string<)))
-           (candidate-items (collect-items candidates))
-           (items (remove-duplicates
-                   (append candidate-items all-items)
-                   :test #'equal
-                   :key #'lem/completion-mode:completion-item-label
-                   :from-end t)))
-      (filter-items items))))
+    ;; (let* ((all-items (collect-items (sort (all-command-names) #'string<)))
+           ;; (candidate-items (collect-items candidates))
+           ;; (items (remove-duplicates
+                   ;; (append candidate-items all-items)
+                   ;; :test #'equal
+                   ;; :key #'lem/completion-mode:completion-item-label
+                   ;; :from-end t)))
+      ;; (filter-items items))))
 
 (setf *prompt-file-completion-function* 'prompt-file-completion)
 (setf *prompt-buffer-completion-function* 'prompt-buffer-completion)

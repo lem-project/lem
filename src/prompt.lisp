@@ -73,6 +73,7 @@ When set to false, the completion list only opens when the user presses TAB")
 (defun prompt-for-string (prompt &rest args
                                  &key initial-value
                                       candidate-function
+                                      history-candidates
                                       filter-function
                                       completion-function
                                       test-function
@@ -85,6 +86,7 @@ When set to false, the completion list only opens when the user presses TAB")
                                       default)
   (declare (ignore initial-value
                    candidate-function
+                   history-candidates
                    filter-function
                    completion-function
                    test-function
@@ -153,21 +155,25 @@ When set to false, the completion list only opens when the user presses TAB")
         default
         result)))
 
-
-(defun completion-command (str)
-  (sort
-   (if (find #\- str)
-       (completion-hyphen str (all-command-names))
-       (completion str (all-command-names)))
-   #'string-lessp))
+;; (defun completion-command (str)
+  ;; (sort
+   ;; (if (find #\- str)
+       ;; (completion-hyphen str (all-command-names))
+       ;; (completion str (all-command-names)))
+   ;; #'string-lessp))
 
 (defun prompt-for-command (prompt &key candidates)
   (prompt-for-string
    prompt
-   :completion-function (if candidates
-                            (lambda (input)
-                              (funcall *prompt-command-completion-function* input :candidates candidates))
-                            *prompt-command-completion-function*)
+   :filter-function #'flex-filter
+   :candidate-function (lambda (x)
+                         (declare (ignore x))
+                         (sort (all-command-names) #'string<))
+   :history-candidates candidates
+     ;; :completion-function (if candidates
+                            ;; (lambda (input)
+                              ;; (funcall *prompt-command-completion-function* input :candidates candidates))
+                            ;; *prompt-command-completion-function*)
    :test-function 'exist-command-p
    :history-symbol 'mh-execute-command
    :syntax-table *prompt-syntax-table*))

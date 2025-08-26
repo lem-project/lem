@@ -33,6 +33,9 @@
     :initarg :candidate-function
     :initform nil
     :reader prompt-window-candidate-function)
+   (history-candidates
+    :initarg :history-candidates
+    :reader prompt-window-history-candidates)
    (completion-function
     :initarg :completion-function
     :initform nil
@@ -184,27 +187,35 @@
             (with-point ((start start)
                          (end point))
              
-              (let* ((prompt-string (points-to-string start
+              (let* ((prompt-window (current-prompt-window))
+                     (prompt-string (points-to-string start
                                                       (buffer-end-point 
                                                        (point-buffer end))))
                      (candidates (funcall candidate-fn prompt-string))
-                     (default (prompt-default (current-prompt-window)))
-                     (history (lem/common/history:history-data-list (prompt-window-history (current-prompt-window))))
-                     (items (remove-duplicates
-                             (append (when default (list default)) history candidates)
+                     (default (prompt-default prompt-window))
+                     (history (prompt-window-history-candidates prompt-window))
+                     (items (remove-duplicates 
+                             (append
+                              (funcall filter-fn (when default (list default)) prompt-string)
+                              (loop for item in (funcall filter-fn history prompt-string)
+                                    collect item)
+                              (loop for item in (funcall filter-fn candidates prompt-string :sort t) 
+                                    collect item))
                              :test #'equal
                              :from-end t)))
-                (loop for item in (funcall filter-fn items prompt-string)
-                      collect (lem/completion-mode:make-completion-item :label (car item)
+                (loop for item in items
+                      collect (lem/completion-mode:make-completion-item :label (car item)o
                                                                         :chunks (cdr item)
                                                                         :start start
                                                                         :end end)))))
           :completion-selected (lambda () (prompt-execute)))
-         :style `(:gravity ,*prompt-completion-window-gravity*
+          :style `(:gravity ,*prompt-completion-window-gravity*
                    :offset-y -1
                    :shape ,*prompt-completion-window-shape*)
-         :then (lambda ()
-                 (update-prompt-window (current-prompt-window))))))))
+          :then (lambda ()
+                  (update-prompt-window (current-prompt-window)))))))) 
+
+
 
 (define-command prompt-completion () ()
   (open-prompt-completion))
@@ -260,6 +271,7 @@
                    :height height
                    :use-modeline-p nil
                    :candidate-function (prompt-window-candidate-function parameters)
+                   :history-candidates (prompt-window-history-candidates parameters)
                    :filter-function (prompt-window-filter-function parameters) 
                    :completion-function (prompt-window-completion-function parameters)
                    :existing-test-function (prompt-window-existing-test-function parameters)
@@ -450,6 +462,7 @@
 (defmethod lem-core::%prompt-for-line  (prompt-string
                                        &key initial-value
                                             candidate-function
+                                            history-candidates
                                             filter-function
                                             completion-function
                                             test-function
@@ -464,6 +477,7 @@
                   :initial-string initial-value
                   :parameters (make-instance 'prompt-parameters
                                              :candidate-function candidate-function
+                                             :history-candidates history-candidates
                                              :filter-function filter-function
                                              :completion-function completion-function
                                              :existing-test-function test-function

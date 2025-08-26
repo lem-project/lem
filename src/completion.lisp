@@ -2,18 +2,20 @@
 
 (defvar *file-completion-ignore-case* t)
 
-(defun flex-filter (candidates elt)
+(defun flex-filter (candidates elt &key sort)
   (if (= (length elt) 0)
       (mapcar (lambda (x) (list x)) candidates)
       (mapcar (lambda (x) (cons (car x) 
                                 (mapcar 
                                  (lambda (pos) (cons pos (+ pos 1)))
                                  (cddr x))))
-              (sort (loop for candidate in candidates
-                          for score = (flx:score candidate elt) 
-                          when (car score)
-                          collect (cons candidate score))
-                    (lambda (x y) (> (cadr x) (cadr y)))))))
+              (let ((results (loop for candidate in candidates
+                                   for score = (flx:score candidate elt) 
+                                   when (car score)
+                                   collect (cons candidate score))))
+                (if sort 
+                    (sort results (lambda (x y) (> (cadr x) (cadr y))))
+                    results)))))
 
 (defun fuzzy-match-p (str elt &optional ignore-case)
   (loop :with start := 0

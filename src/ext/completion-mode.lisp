@@ -41,11 +41,16 @@
    (completion-selected
     :initarg :completion-selected
     :initform nil
-    :accessor spec-completion-selected)))
+    :accessor spec-completion-selected)
+   (tab-completion
+    :initarg :tab-completion
+    :initform t
+    :accessor spec-tab-completion)))
 
-(defun make-completion-spec (function &key async completion-selected)
+(defun make-completion-spec (function &key async completion-selected (tab-completion t))
   (make-instance 'completion-spec :function function :async async
-                 :completion-selected completion-selected))
+                 :completion-selected completion-selected
+                 :tab-completion tab-completion))
 
 (defun ensure-completion-spec (completion-spec)
   (typecase completion-spec
@@ -111,7 +116,7 @@
 
 (define-key *completion-mode-keymap* 'next-line 'completion-next-line)
 (define-key *completion-mode-keymap* "M-n"    'completion-next-line)
-(define-key *completion-mode-keymap* "Tab"    'completion-narrowing-down-or-insert)
+(define-key *completion-mode-keymap* "Tab"    'completion-tab)
 (define-key *completion-mode-keymap* "Shift-Tab"    'completion-previous-line)
 (define-key *completion-mode-keymap* 'previous-line 'completion-previous-line)
 (define-key *completion-mode-keymap* "M-p"    'completion-previous-line)
@@ -284,7 +289,18 @@
               (t
                nil))))))
 
-(define-command completion-narrowing-down-or-insert () ()
+(define-command completion-tab () ()
+  (if (spec-tab-completion (context-spec *completion-context*))
+      (completion-narrowing-down-or-next-line)
+      (completion-narrowing-down-or-insert)))
+
+(defun completion-narrowing-down-or-next-line ()
+  (or (narrowing-down *completion-context* (context-last-items *completion-context*))
+      (if *completion-reverse*
+          (completion-previous-line)
+          (completion-next-line))))
+
+(defun completion-narrowing-down-or-insert ()
   (or (narrowing-down *completion-context* (context-last-items *completion-context*))
       (let ((item (lem/popup-menu:get-focus-item 
                    (context-popup-menu *completion-context*))))

@@ -28,6 +28,8 @@
     :initarg :input
     :reader execute-input)))
 
+
+
 (defclass prompt-parameters ()
   ((candidate-function
     :initarg :candidate-function
@@ -208,12 +210,14 @@
                                                                         :chunks (cdr item)
                                                                         :start start
                                                                         :end end)))))
-          :completion-selected (lambda () (prompt-execute)))
-          :style `(:gravity ,*prompt-completion-window-gravity*
-                   :offset-y -1
-                   :shape ,*prompt-completion-window-shape*)
-          :then (lambda ()
-                  (update-prompt-window (current-prompt-window)))))))) 
+          :completion-selected (lambda () (unless lem:*prompt-tab-completion*
+                                            (prompt-execute)))
+          :tab-completion lem:*prompt-tab-completion*)
+         :style `(:gravity ,*prompt-completion-window-gravity*
+                  :offset-y -1
+                  :shape ,*prompt-completion-window-shape*)
+         :then (lambda ()
+                 (update-prompt-window (current-prompt-window)))))))) 
 
 
 

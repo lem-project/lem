@@ -2,6 +2,15 @@
 
 (defparameter *default-prompt-gravity* :top-display)
 
+(defvar *prompt-tab-completion* t
+  "When set to `t`, tab will cycle through the selections in the completion window.
+Return will insert the current selection into the prompt, and you will need to
+press return a second time in order to execute your selection.
+
+When set to nil, tab will insert the current selection in the prompt. Pressing return
+will execute the currently highlighted completion in the window, and you will not have
+to press return a second time.")
+
 (defvar *prompt-activate-hook* '())
 (defvar *prompt-after-activate-hook* '())
 (defvar *prompt-deactivate-hook* '())

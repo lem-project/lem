@@ -135,6 +135,9 @@ When set to false, the completion list only opens when the user presses TAB")
   (let ((result (prompt-for-string prompt
                  :candidate-function (lambda (x) ( buffer-candidates x))
                  :filter-function #'flex-filter
+                 :annotate-function (lambda (name) (or 
+                                                    (buffer-filename 
+                                                     (get-buffer name)) ""))
                  ;:completion-function *prompt-buffer-completion-function*
                  :test-function (and existing
                                      (lambda (name)

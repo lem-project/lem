@@ -610,12 +610,25 @@
           (delete-between-points start end)))))
   (lem/completion-mode:completion-refresh))
 
+
+(defun file-candidates (directory)
+  (lambda (str)
+    (replace-prompt-input (normalize-path-input str))
+    (completion-file 
+     (if (alexandria:emptyp str)
+         "./"
+         (subseq str
+                 0 (1+ (position #\/ str :from-end t ))))
+     (or directory
+         (namestring (user-homedir-pathname))))))
+    
 (defmethod lem-core::%prompt-for-file (prompt directory default existing gravity)
   (let ((result
           (lem-core::%prompt-for-line (if default
                                 (format nil "~a(~a) " prompt default)
                                 prompt)
                             :initial-value (when directory (princ-to-string directory))
+                            :candidate-function (file-candidates directory)
                             :completion-function
                             (when *prompt-file-completion-function*
                               (lambda (str)

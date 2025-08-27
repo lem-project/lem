@@ -14,7 +14,7 @@
                                    when (car score)
                                    collect (cons candidate score))))
                 (if sort 
-                    (sort results (lambda (x y) (> (cadr x) (cadr y))))
+                    (sort results #'> :key #'second)
                     results)))))
 
 (defun fuzzy-match-p (str elt &optional ignore-case)

@@ -611,7 +611,7 @@
   (lem/completion-mode:completion-refresh))
 
 
-(defun file-candidates (directory)
+(defun file-candidates (directory &key directory-only)
   (lambda (str)
     (replace-prompt-input (normalize-path-input str))
     (completion-file 
@@ -620,7 +620,8 @@
          (subseq str
                  0 (1+ (position #\/ str :from-end t ))))
      (or directory
-         (namestring (user-homedir-pathname))))))
+         (namestring (user-homedir-pathname)))
+     :directory-only directory-only)))
     
 (defmethod lem-core::%prompt-for-file (prompt directory default existing gravity)
   (let ((result

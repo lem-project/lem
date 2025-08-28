@@ -253,11 +253,12 @@ With prefix argument ARG, unmark all those files."
       (insert-string point string :file file))))
 
 (defun prompt-for-rename-file (point)
+  "Open an inlined prompt at point to rename the file."
   (let ((file (current-file point)))
     (save-excursion
       (move-point (current-point) point)
       (prompt-for-string
-       ""
+       "New name: "
        :initial-value (if file (file-namestring file) "")
        :test-function (lambda (string)
                         (not (alexandria:emptyp string)))

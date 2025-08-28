@@ -231,8 +231,12 @@ With prefix argument ARG, unmark all those files."
   (update-all-buffers))
 
 (define-command directory-mode-rename-files () ()
-  (let ((dst-file (prompt-for-file "Destination Filename: " :directory (get-dest-directory))))
-    (rename-files (selected-files (current-point)) dst-file))
+  (let ((dst-file (prompt-for-file "Destination: " :directory (get-dest-directory)))
+        (files (selected-files (current-point))))
+    (when (and (< 1 (length files))
+               (uiop:file-pathname-p dst-file))
+      (editor-error "Please select a directory to move multiple files."))
+    (rename-files files dst-file))
   (update-all-buffers))
 
 (defun move-to-file-position (point)

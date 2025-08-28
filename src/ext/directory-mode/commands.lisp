@@ -265,16 +265,25 @@ With prefix argument ARG, unmark all those files."
        :use-border nil))))
 
 (define-command directory-mode-rename-file () ()
+  "Edit the file name at point.
+  Also rename the file's buffer, if it is open."
   (with-point ((point (current-point) :right-inserting))
     (move-to-file-position point)
     (alexandria:when-let (source-file (text-property-at point :file))
       (replace-file-name point "")
       (unwind-protect
-           (let* ((new-file (merge-pathnames (prompt-for-rename-file point)
+           (let* ((old-file (merge-pathnames source-file
+                                             (buffer-directory)))
+                  (new-name (prompt-for-rename-file point))
+                  (new-file (merge-pathnames new-name
                                              (buffer-directory (current-buffer)))))
              (when (probe-file new-file)
                (editor-error "The filename already exists."))
-             (rename-file* source-file new-file))
+             (rename-file* source-file new-file)
+             ;; Rename the old buffer.
+             (alexandria:when-let (old-buffer (get-file-buffer old-file))
+               (buffer-rename old-buffer new-name)
+               (setf (buffer-filename old-buffer) new-file)))
         (directory-mode-update-buffer)))))
 
 (define-command directory-mode-sort-files () ()

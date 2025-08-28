@@ -231,8 +231,12 @@ With prefix argument ARG, unmark all those files."
   (update-all-buffers))
 
 (define-command directory-mode-rename-files () ()
-  (let ((dst-file (prompt-for-file "Destination Filename: " :directory (get-dest-directory))))
-    (rename-files (selected-files (current-point)) dst-file))
+  (let ((dst-file (prompt-for-file "Destination: " :directory (get-dest-directory)))
+        (files (selected-files (current-point))))
+    (when (and (< 1 (length files))
+               (uiop:file-pathname-p dst-file))
+      (editor-error "Please select a directory to move multiple files."))
+    (rename-files files dst-file))
   (update-all-buffers))
 
 (defun move-to-file-position (point)
@@ -253,11 +257,12 @@ With prefix argument ARG, unmark all those files."
       (insert-string point string :file file))))
 
 (defun prompt-for-rename-file (point)
+  "Open an inlined prompt at point to rename the file."
   (let ((file (current-file point)))
     (save-excursion
       (move-point (current-point) point)
       (prompt-for-string
-       ""
+       "New name: "
        :initial-value (if file (file-namestring file) "")
        :test-function (lambda (string)
                         (not (alexandria:emptyp string)))
@@ -265,16 +270,25 @@ With prefix argument ARG, unmark all those files."
        :use-border nil))))
 
 (define-command directory-mode-rename-file () ()
+  "Edit the file name at point.
+  Also rename the file's buffer, if it is open."
   (with-point ((point (current-point) :right-inserting))
     (move-to-file-position point)
     (alexandria:when-let (source-file (text-property-at point :file))
       (replace-file-name point "")
       (unwind-protect
-           (let* ((new-file (merge-pathnames (prompt-for-rename-file point)
+           (let* ((old-file (merge-pathnames source-file
+                                             (buffer-directory)))
+                  (new-name (prompt-for-rename-file point))
+                  (new-file (merge-pathnames new-name
                                              (buffer-directory (current-buffer)))))
              (when (probe-file new-file)
                (editor-error "The filename already exists."))
-             (rename-file* source-file new-file))
+             (rename-file* source-file new-file)
+             ;; Rename the old buffer.
+             (alexandria:when-let (old-buffer (get-file-buffer old-file))
+               (buffer-rename old-buffer new-name)
+               (setf (buffer-filename old-buffer) new-file)))
         (directory-mode-update-buffer)))))
 
 (define-command directory-mode-sort-files () ()

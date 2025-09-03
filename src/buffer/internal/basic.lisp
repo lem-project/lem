@@ -7,12 +7,12 @@
   (eq (point-line point1) (point-line point2)))
 
 (defun first-line-p (point)
-  "Return t if the POINT is the first line in the buffer."
+  "Return t if POINT is at the first line in the buffer."
   (same-line-p point
                (buffer-start-point (point-buffer point))))
 
 (defun last-line-p (point)
-  "Return t if the POINT is the last line in the buffer."
+  "Return t if POINT is at the last line in the buffer."
   (same-line-p point
                (buffer-end-point (point-buffer point))))
 
@@ -42,7 +42,7 @@
   point)
 
 (defun move-point (point new-point)
-  "Move POINT to the NEW-POINT."
+  "Move POINT to NEW-POINT."
   (assert (eq (point-buffer point)
               (point-buffer new-point)))
   (%move-to-position point
@@ -70,9 +70,10 @@
   (move-point point (buffer-end-point (point-buffer point))))
 
 (defun line-offset (point n &optional (charpos 0))
-  "If 'point' is a positive number, move the line down. If it is a negative number, move the line up and return the moved 'point'.
-If there is no line at the 'n' destination, the position of 'point' is left as it is and NIL is returned.
-'charpos' is the offset from the start of the line after the move."
+  "If N is a positive number, move POINT N lines down. If N is a negative number, move POINT N lines up. 
+If the move is successful, return the moved point. Otherwise, if there is no line at the destination, 
+the position of POINT is left as it is and NIL is returned.
+CHARPOS is the offset from the start of the line after the move."
   (cond
     ((plusp n)
      (do ((i n (1- i))
@@ -121,8 +122,9 @@ If there is no line at the 'n' destination, the position of 'point' is left as i
            (decf n (1+ charpos))))))
 
 (defun character-offset (point n)
-  "If 'n' is a positive number, move it forward. If it is a negative number, move it backward. Return the moved 'point'.
-If the 'n' character is beyond the buffer, the position of 'point' is left as it is and NIL is returned."
+  "If N is a positive number, move POINT forward by N characters. If N is a negative number, move POINT backward by N characters. 
+If the move is successful, return the moved point; otherwise, if the destination is beyond the buffer, the position of POINT is 
+left as it is and NIL is returned."
   (%character-offset point n
                      (lambda (linum line charpos)
                        (%move-to-position point linum line charpos)
@@ -131,8 +133,8 @@ If the 'n' character is beyond the buffer, the position of 'point' is left as it
                        point)))
 
 (defun character-at (point &optional (offset 0))
-  "Return the character at the offset.
-Return NIL if the buffer is out of range."
+  "Return the character at OFFSET characters from POINT.
+Return NIL if the position is out of range."
   (%character-offset point offset
                      (lambda (linum line charpos)
                        (declare (ignore linum))
@@ -142,11 +144,11 @@ Return NIL if the buffer is out of range."
                                   (point-charpos point)))))
 
 (defun line-string (point)
-  "Return the string at POINT."
+  "Return a string for the line at POINT."
   (line:line-string (point-line point)))
 
 (defun text-property-at (point prop &optional (offset 0))
-  "Return the property of 'prop' at the offset position from 'point' to 'offset'."
+  "Return the property PROP at OFFSET characters from POINT."
   (%character-offset point offset
                      (lambda (linum line charpos)
                        (declare (ignore linum))

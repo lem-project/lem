@@ -34,6 +34,13 @@ webview:
 
 lem: sdl2
 
+.PHONY: legit
+
+legit:
+	qlot install
+	$(LISP) --load .qlot/setup.lisp \
+		--load scripts/build-legit.lisp
+
 install-bin:
 	install -m 755 lem $(PREFIX)/bin
 

@@ -65,7 +65,7 @@
                                   (buffer-list))
                           :test #'equal)))))
 
-(define-key *global-keymap* "C-x /" 'abbrev-with-pop-up-window)
+(define-key *global-prefix-keymap* "/" 'abbrev-with-pop-up-window)
 (define-command abbrev-with-pop-up-window () ()
   (run-completion (lambda (point)
                     (let* ((src-word (preceding-word point))

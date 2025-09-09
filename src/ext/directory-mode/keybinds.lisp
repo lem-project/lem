@@ -10,7 +10,7 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (sb-ext:lock-package :lem/directory-mode/keybinds))
 
-(define-key *global-keymap* "C-x C-j" 'find-file-directory)
+(define-key *global-prefix-keymap* "C-j" 'find-file-directory)
 
 (define-key *directory-mode-keymap* "q" 'quit-active-window)
 (define-key *directory-mode-keymap* "M-q" 'quit-active-window)

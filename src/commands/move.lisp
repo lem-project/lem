@@ -41,8 +41,8 @@
 (define-key *global-keymap* "PageDown" 'next-page)
 (define-key *global-keymap* "M-v" 'previous-page)
 (define-key *global-keymap* "PageUp" 'previous-page)
-(define-key *global-keymap* "C-x ]" 'next-page-char)
-(define-key *global-keymap* "C-x [" 'previous-page-char)
+(define-key *global-prefix-keymap* "]" 'next-page-char)
+(define-key *global-prefix-keymap* "[" 'previous-page-char)
 (define-key *global-keymap* "M-g" 'goto-line)
 
 (defun next-line-aux (n

@@ -84,9 +84,11 @@
       (assert (search-backward point "http"))
       (with-point ((start point))
         (skip-chars-forward point (lambda (c)
-                                    (not (member c '(#\space #\tab #\newline
-                                                     #\; ; for gcc's output URL: (e.g.  [8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wbuiltin-declaration-mismatch-Wbuiltin-declaration-mismatch8;;])
-                                                     )))))
+                                    (and (point< point limit)
+                                         (not (member c '(#\space #\tab #\newline
+                                                          #\; ; for gcc's output URL: (e.g.  [8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wbuiltin-declaration-mismatch-Wbuiltin-declaration-mismatch8;;])
+                                                          ))))))
+
         (make-instance 'url-link
                        :start start
                        :end point
@@ -97,7 +99,8 @@
     (unless (in-string-p point)
       (assert (search-backward point "file://"))
       (with-point ((start point))
-        (skip-chars-forward point (lambda (c) (not (member c '(#\space #\tab #\newline)))))
+        (skip-chars-forward point (lambda (c) (and (point< point limit)
+                                                   (not (member c '(#\space #\tab #\newline))))))
         (make-instance 'file-link
                        :start start
                        :end point
@@ -181,7 +184,7 @@
                 point))))))))
 
 (defun link-at (point)
-  (text-property-at point 'link))
+  (text-property-at point :link))
 
 (defun move-to-link-at-point (point)
   (when-let ((link (link-at point)))
@@ -197,8 +200,11 @@
 
 (defmethod open-link ((link file-link))
   (find-file (pathname (file-link-file link)))
-  (move-to-line (current-point) (file-link-line-number link))
-  (line-offset (current-point) 0 (1- (file-link-charpos link))))
+  (when-let ((line-num (file-link-line-number link)))
+    (move-to-line (current-point) line-num))
+
+  (when-let ((charpos (file-link-charpos link)))
+    (line-offset (current-point) 0 (1- charpos))))
 
 (defmethod open-link ((link url-link))
   (open-external-file (url-link-url link)))

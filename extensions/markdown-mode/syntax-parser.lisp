@@ -125,12 +125,42 @@
                    (character-offset (copy-point point) end)
                    :attribute 'document-inline-code-attribute))
                 ;; Links
-                (ppcre:do-matches (start end "\\[([^\\]]+)\\]\\(([^)]+)\\)" line)
-                  (put-text-property 
-                   (character-offset (copy-point point) start)
-                   (character-offset (copy-point point) end)
-                   :attribute 'document-link-attribute)))
-          ; Exit if we can't move forward
+                (ppcre:do-scans (start end reg-starts reg-ends "\\[([^\\]]+)\\]\\(([^)]+)\\)" line)
+                  (with-point ((match-start point)
+                               (match-end point)
+                               (url-start point)
+                               (url-end point))
+
+                    (move-to-column match-start start)
+                    (move-to-column match-end end)
+
+                    (put-text-property match-start match-end
+                                       :attribute 'document-link-attribute)
+
+                    ;; the second capture group will contain the actual link text, so
+                    ;; the second item in reg-starts and reg-ends will contain that
+                    ;; information.
+
+                    (move-to-column url-start (elt reg-starts 1))
+                    (move-to-column url-end (elt reg-ends 1))
+
+                    (let (links)
+                      (message "~&~%<<~A>> ~A"
+                               line (lem:points-to-string url-start url-end))
+
+                      (with-point ((a url-start)
+                                   (b url-end))
+                        (setf links (lem/link::search-link a b)))
+
+                      (message "~&done: ~A" (first links))
+
+                      (put-text-property
+                       match-start match-end
+                       ;; search link returns a list of links, however there is
+                       ;; only one link here.
+                       :link (first links))))))
+
+              ; Exit if we can't move forward
           :do (unless (line-offset point 1)
                 (return)))))  
 

@@ -131,7 +131,7 @@
                (funcall set-attribute-function (link-start link) (link-end link)))
              (put-text-property (link-start link)
                                 (link-end link)
-                                'link link)
+                                :link link)
              (lem-core::set-clickable (link-start link)
                                       (link-end link)
                                       'click-callback))

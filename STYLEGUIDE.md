@@ -105,7 +105,8 @@ Loop keywords are written as keywords, with the `:`:
 
 Don't write long macros, use the "call-with-" pattern.
 
-Don't define lists with backquote and comma, use the `list` constructor.
+Avoid defining lists with quote, backquote and comma, only do it when
+you know you need them. Prefer using the `list` constructor.
 
 
 ## User-visible variables names

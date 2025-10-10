@@ -45,7 +45,7 @@
 ("lem-extension-manager" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/lem-extension-manager.git")
-  :version "git-cb19321345d6fd13dc3ca59d4d5b9a6b14cc00b1"))
+  :version "git-d467164b0f3e1a479031ec7097fa6fb0cd9d9d09"))
 ("webview" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/webview.git")

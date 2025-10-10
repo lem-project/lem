@@ -48,8 +48,6 @@
 (defvar *dist* (dump-files))
 
 (defun find-dist-by-path (path)
-  (asdf:system-relative-pathname :lem-server path)
-  #+(or)
   (cdr (assoc path *dist* :test #'equal)))
 
 (defun clack-handler (env)

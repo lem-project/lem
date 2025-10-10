@@ -999,7 +999,7 @@ You can pass in the optional argument WINDOW-LIST to replace the default
   (unless (floating-window-p window)
     (first (sort (min-if #'window-x
                          (remove-if-not (lambda (w)
-                                          (> (window-x w)
+                                          (>= (window-x w)
                                              (+ (window-x window)
                                                 (window-width window))))
                                         (window-list)))

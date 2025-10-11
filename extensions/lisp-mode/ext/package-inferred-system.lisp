@@ -105,8 +105,6 @@
                                     (length (rest prefix-directory)))))
                          ;; If we encounter `:pathname "tests"` within the defsystem,
                          ;; extract just the `/a/b` of `project-root/tests/a/b`
-                         ;; defsystem内に:pathname "tests"とあった場合
-                         ;; project-root/tests/a/bの/a/bだけを残す
                          (when (eql mismatch2 (length (rest prefix-directory)))
                            (append (list (project-root-name project-root))
                                    (subseq relative-lisp-file-directory mismatch2)

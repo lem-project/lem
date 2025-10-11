@@ -1151,9 +1151,6 @@
                        ;; We want to to show the repl prompt and change the cursor position.
                        ;; However, it's disruptive to change the buffer/window while working on another file,
                        ;; so we use `with-current-window` to switch back afterwards.
-                       ;; replのプロンプトの表示とカーソル位置の変更をしたいが
-                       ;; 他のファイルの作業中にバッファ/ウィンドウが切り替わると作業の邪魔なので
-                       ;; with-current-windowで元に戻す
                        (unless (repl-buffer)
                          (with-current-window (current-window) (start-lisp-repl)))
                        (success))))

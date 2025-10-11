@@ -716,6 +716,13 @@
       (move-to-lsp-position start (lsp:range-start range))
       (move-to-lsp-position end (lsp:range-end range))
       (when (point= start end)
+        ;; XXX: for `gopls`
+        ;; ```
+        ;; func main() {
+        ;;     fmt.
+        ;; ```
+        ;; `range.start` and `range.end` point to the end of the line, and aren't highlighted.
+        ;; Shift by one character to fix this.
         ;; XXX: gopls用
         ;; func main() {
         ;;     fmt.
@@ -793,9 +800,12 @@
 ;; TODO
 ;; - workDoneProgress
 ;; - partialResult
-;; - hoverClientCapabilitiesのcontentFormatを設定する
-;; - hoverのrangeを使って範囲に背景色をつける
-;; - serverでサポートしているかのチェックをする
+;; - Set `contentFormat`  `hoverClientCapabilities`
+;;   hoverClientCapabilitiesのcontentFormatを設定する
+;; - Use `hover`'s `range` to add background color to the range
+;;   hoverのrangeを使って範囲に背景色をつける
+;; - Check if supported by server
+;;   serverでサポートしているかのチェックをする
 
 (defun contents-to-string (contents)
   (flet ((marked-string-to-string (marked-string)
@@ -850,11 +860,14 @@
 ;;; completion
 
 ;; TODO
-;; - serverでサポートしているかのチェックをする
+;; - Check if supported by the server
+;;   serverでサポートしているかのチェックをする
 ;; - workDoneProgress
 ;; - partialResult
-;; - completionParams.context, どのように補完が起動されたかの情報を含める
-;; - completionItemの使っていない要素が多分にある
+;; - completionParams.context, include information about how completion was triggered.
+;;   completionParams.context, どのように補完が起動されたかの情報を含める
+;; - There are many unused fields in `completionItem`
+;;   completionItemの使っていない要素が多分にある
 ;; - completionResolve
 
 (defclass completion-item (completion:completion-item)
@@ -889,6 +902,8 @@
                (make-instance
                 'completion-item
                 :start start
+                ;; After showing completion candidates, if you type characters and select a candidate,
+                ;; the `end` position becomes mis-aligned and can't be used.
                 ;; 補完候補を表示した後に文字を入力し, 候補選択をするとendがずれるので使えない
                 ;; :end end
                 :label label
@@ -984,7 +999,9 @@
     (buffer-start point)
     (do-sequence ((parameter index) parameters)
       (let ((label (lsp:parameter-information-label parameter)))
-        ;; TODO: labelの型が[number, number]の場合に対応する
+        ;; TODO:
+        ;; Handle the case where the label's type is [number, number]
+        ;; labelの型が[number, number]の場合に対応する
         (when (stringp label)
           (search-forward point label)
           (when (= active-parameter index)
@@ -1076,7 +1093,9 @@
 
 (defun text-document/declaration (point)
   (declare (ignore point))
-  ;; TODO: goplsが対応していなかったので後回し
+  ;; TODO: 
+  ;; not supported by `gopls`, delaying to later 
+  ;; goplsが対応していなかったので後回し
   nil)
 
 ;;; definition
@@ -1100,7 +1119,10 @@
 
 (defgeneric convert-location (location)
   (:method ((location lsp:location))
-    ;; TODO: end-positionも使い、定義位置への移動後のハイライトをstart/endの範囲にする
+    ;; TODO: 
+    ;; Also use `end-position`. 
+    ;; After moving to definition location, set the highlight to the start/end range.
+    ;; end-positionも使い、定義位置への移動後のハイライトをstart/endの範囲にする
     (let* ((start-position (lsp:range-start (lsp:location-range location)))
            (end-position (lsp:range-end (lsp:location-range location)))
            (uri (lsp:location-uri location))
@@ -1338,6 +1360,7 @@
 ;;; document symbols
 
 ;; TODO
+;; - Sort by `position`
 ;; - position順でソートする
 
 (define-attribute symbol-kind-file-attribute
@@ -1517,7 +1540,7 @@
 (defun append-document-symbol-item (buffer document-symbol nest-level)
   (let ((selection-range (lsp:document-symbol-selection-range document-symbol))
         (range (lsp:document-symbol-range document-symbol)))
-    (declare (ignore range)) ; TODO: rangeをリージョンのハイライトに使う
+    (declare (ignore range)) ; TODO: use `range` in region highlighting / rangeをリージョンのハイライトに使う
     (lem/peek-source:with-appending-source
         (point :move-function (lambda ()
                                 (let ((point (buffer-point buffer)))
@@ -1571,6 +1594,8 @@
 
 (defun execute-command (workspace command)
   ;; TODO
+  ;; Need to look at response, and deal with it somehow.
+  ;; This feature isn't currently used by `gopls`, so its behavior hasn't been tested.
   ;; レスポンスを見てなんらかの処理をする必要がある
   ;; この機能はgoplsで使われる事が今のところないので動作テストをできていない
   (request:request
@@ -1696,6 +1721,7 @@
 
 ;;; range formatting
 
+;; WARNING: This is unsupported by `gopls`, so behavior is not tested. 
 ;; WARNING: goplsでサポートされていないので動作未確認
 
 (defun provide-range-formatting-p (workspace)
@@ -1726,6 +1752,7 @@
 ;;; onTypeFormatting
 
 ;; TODO
+;; - Add a hook to call `text-document/on-type-formatting` when buffer is initialized
 ;; - バッファの初期化時にtext-document/on-type-formattingを呼び出すフックを追加する
 
 (defun provide-on-type-formatting-p (workspace)
@@ -1781,6 +1808,8 @@
   (when-let (workspace (buffer-workspace (current-buffer) nil))
     (dispose-workspace workspace))
   ;; TODO:
+  ;; It's not enough to reopen just the current buffer,
+  ;; we need to check the entire `buffer-list`.
   ;; 現在のバッファを開き直すだけでは不十分
   ;; buffer-listを全て見る必要がある
   (ensure-lsp-buffer (current-buffer)))

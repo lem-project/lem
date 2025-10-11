@@ -318,6 +318,7 @@
           :collect :it)))
 
 (defun document-symbol (buffer)
+  ;; Assumes there is only one `in-package` at the start of the file.
   ;; in-packageがファイル先頭に一つだけあることを前提にしている
   (let* ((package-name (buffer-package buffer))
          (symbol-definitions (collect-definition-symbols-in-buffer buffer package-name)))
@@ -329,6 +330,8 @@
                   (name (micros/lsp-api::symbol-information-name symbol-information))
                   ;; (detail (micros/lsp-api::symbol-information-detail symbol-information))
                   (kind (micros/lsp-api::symbol-information-kind symbol-information)))
+              
+              ;; Doesn't account for symbols having multiple bindings (variable, function, ..)
               ;; symbolに複数の束縛があることを考慮していない(variableとfunctionなど)
               (make-instance 'lsp:document-symbol
                              :name name

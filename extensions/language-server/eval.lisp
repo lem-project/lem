@@ -80,7 +80,7 @@
           (lsp:text-document-position-params-text-document params)))
     (lem:with-point ((start point :left-inserting)
                      (end point :left-inserting))
-      (when (lem:form-offset start -1) ; TODO: nilの場合を考慮する
+      (when (lem:form-offset start -1) ; TODO: Consider `nil` case / nilの場合を考慮する
         (lem:form-offset (lem:move-point end start) 1)
         (let ((string (lem:points-to-string start end))
               (range (points-to-lsp-range start end))

@@ -103,6 +103,8 @@
                                               (rest prefix-directory)
                                               :test #'equal)
                                     (length (rest prefix-directory)))))
+                         ;; If we encounter `:pathname "tests"` within the defsystem,
+                         ;; extract just the `/a/b` of `project-root/tests/a/b`
                          ;; defsystem内に:pathname "tests"とあった場合
                          ;; project-root/tests/a/bの/a/bだけを残す
                          (when (eql mismatch2 (length (rest prefix-directory)))

@@ -14,7 +14,7 @@
 
 (defun execute-command (name arguments)
   (let ((command (get-command name)))
-    (assert command) ; TODO: error responseを返す
+    (assert command) ; TODO: Return error response / error responseを返す
     (call-command command arguments)))
 
 (defmacro define-lsp-command (class-name command-name (arguments) &body body)

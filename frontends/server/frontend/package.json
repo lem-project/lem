@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "vite": "^7.1.5"
+    "vite": "^7.1.11"
   },
   "dependencies": {
     "json-rpc-2.0": "^1.7.0",

@@ -4,4 +4,5 @@
   :serial t
   :components ((:file "python-mode")
                #+#.(cl:if (asdf:find-system :async-process cl:nil) '(and) '(or))
-               (:file "run-python")))
+               (:file "run-python")
+               (:file "lsp-config")))

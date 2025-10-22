@@ -17,7 +17,7 @@
      :name "Rectangle")
   (setf *mark-point* (copy-point (current-point) :temporary)))
 
-(define-key *global-keymap* "C-x Space" 'start-rectangle-mark-mode)
+(define-key *global-prefix-keymap* "Space" 'start-rectangle-mark-mode)
 (define-key *rectangle-mark-mode-keymap* 'copy-region 'rectangle-copy)
 (define-key *rectangle-mark-mode-keymap* 'kill-region 'rectangle-kill)
 (define-key *rectangle-mark-mode-keymap* "C-o" 'rectangle-open)

@@ -173,10 +173,12 @@ When rendering the DOM and a window in a one-to-one manner, no redraw is require
   (setf *display-background-mode* mode))
 
 (defun set-foreground (name)
-  (lem-if:update-foreground (implementation) name))
+  (when name
+    (lem-if:update-foreground (implementation) name)))
 
 (defun set-background (name)
-  (lem-if:update-background (implementation) name))
+  (when name
+    (lem-if:update-background (implementation) name)))
 
 (defun attribute-foreground-color (attribute)
   (or (and attribute

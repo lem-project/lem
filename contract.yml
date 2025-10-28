@@ -1,0 +1,106 @@
+version: 2
+
+trigger:
+  paths:
+      - "extensions/**"
+      - "frontends/**/*.lisp"
+      - "src/**"
+      - "tests/**"
+      - "**/*.asd"
+      - "**/*.md"
+
+validation:
+  scope:
+    deny_paths:
+      - "contract.yml"
+
+  limits:
+    max_total_changed_lines: 400
+    max_delete_ratio: 0.5
+    max_files_changed: 10
+
+  ai:
+    system_prompt: you are senior Common Lisp engineer.
+    rules:
+      - name: defpackage_rule
+        prompt: |
+          When adding a new file, the first form in the file should be `(defpackage <package-name> ...)` (or `uiop:define-package`).
+          The package name in defpackage should match the file name.
+      - name: trim_whitespace_rule
+        prompt: |
+          There should be no trailing whitespace at the end of any line.
+          The last line of the file must be an empty line.
+      - name: docstring_rule
+        prompt: |
+          Documentation rules:
+          - All functions, methods, and classes require documentation strings.
+          - Write detailed docstrings for `define-command`.
+          - For important functions, provide high-level overview explaining not just "how" but "why".
+          - Use `:documentation` option for packages, generic functions, and CLOS slots.
+          - Documentation strings must explain what the function, method, or class does.
+      - name: Alexandria and other utility libraries
+        prompt: |
+          Lem depends on `alexandria`, so you can use `if-let`, `when-let` and similar functions.
+          You can `:import-from` these symbols in your package definition, use the `alexandria:` package prefix, and define a package-local nickname.
+          Try to not use new utility functions that you don't see in the codebase yet.
+          For instance, we won't use `alexandria-2:line-up-first`.
+          Try to not use `alexandria:curry` and prefer higher-order functions.
+      - name: Dynamic bindings, functional style
+        prompt: |
+          Avoid dynamic symbol calls (`uiop:symbol-call`) but rethink your architecture instead.
+
+          Use `defvar` and `defparameter` for user-facing variables, but avoid
+          using them as global variables that store state and that are used from
+          functions to functions. Have a more functional style, give explicit
+          arguments to functions.
+
+          Example:
+
+          ```lisp
+          ;; avoid this
+          (defvar *var* 1)
+          (defun foo ()
+             *var*)
+          (let ((*var* 2))
+              (foo))
+          ```
+
+          instead, have `foo` take one argument.
+      - name: loop_keywords_rule
+        prompt: |
+          Loop keywords must be written with colons.
+          Example: `(loop :for key :in list :do ...)`
+          Wrong example: `(loop for key in list do ...)`
+      - name: file_layout_rule
+        prompt: |
+          File layout rules:
+          - `defvar` and `defparameter` must be grouped and placed near the top of the file.
+          - Key bindings for major and minor modes must be defined at the top of the file.
+      - name: compiler_warnings_rule
+        prompt: |
+          Do not ignore compiler warnings.
+          Pay attention to all compiler warnings and address them appropriately.
+      - name: error_handling_rule
+        prompt: |
+          Error handling rules:
+          - Use `error` for internal errors.
+          - `editor-error` is for errors that are properly displayed to the user.
+          Use `editor-error` for user-facing error messages.
+      - name: macro_style_rule
+        prompt: |
+          Macro style:
+          - Don't write long macros, use the "call-with-" pattern.
+          - When defining lists, avoid quote, backquote, and comma except when necessary.
+          - Prefer the `list` constructor outside of macros.
+      - name: user_variable_naming_rule
+        prompt: |
+          Do not use the "-p" suffix for user-modifiable parameters.
+          Reserve the "-p" suffix for function key arguments.
+          User-facing variables can be made configurable and saveable with the `lem:config` system.
+      - name: deprecation_rule
+        prompt: |
+          When changing or removing features, consider deprecation warnings:
+          - Do not delete or rename `defvar`, `defparameter`, or functions. Instead, leave them and issue a warning or error when used.
+          - Add a `;; DEPRECATED` comment with a date.
+          - Document breaking changes in the "next release changelog" issue.
+

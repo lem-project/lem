@@ -10,10 +10,13 @@ const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 function isWideChar(c) {
   switch (meaw.getEAW(c)) {
-    case 'A':
     case 'F':
     case 'W':
       return true;
+    // following the recommendations in the Unicode Standard Annex #11,
+    // absent additional context, ambiguous width characters should be 
+    // treated as narrow
+    case 'A':
     default:
       return false;
   }

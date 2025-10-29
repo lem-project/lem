@@ -132,7 +132,7 @@ When rendering the DOM and a window in a one-to-one manner, no redraw is require
 
 (defgeneric lem-if:get-mouse-position (implementation)
   (:method (implementation)
-    (values 0 0)))
+    (values -1 -1)))
 
 (defgeneric lem-if:get-char-width (implementation))
 (defgeneric lem-if:get-char-height (implementation))

@@ -97,10 +97,3 @@ validation:
           Do not use the "-p" suffix for user-modifiable parameters.
           Reserve the "-p" suffix for function key arguments.
           User-facing variables can be made configurable and saveable with the `lem:config` system.
-      - name: deprecation_rule
-        prompt: |
-          When changing or removing features, consider deprecation warnings:
-          - Do not delete or rename `defvar`, `defparameter`, or functions. Instead, leave them and issue a warning or error when used.
-          - Add a `;; DEPRECATED` comment with a date.
-          - Document breaking changes in the "next release changelog" issue.
-

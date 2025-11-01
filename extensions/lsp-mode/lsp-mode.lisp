@@ -273,6 +273,7 @@
 (defun lsp-revert-buffer (buffer)
   (remove-hook (variable-value 'before-change-functions :buffer buffer) 'handle-change-buffer)
   (unwind-protect (progn
+                    (clear-document-highlight-overlays)
                     (sync-buffer-with-file-content buffer)
                     (reopen-buffer buffer))
     (add-hook (variable-value 'before-change-functions :buffer buffer) 'handle-change-buffer)))

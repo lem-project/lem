@@ -210,7 +210,7 @@
       (charms/ll:move (view-y view) (1- (view-x view)))
       (loop :for y :from -1 :to (view-height view)
             :do (let ((y (+ (view-y view) y)))
-                  (when (< 0 y)
+                  (when (<= 0 y)
                     (print-yx
                      y
                      (1- (view-x view))

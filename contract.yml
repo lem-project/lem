@@ -74,15 +74,14 @@ validation:
           Loop keywords must be written with colons.
           Example: `(loop :for key :in list :do ...)`
           Wrong example: `(loop for key in list do ...)`
-      - name: file_layout_rule
+      - name: variable_placement_rule
         prompt: |
-          File layout rules:
+          Variable placement rule:
           - `defvar` and `defparameter` must be grouped and placed near the top of the file.
-          - Key bindings for major and minor modes must be defined at the top of the file.
-      - name: compiler_warnings_rule
+      - name: keybinding_placement_rule
         prompt: |
-          Do not ignore compiler warnings.
-          Pay attention to all compiler warnings and address them appropriately.
+          Key binding placement rule:
+          - Key bindings for major and minor modes must be defined at the top of the file.
       - name: error_handling_rule
         prompt: |
           Error handling rules:

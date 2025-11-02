@@ -22,8 +22,23 @@
            :get-buffer-from-text-document-identifier
            :spec-initialization-options
            :register-lsp-method
-           :define-language-spec))
+           :define-language-spec
+           :without-lsp-mode))
 (in-package :lem-lsp-mode/lsp-mode)
+
+;; FIXME:
+;; dirty hack.
+;; Ideally, improve lsp-mode to work within markdown code blocks.
+(defvar *disable* nil
+  "This variable is used to temporarily disable lsp-mode.
+Its purpose is to disable lsp-mode in a code block within markdown-mode, which can cause unexpected behavior in lsp-mode.
+Setting this variable to T while working within a markdown code block will avoid this problem.")
+
+(defmacro without-lsp-mode (() &body body)
+  "This macro prevents enabling lsp-mode within the body.
+Use this when lsp-mode has side effects that you want to avoid."
+  `(let ((*disable* T))
+     ,@body))
 
 ;;;
 (define-condition not-found-program (editor-error)
@@ -1795,7 +1810,10 @@
 
 ;;;
 (defun enable-lsp-mode ()
-  (lsp-mode t))
+  "This function is called when the corresponding major mode is enabled,
+because lsp-mode acts as a minor mode for the corresponding major mode."
+  (unless *disable*
+    (lsp-mode t)))
 
 (defmacro define-language-spec ((spec-name major-mode &key (parent-spec 'lem-lsp-mode/spec::spec)) &body initargs)
   `(progn

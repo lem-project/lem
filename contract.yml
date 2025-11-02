@@ -12,7 +12,7 @@ trigger:
 validation:
   scope:
     deny_paths:
-      - "contract.yml"
+      - "docs/default-keybindings.md"
 
   limits:
     max_total_changed_lines: 400
@@ -45,10 +45,11 @@ validation:
           Try to not use new utility functions that you don't see in the codebase yet.
           For instance, we won't use `alexandria-2:line-up-first`.
           Try to not use `alexandria:curry` and prefer higher-order functions.
-      - name: Dynamic bindings, functional style
+      - name: dynamic_symbol_call_rule
         prompt: |
           Avoid dynamic symbol calls (`uiop:symbol-call`) but rethink your architecture instead.
-
+      - name: functional_style_rule
+        prompt: |
           Use `defvar` and `defparameter` for user-facing variables, but avoid
           using them as global variables that store state and that are used from
           functions to functions. Have a more functional style, give explicit
@@ -66,6 +67,8 @@ validation:
           ```
 
           instead, have `foo` take one argument.
+
+          However, if the purpose is explained in the comments/docstring and is justified, please allow it.
       - name: loop_keywords_rule
         prompt: |
           Loop keywords must be written with colons.

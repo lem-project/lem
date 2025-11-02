@@ -1810,6 +1810,8 @@ Use this when lsp-mode has side effects that you want to avoid."
 
 ;;;
 (defun enable-lsp-mode ()
+  "This function is called when the corresponding major mode is enabled,
+because lsp-mode acts as a minor mode for the corresponding major mode."
   (unless *disable*
     (lsp-mode t)))
 

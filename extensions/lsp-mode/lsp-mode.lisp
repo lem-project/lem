@@ -26,7 +26,9 @@
            :without-lsp-mode))
 (in-package :lem-lsp-mode/lsp-mode)
 
-;; XXX: dirty hack
+;; FIXME:
+;; dirty hack.
+;; Ideally, improve lsp-mode to work within markdown code blocks.
 (defvar *disable* nil
   "This variable is used to temporarily disable lsp-mode.
 Its purpose is to disable lsp-mode in a code block within markdown-mode, which can cause unexpected behavior in lsp-mode.

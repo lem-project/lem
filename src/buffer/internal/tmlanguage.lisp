@@ -308,10 +308,12 @@
                  (tm-scan-line point
                                (tm-region-patterns rule)
                                start2
-                               (line:line-length (point-line point)))
+                               end)
                  (tm-apply-begin-captures rule point begin-result start-line-p)
                  (set-syntax-context (point-line point) (cons rule begin-result))
-                 (line-end point)
+                 (if end
+                     (line-offset point 0 end)
+                     (line-end point))
                  (return))
                 ((and best end-result (tm-result= best end-result))
                  (line:line-add-property (point-line point) start1 (tm-result-end end-result)

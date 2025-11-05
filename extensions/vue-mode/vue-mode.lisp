@@ -11,13 +11,43 @@
 (in-package :lem-vue-mode)
 
 (declaim (type (or pathname string) *vue-language-server-location*))
-(defvar *vue-language-server-location* 
+(defvar *vue-language-server-location*
   #+unix #P"/usr/lib/node_modules/@vue/language-server/"
   #+windows (merge-pathnames "npm/node_modules/@vue/language-server/" (uiop:getenv "APPDATA"))
   "The location of the language server source code files for \"@vue/language-server\"")
 
 (defun make-tmlanguage-vue ()
-  (lem-html-mode::make-tmlanguage-html))
+  (let ((tmlanguage (lem-html-mode::make-tmlanguage-html))
+        (js-patterns (lem-js-mode::make-tm-patterns-js))
+        (js-single-quote-patterns (lem-js-mode::make-tm-patterns-js)))
+    (setf (lem/buffer/internal::patterns js-single-quote-patterns)
+          (remove-if (lambda (pattern)
+                       (eq (lem/buffer/internal::tm-rule-name pattern)
+                           'lem/buffer/internal::syntax-string-attribute))
+                     (lem/buffer/internal::patterns js-single-quote-patterns)))
+    (push (make-tm-string-region "'") (lem/buffer/internal::patterns js-single-quote-patterns))
+    (add-tm-pattern tmlanguage
+                    (make-tm-region
+                     ":[a-zA-Z-]+=\""
+                     "\""
+                     :begin-captures #(syntax-builtin-attribute)
+                     :end-captures #(syntax-builtin-attribute)
+                     :patterns js-single-quote-patterns))
+    (add-tm-pattern tmlanguage
+                    (make-tm-region
+                     "(v-html|v-if|v-bind|v-for|v-on|@|#)[a-zA-Z-]*=\""
+                     "\""
+                     :begin-captures #(syntax-builtin-attribute)
+                     :end-captures #(syntax-builtin-attribute)
+                     :patterns js-single-quote-patterns))
+    (add-tm-pattern tmlanguage
+                    (make-tm-region
+                     "{{"
+                     "}}"
+                     :begin-captures #(syntax-keyword-attribute)
+                     :end-captures #(syntax-keyword-attribute)
+                     :patterns js-patterns))
+    tmlanguage))
 
 (defparameter *vue-syntax-table*
   (let ((syntax-table (make-syntax-table

@@ -54,12 +54,13 @@
   "Make syntax table instance and configure it for vue-mode"
   (let ((syntax-table (make-syntax-table
                        :space-chars lem-js-mode::*js-spaces*
-                       :paren-pairs '((#\( . #\))
-                                      (#\{ . #\})
-                                      (#\[ . #\]))
-                       :string-quote-chars '(#\" #\' #\`)
+                       :paren-pairs (list
+                                     (cons #\( #\))
+                                     (cons #\{ #\})
+                                     (cons #\[ #\]))
+                       :string-quote-chars (list #\" #\' #\`)
                        :line-comment-string "//"
-                       :block-comment-pairs '(("/*" . "*/"))))
+                       :block-comment-pairs (list (cons "/*" "*/"))))
         (tmlanguage (make-tmlanguage-vue)))
     (set-syntax-parser syntax-table tmlanguage)
     syntax-table))

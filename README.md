@@ -25,15 +25,16 @@ With Docker (terminal version):
 
 ## Build
 
-### Lem(terminal version)
-- [GNU/Linux](https://lem-project.github.io/installation/ncurses/linux/)
-- [MacOS](https://lem-project.github.io/installation/ncurses/macos/)
-- [Windows](https://lem-project.github.io/installation/ncurses/windows/)
+Instructions to build Lem on GNU/Linux, Macos and Windows.
 
-### Lem(sdl2 version)
-- [GNU/Linux](https://lem-project.github.io//installation/sdl2/linux/)
-- [MacOS](https://lem-project.github.io//installation/sdl2/macos/)
-- [Windows](https://lem-project.github.io//installation/sdl2/windows/)
+### Terminal version
+https://lem-project.github.io/installation/ncurses/
+
+### Webview version
+https://lem-project.github.io/installation/webview/
+
+### SDL2 version
+https://lem-project.github.io/installation/sdl2/
 
 ## Vision
 

@@ -17,6 +17,7 @@
   "The location of the language server source code files for \"@vue/language-server\"")
 
 (defun make-tmlanguage-vue ()
+  "Make the tmlanguage instance for vue-mode"
   (let ((tmlanguage (lem-html-mode::make-tmlanguage-html))
         (js-patterns (lem-js-mode::make-tm-patterns-js))
         (js-single-quote-patterns (lem-js-mode::make-tm-patterns-js)))
@@ -49,7 +50,8 @@
                      :patterns js-patterns))
     tmlanguage))
 
-(defparameter *vue-syntax-table*
+(defun make-syntax-table-vue ()
+  "Make syntax table instance and configure it for vue-mode"
   (let ((syntax-table (make-syntax-table
                        :space-chars lem-js-mode::*js-spaces*
                        :paren-pairs '((#\( . #\))
@@ -65,7 +67,7 @@
 (define-major-mode vue-mode language-mode
     (:name "Vue"
      :mode-hook *vue-mode-hook*
-     :syntax-table *vue-syntax-table*
+     :syntax-table (make-syntax-table-vue)
      :keymap *vue-mode-keymap*)
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'indent-tabs-mode) nil

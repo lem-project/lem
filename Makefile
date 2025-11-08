@@ -1,6 +1,6 @@
 LISP ?= sbcl --dynamic-space-size 4GiB --noinform --no-sysinit --no-userinit
 PREFIX ?= /usr/local
-VARIANT ?= sdl2
+VARIANT ?= webview
 
 ncurses:
 	qlot install
@@ -32,7 +32,12 @@ webview:
 	$(LISP) --load .qlot/setup.lisp \
 		--load scripts/build-webview.lisp
 
-lem: sdl2
+webview-ncurses:
+	qlot install
+	$(LISP) --load .qlot/setup.lisp \
+		--load scripts/build-webview-ncurses.lisp
+
+lem: webview
 
 .PHONY: legit
 
@@ -64,7 +69,13 @@ install-ncurses:
 
 install-sdl2-ncurses:
 	$(MAKE) install VARIANT=sdl2-ncurses
-	
+
+install-webview:
+	$(MAKE) install VARIANT=webview
+
+install-webview-ncurses:
+	$(MAKE) install VARIANT=webview-ncurses
+
 test:
 	qlot install
 	.qlot/bin/rove lem-tests.asd

@@ -1,0 +1,8 @@
+(ql:quickload :lem-webview)
+(ql:quickload :lem-ncurses)
+
+(lem:init-at-build-time)
+
+(sb-ext:save-lisp-and-die "lem"
+                          :toplevel #'lem-webview:main
+                          :executable t)

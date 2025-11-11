@@ -265,6 +265,7 @@
    :prompt-for-library)
   ;; buffer.lisp
   (:export
+   :*kill-buffer-hook*
    :kill-buffer-hook)
   ;; window-tree.lisp
   (:export

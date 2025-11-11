@@ -1,5 +1,7 @@
 (in-package :lem-core)
 
+(defvar *kill-buffer-hook* '())
+
 (define-editor-variable kill-buffer-hook '())
 
 (defun strip-buffer-from-frame-windows (buffer frame)
@@ -15,4 +17,5 @@
      buffer)
   (dolist (frame (all-frames))
     (strip-buffer-from-frame-windows buffer frame))
+  (run-hooks *kill-buffer-hook* buffer)
   (run-hooks (make-per-buffer-hook :var 'kill-buffer-hook :buffer buffer) buffer))

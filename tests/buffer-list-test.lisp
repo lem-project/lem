@@ -194,6 +194,24 @@
                 (ok (equal '(:local :global)
                                 (nreverse called-order)))))))))))
 
+(deftest *kill-buffer-hook*
+  (with-buffer-list ()
+    (testing "*kill-buffer-hook*"
+      (let ((buffer (lem:make-buffer "testing"))
+            (called-hook-p nil)
+            (original-hooks lem:*kill-buffer-hook*))
+        (unwind-protect
+             (progn
+               (setf lem:*kill-buffer-hook* '())
+               (flet ((hook (arg)
+                        (setf called-hook-p t)
+                        (ok (eq arg buffer))
+                        (ok (not (lem:deleted-buffer-p arg)))))
+                 (lem:add-hook lem:*kill-buffer-hook* #'hook)
+                 (lem:delete-buffer buffer)
+                 (ok called-hook-p)))
+          (setf lem:*kill-buffer-hook* original-hooks))))))
+
 (defun buffer-list-length=0-case (function)
   (testing "buffer-list length is 0"
     (with-buffer-list ()

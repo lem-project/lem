@@ -20,27 +20,37 @@
   "Make the tmlanguage instance for vue-mode"
   (let ((tmlanguage (lem-html-mode::make-tmlanguage-html))
         (js-patterns (lem-js-mode::make-tm-patterns-js))
-        (js-single-quote-patterns (lem-js-mode::make-tm-patterns-js)))
-    (setf (lem/buffer/internal::patterns js-single-quote-patterns)
-          (remove-if (lambda (pattern)
-                       (eq (lem/buffer/internal::tm-rule-name pattern)
-                           'lem/buffer/internal::syntax-string-attribute))
-                     (lem/buffer/internal::patterns js-single-quote-patterns)))
-    (push (make-tm-string-region "'") (lem/buffer/internal::patterns js-single-quote-patterns))
+        (js-patterns-no-double-quote (let ((patterns (lem-js-mode::make-tm-patterns-js)))
+                                       (setf (lem/buffer/internal::patterns patterns)
+                                             ;; Remove all string patterns except string interpolation literal pattern (`${}`)
+                                             (remove-if (lambda (pattern)
+                                                          (and (eq (lem/buffer/internal::tm-rule-name pattern)
+                                                                   'lem/buffer/internal::syntax-string-attribute)
+                                                               (not (typep (first (lem/buffer/internal::patterns
+                                                                                   (lem/buffer/internal::tm-region-patterns pattern)))
+                                                                           'lem/buffer/internal::tm-region))))
+                                                        (lem/buffer/internal::patterns patterns)))
+                                       ;; Add back single quote string pattern
+                                       (push (make-tm-string-region "'") (lem/buffer/internal::patterns patterns))
+                                       patterns)))
     (add-tm-pattern tmlanguage
-                    (make-tm-region
-                     ":[a-zA-Z-]+=\""
-                     "\""
-                     :begin-captures #(syntax-builtin-attribute)
-                     :end-captures #(syntax-builtin-attribute)
-                     :patterns js-single-quote-patterns))
+                    (let ((template-keywords-with-parameters (list "v-html" "v-if" "v-bind"
+                                                                   "v-for" "v-on" "v-model"
+                                                                   "v-slot" "v-show" "v-text"
+                                                                   "v-else-if" "v-memo"
+                                                                   "@" "#" ":")))
+                      (make-tm-region
+                       (format nil "(~{~a~^|~})(:*)[a-zA-Z-]*(=)(\")" template-keywords-with-parameters)
+                       "\""
+                       :begin-captures #(nil syntax-keyword-attribute syntax-keyword-attribute syntax-keyword-attribute syntax-string-attribute)
+                       :end-captures #(syntax-string-attribute)
+                       :patterns js-patterns-no-double-quote)))
     (add-tm-pattern tmlanguage
-                    (make-tm-region
-                     "(v-html|v-if|v-bind|v-for|v-on|@|#)[a-zA-Z-]*=\""
-                     "\""
-                     :begin-captures #(syntax-builtin-attribute)
-                     :end-captures #(syntax-builtin-attribute)
-                     :patterns js-single-quote-patterns))
+                    (make-tm-match (list :sequence
+                                         :word-boundary
+                                         (list :alternation "v-else" "v-pre" "v-once" "v-cloak")
+                                         :word-boundary)
+                                   :name 'syntax-keyword-attribute))
     (add-tm-pattern tmlanguage
                     (make-tm-region
                      "{{"

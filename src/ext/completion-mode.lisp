@@ -206,10 +206,13 @@
   (completion-refresh))
 
 (define-command completion-next-line () ()
-  (popup-menu-down (context-popup-menu *completion-context*))
+  "Move selection to next line in completion window"
+  (alexandria:when-let ((popup (context-popup-menu *completion-context*)))
+    (popup-menu-down popup))
   (call-focus-action))
 
 (define-command completion-previous-line () ()
+  "Move selection to previous line in completion window"
   (popup-menu-up (context-popup-menu *completion-context*))
   (call-focus-action))
 
@@ -303,8 +306,9 @@
           (update-items-and-then (call-sync-function spec (current-point)))))))
 
 (defun start-completion (context items style)
+  "Open popup menu for completions in the context provided"
   (when items
-    (setf (context-popup-menu *completion-context*)
+    (setf (context-popup-menu context)
           (apply #'display-popup-menu
                  items
                  :action-callback (lambda (item)
@@ -335,18 +339,28 @@
     (ignore-errors (completion-end-of-buffer))))
 
 (defun run-completion (completion-spec &key style then)
+  "Start a new completion using the completion-spec,
+creates a new completion-context and sets *completion-context*"
+  (when *completion-context*
+    (completion-end))
   (let* ((spec (ensure-completion-spec completion-spec))
          (context (make-instance 'completion-context :spec spec)))
     (setf *completion-context* context)
     (with-point ((before-point (current-point)))
-      (compute-completion-items
-       context
-       (if (spec-async-p (context-spec context))
-           (lambda (items)
-             (when (point= before-point (current-point))
-               (start-completion context items style)
-               (when then
-                 (funcall then))))
+      (if (spec-async-p (context-spec context))
+          (let ((spinner (lem/loading-spinner:start-loading-spinner :line
+                                                                    :point before-point)))
+            (compute-completion-items
+             context
+             (lambda (items)
+               (lem/loading-spinner:stop-loading-spinner spinner)
+               (when (and (eq context *completion-context*)
+                          (point= before-point (current-point)))
+                 (start-completion context items style)
+                 (when then
+                   (funcall then))))))
+          (compute-completion-items
+           context
            (lambda (items)
              (when items
                (cond

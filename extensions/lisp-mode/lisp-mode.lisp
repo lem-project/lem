@@ -1222,7 +1222,6 @@
     (self-connect))
   (when start-repl (start-lisp-repl)))
 
-
 (defun buffer-pathname-type (buffer)
   (alexandria:when-let (pathname (buffer-filename buffer))
     (pathname-type pathname)))

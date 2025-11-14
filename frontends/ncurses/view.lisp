@@ -101,7 +101,9 @@
                    :cursor-invisible cursor-invisible)))
 
 (defun delete-view (view)
-  (charms/ll:delwin (view-scrwin view))
+  "Destroy the view's main and modeline windows, ignoring curses errors."
+  ;; XXX: Muffle "Unhandled memory fault at ..." error
+  (ignore-errors (charms/ll:delwin (view-scrwin view)))
   (when (view-modeline-scrwin view)
     (charms/ll:delwin (view-modeline-scrwin view))))
 

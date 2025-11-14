@@ -206,7 +206,8 @@
   (completion-refresh))
 
 (define-command completion-next-line () ()
-  (popup-menu-down (context-popup-menu *completion-context*))
+  (alexandria:when-let ((popup (context-popup-menu *completion-context*)))
+    (popup-menu-down popup))
   (call-focus-action))
 
 (define-command completion-previous-line () ()
@@ -304,7 +305,7 @@
 
 (defun start-completion (context items style)
   (when items
-    (setf (context-popup-menu *completion-context*)
+    (setf (context-popup-menu context)
           (apply #'display-popup-menu
                  items
                  :action-callback (lambda (item)
@@ -335,18 +336,26 @@
     (ignore-errors (completion-end-of-buffer))))
 
 (defun run-completion (completion-spec &key style then)
+  (when *completion-context*
+    (completion-end))
   (let* ((spec (ensure-completion-spec completion-spec))
          (context (make-instance 'completion-context :spec spec)))
     (setf *completion-context* context)
     (with-point ((before-point (current-point)))
-      (compute-completion-items
-       context
-       (if (spec-async-p (context-spec context))
-           (lambda (items)
-             (when (point= before-point (current-point))
-               (start-completion context items style)
-               (when then
-                 (funcall then))))
+      (if (spec-async-p (context-spec context))
+          (let ((spinner (lem/loading-spinner:start-loading-spinner :line
+                                                                    :point before-point)))
+            (compute-completion-items
+             context
+             (lambda (items)
+               (lem/loading-spinner:stop-loading-spinner spinner)
+               (when (and (eq context *completion-context*)
+                          (point= before-point (current-point)))
+                 (start-completion context items style)
+                 (when then
+                   (funcall then))))))
+          (compute-completion-items
+           context
            (lambda (items)
              (when items
                (cond

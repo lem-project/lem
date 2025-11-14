@@ -206,11 +206,13 @@
   (completion-refresh))
 
 (define-command completion-next-line () ()
+  "Move selection to next line in completion window"
   (alexandria:when-let ((popup (context-popup-menu *completion-context*)))
     (popup-menu-down popup))
   (call-focus-action))
 
 (define-command completion-previous-line () ()
+  "Move selection to previous line in completion window"
   (popup-menu-up (context-popup-menu *completion-context*))
   (call-focus-action))
 
@@ -304,6 +306,7 @@
           (update-items-and-then (call-sync-function spec (current-point)))))))
 
 (defun start-completion (context items style)
+  "Open popup menu for completions in the context provided"
   (when items
     (setf (context-popup-menu context)
           (apply #'display-popup-menu
@@ -336,6 +339,8 @@
     (ignore-errors (completion-end-of-buffer))))
 
 (defun run-completion (completion-spec &key style then)
+  "Start a new completion using the completion-spec,
+creates a new completion-context and sets *completion-context*"
   (when *completion-context*
     (completion-end))
   (let* ((spec (ensure-completion-spec completion-spec))

@@ -961,7 +961,12 @@ Use this when lsp-mode has side effects that you want to avoid."
               'lsp:completion-params
               (make-text-document-position-arguments point))
        :then (lambda (response)
-               (funcall then (convert-completion-response point response)))))))
+               (funcall then
+                        (if-let ((symbol-at-point (symbol-string-at-point point)))
+                          (completion-strings symbol-at-point
+                                              (convert-completion-response point response)
+                                              :key #'lem/completion-mode::completion-item-label)
+                          (convert-completion-response point response))))))))
 
 (defun completion-with-trigger-character (c)
   (declare (ignore c))
@@ -1096,8 +1101,8 @@ Use this when lsp-mode has side effects that you want to avoid."
 
 (defun text-document/declaration (point)
   (declare (ignore point))
-  ;; TODO: 
-  ;; not supported by `gopls`, delaying to later 
+  ;; TODO:
+  ;; not supported by `gopls`, delaying to later
   nil)
 
 ;;; definition
@@ -1121,8 +1126,8 @@ Use this when lsp-mode has side effects that you want to avoid."
 
 (defgeneric convert-location (location)
   (:method ((location lsp:location))
-    ;; TODO: 
-    ;; Also use `end-position`. 
+    ;; TODO:
+    ;; Also use `end-position`.
     ;; After moving to definition location, set the highlight to the start/end range.
     (let* ((start-position (lsp:range-start (lsp:location-range location)))
            (end-position (lsp:range-end (lsp:location-range location)))
@@ -1719,7 +1724,7 @@ Use this when lsp-mode has side effects that you want to avoid."
 
 ;;; range formatting
 
-;; WARNING: This is unsupported by `gopls`, so behavior is not tested. 
+;; WARNING: This is unsupported by `gopls`, so behavior is not tested.
 
 (defun provide-range-formatting-p (workspace)
   (handler-case (lsp:server-capabilities-document-range-formatting-provider

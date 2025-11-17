@@ -926,7 +926,9 @@ on the same line or at eol if there are none."
   (move-to-column (current-point) (1- n)))
 
 (define-command vi-goto-file () ()
-  "Open the file using the filename under the cursor"
+  "Open the file using the filename under the cursor,
+trailing punctuation characters ',.!?:;' are removed.
+Only opens the file if it exists"
   (flet ((remove-trailing-punctuations (string)
            (let* ((punctuation (list #\. #\, #\!
                                      #\: #\; #\?))

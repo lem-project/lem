@@ -158,7 +158,8 @@
            :vi-window-split-new-buffer
            :vi-window-split-horizontally-new
            :vi-window-split-vertically-new
-           :vi-switch-to-buffer))
+           :vi-switch-to-buffer
+           :vi-goto-file))
 (in-package :lem-vi-mode/commands)
 
 (defun extract-count-keys (keys)
@@ -554,7 +555,7 @@ Move the cursor to the first non-blank character of the line."
         (and (enable-clipboard-p) (values (get-clipboard-data) :block)))))
 
 (define-command vi-paste-after (&optional (n 1)) (:universal)
-  (dotimes (i n) 
+  (dotimes (i n)
     (multiple-value-bind (string type)
         (vi-yank-from-clipboard-or-killring)
       (cond
@@ -579,7 +580,7 @@ Move the cursor to the first non-blank character of the line."
       (paste-yank string type :after))))
 
 (define-command vi-paste-before (&optional (n 1)) (:universal)
-  (dotimes (i n) 
+  (dotimes (i n)
     (multiple-value-bind (string type)
         (vi-yank-from-clipboard-or-killring)
       (cond
@@ -923,6 +924,31 @@ on the same line or at eol if there are none."
     (:type :exclusive
      :jump t)
   (move-to-column (current-point) (1- n)))
+
+(define-command vi-goto-file () ()
+  "Open the file using the filename under the cursor,
+trailing punctuation characters ',.!?:;' are removed.
+Only opens the file if it exists"
+  (flet ((remove-trailing-punctuations (string)
+           (let* ((punctuation (list #\. #\, #\!
+                                     #\: #\; #\?))
+                  (end-of-path (position-if-not
+                                (lambda (char)
+                                  (member char punctuation))
+                                string
+                                :from-end t)))
+             (subseq string 0 (1+ end-of-path)))))
+    (let* ((symbol-at-point (symbol-string-at-point (current-point)))
+           (parsed-path (uiop:parse-native-namestring
+                         (remove-trailing-punctuations symbol-at-point)))
+           ;; Unless absolute path, path is relative to current buffer
+           (path (if (eq (first (pathname-directory parsed-path))
+                         :absolute)
+                     parsed-path
+                     (merge-pathnames parsed-path (buffer-directory)))))
+      (if (probe-file path)
+          (lem:find-file path)
+          (editor-error "Can't find file \"~a\"" path)))))
 
 (define-command vi-return (&optional (n 1)) (:universal)
   (vi-next-line n)

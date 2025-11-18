@@ -156,6 +156,7 @@
 (define-key *normal-keymap* "q" 'vi-record-macro)
 (define-key *normal-keymap* "@" 'vi-execute-macro)
 (define-key *normal-keymap* "Q" 'vi-execute-last-recorded-macro)
+(define-key *normal-keymap* "g f" 'vi-goto-file)
 
 (define-key *insert-keymap* "Escape" 'vi-end-insert)
 (define-key *insert-keymap* "C-p" 'abbrev)

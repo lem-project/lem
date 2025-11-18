@@ -12,7 +12,7 @@
   (:export :list-buffers))
 (in-package :lem/list-buffers)
 
-(define-key *global-keymap* "C-x C-b" 'list-buffers)
+(define-key *global-prefix-keymap* "C-b" 'list-buffers)
 
 (defun kill-buffers (window)
   (let ((multi-column-list (multi-column-list-of-window window)))

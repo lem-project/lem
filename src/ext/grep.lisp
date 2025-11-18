@@ -188,7 +188,7 @@
     (:name "Peek"
      :keymap *peek-grep-mode-keymap*))
 
-(define-key *global-keymap* "C-x p g" 'project-grep)
+(define-key *global-prefix-keymap* "p g" 'project-grep)
 (define-key *peek-grep-mode-keymap* "C-x ?" 'grep-help)  ;; originally bound to describe-key.
 
 ;; Comment out because it conflicts with isearch.

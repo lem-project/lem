@@ -904,7 +904,7 @@ class Input {
         return;
       }
 
-      if (this.ignoreKeydownAfterCompositionend && isSafari) {
+      if (this.ignoreKeydownAfterCompositionend && (isSafari || isMacOS())) {
         // safariではIMの入力中にバックスペースやエンターキーの入力によってcompositionendイベントが来ると
         // その後にkeydownイベントが即座に来る
         // それを処理してしまうと余分に改行されたり文字が消えるので無視する

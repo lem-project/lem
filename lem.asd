@@ -30,6 +30,7 @@
                "log4cl"
                "split-sequence"
                "str"
+               "mk-string-metrics"  ;; fuzzy-match algorithm.
                "dexador"
                "cl-mustache"
                ;; "lem-encodings"
@@ -132,6 +133,7 @@
                (:file "input")
                (:file "overlay")
                (:file "streams")
+               (:file "fuzzy-match")
                (:file "completion")
                (:file "typeout")
                (:file "cursors")

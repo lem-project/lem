@@ -23,7 +23,9 @@
 (define-key *multi-column-list-mode-keymap* 'keyboard-quit 'multi-column-list/quit)
 (define-key *multi-column-list-mode-keymap* 'escape 'multi-column-list/quit)
 (define-key *multi-column-list-mode-keymap* 'next-line 'multi-column-list/down)
+(define-key *multi-column-list-mode-keymap* "Tab" 'multi-column-list/down)
 (define-key *multi-column-list-mode-keymap* 'previous-line 'multi-column-list/up)
+(define-key *multi-column-list-mode-keymap* "Shift-Tab" 'multi-column-list/up)
 (define-key *multi-column-list-mode-keymap* 'move-to-end-of-buffer 'multi-column-list/last)
 (define-key *multi-column-list-mode-keymap* 'move-to-beginning-of-buffer 'multi-column-list/first)
 (define-key *multi-column-list-mode-keymap* "Return" 'multi-column-list/select)
@@ -32,6 +34,7 @@
 (define-key *multi-column-list-mode-keymap* "C-k" 'multi-column-list/delete-items)
 (define-key *multi-column-list-mode-keymap* 'show-context-menu 'show-context-menu)
 (define-key *multi-column-list-mode-keymap* 'delete-previous-char 'multi-column-list/delete-previous-char)
+(define-key *multi-column-list-mode-keymap* "Backspace" 'multi-column-list/delete-previous-char)
 
 (define-command multi-column-list/default () ()
   (alexandria:when-let ((c (insertion-key-p (last-read-key-sequence))))

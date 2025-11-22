@@ -10,7 +10,7 @@
   (second form))
 
 (defun collect-global-command-packages ()
-  (loop :for component :in (asdf:component-children (asdf:find-component :lem "commands"))
+  (loop :for component :in (asdf:component-children (asdf:find-component :lem/core "commands"))
         :collect (find-package
                   (extract-defpackage-name
                    (uiop:read-file-form

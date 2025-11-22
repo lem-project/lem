@@ -2,18 +2,14 @@ version: 2
 
 trigger:
   paths:
-      - "extensions/**"
-      - "frontends/**/*.lisp"
-      - "src/**"
-      - "tests/**"
-      - "**/*.asd"
-      - "**/*.md"
+    - "extensions/**"
+    - "frontends/**/*.lisp"
+    - "src/**"
+    - "tests/**"
+    - "**/*.asd"
+    - "**/*.md"
 
 validation:
-  scope:
-    deny_paths:
-      - "docs/default-keybindings.md"
-
   limits:
     max_total_changed_lines: 400
     max_delete_ratio: 0.5

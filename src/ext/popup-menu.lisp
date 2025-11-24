@@ -35,6 +35,9 @@
   (make-line-overlay point focus-attribute))
 
 (defun update-focus-overlay (popup-menu point)
++  "Refresh the focus highlight so it tracks POINT in POPUP-MENU.
++Deletes any previous overlay, clears stray overlays, and creates a new
++focus overlay unless POINT is on the header line."
   (alexandria:when-let ((focus-overlay (popup-menu-focus-overlay popup-menu)))
     (delete-overlay focus-overlay))
   (clear-overlays (popup-menu-buffer popup-menu))

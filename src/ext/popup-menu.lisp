@@ -35,9 +35,15 @@
   (make-line-overlay point focus-attribute))
 
 (defun update-focus-overlay (popup-menu point)
-  (delete-overlay (popup-menu-focus-overlay popup-menu))
-  (setf (popup-menu-focus-overlay popup-menu)
-        (make-focus-overlay point (popup-menu-focus-attribute popup-menu))))
++  "Refresh the focus highlight so it tracks POINT in POPUP-MENU.
++Deletes any previous overlay, clears stray overlays, and creates a new
++focus overlay unless POINT is on the header line."
+  (alexandria:when-let ((focus-overlay (popup-menu-focus-overlay popup-menu)))
+    (delete-overlay focus-overlay))
+  (clear-overlays (popup-menu-buffer popup-menu))
+  (unless (header-point-p point)
+    (setf (popup-menu-focus-overlay popup-menu)
+          (make-focus-overlay point (popup-menu-focus-attribute popup-menu)))))
 
 (defgeneric write-header (print-spec point)
   (:method (print-spec point)))
@@ -77,11 +83,13 @@
   (setf (variable-value 'line-wrap :buffer buffer) nil)
   (let ((point (buffer-point buffer)))
     (write-header print-spec point)
-    (let ((header-exists (not (start-line-p point)))
-          (start-line 1))
-      (when header-exists
-        (insert-character point #\newline)
-        (setf start-line (line-number-at-point point)))
+    (let* ((header-exists (< 0 (length (buffer-text buffer))))
+           (start-line (if header-exists
+                           (1+ (line-number-at-point point))
+                           1)))
+      (when (and header-exists
+                 (< 0 (length items)))
+        (insert-character point #\newline))
       (setf (buffer-start-line buffer) start-line)
       (insert-items point items print-spec)
       (buffer-start point)
@@ -149,7 +157,11 @@
           (lem/popup-window::update-popup-window :source-window source-window
                                                  :width menu-width
                                                  :height (min max-display-items height)
-                                                 :destination-window (popup-menu-window popup-menu)))))))
+                                                 :destination-window (popup-menu-window popup-menu)))))
+    (when (header-point-p (focus-point popup-menu))
+      (move-to-line (focus-point popup-menu)
+                    (buffer-start-line (popup-menu-buffer popup-menu))))
+    (update-focus-overlay popup-menu (focus-point popup-menu))))
 
 (defmethod lem-if:popup-menu-quit (implementation popup-menu)
   (delete-window (popup-menu-window popup-menu))

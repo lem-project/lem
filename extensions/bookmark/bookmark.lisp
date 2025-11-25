@@ -239,7 +239,12 @@ If called interactively, prompt for NAME."
 
 (define-command bookmark-delete-all () ()
   "Delete all bookmarks."
-  (setq *bookmark-table* (clrhash *bookmark-table*)))
+  (if (<= (hash-table-count *bookmark-table*) 0)
+      (editor-error "bookmark: No bookmarks available~&")
+    (when (prompt-for-y-or-n-p (format nil "Do you really want to delete ~a bookmark~a?"
+                                       (hash-table-count *bookmark-table*)
+                                       (if (< 1 (hash-table-count *bookmark-table*)) "s" "")))
+      (setq *bookmark-table* (clrhash *bookmark-table*)))))
 
 (define-command bookmark-rename (old-name new-name) ((prompt-for-bookmark "Rename bookmark: ")
                                                      (prompt-for-string "New bookmark name: "))

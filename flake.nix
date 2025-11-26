@@ -85,6 +85,14 @@
                 pushd .bundle-libs/software/async-process-*
                   chmod +x bootstrap
                   ./bootstrap
+                  # Remove Windows-specific source from Makefile to avoid build errors
+                  sed -i 's/src\/async-process_windows\.c//g' Makefile.am Makefile
+                  make || true
+                  # Copy the built library if it exists
+                  if [ -f .libs/libasyncprocess.so ]; then
+                    mkdir -p static/$(uname -m)/$(uname)
+                    cp -f .libs/libasyncprocess.so static/$(uname -m)/$(uname)/
+                  fi
                 popd
 
                 # nixpkgs patch to fix cffi build on darwin
@@ -105,6 +113,9 @@
 
               (in-package :nix-cl-user)
               (load "${lem.asdfFasl}/asdf.${lem.faslExt}")
+
+              ;; Mark this as a Nix build to disable incompatible features
+              (pushnew :nix-build *features*)
 
               ;; Avoid writing to the global fasl cache
               (asdf:initialize-output-translations

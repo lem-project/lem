@@ -38,9 +38,9 @@
 (lem-core:define-color-theme "lem-default"
     nil
   (:display-background-mode :dark)
-  (:foreground "#cccccc")
-  (:background "#2d2d2d")
-  (:inactive-window-background "#2d2d2d")
+  (:foreground nil)
+  (:background nil)
+  (:inactive-window-background nil)
   (lem-core:region :foreground nil :background "#515151")
   (lem-core:syntax-warning-attribute :foreground "#ff7f7b")
   (lem/buffer/internal:syntax-string-attribute :foreground "#beda78")

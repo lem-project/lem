@@ -36,6 +36,8 @@
                #+sbcl
                sb-concurrency
                "lem-mailbox"
+               ;; Disabled for Nix build due to QL-DIST dependency
+               #-nix-build
                "lem-extension-manager"
                #+sbcl
                "sb-sprof")

@@ -2,7 +2,7 @@
 ;;;; Bookmark package for lem
 ;;;;
 
-(defpackage :bookmark
+(defpackage :lem-bookmark
   (:use :cl :lem)
   (:export
    ;; customization variables
@@ -30,7 +30,7 @@
    :bookmark-relocate
    :bookmark-jump))
 
-(in-package :bookmark)
+(in-package :lem-bookmark)
 
 (setf (documentation *package* t)
       "Bookmarks for the lem editor.
@@ -51,7 +51,7 @@ BOOKMARK-LOAD are used to save and load the bookmarks from disk.  The variable
 
 The keymap *KEYMAP* has some pre-defined mappings for most of the available commands.
 
-Use (DESCRIBE (FIND-PACKAGE \"BOOKMARK\")) to find all available commands.")
+Use (DESCRIBE (FIND-PACKAGE \"LEM-BOOKMARK\")) to find all available commands.")
 
 (defvar *file* #P"bookmarks.lisp-expr"
   "File in which bookmarks are saved.

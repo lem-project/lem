@@ -288,7 +288,8 @@
                "lem-legit"
                "lem-dashboard"
                "lem-copilot"
-               "lem-claude-code"))
+               "lem-claude-code"
+               "lem-bookmark"))
 
 (defsystem "lem"
   :version "2.3.0"

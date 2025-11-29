@@ -119,7 +119,7 @@ If the file is a relative path, it is relative to LEM-HOME.")
 
 (defun %bookmark-update (entry &key (new-name nil new-name-p)
                                     (new-filename nil new-filename-p)
-                                    (position nil new-position-p))
+                                    (new-position nil new-position-p))
   (when new-name-p
     (remhash (bookmark-name entry) *bookmark-table*)
     (setf (bookmark-name entry) new-name)

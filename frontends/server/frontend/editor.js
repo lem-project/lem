@@ -74,8 +74,8 @@ function drawHorizontalLine({ ctx, x, y, width, style, lineWidth = 1 }) {
 class Option {
   constructor({ fontName, fontSize }) {
     this.setFont(fontName, fontSize);
-    this.foreground = '#333';
-    this.background = '#ccc';
+    this.foreground = '#cccccc';
+    this.background = '#2d2d2d';
   }
 
   setFont(fontName, fontSize) {
@@ -1171,11 +1171,13 @@ export class Editor {
   }
 
   updateForeground(color) {
+    if (color == null) return;
     this.option.foreground = color;
     this.input.updateForeground(color);
   }
 
   updateBackground(color) {
+    if (color == null) return;
     this.option.background = color;
     this.input.updateBackground(color);
     const element = getLemEditorElement();

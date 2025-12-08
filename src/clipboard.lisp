@@ -14,10 +14,11 @@
            ((cons major _)
             (<= 2 major))))))
 
-(defparameter *enable-clipboard-p*
-  (ignore-errors
-    #+darwin (sbcl-2.0.0-or-later-p)
-    #-darwin (not (wsl-p))))
+;; Use defvar instead of defparameter for lazy initialization.
+;; On Nix builds, defparameter would evaluate at compile time,
+;; causing platform detection to run in the build environment
+;; rather than the execution environment.
+(defvar *enable-clipboard-p*)
 
 (defmacro with-enable-clipboard (value &body body)
   "Execute BODY with clipboard enabled/disabled.
@@ -36,7 +37,12 @@ Argument VALUE is a boolean, and it will be set to enable/disable the clipboard.
 
 (defun enable-clipboard-p ()
   "Return t if clipboard is enabled."
-  *enable-clipboard-p*)
+  (if (boundp '*enable-clipboard-p)
+      *enable-clipboard-p*
+      (setf *enable-clipboard-p*
+            (ignore-errors
+              #+darwin (sbcl-2.0.0-or-later-p)
+              #-darwin (not (wsl-p))))))
 
 (defun copy-to-clipboard (string)
   "Save STRING to clipboard, so it lives on top of the stack."

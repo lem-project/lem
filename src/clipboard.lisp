@@ -14,6 +14,10 @@
            ((cons major _)
             (<= 2 major))))))
 
+;; Use defvar instead of defparameter for lazy initialization.
+;; On Nix builds, defparameter would evaluate at compile time,
+;; causing platform detection to run in the build environment
+;; rather than the execution environment.
 (defvar *enable-clipboard-p*)
 
 (defmacro with-enable-clipboard (value &body body)

@@ -1,0 +1,35 @@
+[micros]
+src.git = "https://github.com/lem-project/micros"
+fetch.git = "https://github.com/lem-project/micros"
+
+[lem-mailbox]
+src.git = "https://github.com/lem-project/lem-mailbox"
+fetch.git = "https://github.com/lem-project/lem-mailbox"
+
+[async-process]
+src.git = "https://github.com/lem-project/async-process"
+fetch.git = "https://github.com/lem-project/async-process"
+
+[jsonrpc]
+src.git = "https://github.com/cxxxr/jsonrpc"
+fetch.git = "https://github.com/cxxxr/jsonrpc"
+
+#[lem-extension-manager]
+#src.git = "https://github.com/lem-project/lem-extension-manager.git"
+#fetch.git = "https://github.com/lem-project/lem-extension-manager.git"
+#
+#[cl-sdl2]
+#src.git = "https://github.com/lem-project/cl-sdl2.git"
+#fetch.git = "https://github.com/lem-project/cl-sdl2.git"
+#
+#[cl-sdl2-ttf]
+#src.git = "https://github.com/lem-project/cl-sdl2-ttf.git"
+#fetch.git = "https://github.com/lem-project/cl-sdl2-ttf.git"
+#
+#[cl-sdl2-image]
+#src.git = "https://github.com/lem-project/cl-sdl2-image.git"
+#fetch.git = "https://github.com/lem-project/cl-sdl2-image.git"
+#
+#[webview]
+#src.git = "https://github.com/lem-project/webview.git"
+#fetch.git = "https://github.com/lem-project/webview.git"

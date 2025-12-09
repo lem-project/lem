@@ -1,207 +1,188 @@
 {
-  description = "lem";
+  description = "A flake for lem";
 
   inputs = {
-    flake-compat = {
-      url = "github:edolstra/flake-compat";
-      flake = false;
-    };
     flake-parts.url = "github:hercules-ci/flake-parts";
-    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/release-25.11";
   };
 
-  # cribbing a lot from https://github.com/dariof4/lem-flake
-  #            and from https://github.com/eriedaberrie/my-nix-packages
   outputs = inputs:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } {
       systems =
         [ "aarch64-darwin" "aarch64-linux" "x86_64-darwin" "x86_64-linux" ];
-      perSystem = { self', pkgs, lib, ... }:
+      imports = [
+        inputs.flake-parts.flakeModules.easyOverlay
+      ];
+      perSystem = { config, pkgs, ... }:
         let
-          lem = pkgs.sbcl.buildASDFSystem rec {
-            pname = "lem";
+          lisp = "sbcl";
+          sources = import ./_sources/generated.nix {
+            inherit (pkgs) fetchgit fetchurl fetchFromGitHub dockerTools;
+          };
+          micros = pkgs.${lisp}.buildASDFSystem {
+            inherit (sources.micros) pname src version;
+            systems = [ "micros" ];
+          };
+          jsonrpc = pkgs.${lisp}.buildASDFSystem {
+            inherit (sources.jsonrpc) pname src version;
+            systems = [ "jsonrpc" "jsonrpc/transport/stdio" "jsonrpc/transport/tcp" ];
+            lispLibs = with pkgs.${lisp}.pkgs; [
+              yason
+              alexandria
+              bordeaux-threads
+              dissect
+              chanl
+              vom
+              usocket
+              trivial-timeout
+              cl_plus_ssl
+              quri
+              fast-io
+              trivial-utf-8
+            ];
+          };
+          c-async-process = pkgs.stdenv.mkDerivation {
+            inherit (sources.async-process) pname src version;
+            nativeBuildInputs = with pkgs; [
+              libtool
+              libffi.dev
+              automake
+              autoconf
+              pkg-config
+            ];
+            buildPhase = "make PREFIX=$out";
+          };
+          async-process = pkgs.${lisp}.buildASDFSystem {
+            inherit (sources.async-process) pname src version;
+            systems = [ "async-process" ];
+            lispLibs = with pkgs.${lisp}.pkgs; [
+              cffi
+            ];
+            nativeLibs = [
+              c-async-process
+            ];
+            nativeBuildInputs = with pkgs; [
+              pkg-config
+            ];
+          };
+          lem-mailbox = pkgs.${lisp}.buildASDFSystem {
+            inherit (sources.lem-mailbox) pname src version;
+            systems = [ "lem-mailbox" ];
+            lispLibs = with pkgs.${lisp}.pkgs; [
+              bordeaux-threads
+              bt-semaphore
+	      queues
+              queues_dot_simple-cqueue
+            ];
+          };
+          lem-fake-interface = pkgs.${lisp}.buildASDFSystem {
+            pname = "lem-fake-interface";
             version = "unstable";
             systems = [ "lem-fake-interface" ];
             src = ./.;
-
             nativeBuildInputs = with pkgs; [
-              autoconf
-              automake
-              libffi
-              libtool
               makeBinaryWrapper
-              pkg-config
             ];
-
-            nativeLibs = with pkgs; [ libffi openssl ];
-
-            qlBundleLibs = pkgs.stdenvNoCC.mkDerivation {
-              pname = "${pname}-qlot-bundle";
-              inherit src version;
-
-              nativeBuildInputs = with pkgs; [
-                sbcl.pkgs.qlot-cli
-                which
-                git
-                cacert
-              ];
-
-              installPhase = ''
-                runHook preInstall
-
-                export HOME=$(mktemp -d)
-                qlot install --jobs $NIX_BUILD_CORES --no-deps --no-color
-                qlot bundle --no-color
-
-                # Unnecessary and also platform-dependent file
-                rm .bundle-libs/bundle-info.sexp
-
-                # Remove vendored .so files
-                find .bundle-libs \
-                  -type f '(' -name '*.so' -o -name '*.dll' ')' -exec rm '{}' ';'
-
-                cp -r .bundle-libs $out
-
-                runHook postInstall
-              '';
-
-              dontBuild = true;
-              dontFixup = true;
-              outputHashMode = "recursive";
-              outputHash = if pkgs.stdenv.isDarwin then
-                "sha256-BV1m58fUe1zfLH5iKbDP7KTNhv1p+g3W99tFQFYxPqs="
-              else
-                "sha256-GymS1lCsDYHHc3nRiOtzCRGYklP5AAmCtIA8sABw7JE=";
-            };
-
-            configurePhase = ''
-              runHook preConfigure
-              mkdir -p $out/share/lem
-              pushd $out/share/lem
-                cp -r $qlBundleLibs .bundle-libs
-                chmod -R +w .bundle-libs
-
-                # build async-process native part
-                pushd .bundle-libs/software/async-process-*
-                  chmod +x bootstrap
-                  ./bootstrap
-                  # Remove Windows-specific source from Makefile to avoid build errors
-                  sed -i 's/src\/async-process_windows\.c//g' Makefile.am Makefile
-                  make || true
-                  # Copy the built library if it exists
-                  if [ -f .libs/libasyncprocess.so ]; then
-                    mkdir -p static/$(uname -m)/$(uname)
-                    cp -f .libs/libasyncprocess.so static/$(uname -m)/$(uname)/
-                  fi
-                popd
-
-                # nixpkgs patch to fix cffi build on darwin
-                pushd .bundle-libs/software/cffi-*
-                  patch -p1 <${inputs.nixpkgs}/pkgs/development/lisp-modules/patches/cffi-libffi-darwin-ffi-h.patch
-                popd
-              popd
-
-              source ${inputs.nixpkgs}/pkgs/development/lisp-modules/setup-hook.sh
-              buildAsdfPath
-
-              runHook postConfigure
-            '';
-
+            lispLibs = with pkgs.${lisp}.pkgs; [
+              micros
+              async-process
+              jsonrpc
+              lem-mailbox
+              deploy
+              iterate
+              closer-mop
+              trivia
+              alexandria
+              trivial-gray-streams
+              trivial-types
+              cl-ppcre
+              inquisitor
+              babel
+              bordeaux-threads
+              yason
+              log4cl
+              split-sequence
+              str
+              dexador
+              cl-mustache
+              esrap
+              parse-number
+              cl-package-locks
+              trivial-utf-8
+              swank
+              _3bmd
+              _3bmd-ext-code-blocks
+              lisp-preprocessor
+              trivial-ws
+              trivial-open-browser
+              frugal-uuid
+            ];
             buildScript = pkgs.writeText "build-lem.lisp" ''
-              (defpackage :nix-cl-user
-                (:use :cl))
-
+              (defpackage :nix-cl-user (:use :cl))
               (in-package :nix-cl-user)
-              (load "${lem.asdfFasl}/asdf.${lem.faslExt}")
+
+              ;; Load ASDF
+              (load "${lem-fake-interface.asdfFasl}/asdf.${lem-fake-interface.faslExt}")
 
               ;; Mark this as a Nix build to disable incompatible features
               (pushnew :nix-build *features*)
 
               ;; Avoid writing to the global fasl cache
-              (asdf:initialize-output-translations
-                '(:output-translations :disable-cache
-                                       :inherit-configuration))
-
-              (defvar *systems* (uiop:split-string (uiop:getenv "systems")))
-              (defvar *out-path* (uiop:getenv "out"))
-              (defvar *share-path* (concatenate 'string
-                                    *out-path*
-                                    "/share/lem"))
-              (defvar *bundle-path* (concatenate 'string
-                                    *share-path*
-                                    "/.bundle-libs/bundle.lisp"))
+              (asdf:initialize-output-translations '(:output-translations :disable-cache :inherit-configuration))
 
               ;; Initial load
-              (let ((asdf:*system-definition-search-functions*
-                       (copy-list asdf:*system-definition-search-functions*)))
-                (load *bundle-path*)
-                (loop :for system :in *systems*
-                      :do (asdf:load-system system)))
+              (mapcar #'asdf:load-system (uiop:split-string (uiop:getenv "systems")))
 
-              ;; Load the bundle on every startup
-              (uiop:register-image-restore-hook
-                (lambda ()
-                  (load *bundle-path*))
-                   nil)
-
+              ;; Create executable
               (setf uiop:*image-entry-point* #'lem:main)
-              (uiop:dump-image
-                "lem"
-                :executable t
-                :compression t)
+              (uiop:dump-image "lem" :executable t :compression t)
             '';
             installPhase = ''
               runHook preInstall
 
-              mkdir -p $out/bin $out/share/lem
-              mv lem $out/bin
+              mkdir -p $out/bin
+              install lem $out/bin
               wrapProgram $out/bin/lem \
                 --prefix LD_LIBRARY_PATH : "$LD_LIBRARY_PATH" \
                 --prefix DYLD_LIBRARY_PATH : "$DYLD_LIBRARY_PATH"
 
-              cp -r . $out/share/lem
-
               runHook postInstall
             '';
           };
-
-          devShell = pkgs.mkShell {
-            packages = with pkgs; [
-              autoconf
-              automake
-              libffi.dev
-              libtool
-              ncurses.dev
-              pkg-config
-              sbcl
-              sbcl.pkgs.qlot-cli
-              which # this is available in the stdenv and most sane systems
-            ];
-            # Normally we would include pkg-config and list these dependencies
-            # in the packages attribute, but it does not appear that pkg-config
-            # is being used when available.
-            shellHook = with pkgs; ''
-              export LD_LIBRARY_PATH="''${LD_LIBRARY_PATH}:${ncurses.out}/lib:${SDL2}/lib:${SDL2_ttf}/lib:${SDL2_image}/lib:${libffi}/lib:${openssl.out}/lib"
-            '';
-          };
+          lem = lem-fake-interface.overrideLispAttrs (o: {
+             pname = "lem";
+             meta.mainProgram = "lem";
+             systems = [ "lem-ncurses" "lem-sdl2" ];
+             lispLibs = o.lispLibs ++ (with pkgs.${lisp}.pkgs; [
+               # lem-curses
+               cl-charms
+               cl-setlocale
+               # sdl2
+               sdl2
+               sdl2-ttf
+               sdl2-image
+               trivial-main-thread
+             ]);
+             nativeLibs = with pkgs; [
+               # lem-curses
+               ncurses
+               # sdl2
+               SDL2
+               SDL2_ttf
+               SDL2_image
+             ];
+          });
         in
         {
-          devShells.default = devShell;
-          packages.lem-ncurses = lem.overrideLispAttrs (o: {
-            pname = "lem-ncurses";
-            meta.mainProgram = "lem";
-            systems = [ "lem-ncurses" ];
-            nativeLibs = with pkgs; o.nativeLibs ++ [ ncurses ];
-          });
-          packages.lem-sdl2 = lem.overrideLispAttrs (o: {
-            pname = "lem-sdl2";
-            meta.mainProgram = "lem";
-            systems = [ "lem-sdl2" ];
-            nativeLibs = with pkgs;
-              o.nativeLibs ++ [ SDL2 SDL2_ttf SDL2_image ];
-          });
-
-          packages.default = self'.packages.lem-ncurses;
+          overlayAttrs = {
+            lem = config.lem;
+            sbcl = pkgs.${lisp}.withOverrides (self: super: { lem = config.lem; });
+          };
+          packages.lem = lem;
+          apps.lem = {
+            type = "app";
+            program = lem;
+          };
         };
     };
 }

@@ -17,6 +17,10 @@ Tested on Ubuntu 24.04 and macOS(apple silicon).
 
 https://github.com/lem-project/lem/releases/tag/nightly-latest
 
+### Nix
+
+    $ nix profile add github:lem-project/lem#lem
+
 ### docker
 
 With Docker (terminal version):

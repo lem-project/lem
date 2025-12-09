@@ -1,0 +1,82 @@
+{
+    "async-process": {
+        "cargoLocks": null,
+        "date": "2025-11-24",
+        "extract": null,
+        "name": "async-process",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "rev": "239f5f10d230a19d052b88b5440e9325dfc4c5a8",
+            "sha256": "sha256-UFNjj4UKmCC1bCqqfFTZQ0hY8FXm5kAeMFr/4YLd/hg=",
+            "sparseCheckout": [],
+            "type": "git",
+            "url": "https://github.com/lem-project/async-process"
+        },
+        "version": "239f5f10d230a19d052b88b5440e9325dfc4c5a8"
+    },
+    "jsonrpc": {
+        "cargoLocks": null,
+        "date": "2025-08-04",
+        "extract": null,
+        "name": "jsonrpc",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "rev": "42fa96ec34f6b6be77a6f12f7c4e84f375eff019",
+            "sha256": "sha256-tG2poXDvHX6twLmW8keaJedKfrFpmoHJZAmyuN0NRFk=",
+            "sparseCheckout": [],
+            "type": "git",
+            "url": "https://github.com/cxxxr/jsonrpc"
+        },
+        "version": "42fa96ec34f6b6be77a6f12f7c4e84f375eff019"
+    },
+    "lem-mailbox": {
+        "cargoLocks": null,
+        "date": "2023-09-10",
+        "extract": null,
+        "name": "lem-mailbox",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "rev": "12d629541da440fadf771b0225a051ae65fa342a",
+            "sha256": "sha256-hb6GSWA7vUuvSSPSmfZ80aBuvSVyg74qveoCPRP2CeI=",
+            "sparseCheckout": [],
+            "type": "git",
+            "url": "https://github.com/lem-project/lem-mailbox"
+        },
+        "version": "12d629541da440fadf771b0225a051ae65fa342a"
+    },
+    "micros": {
+        "cargoLocks": null,
+        "date": "2025-08-13",
+        "extract": null,
+        "name": "micros",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "rev": "e1d3857400a9bf7d1c6c2852d9c7017a0dc52217",
+            "sha256": "sha256-NryjqfihHjRo4thBLmdeIaZuCNBFFWVDze55KD6nxrY=",
+            "sparseCheckout": [],
+            "type": "git",
+            "url": "https://github.com/lem-project/micros"
+        },
+        "version": "e1d3857400a9bf7d1c6c2852d9c7017a0dc52217"
+    }
+}

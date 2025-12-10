@@ -9,8 +9,8 @@
 
 (define-key *global-keymap* "C-@" 'mark-set)
 (define-key *global-keymap* "C-Space" 'mark-set)
-(define-key *global-keymap* "C-x C-x" 'exchange-point-mark)
-(define-key *global-keymap* "C-x h" 'mark-set-whole-buffer)
+(define-key *global-prefix-keymap* "C-x" 'exchange-point-mark)
+(define-key *global-prefix-keymap* "h" 'mark-set-whole-buffer)
 
 (define-command mark-set (p) (:universal-nil)
   "Sets a mark at the current cursor position."

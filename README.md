@@ -21,6 +21,31 @@ https://github.com/lem-project/lem/releases/tag/nightly-latest
 
     $ nix profile add github:lem-project/lem#lem
 
+Or run Lem temporarily (no install):
+
+    $ nix run github:lem-project/lem#lem
+
+Use the overlay when you already have a flake-based NixOS/home-manager config and
+want `pkgs.lem` (and `apps.lem`) available from your `nixpkgs` set.
+You can also consume `lem` as an overlay in `flake.nix`:
+
+    {
+      inputs = {
+        nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+        lem.url = "github:lem-project/lem";
+      };
+
+      outputs = { self, nixpkgs, lem, ... }: {
+        nixosConfigurations.example = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            { nixpkgs.overlays = [ lem.overlays.default ]; }
+            { environment.systemPackages = [ pkgs.lem ]; }
+          ];
+        };
+      };
+    }
+
 ### docker
 
 With Docker (terminal version):

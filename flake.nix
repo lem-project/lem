@@ -165,7 +165,7 @@
             ];
           };
           lem-cli = lem-fake-interface.overrideLispAttrs (o: {
-            pname = "lem-cli";
+            pname = "lem";
             meta.mainProgram = "lem";
             systems = [
               "lem-ncurses"

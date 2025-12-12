@@ -49,9 +49,9 @@ Key abstractions:
 
 ## Coding Standards
 
-This project uses [code-contractor](https://github.com/rooms-dev/code-contractor) for automated PR review. All Common Lisp coding standards are defined in `contract.yml` at the repository root.
+This project uses code-contractor for automated PR review. code-contractor is a GitHub App that validates pull requests against rules defined in `contract.yml`.
 
-When writing code, refer to `contract.yml` for:
+**All coding standards are defined in `contract.yml` at the repository root.** Refer to it for:
 - Package and file structure rules
 - Documentation requirements
 - Style conventions (loop syntax, error handling, etc.)

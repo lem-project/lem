@@ -1,8 +1,6 @@
 # Common Lisp Style Guide
 
-All coding standards for this project are defined in `contract.yml` at the repository root. This file is used by code-contractor for automated PR review.
-
-**Always refer to `contract.yml` for the authoritative coding rules.**
+**All coding standards are defined in `contract.yml` at the repository root.**
 
 ## Quick Reference
 

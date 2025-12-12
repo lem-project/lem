@@ -6,8 +6,8 @@ trigger:
     - "frontends/**/*.lisp"
     - "src/**"
     - "tests/**"
+    - "contrib/**"
     - "**/*.asd"
-    - "**/*.md"
 
 validation:
   limits:
@@ -16,82 +16,100 @@ validation:
     max_files_changed: 10
 
   ai:
-    system_prompt: you are senior Common Lisp engineer.
+    system_prompt: |
+      You are a senior Common Lisp engineer reviewing code for Lem editor.
+      Lem is a text editor with multiple frontends (ncurses, SDL2, webview).
+      Focus on maintainability, consistency with existing code, and Lem-specific conventions.
     rules:
+      # === File Structure ===
       - name: defpackage_rule
         prompt: |
-          When adding a new file, the first form in the file should be `(defpackage <package-name> ...)` (or `uiop:define-package`).
-          The package name in defpackage should match the file name.
-      - name: trim_whitespace_rule
-        prompt: |
-          There should be no trailing whitespace at the end of any line.
-          The last line of the file must be an empty line.
-      - name: docstring_rule
-        prompt: |
-          Documentation rules:
-          - All functions, methods, and classes require documentation strings.
-          - Write detailed docstrings for `define-command`.
-          - For important functions, provide high-level overview explaining not just "how" but "why".
-          - Use `:documentation` option for packages, generic functions, and CLOS slots.
-          - Documentation strings must explain what the function, method, or class does.
-      - name: Alexandria and other utility libraries
-        prompt: |
-          Lem depends on `alexandria`, so you can use `if-let`, `when-let` and similar functions.
-          You can `:import-from` these symbols in your package definition, use the `alexandria:` package prefix, and define a package-local nickname.
-          Try to not use new utility functions that you don't see in the codebase yet.
-          For instance, we won't use `alexandria-2:line-up-first`.
-          Try to not use `alexandria:curry` and prefer higher-order functions.
-      - name: dynamic_symbol_call_rule
-        prompt: |
-          Avoid dynamic symbol calls (`uiop:symbol-call`) but rethink your architecture instead.
-      - name: functional_style_rule
-        prompt: |
-          Use `defvar` and `defparameter` for user-facing variables, but avoid
-          using them as global variables that store state and that are used from
-          functions to functions. Have a more functional style, give explicit
-          arguments to functions.
+          First form must be `defpackage` or `uiop:define-package`.
+          Package name should match filename (e.g., `foo.lisp` → `:lem-ext/foo` or `:lem-foo`).
+          Extensions must use `lem-` prefix (e.g., `:lem-python-mode`).
 
-          Example:
+      - name: file_structure_rule
+        prompt: |
+          File organization (top to bottom):
+          1. defpackage
+          2. defvar/defparameter declarations
+          3. Key bindings (define-key, define-keys)
+          4. Class/struct definitions
+          5. Functions and commands
 
-          ```lisp
-          ;; avoid this
-          (defvar *var* 1)
-          (defun foo ()
-             *var*)
-          (let ((*var* 2))
-              (foo))
-          ```
-
-          instead, have `foo` take one argument.
-
-          However, if the purpose is explained in the comments/docstring and is justified, please allow it.
+      # === Style ===
       - name: loop_keywords_rule
         prompt: |
-          Loop keywords must be written with colons.
-          Example: `(loop :for key :in list :do ...)`
-          Wrong example: `(loop for key in list do ...)`
-      - name: variable_placement_rule
+          Loop keywords must use colons: `(loop :for x :in list :do ...)`
+          NOT: `(loop for x in list do ...)`
+
+      - name: trim_whitespace_rule
         prompt: |
-          Variable placement rule:
-          - `defvar` and `defparameter` must be grouped and placed near the top of the file.
-      - name: keybinding_placement_rule
+          No trailing whitespace. Files must end with a newline.
+
+      - name: naming_conventions_rule
         prompt: |
-          Key binding placement rule:
-          - Key bindings for major and minor modes must be defined at the top of the file.
+          Naming conventions:
+          - Functions/variables: kebab-case (e.g., `find-buffer`)
+          - Special variables: *earmuffs* (e.g., `*global-keymap*`)
+          - Constants: +plus-signs+ (e.g., `+default-tab-size+`)
+          - Predicates: -p suffix for functions (e.g., `buffer-modified-p`)
+          - Do NOT use -p suffix for user-configurable variables
+
+      # === Documentation ===
+      - name: docstring_rule
+        prompt: |
+          Required docstrings for:
+          - Exported functions, methods, classes
+          - `define-command` (explain what the command does)
+          - Generic functions (`:documentation` option)
+          Important functions should explain "why", not just "what".
+        severity: warning
+
+      # === Lem-Specific ===
+      - name: internal_symbol_rule
+        prompt: |
+          Use exported symbols from `lem` or `lem-core` package.
+          Avoid `lem::internal-symbol` access.
+          If internal access is necessary, document why.
+
       - name: error_handling_rule
         prompt: |
-          Error handling rules:
-          - Use `error` for internal errors.
-          - `editor-error` is for errors that are properly displayed to the user.
-          Use `editor-error` for user-facing error messages.
+          - `error`: Internal/programming errors
+          - `editor-error`: User-facing errors (displayed in echo area)
+          Always use `editor-error` for messages shown to users.
+
+      - name: frontend_interface_rule
+        prompt: |
+          Frontend-specific code must use `lem-if:*` protocol.
+          Do not call frontend implementation directly from core.
+        severity: warning
+
+      # === Functional Style ===
+      - name: functional_style_rule
+        prompt: |
+          Prefer explicit function arguments over dynamic variables.
+          Avoid using `defvar` for state passed between functions.
+          Exception: Well-documented cases like `*current-buffer*`.
+
+      - name: dynamic_symbol_call_rule
+        prompt: |
+          Avoid `uiop:symbol-call`. Rethink architecture instead.
+          If unavoidable, document the reason.
+
+      # === Libraries ===
+      - name: alexandria_usage_rule
+        prompt: |
+          Alexandria utilities allowed: `if-let`, `when-let`, `with-gensyms`, etc.
+          Avoid: `alexandria:curry` (use explicit lambdas)
+          Avoid: `alexandria-2:*` functions not yet used in codebase
+
+      # === Macros ===
       - name: macro_style_rule
         prompt: |
-          Macro style:
-          - Don't write long macros, use the "call-with-" pattern.
-          - When defining lists, avoid quote, backquote, and comma except when necessary.
-          - Prefer the `list` constructor outside of macros.
-      - name: user_variable_naming_rule
-        prompt: |
-          Do not use the "-p" suffix for user-modifiable parameters.
-          Reserve the "-p" suffix for function key arguments.
-          User-facing variables can be made configurable and saveable with the `lem:config` system.
+          Keep macros small. For complex logic, use `call-with-*` pattern:
+          ```lisp
+          (defmacro with-foo (() &body body)
+            `(call-with-foo (lambda () ,@body)))
+          ```
+          Prefer `list` over backquote outside macros.

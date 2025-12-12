@@ -1,250 +1,93 @@
-# CLAUDE.md - Lem Editor Project Guide
+# CLAUDE.md - Lem Editor
 
-## Project Overview
+Lem is a text editor written in Common Lisp with multiple frontend support (terminal, GUI, browser).
 
-Lem is a text editor written in Common Lisp. It provides a live editing environment where users can see program results while editing and customize the editor in real-time. The editor supports multiple frontends (terminal, GUI, browser) through a clean abstraction layer.
+## Quick Reference
 
-**Version**: 2.3.0
-**License**: MIT
-**Primary Language**: Common Lisp (SBCL recommended)
+```bash
+# Build and run
+make sdl2          # GUI version
+make ncurses       # Terminal version
 
-## Architecture
-
-### Four-Layer Design
-
-```
-Layer 4: Frontends      - Platform-specific UI (ncurses, SDL2, webview, server)
-Layer 3: Interface      - Protocol abstraction (lem-if:* generic functions)
-Layer 2: Core           - Editor kernel (buffer, window, command, mode)
-Layer 1: Extensions     - Language modes, LSP, Vi-mode, Git integration
+# Development
+qlot install       # Install dependencies
+make test          # Run tests
 ```
 
-### Directory Structure
+## Project Structure
 
 ```
 src/                    # Core editor
+├── lem.lisp            # Entry point
 ├── buffer/             # Text buffer system
 ├── window/             # Window management
-├── display/            # Rendering system
-├── commands/           # Built-in commands
-├── common/             # Utilities (timer, hooks, color, queue)
-└── ext/                # Core extensions (completion, grep, etc.)
+├── mode.lisp           # Mode system
+├── keymap.lisp         # Key bindings
+├── defcommand.lisp     # Command definition
+└── interface.lisp      # Frontend abstraction
 
 frontends/              # UI implementations
-├── ncurses/            # Terminal frontend
-├── sdl2/               # Desktop GUI frontend
-├── webview/            # Browser-based frontend
-└── server/             # Remote access via JSON-RPC
+├── sdl2/               # Desktop GUI
+├── ncurses/            # Terminal
+└── webview/            # Browser-based
 
-extensions/             # Language modes and features
-├── lisp-mode/          # Common Lisp development
-├── lsp-mode/           # Language Server Protocol client
-├── vi-mode/            # Vim emulation
-├── legit/              # Git integration
-└── [language]-mode/    # 50+ language modes
-
-contrib/                # Community contributions
+extensions/             # Language modes (50+)
+├── lisp-mode/          # Common Lisp with REPL
+├── lsp-mode/           # LSP client
+└── vi-mode/            # Vim emulation
 ```
 
-## Key Concepts
+## Architecture
 
-### Buffer
-Text container with line-based storage. Each buffer has:
-- A name (unique identifier)
-- Optional file association
-- Major mode (exactly one)
-- Minor modes (zero or more)
-- Points (cursor positions)
-- Undo history
+Four-layer design: Frontends → Interface (lem-if:*) → Core → Extensions
 
-### Point
-Position in a buffer (line + character offset). Three kinds:
-- `:temporary` - Short-lived, for calculations
-- `:left-inserting` - Stays left when text inserted
-- `:right-inserting` - Moves right when text inserted
+Key abstractions:
+- **Buffer**: Text storage with points, marks, undo history
+- **Window**: Buffer display, organized in tree (splits) or floating
+- **Mode**: Major (one per buffer) + Minor (multiple, toggleable)
+- **Command**: Interactive operation via `define-command`
 
-### Window
-Displays a buffer. Organized in:
-- Window tree (tiled splits)
-- Floating windows (popups)
-- Frame (top-level container)
-
-### Mode
-Customizes editing behavior:
-- **Major mode**: Primary editing paradigm (one per buffer)
-- **Minor mode**: Optional features (multiple per buffer)
-- **Global mode**: System-wide behavior (emacs-mode, etc.)
-
-### Command
-Interactive operation invoked by key or M-x. Defined with `define-command`.
-
-### Keymap
-Maps key sequences to commands. Hierarchical lookup through active modes.
-
-## Important Files
-
-| File | Purpose |
-|------|---------|
-| `lem.asd` | ASDF system definition |
-| `src/lem.lisp` | Entry point, initialization |
-| `src/interface.lisp` | Frontend abstraction protocol |
-| `src/interp.lisp` | Command loop, error handling |
-| `src/mode.lisp` | Mode system (major/minor/global) |
-| `src/keymap.lisp` | Key binding system |
-| `src/defcommand.lisp` | Command definition macro |
-| `src/buffer/internal/buffer.lisp` | Buffer implementation |
-| `src/window/window.lisp` | Window implementation |
-| `src/display/base.lisp` | Display rendering |
-
-## Common Patterns
-
-### Defining a Command
+## Common Lisp Conventions
 
 ```lisp
-(define-command my-command (arg) ((:string "Prompt: "))
-  "Documentation string."
-  (message "You entered: ~A" arg))
+;; Packages use lem-core for extension API
+(defpackage :lem-my-mode
+  (:use :cl :lem))
+
+;; Special variables use *earmuffs*
+(defvar *my-mode-keymap* (make-keymap))
+
+;; Predicates end with -p
+(buffer-modified-p buffer)
 ```
 
-Argument descriptors: `:universal`, `:string`, `:number`, `:buffer`, `:file`, `:region`
+## Key Files for Common Tasks
 
-### Defining a Major Mode
+| Task | Files |
+|------|-------|
+| Add command | `src/defcommand.lisp` for macro, `src/commands/` for examples |
+| Add mode | `extensions/` for examples, inherit `language-mode` |
+| Add frontend | `src/interface.lisp` for protocol, `frontends/` for impl |
+| Buffer ops | `src/buffer/internal/buffer.lisp`, `src/buffer/internal/edit.lisp` |
+| Window ops | `src/window/window.lisp` |
 
-```lisp
-(define-major-mode my-mode language-mode
-    (:name "My Mode"
-     :keymap *my-mode-keymap*
-     :syntax-table *my-syntax-table*
-     :mode-hook *my-mode-hook*)
-  ;; Initialization code
-  (setf (variable-value 'enable-syntax-highlight) t))
-```
+## Development Notes
 
-### Defining a Minor Mode
+- Use `lem-core` package symbols, avoid `lem::` internal access
+- Frontends implement `lem-if:*` generic functions
+- Modes register via `define-major-mode` / `define-minor-mode`
+- Commands register via `define-command` with argument descriptors
 
-```lisp
-(define-minor-mode my-minor-mode
-    (:name "My Minor"
-     :keymap *my-minor-keymap*
-     :global nil  ; or t for global minor mode
-     :enable-hook (lambda () ...)
-     :disable-hook (lambda () ...))
-  ;; Toggle code
-  )
-```
+## Configuration
 
-### Key Binding
-
-```lisp
-(define-key *global-keymap* "C-c C-c" 'my-command)
-(define-key *my-mode-keymap* "M-." 'find-definition)
-```
-
-### Using Hooks
-
-```lisp
-(add-hook *after-init-hook* 'my-setup-function)
-(add-hook (variable-value 'before-save-hook :buffer buffer) 'format-on-save)
-```
-
-### Buffer Operations
-
-```lisp
-(with-point ((p (current-point)))
-  (insert-string p "text")
-  (delete-character p 1)
-  (line-start p)
-  (line-end p))
-```
-
-## Frontend Protocol
-
-Frontends implement the `implementation` class and these key generic functions:
-
-```lisp
-(lem-if:invoke implementation function)        ; Start UI loop
-(lem-if:display-width implementation)          ; Screen width in chars
-(lem-if:display-height implementation)         ; Screen height in chars
-(lem-if:make-view implementation window ...)   ; Create window view
-(lem-if:render-line implementation view ...)   ; Draw a line
-(lem-if:update-display implementation)         ; Flush to screen
-```
-
-## Build & Run
-
-### Dependencies
-- SBCL (recommended) or other Common Lisp
-- Quicklisp + Qlot for dependency management
-- Platform-specific: ncurses, SDL2, or GTK4/WebKit
-
-### Quick Start
-
-```bash
-# Install dependencies
-qlot install
-
-# Run with SDL2 frontend
-make sdl2
-
-# Run with terminal frontend
-make ncurses
-
-# Run tests
-make test
-```
-
-### Configuration
-
-User config location (in order of precedence):
+User config locations (in order):
 1. `$LEM_HOME/init.lisp`
-2. `~/.config/lem/init.lisp` (XDG)
+2. `~/.config/lem/init.lisp`
 3. `~/.lem/init.lisp`
 4. `~/.lemrc`
 
-## Development Guidelines
+## Documentation
 
-### Code Style
-- Follow existing patterns in the codebase
-- Use `lem-core` package for extensions
-- Avoid `lem::` internal symbol access
-- Document public APIs with docstrings
-
-### Adding a Language Mode
-1. Create `extensions/[lang]-mode/` directory
-2. Define `.asd` system file
-3. Create syntax table for highlighting
-4. Define major mode inheriting `language-mode`
-5. Add to `lem/extensions` dependencies in `lem.asd`
-
-### Adding LSP Support
-1. Define language spec with `define-language-spec`
-2. Specify language server command and connection mode
-3. Add root URI patterns for project detection
-
-### Testing
-- Use Rove test framework
-- Tests in `lem-tests.asd` and mode-specific `.asd` files
-- Run with `make test` or `.qlot/bin/rove lem-tests.asd`
-
-## Debugging
-
-### Logging
-```lisp
-(log:info "Message: ~A" value)
-```
-Logs to `~/.lem/debug.log` by default.
-
-### REPL Access
-With Lisp mode, connect to Swank for live debugging:
-- `M-x slime` or `M-x start-lisp-repl`
-
-### Common Issues
-- **Undo not working**: Check `buffer-%enable-undo-p`
-- **Keys not binding**: Verify keymap hierarchy and mode activation
-- **Display issues**: Check `*implementation*` and view state
-
-## Resources
-
-- Documentation: https://lem-project.github.io/
-- Source: https://github.com/lem-project/lem
-- DeepWiki Analysis: https://deepwiki.com/lem-project/lem/
+- Architecture details: `docs/ARCHITECTURE.md`
+- Extension development: `docs/extension-development.md`
+- Online docs: https://lem-project.github.io/

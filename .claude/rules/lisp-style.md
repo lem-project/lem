@@ -6,22 +6,14 @@
 
 Key rules from contract.yml:
 
-- `defpackage_rule`: First form must be `defpackage` matching filename
-- `docstring_rule`: All exported functions/methods/classes require docstrings
+- `defpackage_rule`: First form must be `defpackage`, package name matches filename
+- `file_structure_rule`: defpackage → defvar → keybindings → classes → functions
 - `loop_keywords_rule`: Use `(loop :for ... :do ...)` with colons
+- `naming_conventions_rule`: kebab-case, *earmuffs*, +constants+, -p suffix
+- `docstring_rule`: Exported symbols require docstrings
+- `internal_symbol_rule`: Use `lem:` not `lem::` internal symbols
 - `error_handling_rule`: Use `editor-error` for user-facing errors
-- `functional_style_rule`: Prefer explicit arguments over global state
-- `trim_whitespace_rule`: No trailing whitespace, end files with newline
-
-## Naming Conventions
-
-- Functions/variables: `kebab-case`
-- Special variables: `*earmuffs*`
-- Constants: `+plus-signs+`
-- Predicates: `-p` suffix (for functions, not user variables)
-
-## Avoid
-
-- `lem::internal-symbol` access - use exported API from `lem-core`
-- `uiop:symbol-call` - rethink architecture instead
-- `alexandria:curry` - prefer explicit higher-order functions
+- `frontend_interface_rule`: Use `lem-if:*` protocol for frontend code
+- `functional_style_rule`: Prefer explicit arguments over dynamic variables
+- `alexandria_usage_rule`: Allowed utilities, avoid `curry`
+- `macro_style_rule`: Keep macros small, use `call-with-*` pattern

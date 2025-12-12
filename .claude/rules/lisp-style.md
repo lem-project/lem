@@ -1,38 +1,29 @@
-# Common Lisp Style Guide for Lem
+# Common Lisp Style Guide
+
+All coding standards for this project are defined in `contract.yml` at the repository root. This file is used by code-contractor for automated PR review.
+
+**Always refer to `contract.yml` for the authoritative coding rules.**
+
+## Quick Reference
+
+Key rules from contract.yml:
+
+- `defpackage_rule`: First form must be `defpackage` matching filename
+- `docstring_rule`: All exported functions/methods/classes require docstrings
+- `loop_keywords_rule`: Use `(loop :for ... :do ...)` with colons
+- `error_handling_rule`: Use `editor-error` for user-facing errors
+- `functional_style_rule`: Prefer explicit arguments over global state
+- `trim_whitespace_rule`: No trailing whitespace, end files with newline
 
 ## Naming Conventions
 
-- Functions/variables: `kebab-case` (e.g., `find-buffer`, `current-point`)
-- Special variables: `*earmuffs*` (e.g., `*global-keymap*`)
-- Constants: `+plus-signs+` (e.g., `+default-tab-size+`)
-- Predicates: end with `-p` (e.g., `buffer-modified-p`)
-- Conversion: `x-to-y` (e.g., `point-to-lsp-position`)
-
-## Package Structure
-
-```lisp
-(defpackage :lem-my-extension
-  (:use :cl :lem)              ; Use lem, not lem-core directly
-  (:export :my-mode
-           :*my-mode-hook*))
-(in-package :lem-my-extension)
-```
-
-## Conditions and Restarts
-
-Use `editor-error` for user-facing errors:
-
-```lisp
-(editor-error "File not found: ~A" filename)
-```
-
-## Documentation
-
-- All exported symbols should have docstrings
-- Use `@param` and `@return` in complex functions
+- Functions/variables: `kebab-case`
+- Special variables: `*earmuffs*`
+- Constants: `+plus-signs+`
+- Predicates: `-p` suffix (for functions, not user variables)
 
 ## Avoid
 
-- `lem::internal-symbol` access - use exported API
-- Modifying global state without proper cleanup
-- Blocking the main thread - use `bt2:make-thread` for long operations
+- `lem::internal-symbol` access - use exported API from `lem-core`
+- `uiop:symbol-call` - rethink architecture instead
+- `alexandria:curry` - prefer explicit higher-order functions

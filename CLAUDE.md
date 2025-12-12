@@ -47,19 +47,15 @@ Key abstractions:
 - **Mode**: Major (one per buffer) + Minor (multiple, toggleable)
 - **Command**: Interactive operation via `define-command`
 
-## Common Lisp Conventions
+## Coding Standards
 
-```lisp
-;; Packages use lem-core for extension API
-(defpackage :lem-my-mode
-  (:use :cl :lem))
+This project uses [code-contractor](https://github.com/rooms-dev/code-contractor) for automated PR review. All Common Lisp coding standards are defined in `contract.yml` at the repository root.
 
-;; Special variables use *earmuffs*
-(defvar *my-mode-keymap* (make-keymap))
-
-;; Predicates end with -p
-(buffer-modified-p buffer)
-```
+When writing code, refer to `contract.yml` for:
+- Package and file structure rules
+- Documentation requirements
+- Style conventions (loop syntax, error handling, etc.)
+- Functional programming guidelines
 
 ## Key Files for Common Tasks
 

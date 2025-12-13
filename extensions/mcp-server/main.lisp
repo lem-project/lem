@@ -2,21 +2,6 @@
 
 ;;; MCP Server Main Entry Point and Initialization
 
-;; Auto-start hook
-(defun maybe-auto-start-mcp-server ()
-  "Start MCP server automatically if configured."
-  (when *mcp-server-auto-start*
-    (handler-case
-        (let ((server (make-instance 'mcp-server :port *mcp-server-default-port*)))
-          (start-mcp-server server)
-          (message "MCP server auto-started at http://127.0.0.1:~A/mcp"
-                   *mcp-server-default-port*))
-      (error (e)
-        (message "Failed to auto-start MCP server: ~A" e)))))
-
-;; Register auto-start with Lem's after-init-hook
-;; (add-hook lem:*after-init-hook* 'maybe-auto-start-mcp-server)
-
 ;; Cleanup on exit
 (defun cleanup-mcp-server ()
   "Clean up MCP server on Lem exit."

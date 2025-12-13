@@ -1,8 +1,5 @@
 (in-package :lem-mcp-server)
 
-(defvar *mcp-server-auto-start* nil
-  "When non-nil, automatically start MCP server when Lem starts.")
-
 (defvar *mcp-server-default-port* 7890
   "Default port for MCP server.")
 

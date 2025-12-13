@@ -42,8 +42,7 @@
                 :redraw-display
                 :switch-to-buffer
                 :pop-to-buffer)
-  (:export :*mcp-server-auto-start*
-           :*mcp-server-default-port*
+  (:export :*mcp-server-default-port*
            :current-mcp-server
            :start-mcp-server
            :stop-mcp-server

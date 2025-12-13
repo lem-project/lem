@@ -33,3 +33,7 @@ fetch.git = "https://github.com/cxxxr/jsonrpc"
 [webview]
 src.git = "https://github.com/lem-project/webview.git"
 fetch.git = "https://github.com/lem-project/webview.git"
+
+[webview-upstream]
+src.manual = "0.12.0"
+fetch.github = "webview/webview"

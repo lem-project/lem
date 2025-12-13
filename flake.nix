@@ -98,13 +98,6 @@
               queues_dot_simple-cqueue
             ];
           };
-          # Fetch upstream webview library
-          webview-upstream = pkgs.fetchFromGitHub {
-            owner = "webview";
-            repo = "webview";
-            rev = "0.12.0";
-            hash = "sha256-pmqodl2fIlCNJTZz1U5spW4MpcoMhQt5WFh3+TRny3U=";
-          };
           # Build the webview C library from lem-project/webview
           c-webview = pkgs.stdenv.mkDerivation {
             pname = "c-webview";
@@ -124,7 +117,7 @@
               runHook preConfigure
               cmake -G Ninja -B build -S c \
                 -DCMAKE_BUILD_TYPE=Release \
-                -DFETCHCONTENT_SOURCE_DIR_WEBVIEW=${webview-upstream}
+                -DFETCHCONTENT_SOURCE_DIR_WEBVIEW=${sources.webview-upstream.src}
               runHook postConfigure
             '';
             buildPhase = ''

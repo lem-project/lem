@@ -71,4 +71,15 @@
     };
     date = "2025-08-23";
   };
+  webview-upstream = {
+    pname = "webview-upstream";
+    version = "0.12.0";
+    src = fetchFromGitHub {
+      owner = "webview";
+      repo = "webview";
+      rev = "0.12.0";
+      fetchSubmodules = false;
+      sha256 = "sha256-pmqodl2fIlCNJTZz1U5spW4MpcoMhQt5WFh3+TRny3U=";
+    };
+  };
 }

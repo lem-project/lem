@@ -98,5 +98,26 @@
             "url": "https://github.com/lem-project/webview.git"
         },
         "version": "238a0be10c6c37311ce2587ef99142f65abd880a"
+    },
+    "webview-upstream": {
+        "cargoLocks": null,
+        "date": null,
+        "extract": null,
+        "name": "webview-upstream",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "owner": "webview",
+            "repo": "webview",
+            "rev": "0.12.0",
+            "sha256": "sha256-pmqodl2fIlCNJTZz1U5spW4MpcoMhQt5WFh3+TRny3U=",
+            "sparseCheckout": [],
+            "type": "github"
+        },
+        "version": "0.12.0"
     }
 }

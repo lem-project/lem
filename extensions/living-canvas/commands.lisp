@@ -13,6 +13,27 @@
   "Get a saved node position"
   (gethash node-id *node-positions*))
 
+;;; Source Location Cache
+
+(defvar *source-location-cache* (make-hash-table :test 'equal)
+  "Cache for source locations to avoid repeated file searches")
+
+(defun cache-source-location (node-id location)
+  "Cache a source location for a node"
+  (setf (gethash node-id *source-location-cache*) location))
+
+(defun get-cached-source-location (node-id)
+  "Get a cached source location"
+  (gethash node-id *source-location-cache*))
+
+(defun populate-source-location-cache (graph)
+  "Populate the source location cache from a graph"
+  (maphash (lambda (node-id node)
+             (let ((location (lem-living-canvas/call-graph:graph-node-source-location node)))
+               (when location
+                 (cache-source-location node-id location))))
+           (lem-living-canvas/call-graph:call-graph-nodes graph)))
+
 ;;; Source Navigation
 
 (defun parse-node-id (node-id)
@@ -27,16 +48,25 @@
 
 (defun jump-to-node-source (node-id)
   "Jump to the source location of a node"
-  (let ((symbol (parse-node-id node-id)))
-    (when symbol
-      (let ((location (lem-living-canvas/call-graph::get-source-location symbol)))
-        (when location
-          (destructuring-bind (file . line) location
-            (when (probe-file file)
-              ;; Open file and go to line
-              (lem:find-file file)
-              (lem:goto-line line)
-              (lem:message "Jumped to ~A" node-id))))))))
+  ;; First check cache
+  (let ((cached (get-cached-source-location node-id)))
+    (if cached
+        (destructuring-bind (file . line) cached
+          (when (probe-file file)
+            (lem:find-file file)
+            (lem:goto-line line)
+            (lem:message "Jumped to ~A" node-id)))
+        ;; Fall back to lookup
+        (let ((symbol (parse-node-id node-id)))
+          (when symbol
+            (let ((location (lem-living-canvas/call-graph::get-source-location symbol)))
+              (when location
+                (cache-source-location node-id location)
+                (destructuring-bind (file . line) location
+                  (when (probe-file file)
+                    (lem:find-file file)
+                    (lem:goto-line line)
+                    (lem:message "Jumped to ~A" node-id))))))))))
 
 ;;; JSON-RPC Method Registration
 
@@ -90,13 +120,16 @@ Drag nodes to rearrange the layout."
                         (lem-living-canvas/call-graph:call-graph-nodes graph))))
       (if (zerop node-count)
           (lem:message "No functions found in package ~A" package-name)
-          (let ((canvas-buffer (make-canvas-buffer
-                                (format nil "*Canvas: ~A*" package-name)
-                                source-buffer
-                                graph)))
-            (lem:pop-to-buffer canvas-buffer)
-            (lem:message "Living Canvas: ~D functions in ~A"
-                         node-count package-name))))))
+          (progn
+            ;; Pre-populate cache for fast source navigation
+            (populate-source-location-cache graph)
+            (let ((canvas-buffer (make-canvas-buffer
+                                  (format nil "*Canvas: ~A*" package-name)
+                                  source-buffer
+                                  graph)))
+              (lem:pop-to-buffer canvas-buffer)
+              (lem:message "Living Canvas: ~D functions in ~A"
+                           node-count package-name)))))))
 
 (lem:define-command living-canvas-current-file () ()
   "Display a call graph for CL-USER package (placeholder)"

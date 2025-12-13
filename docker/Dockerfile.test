@@ -14,4 +14,4 @@ RUN qlot install
 
 # Run tests using standard lem-tests mechanism
 # .qlot/bin/rove is installed by qlot
-CMD ["exec", ".qlot/bin/rove", "lem-tests.asd"]
+CMD ["/bin/bash", "-c", ".qlot/bin/rove lem-tests.asd && .qlot/bin/rove extensions/vi-mode/lem-vi-mode.asd"]

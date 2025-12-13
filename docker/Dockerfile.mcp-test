@@ -1,0 +1,17 @@
+FROM fukamachi/qlot:latest
+
+USER root
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY . .
+
+# Install dependencies
+RUN qlot install
+
+# Run tests using standard lem-tests mechanism
+# .qlot/bin/rove is installed by qlot
+CMD ["exec", ".qlot/bin/rove", "lem-tests.asd"]

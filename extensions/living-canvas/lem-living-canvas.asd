@@ -4,7 +4,6 @@
   :license "MIT"
   :depends-on ("alexandria"
                "lem/core"
-               "lem-server"
                "yason")
   :serial t
   :components ((:file "package")

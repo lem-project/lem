@@ -41,34 +41,38 @@
 ;;; JSON-RPC Method Registration
 
 (defun register-canvas-methods ()
-  "Register JSON-RPC methods for canvas interaction"
-  (when (find-package :lem-server)
-    ;; Node selected (single click)
-    (lem-server:register-method "canvas:node-selected"
-      (lambda (args)
-        (let ((node-id (gethash "nodeId" args)))
-          (lem:send-event
-           (lambda ()
-             (lem:message "Selected: ~A" node-id))))))
+  "Register JSON-RPC methods for canvas interaction.
+Called when lem-server is available (WebView frontend)."
+  (let ((pkg (find-package :lem-server)))
+    (when pkg
+      (let ((register-fn (find-symbol "REGISTER-METHOD" pkg)))
+        (when (and register-fn (fboundp register-fn))
+          ;; Node selected (single click)
+          (funcall register-fn "canvas:node-selected"
+                   (lambda (args)
+                     (let ((node-id (gethash "nodeId" args)))
+                       (lem:send-event
+                        (lambda ()
+                          (lem:message "Selected: ~A" node-id))))))
 
-    ;; Open source (double click)
-    (lem-server:register-method "canvas:open-source"
-      (lambda (args)
-        (let ((node-id (gethash "nodeId" args)))
-          (lem:send-event
-           (lambda ()
-             (jump-to-node-source node-id))))))
+          ;; Open source (double click)
+          (funcall register-fn "canvas:open-source"
+                   (lambda (args)
+                     (let ((node-id (gethash "nodeId" args)))
+                       (lem:send-event
+                        (lambda ()
+                          (jump-to-node-source node-id))))))
 
-    ;; Node moved (drag end)
-    (lem-server:register-method "canvas:node-moved"
-      (lambda (args)
-        (let ((node-id (gethash "nodeId" args))
-              (x (gethash "x" args))
-              (y (gethash "y" args)))
-          (save-node-position node-id x y))))))
+          ;; Node moved (drag end)
+          (funcall register-fn "canvas:node-moved"
+                   (lambda (args)
+                     (let ((node-id (gethash "nodeId" args))
+                           (x (gethash "x" args))
+                           (y (gethash "y" args)))
+                       (save-node-position node-id x y)))))))))
 
-;; Register methods when loaded
-(register-canvas-methods)
+;; Register methods after editor initialization
+(lem:add-hook lem:*after-init-hook* 'register-canvas-methods)
 
 ;;; User Commands
 

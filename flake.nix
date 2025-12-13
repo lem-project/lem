@@ -122,8 +122,7 @@
             # Use FETCHCONTENT_SOURCE_DIR to skip network fetch and use pre-fetched source
             configurePhase = ''
               runHook preConfigure
-              cd c
-              cmake -G Ninja -B build -S . \
+              cmake -G Ninja -B build -S c \
                 -DCMAKE_BUILD_TYPE=Release \
                 -DFETCHCONTENT_SOURCE_DIR_WEBVIEW=${webview-upstream}
               runHook postConfigure

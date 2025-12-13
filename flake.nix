@@ -162,6 +162,8 @@
               trivial-ws
               trivial-open-browser
               frugal-uuid
+              # lem-mcp-server
+              hunchentoot
             ];
           };
           lem-cli = lem-fake-interface.overrideLispAttrs (o: {

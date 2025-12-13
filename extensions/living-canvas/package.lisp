@@ -23,6 +23,7 @@
            #:analyze-package
            #:analyze-file
            #:analyze-buffer
+           #:analyze-system
            #:graph-to-cytoscape-json))
 
 (defpackage :lem-living-canvas/buffer
@@ -44,6 +45,7 @@
                 #:analyze-package
                 #:analyze-file
                 #:analyze-buffer
+                #:analyze-system
                 #:graph-to-cytoscape-json)
   (:import-from :lem-living-canvas/buffer
                 #:canvas-buffer
@@ -52,4 +54,5 @@
                 #:canvas-buffer-source-buffer)
   (:export #:living-canvas
            #:living-canvas-current-file
+           #:living-canvas-system
            #:living-canvas-refresh))

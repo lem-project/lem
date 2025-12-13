@@ -340,6 +340,85 @@ Uses sb-introspect:who-calls which relies on xref data from compilation."
                         :edges nil
                         :root-package nil))))
 
+;;; ASDF System Analysis
+
+(defun get-system-source-files (system-designator)
+  "Get all Lisp source files from an ASDF system"
+  (let ((system (asdf:find-system system-designator nil)))
+    (unless system
+      (error "System ~A not found" system-designator))
+    (let ((files '()))
+      (labels ((collect-files (component)
+                 (typecase component
+                   (asdf:cl-source-file
+                    (let ((path (asdf:component-pathname component)))
+                      (when (and path (probe-file path))
+                        (push (namestring path) files))))
+                   (asdf:module
+                    (dolist (child (asdf:component-children component))
+                      (collect-files child)))
+                   (asdf:system
+                    (dolist (child (asdf:component-children component))
+                      (collect-files child))))))
+        (collect-files system))
+      (nreverse files))))
+
+(defun analyze-system (system-designator)
+  "Analyze an ASDF system and build its call graph.
+Shows all functions defined in the system and their call relationships."
+  (let ((files (get-system-source-files system-designator))
+        (nodes (make-hash-table :test 'equal))
+        (edges '())
+        (all-symbols '()))
+    (unless files
+      (error "No source files found in system ~A" system-designator))
+    ;; First pass: collect all function definitions from all files
+    (dolist (file files)
+      (let ((definitions (extract-definitions-from-file file)))
+        (dolist (sym definitions)
+          (let* ((node-id (make-node-id sym))
+                 (source-loc (get-source-location sym)))
+            (unless (gethash node-id nodes)
+              (push sym all-symbols)
+              (setf (gethash node-id nodes)
+                    (make-graph-node
+                     :id node-id
+                     :name (symbol-name sym)
+                     :package (package-name (symbol-package sym))
+                     :type (get-function-type sym)
+                     :docstring (documentation sym 'function)
+                     :source-location source-loc
+                     :source-file (or (car source-loc) file))))))))
+    ;; Second pass: create edges (cross-package calls allowed)
+    (dolist (sym all-symbols)
+      (let ((source-id (make-node-id sym)))
+        ;; Use find-function-callees for call relationships
+        (handler-case
+            (let ((fn (fdefinition sym)))
+              (when fn
+                (let ((callees (sb-introspect:find-function-callees fn)))
+                  (dolist (callee callees)
+                    (let ((callee-sym (function-to-symbol callee)))
+                      (when callee-sym
+                        (let ((target-id (make-node-id callee-sym)))
+                          (when (and (not (equal source-id target-id))
+                                     (gethash target-id nodes))
+                            (push (make-graph-edge
+                                   :source source-id
+                                   :target target-id
+                                   :call-type :direct)
+                                  edges)))))))))
+          (error () nil))))
+    (make-call-graph
+     :nodes nodes
+     :edges (remove-duplicates edges
+                               :test (lambda (a b)
+                                       (and (string= (graph-edge-source a)
+                                                     (graph-edge-source b))
+                                            (string= (graph-edge-target a)
+                                                     (graph-edge-target b)))))
+     :root-package nil)))
+
 ;;; JSON Serialization
 
 (defun alist-to-hash-table (alist)

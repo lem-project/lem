@@ -24,7 +24,8 @@
   <meta charset='utf-8'>
   <meta name='viewport' content='width=device-width, initial-scale=1'>
   <script src='https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js'></script>
-  <script src='https://unpkg.com/cytoscape-fcose@2.2.0/cytoscape-fcose.js'></script>
+  <script src='https://unpkg.com/dagre@0.8.5/dist/dagre.min.js'></script>
+  <script src='https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js'></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -107,18 +108,16 @@
     }
     #debug-info {
       position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: rgba(0, 80, 0, 0.95);
-      border: 2px solid #0f0;
-      border-radius: 6px;
-      padding: 12px 16px;
-      color: #0f0;
-      font-size: 14px;
-      font-weight: bold;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(30, 30, 30, 0.9);
+      border: 1px solid #3c3c3c;
+      border-radius: 4px;
+      padding: 6px 10px;
+      color: #808080;
+      font-size: 11px;
       font-family: monospace;
       z-index: 1000;
-      min-width: 200px;
     }
   </style>
 </head>
@@ -247,13 +246,13 @@
         {
           selector: 'edge',
           style: {
-            'width': 1,
-            'line-color': '#404040',
-            'target-arrow-color': '#404040',
+            'width': 1.5,
+            'line-color': '#606060',
+            'target-arrow-color': '#606060',
             'target-arrow-shape': 'triangle',
             'curve-style': 'bezier',
-            'arrow-scale': 0.6,
-            'opacity': 0
+            'arrow-scale': 0.8,
+            'opacity': 0.7
           }
         },
         {
@@ -411,118 +410,27 @@
 
     function runLayout() {
       const nodeCount = cy.nodes().length;
-      console.log('Running layout for', nodeCount, 'nodes');
+      const edgeCount = cy.edges().length;
+      console.log('Running dagre layout for', nodeCount, 'nodes,', edgeCount, 'edges');
 
-      // Custom compound-aware layout
-      runCompoundLayout();
-    }
-
-    function runCompoundLayout() {
-      // Get all file (parent) nodes and function nodes
-      const fileNodes = cy.nodes('[type = \"file\"]');
-      const funcNodes = cy.nodes('[type != \"file\"]');
-
-      console.log('File nodes:', fileNodes.length, 'Function nodes:', funcNodes.length);
-
-      // Group function nodes by parent
-      const fileGroups = new Map();
-      const orphanNodes = [];
-
-      funcNodes.forEach(node => {
-        const parent = node.data('parent');
-        if (parent) {
-          if (!fileGroups.has(parent)) {
-            fileGroups.set(parent, []);
-          }
-          fileGroups.get(parent).push(node);
-        } else {
-          orphanNodes.push(node);
-        }
+      // Use dagre layout for directed graph with edge routing
+      // dagre minimizes edge crossings and handles hierarchical layouts well
+      const layout = cy.layout({
+        name: 'dagre',
+        rankDir: 'TB',           // Top to Bottom (caller -> callee)
+        nodeSep: 60,             // Horizontal spacing between nodes
+        rankSep: 80,             // Vertical spacing between ranks
+        edgeSep: 20,             // Minimum edge separation
+        ranker: 'network-simplex', // Algorithm for ranking nodes
+        fit: true,
+        padding: 50,
+        animate: false,
+        // Handle compound nodes (file containers)
+        nodeDimensionsIncludeLabels: true
       });
 
-      // Calculate layout parameters
-      const nodeWidth = 140;
-      const nodeHeight = 32;
-      const nodePadding = 25;
-      const filePadding = 50;
-      const fileSpacing = 40;
-
-      // Calculate size for each file based on its children
-      const fileSizes = new Map();
-      fileGroups.forEach((children, fileId) => {
-        const count = children.length;
-        const cols = Math.ceil(Math.sqrt(count));
-        const rows = Math.ceil(count / cols);
-        const width = cols * (nodeWidth + nodePadding) + filePadding * 2;
-        const height = rows * (nodeHeight + nodePadding) + filePadding * 2 + 20; // +20 for label
-        fileSizes.set(fileId, { width, height, cols, rows, count });
-      });
-
-      // Sort files by size (largest first) for better packing
-      const sortedFiles = Array.from(fileSizes.entries())
-        .sort((a, b) => b[1].count - a[1].count);
-
-      // Position files using simple row-based packing
-      const maxRowWidth = Math.max(3000, Math.sqrt(funcNodes.length) * 150);
-      let currentX = 0;
-      let currentY = 0;
-      let rowHeight = 0;
-
-      const filePositions = new Map();
-
-      sortedFiles.forEach(([fileId, size]) => {
-        // Check if we need to start a new row
-        if (currentX + size.width > maxRowWidth && currentX > 0) {
-          currentX = 0;
-          currentY += rowHeight + fileSpacing;
-          rowHeight = 0;
-        }
-
-        filePositions.set(fileId, { x: currentX, y: currentY, ...size });
-
-        currentX += size.width + fileSpacing;
-        rowHeight = Math.max(rowHeight, size.height);
-      });
-
-      // Position file nodes and their children
-      filePositions.forEach((pos, fileId) => {
-        const fileNode = cy.$('#' + CSS.escape(fileId));
-        if (fileNode.length > 0) {
-          // Position file container at center of its area
-          fileNode.position({
-            x: pos.x + pos.width / 2,
-            y: pos.y + pos.height / 2
-          });
-        }
-
-        // Position children in a grid within the file
-        const children = fileGroups.get(fileId) || [];
-        children.forEach((node, i) => {
-          const col = i % pos.cols;
-          const row = Math.floor(i / pos.cols);
-          node.position({
-            x: pos.x + filePadding + col * (nodeWidth + nodePadding) + nodeWidth / 2,
-            y: pos.y + filePadding + 20 + row * (nodeHeight + nodePadding) + nodeHeight / 2
-          });
-        });
-      });
-
-      // Position orphan nodes (no parent) in a separate area
-      if (orphanNodes.length > 0) {
-        const orphanCols = Math.ceil(Math.sqrt(orphanNodes.length));
-        const orphanStartY = currentY + rowHeight + fileSpacing + 50;
-
-        orphanNodes.forEach((node, i) => {
-          const col = i % orphanCols;
-          const row = Math.floor(i / orphanCols);
-          node.position({
-            x: col * (nodeWidth + nodePadding) + nodeWidth / 2,
-            y: orphanStartY + row * (nodeHeight + nodePadding) + nodeHeight / 2
-          });
-        });
-      }
-
-      console.log('Compound layout complete');
+      layout.run();
+      console.log('Dagre layout complete');
     }
 
     // API for Lem
@@ -555,17 +463,17 @@
       const cyNodes = cy.nodes().length;
       const cyEdges = cy.edges().length;
       const fileCount = cy.nodes('[type = \"file\"]').length;
-      debugEl.textContent = 'Loaded: ' + cyNodes + ' nodes, ' + fileCount + ' files';
+      debugEl.textContent = 'Loaded: ' + cyNodes + ' nodes, ' + cyEdges + ' edges';
       console.log('Cytoscape nodes:', cyNodes, 'edges:', cyEdges, 'files:', fileCount);
 
       if (cyNodes > 0) {
         try {
-          console.log('Running compound layout...');
-          runCompoundLayout();
-          debugEl.textContent = 'Layout: ' + cyNodes + ' nodes in ' + fileCount + ' files';
+          console.log('Running dagre layout...');
+          runLayout();
+          debugEl.textContent = cyNodes + ' nodes, ' + cyEdges + ' edges';
           setTimeout(fitView, 100);
         } catch (e) {
-          console.error('Compound layout failed:', e);
+          console.error('Dagre layout failed:', e);
           debugEl.textContent = 'Error: ' + e.message;
           // Fallback to grid
           cy.layout({ name: 'grid', fit: true, padding: 30 }).run();

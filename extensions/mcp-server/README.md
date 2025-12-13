@@ -21,6 +21,8 @@ docker run --rm lem-tests
 
 ## Available Tools
 
+### Buffer Operations
+
 | Tool | Description |
 |------|-------------|
 | `buffer_list` | List all buffers |
@@ -28,11 +30,41 @@ docker run --rm lem-tests
 | `buffer_create` | Create a new buffer |
 | `buffer_delete` | Delete a buffer |
 | `buffer_info` | Get buffer information |
+
+### Editing Operations
+
+| Tool | Description |
+|------|-------------|
 | `buffer_insert` | Insert text at position |
 | `buffer_replace` | Replace text in region |
 | `buffer_delete_region` | Delete text in region |
 | `buffer_set_content` | Replace entire buffer content |
+| `buffer_save` | Save buffer to file |
+
+### Command Operations
+
+| Tool | Description |
+|------|-------------|
 | `command_list` | List available commands |
+| `command_execute` | Execute a command |
+| `command_info` | Get command information |
+| `eval_expression` | Evaluate Lisp expression |
+
+## Resources
+
+| URI Pattern | Description |
+|-------------|-------------|
+| `buffer://{name}` | Buffer content |
+| `file://{path}` | File content |
+
+## Lem Commands
+
+| Command | Description |
+|---------|-------------|
+| `M-x mcp-server-start` | Start MCP server |
+| `M-x mcp-server-stop` | Stop MCP server |
+| `M-x mcp-server-status` | Show server status |
+| `M-x mcp-server-restart` | Restart server |
 
 ## Connecting from Claude Code
 

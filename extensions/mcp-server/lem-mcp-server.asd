@@ -20,5 +20,4 @@
                 :components ((:file "buffer")
                              (:file "editing")
                              (:file "command")))
-               (:file "commands")
-               (:file "main")))
+               (:file "commands")))

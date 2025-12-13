@@ -10,6 +10,7 @@
   (type :function :type keyword)
   (docstring nil :type (or null string))
   (source-location nil :type (or null cons))
+  (source-file nil :type (or null string))
   (position nil :type (or null cons)))
 
 (defstruct graph-edge
@@ -188,7 +189,9 @@
           (push sym symbols)))
       ;; Second pass: create nodes
       (dolist (sym symbols)
-        (let ((node-id (make-node-id sym)))
+        (let* ((node-id (make-node-id sym))
+               (source-loc (get-source-location sym))
+               (source-file (when source-loc (car source-loc))))
           (setf (gethash node-id nodes)
                 (make-graph-node
                  :id node-id
@@ -196,7 +199,8 @@
                  :package (package-name package)
                  :type (get-function-type sym)
                  :docstring (documentation sym 'function)
-                 :source-location (get-source-location sym)))))
+                 :source-location source-loc
+                 :source-file source-file))))
       ;; Third pass: create edges
       (dolist (sym symbols)
         (let ((callees (get-callees sym package))
@@ -235,12 +239,14 @@
   "Analyze a single file and build its call graph"
   (let ((definitions (extract-definitions-from-file pathname))
         (nodes (make-hash-table :test 'equal))
-        (edges '()))
+        (edges '())
+        (file-path (namestring pathname)))
     (when definitions
       (let ((package (symbol-package (first definitions))))
         ;; Create nodes for all definitions in the file
         (dolist (sym definitions)
-          (let ((node-id (make-node-id sym)))
+          (let* ((node-id (make-node-id sym))
+                 (source-loc (get-source-location sym)))
             (setf (gethash node-id nodes)
                   (make-graph-node
                    :id node-id
@@ -248,7 +254,8 @@
                    :package (package-name (symbol-package sym))
                    :type (get-function-type sym)
                    :docstring (documentation sym 'function)
-                   :source-location (get-source-location sym)))))
+                   :source-location source-loc
+                   :source-file (or (car source-loc) file-path)))))
         ;; Create edges (only between functions in this file)
         (dolist (sym definitions)
           (let ((callees (get-callees sym package))
@@ -296,22 +303,54 @@
                         value)))
     ht))
 
+(defun make-file-node-id (filepath)
+  "Create a unique ID for a file node"
+  (format nil "file:~A" (or filepath "unknown")))
+
+(defun short-filename (filepath)
+  "Extract just the filename from a path"
+  (if filepath
+      (file-namestring filepath)
+      "unknown"))
+
 (defun graph-to-cytoscape-json (graph)
   "Convert a call-graph to Cytoscape.js compatible JSON string"
   (with-output-to-string (stream)
-    (let ((elements '()))
-      ;; Add nodes
+    (let ((elements '())
+          (files (make-hash-table :test 'equal)))
+      ;; First pass: collect unique source files
       (maphash (lambda (id node)
                  (declare (ignore id))
+                 (let ((source-file (graph-node-source-file node)))
+                   (when source-file
+                     (setf (gethash source-file files) t))))
+               (call-graph-nodes graph))
+      ;; Add file parent nodes
+      (maphash (lambda (filepath _)
+                 (declare (ignore _))
                  (push (alist-to-hash-table
                         `(("group" . "nodes")
-                          ("data" . (("id" . ,(graph-node-id node))
-                                     ("name" . ,(graph-node-name node))
-                                     ("type" . ,(string-downcase
-                                                 (symbol-name (graph-node-type node))))
-                                     ("package" . ,(graph-node-package node))
-                                     ("docstring" . ,(or (graph-node-docstring node) ""))))))
+                          ("data" . (("id" . ,(make-file-node-id filepath))
+                                     ("name" . ,(short-filename filepath))
+                                     ("type" . "file")
+                                     ("filepath" . ,filepath)))))
                        elements))
+               files)
+      ;; Add function nodes with parent reference
+      (maphash (lambda (id node)
+                 (declare (ignore id))
+                 (let ((source-file (graph-node-source-file node)))
+                   (push (alist-to-hash-table
+                          `(("group" . "nodes")
+                            ("data" . (("id" . ,(graph-node-id node))
+                                       ("name" . ,(graph-node-name node))
+                                       ("type" . ,(string-downcase
+                                                   (symbol-name (graph-node-type node))))
+                                       ("package" . ,(graph-node-package node))
+                                       ("docstring" . ,(or (graph-node-docstring node) ""))
+                                       ,@(when source-file
+                                           `(("parent" . ,(make-file-node-id source-file))))))))
+                         elements)))
                (call-graph-nodes graph))
       ;; Add edges
       (loop :for edge :in (call-graph-edges graph)

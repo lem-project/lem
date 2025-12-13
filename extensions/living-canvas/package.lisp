@@ -8,6 +8,7 @@
            #:graph-node-type
            #:graph-node-docstring
            #:graph-node-source-location
+           #:graph-node-source-file
            #:graph-node-position
            #:graph-edge
            #:make-graph-edge

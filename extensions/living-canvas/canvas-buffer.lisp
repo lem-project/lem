@@ -24,8 +24,7 @@
   <meta charset='utf-8'>
   <meta name='viewport' content='width=device-width, initial-scale=1'>
   <script src='https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js'></script>
-  <script src='https://unpkg.com/dagre@0.8.5/dist/dagre.min.js'></script>
-  <script src='https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js'></script>
+  <script src='https://unpkg.com/cytoscape-fcose@2.2.0/cytoscape-fcose.js'></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -126,15 +125,33 @@
   <script>
     const graphData = ~A;
 
-    // Initialize Cytoscape with dagre layout
-    cytoscape.use(cytoscapeDagre);
-
     const cy = cytoscape({
       container: document.getElementById('cy'),
       elements: graphData.elements,
       style: [
+        // File container nodes (parents)
         {
-          selector: 'node',
+          selector: 'node[type=\"file\"]',
+          style: {
+            'background-color': '#252526',
+            'background-opacity': 0.8,
+            'border-color': '#3c3c3c',
+            'border-width': 2,
+            'label': 'data(name)',
+            'color': '#808080',
+            'text-valign': 'top',
+            'text-halign': 'center',
+            'font-size': '12px',
+            'font-weight': 'bold',
+            'font-family': 'Consolas, Monaco, monospace',
+            'padding': '20px',
+            'shape': 'roundrectangle',
+            'text-margin-y': -8
+          }
+        },
+        // Function nodes
+        {
+          selector: 'node[type=\"function\"]',
           style: {
             'background-color': '#2d2d2d',
             'border-color': '#569cd6',
@@ -143,11 +160,11 @@
             'color': '#d4d4d4',
             'text-valign': 'center',
             'text-halign': 'center',
-            'font-size': '11px',
+            'font-size': '10px',
             'font-family': 'Consolas, Monaco, monospace',
             'width': 'label',
-            'height': 28,
-            'padding': '10px',
+            'height': 24,
+            'padding': '8px',
             'shape': 'roundrectangle',
             'text-wrap': 'none'
           }
@@ -155,26 +172,48 @@
         {
           selector: 'node[type=\"macro\"]',
           style: {
+            'background-color': '#3d2d3d',
             'border-color': '#c586c0',
-            'background-color': '#3d2d3d'
+            'border-width': 2,
+            'label': 'data(name)',
+            'color': '#d4d4d4',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'font-size': '10px',
+            'font-family': 'Consolas, Monaco, monospace',
+            'width': 'label',
+            'height': 24,
+            'padding': '8px',
+            'shape': 'roundrectangle'
           }
         },
         {
           selector: 'node[type=\"generic-function\"]',
           style: {
+            'background-color': '#2d3d3d',
             'border-color': '#4ec9b0',
-            'background-color': '#2d3d3d'
+            'border-width': 2,
+            'label': 'data(name)',
+            'color': '#d4d4d4',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'font-size': '10px',
+            'font-family': 'Consolas, Monaco, monospace',
+            'width': 'label',
+            'height': 24,
+            'padding': '8px',
+            'shape': 'roundrectangle'
           }
         },
         {
           selector: 'edge',
           style: {
-            'width': 1.5,
+            'width': 1,
             'line-color': '#404040',
             'target-arrow-color': '#404040',
             'target-arrow-shape': 'triangle',
             'curve-style': 'bezier',
-            'arrow-scale': 0.8
+            'arrow-scale': 0.6
           }
         },
         {
@@ -197,7 +236,7 @@
           style: {
             'line-color': '#569cd6',
             'target-arrow-color': '#569cd6',
-            'width': 2.5
+            'width': 2
           }
         },
         {
@@ -205,16 +244,38 @@
           style: {
             'opacity': 0.25
           }
+        },
+        {
+          selector: 'node[type=\"file\"]:selected',
+          style: {
+            'border-color': '#007acc',
+            'background-color': '#1e3a5f'
+          }
         }
       ],
       layout: {
-        name: 'dagre',
-        rankDir: 'LR',
-        nodeSep: 60,
-        rankSep: 100,
-        padding: 50
+        name: 'fcose',
+        quality: 'proof',
+        randomize: false,
+        animate: false,
+        fit: true,
+        padding: 50,
+        nodeDimensionsIncludeLabels: true,
+        packComponents: true,
+        nodeRepulsion: 8000,
+        idealEdgeLength: 80,
+        edgeElasticity: 0.45,
+        nestingFactor: 0.1,
+        gravity: 0.25,
+        gravityRange: 3.8,
+        gravityCompound: 1.0,
+        gravityRangeCompound: 1.5,
+        numIter: 2500,
+        tile: true,
+        tilingPaddingVertical: 20,
+        tilingPaddingHorizontal: 20
       },
-      minZoom: 0.2,
+      minZoom: 0.1,
       maxZoom: 3,
       wheelSensitivity: 0.3
     });
@@ -227,9 +288,15 @@
 
     function showInfo(node) {
       const data = node.data();
-      infoName.textContent = data.name;
-      infoType.textContent = data.type.toUpperCase() + ' in ' + data.package;
-      infoDoc.textContent = data.docstring || '(no documentation)';
+      if (data.type === 'file') {
+        infoName.textContent = data.name;
+        infoType.textContent = 'FILE';
+        infoDoc.textContent = data.filepath || '';
+      } else {
+        infoName.textContent = data.name;
+        infoType.textContent = data.type.toUpperCase() + ' in ' + (data.package || '');
+        infoDoc.textContent = data.docstring || '(no documentation)';
+      }
       infoPanel.classList.add('visible');
     }
 
@@ -242,12 +309,14 @@
       const node = e.target;
       showInfo(node);
 
-      // Highlight connected edges
+      // Highlight connected edges (only for non-file nodes)
       cy.elements().removeClass('highlighted faded');
-      const connected = node.connectedEdges().connectedNodes();
-      const neighborhood = node.connectedEdges().add(connected).add(node);
-      cy.elements().not(neighborhood).addClass('faded');
-      neighborhood.addClass('highlighted');
+      if (node.data('type') !== 'file') {
+        const connected = node.connectedEdges().connectedNodes();
+        const neighborhood = node.connectedEdges().add(connected).add(node);
+        cy.elements().not(neighborhood).addClass('faded');
+        neighborhood.addClass('highlighted');
+      }
 
       // Notify Lem
       if (window.invokeLem) {
@@ -257,7 +326,8 @@
 
     cy.on('dbltap', 'node', function(e) {
       const node = e.target;
-      if (window.invokeLem) {
+      // Only jump to source for function nodes, not file nodes
+      if (node.data('type') !== 'file' && window.invokeLem) {
         invokeLem('canvas:open-source', { nodeId: node.id() });
       }
     });
@@ -293,6 +363,11 @@
       cy.nodes().forEach(function(node) {
         if (node.data('name').toLowerCase().includes(query)) {
           node.removeClass('faded').addClass('highlighted');
+          // Also highlight parent file node
+          const parent = node.parent();
+          if (parent.length > 0) {
+            parent.removeClass('faded');
+          }
         }
       });
     });
@@ -304,13 +379,18 @@
 
     function runLayout() {
       cy.layout({
-        name: 'dagre',
-        rankDir: 'LR',
-        nodeSep: 60,
-        rankSep: 100,
-        padding: 50,
+        name: 'fcose',
+        quality: 'proof',
+        randomize: false,
         animate: true,
-        animationDuration: 500
+        animationDuration: 500,
+        fit: true,
+        padding: 50,
+        nodeDimensionsIncludeLabels: true,
+        packComponents: true,
+        nodeRepulsion: 8000,
+        idealEdgeLength: 80,
+        nestingFactor: 0.1
       }).run();
     }
 

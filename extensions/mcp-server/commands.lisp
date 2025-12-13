@@ -2,10 +2,12 @@
 
 ;;; Lem Commands for MCP Server Control
 
-(define-command mcp-server-start (hostname port) ((:string "Hostname: ")
-                                                   (:number "Port: "))
+(define-command mcp-server-start (hostname port)
+    ((:splice (lem:prompt-for-string "Hostname: "
+                                      :initial-value *mcp-server-default-hostname*))
+     (:number "Port: "))
   "Start the MCP HTTP server on the specified hostname and port.
-If no hostname is specified, uses *mcp-server-default-hostname* (default: localhost).
+If no hostname is specified, uses *mcp-server-default-hostname* (default: 127.0.0.1).
 If no port is specified, uses *mcp-server-default-port* (default: 7890).
 
 After starting, connect from Claude Code with:
@@ -48,8 +50,10 @@ After starting, connect from Claude Code with:
                    num-sessions))
         (message "MCP server is not running"))))
 
-(define-command mcp-server-restart (hostname port) ((:string "Hostname: ")
-                                                     (:number "Port: "))
+(define-command mcp-server-restart (hostname port)
+    ((:splice (lem:prompt-for-string "Hostname: "
+                                      :initial-value *mcp-server-default-hostname*))
+     (:number "Port: "))
   "Restart the MCP server, optionally on a new hostname and port."
   (let ((old-hostname *mcp-server-default-hostname*)
         (old-port *mcp-server-default-port*))

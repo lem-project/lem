@@ -118,7 +118,7 @@ Drag nodes to rearrange the layout."
 ;;; Keymap
 
 (defvar *living-canvas-keymap*
-  (make-instance 'lem:keymap :name '*living-canvas-keymap*))
+  (lem:make-keymap :name '*living-canvas-keymap*))
 
 (lem:define-key *living-canvas-keymap* "g" 'living-canvas-refresh)
 (lem:define-key *living-canvas-keymap* "q" 'lem:kill-buffer)
@@ -127,5 +127,4 @@ Drag nodes to rearrange the layout."
 
 (lem:define-minor-mode living-canvas-mode
     (:name "LivingCanvas"
-     :keymap *living-canvas-keymap*)
-  (setf (lem:variable-value 'lem:truncate-lines :buffer (lem:current-buffer)) nil))
+     :keymap *living-canvas-keymap*))

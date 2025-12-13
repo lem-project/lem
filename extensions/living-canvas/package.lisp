@@ -29,7 +29,8 @@
   (:use :cl :lem)
   (:import-from :lem-living-canvas/call-graph
                 #:call-graph
-                #:graph-to-cytoscape-json)
+                #:graph-to-cytoscape-json
+                #:analyze-buffer)
   (:export #:canvas-buffer
            #:make-canvas-buffer
            #:canvas-buffer-graph

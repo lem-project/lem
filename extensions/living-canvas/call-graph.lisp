@@ -26,18 +26,31 @@
 
 ;;; Source Location
 
-(defun character-offset-to-line (pathname offset)
-  "Convert a character offset to a line number"
-  (when (and pathname offset (probe-file pathname))
+(defun line-defines-symbol-p (line symbol-name)
+  "Check if a line defines the given symbol"
+  (let ((trimmed (string-left-trim '(#\Space #\Tab) line)))
+    (dolist (prefix '("(defun " "(defmacro " "(defgeneric " "(defmethod "))
+      (let ((prefix-len (length prefix)))
+        (when (and (>= (length trimmed) prefix-len)
+                   (string= prefix (subseq trimmed 0 prefix-len)))
+          (let* ((rest (subseq trimmed prefix-len))
+                 (space-pos (position #\Space rest))
+                 (paren-pos (position #\( rest))
+                 (end-pos (or space-pos paren-pos (length rest)))
+                 (name (subseq rest 0 end-pos)))
+            (when (string-equal name symbol-name)
+              (return-from line-defines-symbol-p t))))))
+    nil))
+
+(defun find-definition-line (pathname symbol-name)
+  "Find the line number where a symbol is defined"
+  (when (and pathname (probe-file pathname))
     (with-open-file (stream pathname)
-      (let ((line 1)
-            (pos 0))
-        (loop :for char = (read-char stream nil nil)
-              :while (and char (< pos offset))
-              :do (incf pos)
-                  (when (char= char #\Newline)
-                    (incf line)))
-        line))))
+      (loop :for line-number :from 1
+            :for line = (read-line stream nil nil)
+            :while line
+            :when (line-defines-symbol-p line symbol-name)
+              :return line-number))))
 
 (defun get-source-location (symbol)
   "Get the source file and line number for a symbol's function definition"
@@ -45,10 +58,9 @@
       (let ((source (sb-introspect:find-definition-source
                      (fdefinition symbol))))
         (when source
-          (let ((pathname (sb-introspect:definition-source-pathname source))
-                (offset (sb-introspect:definition-source-character-offset source)))
+          (let ((pathname (sb-introspect:definition-source-pathname source)))
             (when pathname
-              (let ((line (character-offset-to-line pathname offset)))
+              (let ((line (find-definition-line pathname (symbol-name symbol))))
                 (cons (namestring pathname)
                       (or line 1)))))))
     (error () nil)))

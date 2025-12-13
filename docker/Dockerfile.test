@@ -12,6 +12,5 @@ COPY . .
 # Install dependencies
 RUN qlot install
 
-# Run tests using standard lem-tests mechanism
-# .qlot/bin/rove is installed by qlot
-CMD ["/bin/sh", "-c", ".qlot/bin/rove lem-tests.asd && .qlot/bin/rove extensions/vi-mode/lem-vi-mode.asd"]
+# Run tests using qlot exec (fukamachi/qlot image uses qlot as entrypoint)
+CMD ["exec", "bash", "-c", ".qlot/bin/rove lem-tests.asd && .qlot/bin/rove extensions/vi-mode/lem-vi-mode.asd"]

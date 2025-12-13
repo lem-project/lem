@@ -178,6 +178,30 @@ Only shows functions defined in this file."
               (lem:message "Living Canvas: ~D functions in ~A"
                            node-count (file-namestring filename))))))))
 
+(lem:define-command living-canvas-system (system-name) ((:string "System: "))
+  "Display a function call graph for an ASDF system.
+Shows all functions defined in the system and their call relationships,
+including cross-package calls within the system."
+  (let ((system (asdf:find-system system-name nil)))
+    (unless system
+      (lem:editor-error "System not found: ~A" system-name))
+    (let* ((source-buffer (lem:current-buffer))
+           (graph (analyze-system system-name))
+           (node-count (hash-table-count
+                        (lem-living-canvas/call-graph:call-graph-nodes graph))))
+      (if (zerop node-count)
+          (lem:message "No functions found in system ~A" system-name)
+          (progn
+            (populate-source-location-cache graph)
+            (let ((canvas-buffer (make-canvas-buffer
+                                  (format nil "*Canvas: ~A*" system-name)
+                                  source-buffer
+                                  graph)))
+              (lem:pop-to-buffer canvas-buffer)
+              (lem:change-buffer-mode canvas-buffer 'living-canvas-mode)
+              (lem:message "Living Canvas: ~D functions in system ~A"
+                           node-count system-name)))))))
+
 (lem:define-command living-canvas-lem-core () ()
   "Display a call graph for lem-core package (demo)"
   (living-canvas "LEM-CORE"))

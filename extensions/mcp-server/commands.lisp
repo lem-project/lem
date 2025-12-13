@@ -5,7 +5,7 @@
 (define-command mcp-server-start (hostname port) ((:string "Hostname: ")
                                                    (:number "Port: "))
   "Start the MCP HTTP server on the specified hostname and port.
-If no hostname is specified, uses *mcp-server-default-hostname* (default: 127.0.0.1).
+If no hostname is specified, uses *mcp-server-default-hostname* (default: localhost).
 If no port is specified, uses *mcp-server-default-port* (default: 7890).
 
 After starting, connect from Claude Code with:

@@ -82,7 +82,7 @@ nix run .#lem
 ### 2. Register with Claude Code
 
 ```bash
-claude mcp add --transport http lem http://127.0.0.1:7890/mcp
+claude mcp add --transport http lem http://localhost:7890/mcp
 ```
 
 ### 3. Verify Connection
@@ -92,7 +92,7 @@ claude mcp add --transport http lem http://127.0.0.1:7890/mcp
 claude mcp list
 
 # Test the connection (server must be running)
-curl -X POST http://127.0.0.1:7890/mcp \
+curl -X POST http://localhost:7890/mcp \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test"}}}'
 ```

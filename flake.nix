@@ -141,8 +141,7 @@
           };
           # Common Lisp webview bindings
           cl-webview = lisp.buildASDFSystem {
-            inherit (sources.webview) pname version;
-            src = sources.webview.src;
+            inherit (sources.webview) pname src version;
             systems = [ "webview" ];
             lispLibs = with lisp.pkgs; [
               cffi

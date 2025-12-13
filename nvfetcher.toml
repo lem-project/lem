@@ -30,6 +30,6 @@ fetch.git = "https://github.com/cxxxr/jsonrpc"
 #src.git = "https://github.com/lem-project/cl-sdl2-image.git"
 #fetch.git = "https://github.com/lem-project/cl-sdl2-image.git"
 #
-#[webview]
-#src.git = "https://github.com/lem-project/webview.git"
-#fetch.git = "https://github.com/lem-project/webview.git"
+[webview]
+src.git = "https://github.com/lem-project/webview.git"
+fetch.git = "https://github.com/lem-project/webview.git"

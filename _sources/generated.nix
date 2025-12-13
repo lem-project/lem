@@ -3,17 +3,17 @@
 {
   async-process = {
     pname = "async-process";
-    version = "239f5f10d230a19d052b88b5440e9325dfc4c5a8";
+    version = "725da0ab1c21a29cc02e283236a2c2e88947fa65";
     src = fetchgit {
       url = "https://github.com/lem-project/async-process";
-      rev = "239f5f10d230a19d052b88b5440e9325dfc4c5a8";
+      rev = "725da0ab1c21a29cc02e283236a2c2e88947fa65";
       fetchSubmodules = false;
       deepClone = false;
       leaveDotGit = false;
       sparseCheckout = [ ];
-      sha256 = "sha256-UFNjj4UKmCC1bCqqfFTZQ0hY8FXm5kAeMFr/4YLd/hg=";
+      sha256 = "sha256-CRK4BDooxTts9b4Hvl15zqvHYPDA6yovHEE0Dr0nod4=";
     };
-    date = "2025-11-24";
+    date = "2025-12-10";
   };
   jsonrpc = {
     pname = "jsonrpc";
@@ -56,5 +56,19 @@
       sha256 = "sha256-NryjqfihHjRo4thBLmdeIaZuCNBFFWVDze55KD6nxrY=";
     };
     date = "2025-08-13";
+  };
+  webview = {
+    pname = "webview";
+    version = "238a0be10c6c37311ce2587ef99142f65abd880a";
+    src = fetchgit {
+      url = "https://github.com/lem-project/webview.git";
+      rev = "238a0be10c6c37311ce2587ef99142f65abd880a";
+      fetchSubmodules = false;
+      deepClone = false;
+      leaveDotGit = false;
+      sparseCheckout = [ ];
+      sha256 = "sha256-PsHF4PoSa93x2vHrqU1aeNHKutli6Y//Yqs5SQGxGWU=";
+    };
+    date = "2025-08-23";
   };
 }

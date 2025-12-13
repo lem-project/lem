@@ -40,6 +40,8 @@
               "jsonrpc"
               "jsonrpc/transport/stdio"
               "jsonrpc/transport/tcp"
+              "jsonrpc/transport/websocket"
+              "jsonrpc/transport/local-domain-socket"
             ];
             lispLibs = with lisp.pkgs; [
               yason
@@ -54,6 +56,12 @@
               quri
               fast-io
               trivial-utf-8
+              # For websocket transport
+              websocket-driver
+              clack
+              clack-handler-hunchentoot
+              event-emitter
+              hunchentoot
             ];
           };
           c-async-process = pkgs.stdenv.mkDerivation {
@@ -89,6 +97,119 @@
               queues
               queues_dot_simple-cqueue
             ];
+          };
+          # Fetch upstream webview library
+          webview-upstream = pkgs.fetchFromGitHub {
+            owner = "webview";
+            repo = "webview";
+            rev = "0.12.0";
+            hash = "sha256-pmqodl2fIlCNJTZz1U5spW4MpcoMhQt5WFh3+TRny3U=";
+          };
+          # Build the webview C library from lem-project/webview
+          c-webview = pkgs.stdenv.mkDerivation {
+            pname = "c-webview";
+            version = "unstable";
+            src = sources.webview.src;
+            nativeBuildInputs = with pkgs; [
+              cmake
+              ninja
+              pkg-config
+            ];
+            buildInputs = with pkgs; [
+              webkitgtk_4_1
+              gtk3
+            ];
+            # Patch CMakeLists.txt to use pre-fetched webview source
+            postPatch = ''
+              cat > c/CMakeLists.txt << 'EOF'
+              cmake_minimum_required(VERSION 3.16)
+              project(webview-wrapper LANGUAGES C CXX)
+
+              set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "''${CMAKE_BINARY_DIR}/bin")
+              set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "''${CMAKE_BINARY_DIR}/lib")
+              set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "''${CMAKE_BINARY_DIR}/lib")
+
+              # Use pre-fetched webview source
+              add_subdirectory(''${WEBVIEW_SOURCE_DIR} webview_build)
+
+              add_library(example SHARED)
+              target_sources(example PRIVATE main.c)
+              target_link_libraries(example PRIVATE webview::core_static)
+              EOF
+            '';
+            configurePhase = ''
+              runHook preConfigure
+              cd c
+              cmake -G Ninja -B build -S . \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DWEBVIEW_SOURCE_DIR=${webview-upstream}
+              runHook postConfigure
+            '';
+            buildPhase = ''
+              runHook preBuild
+              cmake --build build
+              runHook postBuild
+            '';
+            installPhase = ''
+              runHook preInstall
+              mkdir -p $out/lib
+              cp build/lib/libexample.so $out/lib/libwebview.so
+              runHook postInstall
+            '';
+          };
+          # Common Lisp webview bindings
+          cl-webview = lisp.buildASDFSystem {
+            inherit (sources.webview) pname version;
+            src = sources.webview.src;
+            systems = [ "webview" ];
+            lispLibs = with lisp.pkgs; [
+              cffi
+              float-features
+            ];
+            nativeLibs = [
+              c-webview
+            ];
+            # Patch to use library from nativeLibs instead of bundled prebuilt
+            postPatch = ''
+              cat > webview.lisp.new << 'PATCH_EOF'
+              (defpackage :webview
+                (:use :cl :cffi)
+                (:export #:webview-t
+                         #:webview-error-t
+                         #:webview-hint-t
+                         #:webview-native-handle-kind-t
+                         #:webview-version-info-t
+                         #:webview-create
+                         #:webview-destroy
+                         #:webview-run
+                         #:webview-terminate
+                         #:webview-dispatch
+                         #:webview-get-window
+                         #:webview-get-native-handle
+                         #:webview-set-title
+                         #:webview-set-size
+                         #:webview-navigate
+                         #:webview-set-html
+                         #:webview-init
+                         #:webview-eval
+                         #:webview-bind
+                         #:webview-unbind
+                         #:webview-return
+                         #:webview-version))
+              (in-package :webview)
+
+              (define-foreign-library libwebview
+                (:os-macosx "libwebview.dylib")
+                (:unix "libwebview.so")
+                (:windows "webview.dll")
+                (t (:default "libwebview")))
+
+              (use-foreign-library libwebview)
+              PATCH_EOF
+              # Append the rest of the file after line 40
+              tail -n +41 webview.lisp >> webview.lisp.new
+              mv webview.lisp.new webview.lisp
+            '';
           };
           lem-fake-interface = lisp.buildASDFSystem {
             pname = "lem-fake-interface";
@@ -192,15 +313,77 @@
               SDL2_image
             ];
           });
+          lem-webview = lem-fake-interface.overrideLispAttrs (o: {
+            pname = "lem-webview";
+            meta.mainProgram = "lem";
+            systems = [
+              "lem-webview"
+            ];
+            # Extend postPatch to also patch default font
+            postPatch = (o.postPatch or "") + ''
+              sed -i "s/fontName: 'Monospace'/fontName: 'DejaVu Sans Mono'/" frontends/server/frontend/main.js
+              sed -i 's/fontName:"Monospace"/fontName:"DejaVu Sans Mono"/' frontends/server/frontend/dist/assets/index.js
+            '';
+            # Override buildScript to use lem-webview:main as entry point
+            buildScript = pkgs.writeText "build-lem-webview.lisp" ''
+              (defpackage :nix-cl-user (:use :cl))
+              (in-package :nix-cl-user)
+
+              ;; Load ASDF
+              (load "${lem-fake-interface.asdfFasl}/asdf.${lem-fake-interface.faslExt}")
+
+              ;; Avoid writing to the global fasl cache
+              (asdf:initialize-output-translations '(:output-translations :disable-cache :inherit-configuration))
+
+              ;; Initial load
+              (mapcar #'asdf:load-system (uiop:split-string (uiop:getenv "systems")))
+
+              ;; Create executable with lem-webview:main as entry point
+              (setf uiop:*image-entry-point* #'lem-webview:main)
+              (uiop:dump-image "lem" :executable t :compression t)
+            '';
+            lispLibs =
+              o.lispLibs
+              ++ [
+                cl-webview
+              ]
+              ++ (with lisp.pkgs; [
+                float-features
+                command-line-arguments
+              ]);
+            nativeLibs = with pkgs; [
+              webkitgtk_4_1
+              gtk3
+              stdenv.cc.cc.lib  # For libstdc++
+              c-webview
+            ];
+            # Include monospace font and configure fontconfig
+            postInstall = let
+              fontsConf = pkgs.makeFontsConf {
+                fontDirectories = [ pkgs.dejavu_fonts ];
+              };
+            in ''
+              wrapProgram $out/bin/lem \
+                --set FONTCONFIG_FILE "${fontsConf}" \
+                --prefix XDG_DATA_DIRS : "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}" \
+                --prefix XDG_DATA_DIRS : "${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}"
+            '';
+          });
         in
         {
           overlayAttrs = {
             lem = lem-cli;
+            inherit lem-webview;
           };
           packages.lem = lem-cli;
+          packages.lem-webview = lem-webview;
           apps.lem = {
             type = "app";
             program = lem-cli;
+          };
+          apps.lem-webview = {
+            type = "app";
+            program = lem-webview;
           };
           devShells.default = pkgs.mkShell {
             packages = with pkgs; [

@@ -33,7 +33,16 @@
           (random 1000000)
           (sb-posix:getpid)))
 
-;; Server class
+;; Server class - Generic function declarations with docstrings
+(defgeneric mcp-server-hostname (server)
+  (:documentation "Return the hostname the MCP server is listening on."))
+
+(defgeneric mcp-server-port (server)
+  (:documentation "Return the port the MCP server is listening on."))
+
+(defgeneric mcp-server-sessions (server)
+  (:documentation "Return the hash-table of active sessions for the MCP server."))
+
 (defclass mcp-server ()
   ((hostname :initarg :hostname
              :initform *mcp-server-default-hostname*
@@ -115,6 +124,7 @@
   (let* ((body (hunchentoot:raw-post-data :force-text t))
          (protocol-version (hunchentoot:header-in* :mcp-protocol-version))
          (session-id (hunchentoot:header-in* :mcp-session-id)))
+    (declare (ignore protocol-version))
     (handler-case
         (let* ((message (yason:parse body :object-as :alist))
                (method (cdr (assoc "method" message :test #'string=)))
@@ -125,8 +135,7 @@
             ((string= method "initialize")
              (let* ((new-session-id (generate-session-id))
                     (session (get-or-create-session server new-session-id)))
-               (setf *current-session* session)
-               (let ((result (handle-method server method params id)))
+               (let ((result (handle-method server method params id session)))
                  (setf (hunchentoot:header-out :mcp-session-id) new-session-id)
                  (setf (hunchentoot:content-type*) "application/json")
                  result)))
@@ -142,8 +151,7 @@
                  (return-from handle-post-request
                    (encode-error-response id +invalid-request+ "Session not found")))
                (setf (session-last-activity session) (get-universal-time))
-               (setf *current-session* session)
-               (let ((result (handle-method server method params id)))
+               (let ((result (handle-method server method params id session)))
                  (setf (hunchentoot:content-type*) "application/json")
                  result)))))
       (error (e)
@@ -157,9 +165,6 @@
   (setf (hunchentoot:return-code*) hunchentoot:+http-method-not-allowed+)
   "")
 
-(defvar *current-session* nil
-  "The session for the current request.")
-
 (defvar *lifecycle-methods* '("initialize" "notifications/initialized" "shutdown" "exit" "ping"
                                "notifications/cancelled" "notifications/progress")
   "Methods that don't need to run in Lem's main thread.")
@@ -168,18 +173,18 @@
   "Return T if METHOD is a lifecycle method that doesn't need main thread."
   (member method *lifecycle-methods* :test #'string=))
 
-(defun handle-method (server method params id)
-  "Handle a JSON-RPC method call."
+(defun handle-method (server method params id session)
+  "Handle a JSON-RPC method call with SERVER and SESSION passed explicitly."
   (let ((handler (gethash method (mcp-server-method-handlers server))))
     (if handler
         (handler-case
             (let ((result (if (lifecycle-method-p method)
                               ;; Lifecycle methods run directly
-                              (call-mcp-method handler params)
+                              (call-mcp-method handler params :server server :session session)
                               ;; Other methods run in Lem's main thread
                               (execute-in-editor
                                (lambda ()
-                                 (call-mcp-method handler params))))))
+                                 (call-mcp-method handler params :server server :session session))))))
               (if id
                   (encode-response id result)
                   ;; Notification - no response needed

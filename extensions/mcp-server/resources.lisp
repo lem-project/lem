@@ -71,12 +71,12 @@
         (cons scheme path)))))
 
 ;; resources/list - List available resources
-(define-mcp-request (resources-list-request "resources/list") (params)
+(define-mcp-request (resources-list-request "resources/list") ((params))
   (let ((resources (mapcar #'buffer-to-resource (buffer-list))))
     `(("resources" . ,(mapcar #'resource-to-json resources)))))
 
 ;; resources/read - Read a resource
-(define-mcp-request (resources-read-request "resources/read") (params)
+(define-mcp-request (resources-read-request "resources/read") ((params))
   (let* ((uri (cdr (assoc "uri" params :test #'string=)))
          (parsed (parse-resource-uri uri)))
     (unless parsed
@@ -109,6 +109,6 @@
                     (format nil "Unsupported URI scheme: ~A" scheme)))))))
 
 ;; resources/templates/list - List resource templates (optional)
-(define-mcp-request (resources-templates-list-request "resources/templates/list") (params)
+(define-mcp-request (resources-templates-list-request "resources/templates/list") ((params))
   ;; We don't support resource templates for now
   `(("resourceTemplates" . ())))

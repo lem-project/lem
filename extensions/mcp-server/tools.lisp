@@ -4,12 +4,12 @@
 ;;; Handles tools/list and tools/call methods
 
 ;; tools/list - Return list of available tools
-(define-mcp-request (tools-list-request "tools/list") (params)
+(define-mcp-request (tools-list-request "tools/list") ((params))
   (let ((tools (list-all-tools)))
     `(("tools" . ,(mapcar #'tool-to-json tools)))))
 
 ;; tools/call - Execute a tool
-(define-mcp-request (tools-call-request "tools/call") (params)
+(define-mcp-request (tools-call-request "tools/call") ((params))
   (let* ((name (cdr (assoc "name" params :test #'string=)))
          (arguments (cdr (assoc "arguments" params :test #'string=)))
          (tool (get-tool name)))

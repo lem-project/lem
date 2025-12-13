@@ -99,14 +99,8 @@ Drag nodes to rearrange the layout."
                          node-count package-name))))))
 
 (lem:define-command living-canvas-current-file () ()
-  "Display a call graph for all packages defined in the current file"
-  (let ((buffer (lem:current-buffer)))
-    (if (lem:buffer-filename buffer)
-        (let ((pkg (lem:buffer-package buffer)))
-          (if pkg
-              (living-canvas (package-name pkg))
-              (lem:message "No package found for current buffer")))
-        (lem:message "Buffer has no associated file"))))
+  "Display a call graph for CL-USER package (placeholder)"
+  (living-canvas "CL-USER"))
 
 (lem:define-command living-canvas-lem-core () ()
   "Display a call graph for lem-core package (demo)"

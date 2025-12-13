@@ -165,11 +165,10 @@
        :root-package package))))
 
 (defun analyze-buffer (buffer)
-  "Analyze a buffer and extract its call graph"
-  ;; For now, use the buffer's package
-  (let ((package (or (lem:buffer-package buffer)
-                     (find-package :cl-user))))
-    (analyze-package package)))
+  "Analyze a buffer and extract its call graph.
+Currently defaults to CL-USER package."
+  (declare (ignore buffer))
+  (analyze-package :cl-user))
 
 ;;; JSON Serialization
 

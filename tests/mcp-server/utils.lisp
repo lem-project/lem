@@ -6,7 +6,8 @@
            :lines
            :extract-text-content
            :extract-result
-           :result-is-error-p))
+           :result-is-error-p
+           :*test-session*))
 (in-package :lem-tests/mcp-server/utils)
 
 ;;; Test utilities for MCP Server tests
@@ -18,15 +19,18 @@
 (defvar *test-mcp-server* nil
   "The MCP server instance for testing.")
 
+(defvar *test-session* nil
+  "The MCP session instance for testing.")
+
 (defmacro with-mcp-test-env (() &body body)
   "Set up MCP test environment.
 Bypasses HTTP layer but uses real MCP handlers and Lem buffers."
   `(lem-fake-interface:with-fake-interface ()
      (let* ((server (make-instance 'lem-mcp-server::mcp-server :port 0))
+            (session (make-instance 'lem-mcp-server::mcp-session :id "test-session"))
             (*test-mcp-server* server)
-            (lem-mcp-server::*current-mcp-server* server)
-            (lem-mcp-server::*current-session*
-             (make-instance 'lem-mcp-server::mcp-session :id "test-session")))
+            (*test-session* session)
+            (lem-mcp-server::*current-mcp-server* server))
        (lem-mcp-server::register-all-methods server)
        ,@body)))
 
@@ -37,7 +41,9 @@ Returns the result alist or signals an error."
          (handler (gethash method handlers)))
     (unless handler
       (error "Unknown MCP method: ~A" method))
-    (lem-mcp-server::call-mcp-method handler params)))
+    (lem-mcp-server::call-mcp-method handler params
+                                      :server *test-mcp-server*
+                                      :session *test-session*)))
 
 (defun mcp-tool-call (tool-name &optional arguments)
   "Call an MCP tool by name with optional arguments.

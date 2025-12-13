@@ -33,7 +33,7 @@
         ("capabilities" . ())
         ("clientInfo" . (("name" . "test-client")))))
     (mcp-request "notifications/initialized" nil)
-    (ok (lem-mcp-server::session-initialized-p lem-mcp-server::*current-session*)
+    (ok (lem-mcp-server::session-initialized-p *test-session*)
         "Session is marked as initialized")))
 
 ;;; ========================================

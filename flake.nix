@@ -119,30 +119,13 @@
               webkitgtk_4_1
               gtk3
             ];
-            # Patch CMakeLists.txt to use pre-fetched webview source
-            postPatch = ''
-              cat > c/CMakeLists.txt << 'EOF'
-              cmake_minimum_required(VERSION 3.16)
-              project(webview-wrapper LANGUAGES C CXX)
-
-              set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "''${CMAKE_BINARY_DIR}/bin")
-              set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "''${CMAKE_BINARY_DIR}/lib")
-              set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "''${CMAKE_BINARY_DIR}/lib")
-
-              # Use pre-fetched webview source
-              add_subdirectory(''${WEBVIEW_SOURCE_DIR} webview_build)
-
-              add_library(example SHARED)
-              target_sources(example PRIVATE main.c)
-              target_link_libraries(example PRIVATE webview::core_static)
-              EOF
-            '';
+            # Use FETCHCONTENT_SOURCE_DIR to skip network fetch and use pre-fetched source
             configurePhase = ''
               runHook preConfigure
               cd c
               cmake -G Ninja -B build -S . \
                 -DCMAKE_BUILD_TYPE=Release \
-                -DWEBVIEW_SOURCE_DIR=${webview-upstream}
+                -DFETCHCONTENT_SOURCE_DIR_WEBVIEW=${webview-upstream}
               runHook postConfigure
             '';
             buildPhase = ''
@@ -169,46 +152,14 @@
             nativeLibs = [
               c-webview
             ];
-            # Patch to use library from nativeLibs instead of bundled prebuilt
+            # Minimal patch: remove :search-path and fix library name
             postPatch = ''
-              cat > webview.lisp.new << 'PATCH_EOF'
-              (defpackage :webview
-                (:use :cl :cffi)
-                (:export #:webview-t
-                         #:webview-error-t
-                         #:webview-hint-t
-                         #:webview-native-handle-kind-t
-                         #:webview-version-info-t
-                         #:webview-create
-                         #:webview-destroy
-                         #:webview-run
-                         #:webview-terminate
-                         #:webview-dispatch
-                         #:webview-get-window
-                         #:webview-get-native-handle
-                         #:webview-set-title
-                         #:webview-set-size
-                         #:webview-navigate
-                         #:webview-set-html
-                         #:webview-init
-                         #:webview-eval
-                         #:webview-bind
-                         #:webview-unbind
-                         #:webview-return
-                         #:webview-version))
-              (in-package :webview)
-
-              (define-foreign-library libwebview
-                (:os-macosx "libwebview.dylib")
-                (:unix "libwebview.so")
-                (:windows "webview.dll")
-                (t (:default "libwebview")))
-
-              (use-foreign-library libwebview)
-              PATCH_EOF
-              # Append the rest of the file after line 40
-              tail -n +41 webview.lisp >> webview.lisp.new
-              mv webview.lisp.new webview.lisp
+              # Remove :search-path directive (change "(libwebview" to "libwebview")
+              sed -i 's/(define-foreign-library (libwebview/(define-foreign-library libwebview/' webview.lisp
+              # Delete the :search-path block (lines containing :search-path through arm64"))))
+              sed -i '/:search-path/,/arm64"))))/d' webview.lisp
+              # Fix library name (remove version suffix)
+              sed -i 's/"libwebview\.so\.0\.12\.0"/"libwebview.so"/' webview.lisp
             '';
           };
           lem-fake-interface = lisp.buildASDFSystem {
@@ -319,9 +270,8 @@
             systems = [
               "lem-webview"
             ];
-            # Extend postPatch to also patch default font
+            # Patch default font in the bundled frontend (dist/ is what lem-server actually uses)
             postPatch = (o.postPatch or "") + ''
-              sed -i "s/fontName: 'Monospace'/fontName: 'DejaVu Sans Mono'/" frontends/server/frontend/main.js
               sed -i 's/fontName:"Monospace"/fontName:"DejaVu Sans Mono"/' frontends/server/frontend/dist/assets/index.js
             '';
             # Override buildScript to use lem-webview:main as entry point

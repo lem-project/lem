@@ -172,6 +172,16 @@ Currently defaults to CL-USER package."
 
 ;;; JSON Serialization
 
+(defun alist-to-hash-table (alist)
+  "Convert an alist to a hash table for YASON encoding"
+  (let ((ht (make-hash-table :test 'equal)))
+    (loop :for (key . value) :in alist
+          :do (setf (gethash key ht)
+                    (if (and (consp value) (consp (car value)))
+                        (alist-to-hash-table value)
+                        value)))
+    ht))
+
 (defun graph-to-cytoscape-json (graph)
   "Convert a call-graph to Cytoscape.js compatible JSON string"
   (with-output-to-string (stream)
@@ -179,22 +189,24 @@ Currently defaults to CL-USER package."
       ;; Add nodes
       (maphash (lambda (id node)
                  (declare (ignore id))
-                 (push `(("group" . "nodes")
-                         ("data" . (("id" . ,(graph-node-id node))
-                                    ("name" . ,(graph-node-name node))
-                                    ("type" . ,(string-downcase
-                                                (symbol-name (graph-node-type node))))
-                                    ("package" . ,(graph-node-package node))
-                                    ("docstring" . ,(or (graph-node-docstring node) "")))))
+                 (push (alist-to-hash-table
+                        `(("group" . "nodes")
+                          ("data" . (("id" . ,(graph-node-id node))
+                                     ("name" . ,(graph-node-name node))
+                                     ("type" . ,(string-downcase
+                                                 (symbol-name (graph-node-type node))))
+                                     ("package" . ,(graph-node-package node))
+                                     ("docstring" . ,(or (graph-node-docstring node) ""))))))
                        elements))
                (call-graph-nodes graph))
       ;; Add edges
       (loop :for edge :in (call-graph-edges graph)
             :for i :from 0
-            :do (push `(("group" . "edges")
-                        ("data" . (("id" . ,(format nil "edge-~D" i))
-                                   ("source" . ,(graph-edge-source edge))
-                                   ("target" . ,(graph-edge-target edge)))))
+            :do (push (alist-to-hash-table
+                       `(("group" . "edges")
+                         ("data" . (("id" . ,(format nil "edge-~D" i))
+                                    ("source" . ,(graph-edge-source edge))
+                                    ("target" . ,(graph-edge-target edge))))))
                       elements))
       ;; Write JSON
       (yason:encode

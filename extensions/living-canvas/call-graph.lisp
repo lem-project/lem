@@ -156,10 +156,12 @@
   (let ((body (get-function-body symbol)))
     (when body
       (let ((all-calls (extract-called-symbols body package)))
-        ;; Filter to only include symbols from the same package or exported
-        (remove-if-not
+        ;; Filter to only include symbols from the same package
+        ;; and exclude self-references
+        (remove-if
          (lambda (sym)
-           (eq (symbol-package sym) package))
+           (or (eq sym symbol)
+               (not (eq (symbol-package sym) package))))
          all-calls)))))
 
 ;;; Graph Construction

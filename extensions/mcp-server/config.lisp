@@ -3,6 +3,10 @@
 (defvar *mcp-server-default-port* 7890
   "Default port for MCP server.")
 
+(defvar *mcp-server-default-hostname* "127.0.0.1"
+  "Default hostname for MCP server.
+Use \"0.0.0.0\" to listen on all interfaces.")
+
 (defvar *mcp-protocol-version* "2024-11-05"
   "MCP protocol version supported by this server.")
 

@@ -43,9 +43,11 @@
                 :switch-to-buffer
                 :pop-to-buffer)
   (:export :*mcp-server-default-port*
+           :*mcp-server-default-hostname*
            :current-mcp-server
            :start-mcp-server
            :stop-mcp-server
+           :mcp-server-hostname
            :mcp-server-port
            :mcp-server-sessions
            :mcp-server-start

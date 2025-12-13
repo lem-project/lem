@@ -35,7 +35,10 @@
 
 ;; Server class
 (defclass mcp-server ()
-  ((port :initarg :port
+  ((hostname :initarg :hostname
+             :initform *mcp-server-default-hostname*
+             :reader mcp-server-hostname)
+   (port :initarg :port
          :reader mcp-server-port)
    (acceptor :initform nil
              :accessor mcp-server-acceptor)
@@ -238,11 +241,12 @@
   "Start the MCP HTTP server."
   (when *current-mcp-server*
     (error "MCP server is already running"))
-  (let ((port (mcp-server-port server)))
+  (let ((hostname (mcp-server-hostname server))
+        (port (mcp-server-port server)))
     (setf (mcp-server-acceptor server)
           (make-instance 'mcp-acceptor
                          :port port
-                         :address "127.0.0.1"
+                         :address hostname
                          :mcp-server server))
     ;; Set up the request dispatcher
     (setf hunchentoot:*dispatch-table*

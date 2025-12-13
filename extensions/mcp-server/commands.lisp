@@ -2,21 +2,29 @@
 
 ;;; Lem Commands for MCP Server Control
 
-(define-command mcp-server-start (port) ((:number "Port: "))
-  "Start the MCP HTTP server on the specified port.
+(define-command mcp-server-start (hostname port) ((:string "Hostname: ")
+                                                   (:number "Port: "))
+  "Start the MCP HTTP server on the specified hostname and port.
+If no hostname is specified, uses *mcp-server-default-hostname* (default: 127.0.0.1).
 If no port is specified, uses *mcp-server-default-port* (default: 7890).
 
 After starting, connect from Claude Code with:
-  claude mcp add --transport http lem http://127.0.0.1:PORT/mcp"
-  (let ((actual-port (or port *mcp-server-default-port*)))
+  claude mcp add --transport http lem http://HOSTNAME:PORT/mcp"
+  (let ((actual-hostname (if (or (null hostname) (string= hostname ""))
+                             *mcp-server-default-hostname*
+                             hostname))
+        (actual-port (or port *mcp-server-default-port*)))
     (when (current-mcp-server)
-      (message "MCP server is already running on port ~A"
+      (message "MCP server is already running on ~A:~A"
+               (mcp-server-hostname (current-mcp-server))
                (mcp-server-port (current-mcp-server)))
       (return-from mcp-server-start))
     (handler-case
-        (let ((server (make-instance 'mcp-server :port actual-port)))
+        (let ((server (make-instance 'mcp-server
+                                     :hostname actual-hostname
+                                     :port actual-port)))
           (start-mcp-server server)
-          (message "MCP server started at http://127.0.0.1:~A/mcp" actual-port))
+          (message "MCP server started at http://~A:~A/mcp" actual-hostname actual-port))
       (error (e)
         (message "Failed to start MCP server: ~A" e)))))
 
@@ -34,25 +42,33 @@ After starting, connect from Claude Code with:
   (let ((server (current-mcp-server)))
     (if server
         (let ((num-sessions (hash-table-count (mcp-server-sessions server))))
-          (message "MCP server running at http://127.0.0.1:~A/mcp (~A session~:P)"
+          (message "MCP server running at http://~A:~A/mcp (~A session~:P)"
+                   (mcp-server-hostname server)
                    (mcp-server-port server)
                    num-sessions))
         (message "MCP server is not running"))))
 
-(define-command mcp-server-restart (port) ((:number "Port: "))
-  "Restart the MCP server, optionally on a new port."
-  (when (current-mcp-server)
-    (let ((old-port (mcp-server-port (current-mcp-server))))
-      (stop-mcp-server (current-mcp-server))
-      (unless port
-        (setf port old-port))))
-  (let ((actual-port (or port *mcp-server-default-port*)))
-    (handler-case
-        (let ((server (make-instance 'mcp-server :port actual-port)))
-          (start-mcp-server server)
-          (message "MCP server restarted at http://127.0.0.1:~A/mcp" actual-port))
-      (error (e)
-        (message "Failed to restart MCP server: ~A" e)))))
+(define-command mcp-server-restart (hostname port) ((:string "Hostname: ")
+                                                     (:number "Port: "))
+  "Restart the MCP server, optionally on a new hostname and port."
+  (let ((old-hostname *mcp-server-default-hostname*)
+        (old-port *mcp-server-default-port*))
+    (when (current-mcp-server)
+      (setf old-hostname (mcp-server-hostname (current-mcp-server)))
+      (setf old-port (mcp-server-port (current-mcp-server)))
+      (stop-mcp-server (current-mcp-server)))
+    (let ((actual-hostname (if (or (null hostname) (string= hostname ""))
+                               old-hostname
+                               hostname))
+          (actual-port (or port old-port)))
+      (handler-case
+          (let ((server (make-instance 'mcp-server
+                                       :hostname actual-hostname
+                                       :port actual-port)))
+            (start-mcp-server server)
+            (message "MCP server restarted at http://~A:~A/mcp" actual-hostname actual-port))
+        (error (e)
+          (message "Failed to restart MCP server: ~A" e))))))
 
 (define-command mcp-server-toggle-logging () ()
   "Toggle MCP server logging to *mcp-log* buffer."

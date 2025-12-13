@@ -219,11 +219,70 @@
                                                        (graph-edge-target b)))))
        :root-package package))))
 
+(defun extract-definitions-from-file (pathname)
+  "Extract all function/macro definitions from a file"
+  (let ((forms (read-all-forms-from-file pathname))
+        (definitions '()))
+    (dolist (form forms)
+      (when (and (consp form)
+                 (member (car form) '(defun defmacro defgeneric)))
+        (let ((name (cadr form)))
+          (when (and (symbolp name) (fboundp name))
+            (push name definitions)))))
+    (nreverse definitions)))
+
+(defun analyze-file (pathname)
+  "Analyze a single file and build its call graph"
+  (let ((definitions (extract-definitions-from-file pathname))
+        (nodes (make-hash-table :test 'equal))
+        (edges '()))
+    (when definitions
+      (let ((package (symbol-package (first definitions))))
+        ;; Create nodes for all definitions in the file
+        (dolist (sym definitions)
+          (let ((node-id (make-node-id sym)))
+            (setf (gethash node-id nodes)
+                  (make-graph-node
+                   :id node-id
+                   :name (symbol-name sym)
+                   :package (package-name (symbol-package sym))
+                   :type (get-function-type sym)
+                   :docstring (documentation sym 'function)
+                   :source-location (get-source-location sym)))))
+        ;; Create edges (only between functions in this file)
+        (dolist (sym definitions)
+          (let ((callees (get-callees sym package))
+                (source-id (make-node-id sym)))
+            (dolist (callee callees)
+              (let ((target-id (make-node-id callee)))
+                (when (gethash target-id nodes)
+                  (push (make-graph-edge
+                         :source source-id
+                         :target target-id
+                         :call-type :direct)
+                        edges))))))
+        (make-call-graph
+         :nodes nodes
+         :edges (remove-duplicates edges
+                                   :test (lambda (a b)
+                                           (and (string= (graph-edge-source a)
+                                                         (graph-edge-source b))
+                                                (string= (graph-edge-target a)
+                                                         (graph-edge-target b)))))
+         :root-package package)))))
+
 (defun analyze-buffer (buffer)
-  "Analyze a buffer and extract its call graph.
-Currently defaults to CL-USER package."
-  (declare (ignore buffer))
-  (analyze-package :cl-user))
+  "Analyze a buffer and extract its call graph"
+  (let ((pathname (lem:buffer-filename buffer)))
+    (if (and pathname (probe-file pathname))
+        (or (analyze-file pathname)
+            ;; Fallback if no definitions found
+            (make-call-graph :nodes (make-hash-table :test 'equal)
+                            :edges nil
+                            :root-package nil))
+        (make-call-graph :nodes (make-hash-table :test 'equal)
+                        :edges nil
+                        :root-package nil))))
 
 ;;; JSON Serialization
 

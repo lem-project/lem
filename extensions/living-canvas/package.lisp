@@ -20,6 +20,7 @@
            #:call-graph-edges
            #:call-graph-root-package
            #:analyze-package
+           #:analyze-file
            #:analyze-buffer
            #:graph-to-cytoscape-json))
 
@@ -39,6 +40,7 @@
   (:use :cl :lem)
   (:import-from :lem-living-canvas/call-graph
                 #:analyze-package
+                #:analyze-file
                 #:analyze-buffer
                 #:graph-to-cytoscape-json)
   (:import-from :lem-living-canvas/buffer
@@ -47,5 +49,5 @@
                 #:canvas-buffer-graph
                 #:canvas-buffer-source-buffer)
   (:export #:living-canvas
-           #:living-canvas-current-buffer
+           #:living-canvas-current-file
            #:living-canvas-refresh))

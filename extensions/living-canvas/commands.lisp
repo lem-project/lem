@@ -150,8 +150,31 @@ Drag nodes to rearrange the layout."
                            node-count package-name)))))))
 
 (lem:define-command living-canvas-current-file () ()
-  "Display a call graph for CL-USER package (placeholder)"
-  (living-canvas "CL-USER"))
+  "Display a call graph for the current file.
+Only shows functions defined in this file."
+  (let* ((buffer (lem:current-buffer))
+         (filename (lem:buffer-filename buffer)))
+    (unless filename
+      (lem:editor-error "Buffer has no associated file"))
+    (unless (probe-file filename)
+      (lem:editor-error "File not found: ~A" filename))
+    (let* ((graph (lem-living-canvas/call-graph:analyze-file filename))
+           (node-count (if graph
+                           (hash-table-count
+                            (lem-living-canvas/call-graph:call-graph-nodes graph))
+                           0)))
+      (if (zerop node-count)
+          (lem:message "No functions found in ~A (file may need to be loaded first)"
+                       (file-namestring filename))
+          (progn
+            (populate-source-location-cache graph)
+            (let ((canvas-buffer (make-canvas-buffer
+                                  (format nil "*Canvas: ~A*" (file-namestring filename))
+                                  buffer
+                                  graph)))
+              (lem:pop-to-buffer canvas-buffer)
+              (lem:message "Living Canvas: ~D functions in ~A"
+                           node-count (file-namestring filename))))))))
 
 (lem:define-command living-canvas-lem-core () ()
   "Display a call graph for lem-core package (demo)"

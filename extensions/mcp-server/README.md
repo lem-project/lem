@@ -9,60 +9,14 @@ MCP (Model Context Protocol) server implementation for Lem editor. This allows A
 - Command listing and execution
 - Resource access (buffer contents)
 
-## Docker Development Environment
-
-### Running Tests
+## Running Tests
 
 ```bash
 # Build test image
-docker build -f docker/Dockerfile.mcp-test -t lem-tests .
+docker build -f docker/Dockerfile.test -t lem-tests .
 
 # Run tests
 docker run --rm lem-tests
-```
-
-### Development Server (micros connection)
-
-```bash
-# Build development image
-docker build -f docker/Dockerfile.mcp-dev -t lem-mcp-dev .
-
-# Start server
-docker run --rm -p 4005:4005 --name lem-mcp-dev lem-mcp-dev
-
-# Start with source mounting (for live reload)
-docker run --rm -p 4005:4005 \
-  -v $(pwd)/extensions/mcp-server:/app/extensions/mcp-server \
-  --name lem-mcp-dev lem-mcp-dev
-```
-
-### Connecting from Lem
-
-```
-M-x slime-connect RET
-Host: 127.0.0.1 RET
-Port: 4005 RET
-```
-
-> Note: The Docker container binds micros to `0.0.0.0` to allow external connections.
-
-### REPL Operations
-
-```lisp
-;; Switch to package
-(in-package :lem-mcp-server)
-
-;; List available tools
-(list-all-tools)
-
-;; Reload after source changes (when mounted)
-(asdf:load-system :lem-mcp-server :force t)
-
-;; Start MCP server (creates and starts server instance)
-(mcp-server-start 8080)
-
-;; Stop server
-(mcp-server-stop)
 ```
 
 ## Available Tools

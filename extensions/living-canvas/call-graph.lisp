@@ -152,18 +152,54 @@
                       defn)))))))
     (error () nil)))
 
+(defun function-to-symbol (fn)
+  "Try to get the symbol name for a function object"
+  (handler-case
+      (let ((name (sb-kernel:%fun-name fn)))
+        (cond
+          ;; Regular function
+          ((symbolp name) name)
+          ;; Method - extract generic function name
+          ((and (consp name) (eq (car name) 'sb-pcl::fast-method))
+           (cadr name))
+          ((and (consp name) (member (car name) '(setf sb-pcl::slot-accessor)))
+           nil) ; Skip setf functions and slot accessors
+          (t nil)))
+    (error () nil)))
+
 (defun get-callees (symbol package)
-  "Get all functions called by a symbol within the given package"
-  (let ((body (get-function-body symbol)))
-    (when body
-      (let ((all-calls (extract-called-symbols body package)))
-        ;; Filter to only include symbols from the same package
-        ;; and exclude self-references
-        (remove-if
-         (lambda (sym)
-           (or (eq sym symbol)
-               (not (eq (symbol-package sym) package))))
-         all-calls)))))
+  "Get all functions called by SYMBOL within the given package.
+Uses sb-introspect:find-function-callees for compiled code analysis."
+  (handler-case
+      (let ((fn (fdefinition symbol)))
+        (when fn
+          (let ((callees (sb-introspect:find-function-callees fn))
+                (result '()))
+            (dolist (callee callees)
+              (let ((callee-sym (function-to-symbol callee)))
+                (when (and callee-sym
+                           (not (eq callee-sym symbol))
+                           (eq (symbol-package callee-sym) package)
+                           (fboundp callee-sym))
+                  (pushnew callee-sym result))))
+            result)))
+    (error () nil)))
+
+(defun get-callers (symbol package)
+  "Get all functions that call SYMBOL within the given package.
+Uses sb-introspect:who-calls which relies on xref data from compilation."
+  (handler-case
+      (let ((xrefs (sb-introspect:who-calls symbol))
+            (result '()))
+        (dolist (xref xrefs)
+          (let ((caller-name (car xref)))
+            (when (and (symbolp caller-name)
+                       (not (eq caller-name symbol))
+                       (eq (symbol-package caller-name) package)
+                       (fboundp caller-name))
+              (pushnew caller-name result))))
+        result)
+    (error () nil)))
 
 ;;; Graph Construction
 
@@ -201,7 +237,20 @@
                  :docstring (documentation sym 'function)
                  :source-location source-loc
                  :source-file source-file))))
-      ;; Third pass: create edges
+      ;; Third pass: create edges using who-calls (xref data)
+      ;; For each symbol, find what calls it and create edges
+      (dolist (sym symbols)
+        (let ((callers (get-callers sym package))
+              (target-id (make-node-id sym)))
+          (dolist (caller callers)
+            (let ((source-id (make-node-id caller)))
+              (when (gethash source-id nodes)
+                (push (make-graph-edge
+                       :source source-id
+                       :target target-id
+                       :call-type :direct)
+                      edges))))))
+      ;; Also try find-function-callees as backup
       (dolist (sym symbols)
         (let ((callees (get-callees sym package))
               (source-id (make-node-id sym)))
@@ -313,17 +362,22 @@
       (file-namestring filepath)
       "unknown"))
 
+(defparameter *unknown-source-id* "file:(unknown source)"
+  "ID for the container that holds functions without known source files")
+
 (defun graph-to-cytoscape-json (graph)
   "Convert a call-graph to Cytoscape.js compatible JSON string"
   (with-output-to-string (stream)
     (let ((elements '())
-          (files (make-hash-table :test 'equal)))
-      ;; First pass: collect unique source files
+          (files (make-hash-table :test 'equal))
+          (has-orphans nil))
+      ;; First pass: collect unique source files and check for orphans
       (maphash (lambda (id node)
                  (declare (ignore id))
                  (let ((source-file (graph-node-source-file node)))
-                   (when source-file
-                     (setf (gethash source-file files) t))))
+                   (if source-file
+                       (setf (gethash source-file files) t)
+                       (setf has-orphans t))))
                (call-graph-nodes graph))
       ;; Add file parent nodes
       (maphash (lambda (filepath _)
@@ -336,10 +390,22 @@
                                      ("filepath" . ,filepath)))))
                        elements))
                files)
+      ;; Add unknown source container if there are orphan nodes
+      (when has-orphans
+        (push (alist-to-hash-table
+               `(("group" . "nodes")
+                 ("data" . (("id" . ,*unknown-source-id*)
+                            ("name" . "(unknown source)")
+                            ("type" . "file")
+                            ("filepath" . "")))))
+              elements))
       ;; Add function nodes with parent reference
       (maphash (lambda (id node)
                  (declare (ignore id))
-                 (let ((source-file (graph-node-source-file node)))
+                 (let* ((source-file (graph-node-source-file node))
+                        (parent-id (if source-file
+                                       (make-file-node-id source-file)
+                                       *unknown-source-id*)))
                    (push (alist-to-hash-table
                           `(("group" . "nodes")
                             ("data" . (("id" . ,(graph-node-id node))
@@ -348,8 +414,7 @@
                                                    (symbol-name (graph-node-type node))))
                                        ("package" . ,(graph-node-package node))
                                        ("docstring" . ,(or (graph-node-docstring node) ""))
-                                       ,@(when source-file
-                                           `(("parent" . ,(make-file-node-id source-file))))))))
+                                       ("parent" . ,parent-id)))))
                          elements)))
                (call-graph-nodes graph))
       ;; Add edges

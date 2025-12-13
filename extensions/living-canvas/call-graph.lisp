@@ -9,6 +9,7 @@
   (package "" :type string)
   (type :function :type keyword)
   (docstring nil :type (or null string))
+  (arglist nil :type (or null string))
   (source-location nil :type (or null cons))
   (source-file nil :type (or null string))
   (position nil :type (or null cons)))
@@ -76,6 +77,30 @@
          :generic-function)
         ((fboundp symbol) :function)
         (t nil)))
+
+(defun get-function-arglist (symbol)
+  "Get the argument list of a function as a string.
+Returns nil if the arglist cannot be determined."
+  (handler-case
+      (let ((arglist (sb-introspect:function-lambda-list
+                      (if (macro-function symbol)
+                          (macro-function symbol)
+                          (fdefinition symbol)))))
+        (when arglist
+          (format nil "~{~A~^ ~}" arglist)))
+    (error () nil)))
+
+(defun format-arglist-for-display (symbol)
+  "Format the argument list for display in the UI.
+Returns a formatted string like '(x y &optional z)' or nil."
+  (handler-case
+      (let ((arglist (sb-introspect:function-lambda-list
+                      (if (macro-function symbol)
+                          (macro-function symbol)
+                          (fdefinition symbol)))))
+        (when arglist
+          (format nil "(~{~(~A~)~^ ~})" arglist)))
+    (error () nil)))
 
 (defun extract-called-symbols (form package)
   "Extract all function symbols called within a form"
@@ -235,6 +260,7 @@ Uses sb-introspect:who-calls which relies on xref data from compilation."
                  :package (package-name package)
                  :type (get-function-type sym)
                  :docstring (documentation sym 'function)
+                 :arglist (format-arglist-for-display sym)
                  :source-location source-loc
                  :source-file source-file))))
       ;; Third pass: create edges using who-calls (xref data)
@@ -303,6 +329,7 @@ Uses sb-introspect:who-calls which relies on xref data from compilation."
                    :package (package-name (symbol-package sym))
                    :type (get-function-type sym)
                    :docstring (documentation sym 'function)
+                   :arglist (format-arglist-for-display sym)
                    :source-location source-loc
                    :source-file (or (car source-loc) file-path)))))
         ;; Create edges (only between functions in this file)
@@ -387,6 +414,7 @@ Shows all functions defined in the system and their call relationships."
                      :package (package-name (symbol-package sym))
                      :type (get-function-type sym)
                      :docstring (documentation sym 'function)
+                     :arglist (format-arglist-for-display sym)
                      :source-location source-loc
                      :source-file (or (car source-loc) file))))))))
     ;; Second pass: create edges (cross-package calls allowed)
@@ -482,6 +510,8 @@ Shows all functions defined in the system and their call relationships."
       (maphash (lambda (id node)
                  (declare (ignore id))
                  (let* ((source-file (graph-node-source-file node))
+                        (source-loc (graph-node-source-location node))
+                        (line-number (when source-loc (cdr source-loc)))
                         (parent-id (if source-file
                                        (make-file-node-id source-file)
                                        *unknown-source-id*)))
@@ -493,6 +523,9 @@ Shows all functions defined in the system and their call relationships."
                                                    (symbol-name (graph-node-type node))))
                                        ("package" . ,(graph-node-package node))
                                        ("docstring" . ,(or (graph-node-docstring node) ""))
+                                       ("arglist" . ,(or (graph-node-arglist node) ""))
+                                       ("sourceFile" . ,(or (short-filename source-file) ""))
+                                       ("lineNumber" . ,(or line-number 0))
                                        ("parent" . ,parent-id)))))
                          elements)))
                (call-graph-nodes graph))

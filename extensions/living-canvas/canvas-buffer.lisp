@@ -47,25 +47,83 @@
       padding: 12px 16px;
       color: #d4d4d4;
       font-size: 12px;
-      max-width: 400px;
+      max-width: 450px;
+      min-width: 280px;
       display: none;
       z-index: 1000;
     }
     #info-panel.visible { display: block; }
     #info-panel h3 {
       color: #569cd6;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
       font-size: 14px;
+      font-family: Consolas, Monaco, monospace;
     }
-    #info-panel .type {
+    #info-panel .type-badge {
+      display: inline-block;
+      background: #3c3c3c;
       color: #4ec9b0;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    #info-panel .type-badge.macro { background: #3d2d3d; color: #c586c0; }
+    #info-panel .type-badge.generic-function { background: #2d3d3d; color: #4ec9b0; }
+    #info-panel .info-section {
+      border-top: 1px solid #3c3c3c;
+      padding-top: 8px;
+      margin-top: 8px;
+    }
+    #info-panel .info-row {
+      display: flex;
+      margin-bottom: 4px;
+    }
+    #info-panel .info-label {
+      color: #808080;
+      min-width: 70px;
       font-size: 11px;
-      margin-bottom: 6px;
+    }
+    #info-panel .info-value {
+      color: #d4d4d4;
+      font-family: Consolas, Monaco, monospace;
+      font-size: 11px;
+      word-break: break-all;
+    }
+    #info-panel .info-value.arglist {
+      color: #dcdcaa;
+    }
+    #info-panel .info-value.source {
+      color: #ce9178;
+    }
+    #info-panel .connection-stats {
+      display: flex;
+      gap: 16px;
+      margin-top: 8px;
+    }
+    #info-panel .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    #info-panel .stat-count {
+      font-weight: bold;
+      color: #569cd6;
+    }
+    #info-panel .stat-label {
+      color: #808080;
+      font-size: 11px;
     }
     #info-panel .docstring {
       color: #9cdcfe;
       font-style: italic;
       line-height: 1.4;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #3c3c3c;
+      max-height: 80px;
+      overflow-y: auto;
     }
     #controls {
       position: fixed;
@@ -132,7 +190,27 @@
   <div id='cy'></div>
   <div id='info-panel'>
     <h3 id='info-name'></h3>
-    <div class='type' id='info-type'></div>
+    <span class='type-badge' id='info-type-badge'></span>
+    <div class='info-section'>
+      <div class='info-row'>
+        <span class='info-label'>Args:</span>
+        <span class='info-value arglist' id='info-arglist'></span>
+      </div>
+      <div class='info-row'>
+        <span class='info-label'>Source:</span>
+        <span class='info-value source' id='info-source'></span>
+      </div>
+    </div>
+    <div class='connection-stats' id='info-connections'>
+      <div class='stat-item'>
+        <span class='stat-count' id='info-callers'>0</span>
+        <span class='stat-label'>callers</span>
+      </div>
+      <div class='stat-item'>
+        <span class='stat-count' id='info-callees'>0</span>
+        <span class='stat-label'>callees</span>
+      </div>
+    </div>
     <div class='docstring' id='info-doc'></div>
   </div>
   <div id='debug-info'>Loading...</div>
@@ -302,22 +380,70 @@
       wheelSensitivity: 0.3
     });
 
-    // Info panel
+    // Info panel elements
     const infoPanel = document.getElementById('info-panel');
     const infoName = document.getElementById('info-name');
-    const infoType = document.getElementById('info-type');
+    const infoTypeBadge = document.getElementById('info-type-badge');
+    const infoArglist = document.getElementById('info-arglist');
+    const infoSource = document.getElementById('info-source');
+    const infoCallers = document.getElementById('info-callers');
+    const infoCallees = document.getElementById('info-callees');
+    const infoConnections = document.getElementById('info-connections');
     const infoDoc = document.getElementById('info-doc');
+    const infoSection = document.querySelector('#info-panel .info-section');
 
     function showInfo(node) {
       const data = node.data();
       if (data.type === 'file') {
+        // File node - simplified view
         infoName.textContent = data.name;
-        infoType.textContent = 'FILE';
+        infoTypeBadge.textContent = 'FILE';
+        infoTypeBadge.className = 'type-badge';
+        infoSection.style.display = 'none';
+        infoConnections.style.display = 'none';
         infoDoc.textContent = data.filepath || '';
+        infoDoc.style.display = data.filepath ? 'block' : 'none';
       } else {
+        // Function node - full details
         infoName.textContent = data.name;
-        infoType.textContent = data.type.toUpperCase() + ' in ' + (data.package || '');
-        infoDoc.textContent = data.docstring || '(no documentation)';
+
+        // Type badge with color
+        infoTypeBadge.textContent = data.type.toUpperCase();
+        infoTypeBadge.className = 'type-badge ' + data.type;
+
+        // Arglist
+        const arglist = data.arglist || '()';
+        infoArglist.textContent = arglist;
+
+        // Source location
+        const sourceFile = data.sourceFile || '';
+        const lineNumber = data.lineNumber || 0;
+        if (sourceFile && lineNumber > 0) {
+          infoSource.textContent = sourceFile + ':' + lineNumber;
+        } else if (sourceFile) {
+          infoSource.textContent = sourceFile;
+        } else {
+          infoSource.textContent = '(unknown)';
+        }
+
+        // Connection counts (callers = incoming, callees = outgoing)
+        const incomingEdges = node.incomers('edge').length;
+        const outgoingEdges = node.outgoers('edge').length;
+        infoCallers.textContent = incomingEdges;
+        infoCallees.textContent = outgoingEdges;
+
+        // Docstring
+        const docstring = data.docstring;
+        if (docstring && docstring.trim()) {
+          infoDoc.textContent = docstring;
+          infoDoc.style.display = 'block';
+        } else {
+          infoDoc.style.display = 'none';
+        }
+
+        // Show sections
+        infoSection.style.display = 'block';
+        infoConnections.style.display = 'flex';
       }
       infoPanel.classList.add('visible');
     }

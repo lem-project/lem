@@ -3,9 +3,11 @@
                "lem-fake-interface"
                "lem-lisp-syntax"
                "lem-lisp-mode"
+               #+sbcl "lem-mcp-server"
                "cl-ansi-text"
                "trivial-package-local-nicknames"
-               "rove")
+               "rove"
+               "yason")
   :pathname "tests"
   :components ((:file "utilities")
                (:module "buffer"
@@ -20,6 +22,11 @@
                 :components ((:file "utils")
                              (:file "micros-tests")
                              (:file "tests")))
+               #+sbcl
+               (:module "mcp-server"
+                :components ((:file "utils")
+                             (:file "integration-tests")
+                             (:file "edge-case-tests")))
                (:module "lisp-syntax"
                 :components ((:file "indent-test")
                              (:file "defstruct-to-defclass")))

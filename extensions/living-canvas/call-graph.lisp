@@ -26,6 +26,19 @@
 
 ;;; Source Location
 
+(defun character-offset-to-line (pathname offset)
+  "Convert a character offset to a line number"
+  (when (and pathname offset (probe-file pathname))
+    (with-open-file (stream pathname)
+      (let ((line 1)
+            (pos 0))
+        (loop :for char = (read-char stream nil nil)
+              :while (and char (< pos offset))
+              :do (incf pos)
+                  (when (char= char #\Newline)
+                    (incf line)))
+        line))))
+
 (defun get-source-location (symbol)
   "Get the source file and line number for a symbol's function definition"
   (handler-case
@@ -33,10 +46,11 @@
                      (fdefinition symbol))))
         (when source
           (let ((pathname (sb-introspect:definition-source-pathname source))
-                (form-number (sb-introspect:definition-source-form-number source)))
+                (offset (sb-introspect:definition-source-character-offset source)))
             (when pathname
-              (cons (namestring pathname)
-                    (or form-number 1))))))
+              (let ((line (character-offset-to-line pathname offset)))
+                (cons (namestring pathname)
+                      (or line 1)))))))
     (error () nil)))
 
 ;;; Function Analysis

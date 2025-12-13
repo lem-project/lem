@@ -146,6 +146,7 @@ Drag nodes to rearrange the layout."
                                   source-buffer
                                   graph)))
               (lem:pop-to-buffer canvas-buffer)
+              (lem:change-buffer-mode canvas-buffer 'living-canvas-mode)
               (lem:message "Living Canvas: ~D functions in ~A"
                            node-count package-name)))))))
 
@@ -173,6 +174,7 @@ Only shows functions defined in this file."
                                   buffer
                                   graph)))
               (lem:pop-to-buffer canvas-buffer)
+              (lem:change-buffer-mode canvas-buffer 'living-canvas-mode)
               (lem:message "Living Canvas: ~D functions in ~A"
                            node-count (file-namestring filename))))))))
 

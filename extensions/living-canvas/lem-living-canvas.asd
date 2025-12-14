@@ -6,7 +6,6 @@
                "lem/core"
                "yason")
   :serial t
-  :components ((:file "package")
-               (:file "call-graph")
+  :components ((:file "call-graph")
                (:file "canvas-buffer")
                (:file "commands")))

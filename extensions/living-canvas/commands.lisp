@@ -1,4 +1,23 @@
-(in-package :lem-living-canvas)
+(defpackage :lem-living-canvas/commands
+  (:use :cl :lem)
+  (:import-from :lem-living-canvas/call-graph
+                #:analyze-package
+                #:analyze-file
+                #:analyze-buffer
+                #:analyze-system
+                #:graph-to-cytoscape-json
+                #:get-source-location)
+  (:import-from :lem-living-canvas/canvas-buffer
+                #:canvas-buffer
+                #:make-canvas-buffer
+                #:canvas-buffer-graph
+                #:canvas-buffer-source-buffer
+                #:update-canvas-buffer)
+  (:export #:living-canvas
+           #:living-canvas-current-file
+           #:living-canvas-system
+           #:living-canvas-refresh))
+(in-package :lem-living-canvas/commands)
 
 ;;; Node Position Storage
 
@@ -81,8 +100,7 @@ Returns the created overlay."
 (defun find-canvas-window ()
   "Find a window displaying a canvas-buffer."
   (dolist (window (lem:window-list))
-    (when (typep (lem:window-buffer window)
-                 'lem-living-canvas/buffer:canvas-buffer)
+    (when (typep (lem:window-buffer window) 'canvas-buffer)
       (return window))))
 
 (defun show-node-source-popup (node-id)
@@ -96,7 +114,7 @@ Uses pop-to-buffer to display the source, then returns focus to canvas."
     (let ((location (or (get-cached-source-location node-id)
                         (let ((symbol (parse-node-id node-id)))
                           (when symbol
-                            (let ((loc (lem-living-canvas/call-graph::get-source-location symbol)))
+                            (let ((loc (get-source-location symbol)))
                               (when loc
                                 (cache-source-location node-id loc)
                                 loc)))))))
@@ -156,7 +174,7 @@ Uses pop-to-buffer to display the source, then returns focus to canvas."
             (lem:message "Jumped to ~A" node-id)))
         (let ((symbol (parse-node-id node-id)))
           (when symbol
-            (let ((location (lem-living-canvas/call-graph::get-source-location symbol)))
+            (let ((location (get-source-location symbol)))
               (when location
                 (cache-source-location node-id location)
                 (destructuring-bind (file . line) location
@@ -288,9 +306,9 @@ including cross-package calls within the system."
 (lem:define-command living-canvas-refresh () ()
   "Refresh the current canvas view"
   (let ((buffer (lem:current-buffer)))
-    (if (typep buffer 'lem-living-canvas/buffer:canvas-buffer)
+    (if (typep buffer 'canvas-buffer)
         (progn
-          (lem-living-canvas/buffer:update-canvas-buffer buffer)
+          (update-canvas-buffer buffer)
           (lem:message "Canvas refreshed"))
         (lem:message "Not in a canvas buffer"))))
 

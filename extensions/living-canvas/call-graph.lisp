@@ -1,3 +1,32 @@
+(defpackage :lem-living-canvas/call-graph
+  (:use :cl)
+  (:export #:graph-node
+           #:make-graph-node
+           #:graph-node-id
+           #:graph-node-name
+           #:graph-node-package
+           #:graph-node-type
+           #:graph-node-docstring
+           #:graph-node-arglist
+           #:graph-node-source-location
+           #:graph-node-source-file
+           #:graph-node-position
+           #:graph-edge
+           #:make-graph-edge
+           #:graph-edge-source
+           #:graph-edge-target
+           #:graph-edge-call-type
+           #:call-graph
+           #:make-call-graph
+           #:call-graph-nodes
+           #:call-graph-edges
+           #:call-graph-root-package
+           #:analyze-package
+           #:analyze-file
+           #:analyze-buffer
+           #:analyze-system
+           #:graph-to-cytoscape-json
+           #:get-source-location))
 (in-package :lem-living-canvas/call-graph)
 
 ;;; Data Structures

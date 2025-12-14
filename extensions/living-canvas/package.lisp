@@ -7,6 +7,7 @@
            #:graph-node-package
            #:graph-node-type
            #:graph-node-docstring
+           #:graph-node-arglist
            #:graph-node-source-location
            #:graph-node-source-file
            #:graph-node-position
@@ -24,9 +25,10 @@
            #:analyze-file
            #:analyze-buffer
            #:analyze-system
-           #:graph-to-cytoscape-json))
+           #:graph-to-cytoscape-json
+           #:get-source-location))
 
-(defpackage :lem-living-canvas/buffer
+(defpackage :lem-living-canvas/canvas-buffer
   (:use :cl :lem)
   (:import-from :lem-living-canvas/call-graph
                 #:call-graph
@@ -39,19 +41,21 @@
            #:canvas-buffer-node-positions
            #:update-canvas-buffer))
 
-(defpackage :lem-living-canvas
+(defpackage :lem-living-canvas/commands
   (:use :cl :lem)
   (:import-from :lem-living-canvas/call-graph
                 #:analyze-package
                 #:analyze-file
                 #:analyze-buffer
                 #:analyze-system
-                #:graph-to-cytoscape-json)
-  (:import-from :lem-living-canvas/buffer
+                #:graph-to-cytoscape-json
+                #:get-source-location)
+  (:import-from :lem-living-canvas/canvas-buffer
                 #:canvas-buffer
                 #:make-canvas-buffer
                 #:canvas-buffer-graph
-                #:canvas-buffer-source-buffer)
+                #:canvas-buffer-source-buffer
+                #:update-canvas-buffer)
   (:export #:living-canvas
            #:living-canvas-current-file
            #:living-canvas-system

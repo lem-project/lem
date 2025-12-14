@@ -46,6 +46,85 @@
           (when pkg
             (find-symbol sym-name pkg)))))))
 
+;;; Highlight Overlay for Source Preview
+
+(lem:define-attribute source-highlight-attribute
+  (t :background "#264f78"))
+
+(defvar *current-highlight-overlay* nil
+  "Current overlay used to highlight the selected function in source view.")
+
+(defun clear-highlight-overlay ()
+  "Remove the current highlight overlay if it exists."
+  (when *current-highlight-overlay*
+    (lem:delete-overlay *current-highlight-overlay*)
+    (setf *current-highlight-overlay* nil)))
+
+;; Clear highlight on any command execution
+(defun clear-highlight-on-command ()
+  "Hook function to clear highlight overlay before any command."
+  (clear-highlight-overlay))
+
+(lem:add-hook lem:*pre-command-hook* 'clear-highlight-on-command)
+
+(defun highlight-sexp-at-point (point)
+  "Create an overlay to highlight the sexp starting at POINT.
+Returns the created overlay."
+  (lem:with-point ((start point)
+                   (end point))
+    ;; Move to start of line/sexp
+    (lem:line-start start)
+    ;; Find end of sexp
+    (when (lem:form-offset end 1)
+      (lem:make-overlay start end 'source-highlight-attribute))))
+
+(defun find-canvas-window ()
+  "Find a window displaying a canvas-buffer."
+  (dolist (window (lem:window-list))
+    (when (typep (lem:window-buffer window)
+                 'lem-living-canvas/buffer:canvas-buffer)
+      (return window))))
+
+(defun show-node-source-popup (node-id)
+  "Show source code in a popup window, keeping focus on canvas.
+Uses pop-to-buffer to display the source, then returns focus to canvas."
+  (let ((canvas-window (find-canvas-window)))
+    (unless canvas-window
+      (return-from show-node-source-popup))
+    ;; Clear previous highlight
+    (clear-highlight-overlay)
+    (let ((location (or (get-cached-source-location node-id)
+                        (let ((symbol (parse-node-id node-id)))
+                          (when symbol
+                            (let ((loc (lem-living-canvas/call-graph::get-source-location symbol)))
+                              (when loc
+                                (cache-source-location node-id loc)
+                                loc)))))))
+      (when location
+        (destructuring-bind (file . line) location
+          (when (and file (probe-file file))
+            (let ((buffer (lem:find-file-buffer file)))
+              ;; Execute with canvas window as current-window for pop-to-buffer
+              (lem:with-current-window canvas-window
+                (lem:pop-to-buffer buffer))
+              ;; Now switch to source window to move cursor and update display
+              (let ((source-window (car (lem:get-buffer-windows buffer))))
+                (when source-window
+                  (lem:with-current-window source-window
+                    ;; Move to the specified line
+                    (lem:goto-line line)
+                    ;; Move to beginning of line (start of defun)
+                    (lem:line-start (lem:current-point))
+                    ;; Create highlight overlay for the sexp
+                    (setf *current-highlight-overlay*
+                          (highlight-sexp-at-point (lem:current-point)))
+                    ;; Center the view
+                    (lem:window-recenter source-window))))
+              ;; Return focus to canvas
+              (lem:switch-to-window canvas-window)
+              ;; Force redraw
+              (lem:redraw-display))))))))
+
 (defun jump-to-node-source (node-id)
   "Jump to the source location of a node using lem-lisp-mode's M-. functionality"
   ;; Try to use lem-lisp-mode's find-definitions-by-name for accurate navigation
@@ -95,13 +174,13 @@ Called when lem-server is available (WebView frontend)."
     (when pkg
       (let ((register-fn (find-symbol "REGISTER-METHOD" pkg)))
         (when (and register-fn (fboundp register-fn))
-          ;; Node selected (single click)
+          ;; Node selected (single click) - show source in popup
           (funcall register-fn "canvas:node-selected"
                    (lambda (args)
                      (let ((node-id (gethash "nodeId" args)))
                        (lem:send-event
                         (lambda ()
-                          (lem:message "Selected: ~A" node-id))))))
+                          (show-node-source-popup node-id))))))
 
           ;; Open source (double click)
           (funcall register-fn "canvas:open-source"

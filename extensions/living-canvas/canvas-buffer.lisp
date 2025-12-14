@@ -475,9 +475,15 @@
         cy.nodes().not(neighborhood).addClass('faded');
       }
 
-      // Notify Lem
-      if (window.invokeLem) {
-        invokeLem('canvas:node-selected', { nodeId: node.id() });
+      // Notify Lem (only for function nodes, not file containers)
+      if (node.data('type') !== 'file') {
+        console.log('Node clicked:', node.id(), 'invokeLem available:', !!window.invokeLem);
+        if (window.invokeLem) {
+          console.log('Calling invokeLem canvas:node-selected');
+          invokeLem('canvas:node-selected', { nodeId: node.id() });
+        } else {
+          console.warn('invokeLem not available');
+        }
       }
     });
 

@@ -18,10 +18,31 @@
            #:living-canvas-refresh))
 (in-package :lem-living-canvas)
 
-;;; Node Position Storage
+;;; Variables
 
 (defvar *node-positions* (make-hash-table :test 'equal)
   "Global storage for node positions across sessions")
+
+(defvar *source-location-cache* (make-hash-table :test 'equal)
+  "Cache for source locations to avoid repeated file searches")
+
+(defvar *current-highlight-overlay* nil
+  "Current overlay used to highlight the selected function in source view.")
+
+(defvar *living-canvas-keymap*
+  (lem:make-keymap :name '*living-canvas-keymap*))
+
+;;; Attributes
+
+(lem:define-attribute source-highlight-attribute
+  (t :background "#264f78"))
+
+;;; Key Bindings
+
+(lem:define-key *living-canvas-keymap* "g" 'living-canvas-refresh)
+(lem:define-key *living-canvas-keymap* "q" 'lem:kill-buffer)
+
+;;; Node Position Storage
 
 (defun save-node-position (node-id x y)
   "Save a node's position for persistence"
@@ -32,9 +53,6 @@
   (gethash node-id *node-positions*))
 
 ;;; Source Location Cache
-
-(defvar *source-location-cache* (make-hash-table :test 'equal)
-  "Cache for source locations to avoid repeated file searches")
 
 (defun cache-source-location (node-id location)
   "Cache a source location for a node"
@@ -66,19 +84,12 @@
 
 ;;; Highlight Overlay for Source Preview
 
-(lem:define-attribute source-highlight-attribute
-  (t :background "#264f78"))
-
-(defvar *current-highlight-overlay* nil
-  "Current overlay used to highlight the selected function in source view.")
-
 (defun clear-highlight-overlay ()
   "Remove the current highlight overlay if it exists."
   (when *current-highlight-overlay*
     (lem:delete-overlay *current-highlight-overlay*)
     (setf *current-highlight-overlay* nil)))
 
-;; Clear highlight on any command execution
 (defun clear-highlight-on-command ()
   "Hook function to clear highlight overlay before any command."
   (clear-highlight-overlay))
@@ -216,7 +227,6 @@ Called when lem-server is available (WebView frontend)."
                            (y (gethash "y" args)))
                        (save-node-position node-id x y)))))))))
 
-;; Register methods after editor initialization
 (lem:add-hook lem:*after-init-hook* 'register-canvas-methods)
 
 ;;; User Commands
@@ -312,15 +322,7 @@ including cross-package calls within the system."
           (lem:message "Canvas refreshed"))
         (lem:message "Not in a canvas buffer"))))
 
-;;; Keymap
-
-(defvar *living-canvas-keymap*
-  (lem:make-keymap :name '*living-canvas-keymap*))
-
-(lem:define-key *living-canvas-keymap* "g" 'living-canvas-refresh)
-(lem:define-key *living-canvas-keymap* "q" 'lem:kill-buffer)
-
-;;; Minor mode for canvas buffers
+;;; Minor Mode
 
 (lem:define-minor-mode living-canvas-mode
     (:name "LivingCanvas"

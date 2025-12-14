@@ -1,9 +1,48 @@
+(defpackage :lem-living-canvas
+  (:use :cl :lem)
+  (:import-from :lem-living-canvas/call-graph
+                #:analyze-package
+                #:analyze-file
+                #:analyze-buffer
+                #:analyze-system
+                #:graph-to-cytoscape-json
+                #:get-source-location)
+  (:import-from :lem-living-canvas/buffer
+                #:canvas-buffer
+                #:make-canvas-buffer
+                #:canvas-buffer-graph
+                #:canvas-buffer-source-buffer)
+  (:export #:living-canvas
+           #:living-canvas-current-file
+           #:living-canvas-system
+           #:living-canvas-refresh))
 (in-package :lem-living-canvas)
 
-;;; Node Position Storage
+;;; Variables
 
 (defvar *node-positions* (make-hash-table :test 'equal)
   "Global storage for node positions across sessions")
+
+(defvar *source-location-cache* (make-hash-table :test 'equal)
+  "Cache for source locations to avoid repeated file searches")
+
+(defvar *current-highlight-overlay* nil
+  "Current overlay used to highlight the selected function in source view.")
+
+(defvar *living-canvas-keymap*
+  (lem:make-keymap :name '*living-canvas-keymap*))
+
+;;; Attributes
+
+(lem:define-attribute source-highlight-attribute
+  (t :background "#264f78"))
+
+;;; Key Bindings
+
+(lem:define-key *living-canvas-keymap* "g" 'living-canvas-refresh)
+(lem:define-key *living-canvas-keymap* "q" 'lem:kill-buffer)
+
+;;; Node Position Storage
 
 (defun save-node-position (node-id x y)
   "Save a node's position for persistence"
@@ -14,9 +53,6 @@
   (gethash node-id *node-positions*))
 
 ;;; Source Location Cache
-
-(defvar *source-location-cache* (make-hash-table :test 'equal)
-  "Cache for source locations to avoid repeated file searches")
 
 (defun cache-source-location (node-id location)
   "Cache a source location for a node"
@@ -45,6 +81,78 @@
         (let ((pkg (find-package pkg-name)))
           (when pkg
             (find-symbol sym-name pkg)))))))
+
+;;; Highlight Overlay for Source Preview
+
+(defun clear-highlight-overlay ()
+  "Remove the current highlight overlay if it exists."
+  (when *current-highlight-overlay*
+    (lem:delete-overlay *current-highlight-overlay*)
+    (setf *current-highlight-overlay* nil)))
+
+(defun clear-highlight-on-command ()
+  "Hook function to clear highlight overlay before any command."
+  (clear-highlight-overlay))
+
+(lem:add-hook lem:*pre-command-hook* 'clear-highlight-on-command)
+
+(defun highlight-sexp-at-point (point)
+  "Create an overlay to highlight the sexp starting at POINT.
+Returns the created overlay."
+  (lem:with-point ((start point)
+                   (end point))
+    ;; Move to start of line/sexp
+    (lem:line-start start)
+    ;; Find end of sexp
+    (when (lem:form-offset end 1)
+      (lem:make-overlay start end 'source-highlight-attribute))))
+
+(defun find-canvas-window ()
+  "Find a window displaying a canvas-buffer."
+  (dolist (window (lem:window-list))
+    (when (typep (lem:window-buffer window)
+                 'lem-living-canvas/buffer:canvas-buffer)
+      (return window))))
+
+(defun show-node-source-popup (node-id)
+  "Show source code in a popup window, keeping focus on canvas.
+Uses pop-to-buffer to display the source, then returns focus to canvas."
+  (let ((canvas-window (find-canvas-window)))
+    (unless canvas-window
+      (return-from show-node-source-popup))
+    ;; Clear previous highlight
+    (clear-highlight-overlay)
+    (let ((location (or (get-cached-source-location node-id)
+                        (let ((symbol (parse-node-id node-id)))
+                          (when symbol
+                            (let ((loc (get-source-location symbol)))
+                              (when loc
+                                (cache-source-location node-id loc)
+                                loc)))))))
+      (when location
+        (destructuring-bind (file . line) location
+          (when (and file (probe-file file))
+            (let ((buffer (lem:find-file-buffer file)))
+              ;; Execute with canvas window as current-window for pop-to-buffer
+              (lem:with-current-window canvas-window
+                (lem:pop-to-buffer buffer))
+              ;; Now switch to source window to move cursor and update display
+              (let ((source-window (car (lem:get-buffer-windows buffer))))
+                (when source-window
+                  (lem:with-current-window source-window
+                    ;; Move to the specified line
+                    (lem:goto-line line)
+                    ;; Move to beginning of line (start of defun)
+                    (lem:line-start (lem:current-point))
+                    ;; Create highlight overlay for the sexp
+                    (setf *current-highlight-overlay*
+                          (highlight-sexp-at-point (lem:current-point)))
+                    ;; Center the view
+                    (lem:window-recenter source-window))))
+              ;; Return focus to canvas
+              (lem:switch-to-window canvas-window)
+              ;; Force redraw
+              (lem:redraw-display))))))))
 
 (defun jump-to-node-source (node-id)
   "Jump to the source location of a node using lem-lisp-mode's M-. functionality"
@@ -77,7 +185,7 @@
             (lem:message "Jumped to ~A" node-id)))
         (let ((symbol (parse-node-id node-id)))
           (when symbol
-            (let ((location (lem-living-canvas/call-graph::get-source-location symbol)))
+            (let ((location (get-source-location symbol)))
               (when location
                 (cache-source-location node-id location)
                 (destructuring-bind (file . line) location
@@ -95,13 +203,13 @@ Called when lem-server is available (WebView frontend)."
     (when pkg
       (let ((register-fn (find-symbol "REGISTER-METHOD" pkg)))
         (when (and register-fn (fboundp register-fn))
-          ;; Node selected (single click)
+          ;; Node selected (single click) - show source in popup
           (funcall register-fn "canvas:node-selected"
                    (lambda (args)
                      (let ((node-id (gethash "nodeId" args)))
                        (lem:send-event
                         (lambda ()
-                          (lem:message "Selected: ~A" node-id))))))
+                          (show-node-source-popup node-id))))))
 
           ;; Open source (double click)
           (funcall register-fn "canvas:open-source"
@@ -119,7 +227,6 @@ Called when lem-server is available (WebView frontend)."
                            (y (gethash "y" args)))
                        (save-node-position node-id x y)))))))))
 
-;; Register methods after editor initialization
 (lem:add-hook lem:*after-init-hook* 'register-canvas-methods)
 
 ;;; User Commands
@@ -215,15 +322,7 @@ including cross-package calls within the system."
           (lem:message "Canvas refreshed"))
         (lem:message "Not in a canvas buffer"))))
 
-;;; Keymap
-
-(defvar *living-canvas-keymap*
-  (lem:make-keymap :name '*living-canvas-keymap*))
-
-(lem:define-key *living-canvas-keymap* "g" 'living-canvas-refresh)
-(lem:define-key *living-canvas-keymap* "q" 'lem:kill-buffer)
-
-;;; Minor mode for canvas buffers
+;;; Minor Mode
 
 (lem:define-minor-mode living-canvas-mode
     (:name "LivingCanvas"

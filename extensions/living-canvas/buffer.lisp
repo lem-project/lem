@@ -39,6 +39,9 @@
          :documentation "The Living Canvas JSON data (portable format)"))
   (:documentation "A buffer that displays a function call graph as an interactive canvas"))
 
+(defgeneric canvas-buffer-json (buffer)
+  (:documentation "Return the Living Canvas JSON data (portable format) for BUFFER."))
+
 ;;; HTML Generation
 
 (defun generate-canvas-html (graph-json)

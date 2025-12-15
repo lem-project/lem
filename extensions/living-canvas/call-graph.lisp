@@ -876,7 +876,7 @@ Returns a call-graph structure."
     (unless (and (hash-table-p parsed)
                  (gethash "nodes" parsed)
                  (gethash "edges" parsed))
-      (error "Invalid Living Canvas JSON structure"))
+      (lem:editor-error "Invalid Living Canvas JSON structure"))
     (let ((nodes-ht (make-hash-table :test 'equal))
           (edges '())
           (json-nodes (gethash "nodes" parsed))
@@ -959,7 +959,7 @@ SCOPE-NAME: Optional scope name for metadata."
 PATHNAME: The file path to load from.
 Returns a call-graph structure."
   (unless (probe-file pathname)
-    (error "File not found: ~A" pathname))
+    (lem:editor-error "File not found: ~A" pathname))
   (with-open-file (stream pathname :direction :input)
     (let ((json (make-string (file-length stream))))
       (read-sequence json stream)

@@ -58,8 +58,11 @@
 ;;; Source Location
 
 (defun line-defines-symbol-p (line symbol-name)
-  "Check if a line defines the given symbol"
+  "Check if a line defines the given symbol.
+Supports standard CL forms (defun, defmacro, etc.) and Lem-specific forms
+(define-command, define-major-mode, define-minor-mode)."
   (let ((trimmed (string-left-trim '(#\Space #\Tab) line)))
+    ;; Standard CL definition forms
     (dolist (prefix '("(defun " "(defmacro " "(defgeneric " "(defmethod "))
       (let ((prefix-len (length prefix)))
         (when (and (>= (length trimmed) prefix-len)
@@ -71,6 +74,27 @@
                  (name (subseq rest 0 end-pos)))
             (when (string-equal name symbol-name)
               (return-from line-defines-symbol-p t))))))
+    ;; Lem-specific definition forms (may have name or (name options...))
+    ;; Support both unqualified and package-qualified forms (lem:define-command, etc.)
+    (dolist (prefix '("(define-command " "(lem:define-command "
+                      "(define-major-mode " "(lem:define-major-mode "
+                      "(define-minor-mode " "(lem:define-minor-mode "))
+      (let ((prefix-len (length prefix)))
+        (when (and (>= (length trimmed) prefix-len)
+                   (string-equal prefix (subseq trimmed 0 prefix-len)))
+          (let* ((rest (subseq trimmed prefix-len))
+                 (rest-trimmed (string-left-trim '(#\Space #\Tab) rest)))
+            ;; Handle (name options...) case
+            (when (and (> (length rest-trimmed) 0)
+                       (char= (char rest-trimmed 0) #\())
+              (setf rest-trimmed (subseq rest-trimmed 1)))
+            (let* ((space-pos (position #\Space rest-trimmed))
+                   (paren-pos (position #\( rest-trimmed))
+                   (close-paren-pos (position #\) rest-trimmed))
+                   (end-pos (or space-pos paren-pos close-paren-pos (length rest-trimmed)))
+                   (name (subseq rest-trimmed 0 end-pos)))
+              (when (string-equal name symbol-name)
+                (return-from line-defines-symbol-p t)))))))
     nil))
 
 (defun find-definition-line (pathname symbol-name)
@@ -96,6 +120,50 @@
                       (or line 1)))))))
     (error () nil)))
 
+;;; Definition Form Detection
+
+(defun def-form-p (form-head)
+  "Check if FORM-HEAD is a definition macro (starts with DEF or DEFINE-)"
+  (and (symbolp form-head)
+       (let ((name (symbol-name form-head)))
+         (or (and (>= (length name) 3)
+                  (string-equal "DEF" name :end2 3))
+             (and (>= (length name) 7)
+                  (string-equal "DEFINE-" name :end2 7))))))
+
+(defparameter *excluded-definition-forms*
+  '(;; Package/module structure
+    defpackage in-package defsystem
+    ;; Variable definitions (fboundp = false)
+    defvar defparameter defconstant
+    ;; Type definitions
+    defclass defstruct deftype define-condition
+    ;; Testing
+    deftest
+    ;; Lem-specific non-function definitions
+    define-editor-variable define-attribute
+    ;; Key bindings (not functions)
+    define-keys define-key define-named-key)
+  "Definition forms to exclude from call graph analysis")
+
+(defun extract-definition-name (form)
+  "Extract the defined name from a definition form.
+Returns a symbol or NIL if the form structure is unrecognized."
+  (when (and (consp form) (consp (cdr form)))
+    (let ((form-head (car form))
+          (second-element (cadr form)))
+      (cond
+        ;; define-command: (define-command (name options...) ...) or (define-command name ...)
+        ((member form-head '(define-command define-major-mode define-minor-mode
+                             define-global-mode) :test #'string-equal)
+         (if (consp second-element)
+             (car second-element)
+             second-element))
+        ;; Standard forms: (defun name ...), etc.
+        ((symbolp second-element)
+         second-element)
+        (t nil)))))
+
 ;;; Function Analysis
 
 (defun get-function-type (symbol)
@@ -106,6 +174,42 @@
          :generic-function)
         ((fboundp symbol) :function)
         (t nil)))
+
+(defun get-definition-type (symbol &optional form-head)
+  "Determine the type of a definition, including Lem-specific types.
+SYMBOL is the defined symbol.
+FORM-HEAD is the definition macro used (e.g., DEFUN, DEFINE-COMMAND).
+Returns :command, :major-mode, :minor-mode, :macro, :generic-function, :function, or NIL."
+  (cond
+    ;; Lem-specific types (checked via symbol properties)
+    ;; Check mode-object first because define-major-mode also creates a command
+    ((and (find-package :lem-core)
+          (get symbol (find-symbol "MODE-OBJECT" :lem-core)))
+     (let ((mode (get symbol (find-symbol "MODE-OBJECT" :lem-core))))
+       (typecase mode
+         ;; Note: We can't use lem-core::major-mode directly, so use class name check
+         (t (let ((class-name (class-name (class-of mode))))
+              (cond
+                ((search "MAJOR-MODE" (symbol-name class-name)) :major-mode)
+                ((search "MINOR-MODE" (symbol-name class-name)) :minor-mode)
+                (t :mode)))))))
+    ((and (find-package :lem-core)
+          (get symbol (find-symbol "COMMAND-CLASS" :lem-core)))
+     :command)
+    ;; Fallback: type based on form-head when property check fails
+    ((and form-head (member (symbol-name form-head) '("DEFINE-COMMAND") :test #'string-equal))
+     :command)
+    ((and form-head (member (symbol-name form-head) '("DEFINE-MAJOR-MODE") :test #'string-equal))
+     :major-mode)
+    ((and form-head (member (symbol-name form-head) '("DEFINE-MINOR-MODE") :test #'string-equal))
+     :minor-mode)
+    ;; Standard CL types (existing logic)
+    ((macro-function symbol) :macro)
+    ((and (fboundp symbol)
+          (typep (fdefinition symbol) 'generic-function))
+     :generic-function)
+    ((fboundp symbol) :function)
+    (t nil)))
 
 (defun get-function-arglist (symbol)
   "Get the argument list of a function as a string.
@@ -327,16 +431,24 @@ Uses sb-introspect:who-calls which relies on xref data from compilation."
                                                        (graph-edge-target b)))))
        :root-package package))))
 
+(defun excluded-definition-form-p (form-head)
+  "Check if FORM-HEAD is in the exclusion list"
+  (member (symbol-name form-head)
+          (mapcar #'symbol-name *excluded-definition-forms*)
+          :test #'string-equal))
+
 (defun extract-definitions-from-file (pathname)
-  "Extract all function/macro definitions from a file"
+  "Extract all function/macro definitions from a file.
+Returns a list of (symbol . form-head) pairs for each definition found."
   (let ((forms (read-all-forms-from-file pathname))
         (definitions '()))
     (dolist (form forms)
       (when (and (consp form)
-                 (member (car form) '(defun defmacro defgeneric)))
-        (let ((name (cadr form)))
-          (when (and (symbolp name) (fboundp name))
-            (push name definitions)))))
+                 (def-form-p (car form))
+                 (not (excluded-definition-form-p (car form))))
+        (let ((name (extract-definition-name form)))
+          (when (and name (symbolp name) (fboundp name))
+            (push (cons name (car form)) definitions)))))
     (nreverse definitions)))
 
 (defun analyze-file (pathname)
@@ -344,25 +456,30 @@ Uses sb-introspect:who-calls which relies on xref data from compilation."
   (let ((definitions (extract-definitions-from-file pathname))
         (nodes (make-hash-table :test 'equal))
         (edges '())
-        (file-path (namestring pathname)))
+        (file-path (namestring pathname))
+        (symbols '()))  ; Store just symbols for edge analysis
     (when definitions
-      (let ((package (symbol-package (first definitions))))
+      (let ((package (symbol-package (car (first definitions)))))
         ;; Create nodes for all definitions in the file
-        (dolist (sym definitions)
-          (let* ((node-id (make-node-id sym))
+        ;; definitions is a list of (symbol . form-head) pairs
+        (dolist (def definitions)
+          (let* ((sym (car def))
+                 (form-head (cdr def))
+                 (node-id (make-node-id sym))
                  (source-loc (get-source-location sym)))
+            (push sym symbols)
             (setf (gethash node-id nodes)
                   (make-graph-node
                    :id node-id
                    :name (symbol-name sym)
                    :package (package-name (symbol-package sym))
-                   :type (get-function-type sym)
+                   :type (get-definition-type sym form-head)
                    :docstring (documentation sym 'function)
                    :arglist (format-arglist-for-display sym)
                    :source-location source-loc
                    :source-file (or (car source-loc) file-path)))))
         ;; Create edges (only between functions in this file)
-        (dolist (sym definitions)
+        (dolist (sym symbols)
           (let ((callees (get-callees sym package))
                 (source-id (make-node-id sym)))
             (dolist (callee callees)
@@ -429,10 +546,13 @@ Shows all functions defined in the system and their call relationships."
     (unless files
       (error "No source files found in system ~A" system-designator))
     ;; First pass: collect all function definitions from all files
+    ;; definitions is a list of (symbol . form-head) pairs
     (dolist (file files)
       (let ((definitions (extract-definitions-from-file file)))
-        (dolist (sym definitions)
-          (let* ((node-id (make-node-id sym))
+        (dolist (def definitions)
+          (let* ((sym (car def))
+                 (form-head (cdr def))
+                 (node-id (make-node-id sym))
                  (source-loc (get-source-location sym)))
             (unless (gethash node-id nodes)
               (push sym all-symbols)
@@ -441,7 +561,7 @@ Shows all functions defined in the system and their call relationships."
                      :id node-id
                      :name (symbol-name sym)
                      :package (package-name (symbol-package sym))
-                     :type (get-function-type sym)
+                     :type (get-definition-type sym form-head)
                      :docstring (documentation sym 'function)
                      :arglist (format-arglist-for-display sym)
                      :source-location source-loc

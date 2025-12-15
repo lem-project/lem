@@ -2,7 +2,7 @@
   (:use :cl)
   (:export #:convert-to-cytoscape
            #:parse-living-canvas-json
-           #:validate-living-canvas-json))
+           #:validate-living-canvas-json-p))
 (in-package :lem-living-canvas/graph-format)
 
 ;;; Living Canvas JSON to Cytoscape.js Conversion
@@ -87,7 +87,7 @@ Returns NIL if parsing fails."
       (declare (ignore c))
       nil)))
 
-(defun validate-living-canvas-json (parsed-json)
+(defun validate-living-canvas-json-p (parsed-json)
   "Validate parsed Living Canvas JSON structure.
 Returns T if valid, NIL otherwise."
   (and (hash-table-p parsed-json)
@@ -101,7 +101,7 @@ Returns a JSON string ready for Cytoscape.js initialization."
   (let ((parsed (parse-living-canvas-json json-string)))
     (unless parsed
       (lem:editor-error "Failed to parse Living Canvas JSON"))
-    (unless (validate-living-canvas-json parsed)
+    (unless (validate-living-canvas-json-p parsed)
       (lem:editor-error "Invalid Living Canvas JSON structure"))
     (let ((elements '())
           (nodes (gethash "nodes" parsed))

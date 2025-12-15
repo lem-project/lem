@@ -26,7 +26,7 @@
   (:import-from :lem-living-canvas/graph-format
                 #:convert-to-cytoscape
                 #:parse-living-canvas-json
-                #:validate-living-canvas-json))
+                #:validate-living-canvas-json-p))
 (in-package :lem-living-canvas/tests/data-layer)
 
 ;;; Test Fixtures
@@ -270,25 +270,25 @@
   (ok (null (parse-living-canvas-json "{broken"))
       "Returns NIL for broken JSON"))
 
-;;; validate-living-canvas-json Tests
+;;; validate-living-canvas-json-p Tests
 
-(deftest test-validate-living-canvas-json-valid
+(deftest test-validate-living-canvas-json-p-valid
   "Test validation of valid JSON."
   (let* ((graph (make-test-graph))
          (json (graph-to-json graph))
          (parsed (parse-living-canvas-json json)))
-    (ok (validate-living-canvas-json parsed)
+    (ok (validate-living-canvas-json-p parsed)
         "Valid JSON passes validation")))
 
-(deftest test-validate-living-canvas-json-invalid
+(deftest test-validate-living-canvas-json-p-invalid
   "Test validation of invalid structures."
-  (ok (not (validate-living-canvas-json nil))
+  (ok (not (validate-living-canvas-json-p nil))
       "NIL fails validation")
-  (ok (not (validate-living-canvas-json (make-hash-table)))
+  (ok (not (validate-living-canvas-json-p (make-hash-table)))
       "Empty hash table fails validation")
   (let ((incomplete (make-hash-table :test 'equal)))
     (setf (gethash "version" incomplete) "1.0")
-    (ok (not (validate-living-canvas-json incomplete))
+    (ok (not (validate-living-canvas-json-p incomplete))
         "Missing nodes/edges fails validation")))
 
 ;;; File I/O Tests

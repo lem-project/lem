@@ -3,6 +3,7 @@
   (:import-from :lem-living-canvas/call-graph
                 #:graph-to-json
                 #:json-to-graph
+                #:graph-to-cytoscape-json
                 #:analyze-buffer
                 #:save-graph)
   (:import-from :lem-living-canvas/graph-format
@@ -727,15 +728,15 @@
 
 (defun make-canvas-buffer (name source-buffer graph)
   "Create a new canvas buffer displaying the given call graph.
-Uses the new data layer: graph -> Living Canvas JSON -> Cytoscape JSON -> HTML"
-  (let* ((living-canvas-json (graph-to-json graph))
-         (cytoscape-json (convert-to-cytoscape living-canvas-json))
+Generates Cytoscape JSON directly from graph for efficient rendering.
+Living Canvas JSON is only generated on-demand when saving."
+  (let* ((cytoscape-json (graph-to-cytoscape-json graph))
          (html (generate-canvas-html cytoscape-json))
          (buffer (lem:make-buffer name)))
     (change-class buffer 'canvas-buffer
                   :graph graph
                   :source-buffer source-buffer
-                  :json living-canvas-json
+                  :json nil  ; Generated on-demand when saving
                   :html html)
     buffer))
 
@@ -787,13 +788,12 @@ Returns the pathname on success."
 
 (defun update-canvas-buffer (buffer)
   "Update the canvas buffer with fresh graph data.
-Uses the new data layer for conversion."
+Generates Cytoscape JSON directly from graph for efficient rendering."
   (let* ((source-buffer (canvas-buffer-source-buffer buffer))
          (graph (analyze-buffer source-buffer))
-         (living-canvas-json (graph-to-json graph))
-         (cytoscape-json (convert-to-cytoscape living-canvas-json)))
+         (cytoscape-json (graph-to-cytoscape-json graph)))
     (setf (canvas-buffer-graph buffer) graph)
-    (setf (canvas-buffer-json buffer) living-canvas-json)
+    (setf (canvas-buffer-json buffer) nil)  ; Invalidate cached JSON
     (setf (lem:html-buffer-html buffer)
           (generate-canvas-html cytoscape-json))
     buffer))

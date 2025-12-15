@@ -327,9 +327,10 @@
   )
 
 (defmethod lem-if:redraw-view-after ((jsonrpc jsonrpc) view)
+  ;; Only send view ID, not full content (avoids sending large HTML on every redraw)
   (notify* jsonrpc
            "redraw-view-after"
-           (hash "viewInfo" view)))
+           (hash "viewInfo" (hash "id" (lem-server/view:view-id view)))))
 
 (defmethod lem:redraw-buffer ((jsonrpc jsonrpc) (buffer lem:html-buffer) window force)
   )

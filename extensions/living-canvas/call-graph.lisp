@@ -29,6 +29,33 @@
            #:get-source-location))
 (in-package :lem-living-canvas/call-graph)
 
+;;; Configuration for Definition Detection
+;;;
+;;; Living Canvas analyzes source files to extract function definitions.
+;;; Not all `def*` forms represent callable functions - variables, types,
+;;; and configuration forms should be excluded from the call graph.
+
+(defparameter *excluded-definition-forms*
+  '(;; Package/module structure
+    defpackage in-package defsystem
+    ;; Variable definitions (fboundp = false)
+    defvar defparameter defconstant
+    ;; Type definitions
+    defclass defstruct deftype define-condition
+    ;; Testing
+    deftest
+    ;; Lem-specific non-function definitions
+    define-editor-variable define-attribute
+    ;; Key bindings (not functions)
+    define-keys define-key define-named-key)
+  "Definition forms to exclude from call graph analysis.
+These forms either don't create callable functions (variables, types)
+or are not relevant to understanding code flow (package declarations, tests).")
+
+(defparameter *unknown-source-id* "file:(unknown source)"
+  "Sentinel ID for grouping functions whose source file cannot be determined.
+Used as a parent node in the Cytoscape graph visualization.")
+
 ;;; Data Structures
 
 (defstruct graph-node
@@ -123,7 +150,9 @@ Supports standard CL forms (defun, defmacro, etc.) and Lem-specific forms
 ;;; Definition Form Detection
 
 (defun def-form-p (form-head)
-  "Check if FORM-HEAD is a definition macro (starts with DEF or DEFINE-)"
+  "Check if FORM-HEAD is a definition macro (starts with DEF or DEFINE-).
+This enables Living Canvas to recognize Lem-specific macros like define-command
+alongside standard Common Lisp definition forms like defun."
   (and (symbolp form-head)
        (let ((name (symbol-name form-head)))
          (or (and (>= (length name) 3)
@@ -131,23 +160,11 @@ Supports standard CL forms (defun, defmacro, etc.) and Lem-specific forms
              (and (>= (length name) 7)
                   (string-equal "DEFINE-" name :end2 7))))))
 
-(defparameter *excluded-definition-forms*
-  '(;; Package/module structure
-    defpackage in-package defsystem
-    ;; Variable definitions (fboundp = false)
-    defvar defparameter defconstant
-    ;; Type definitions
-    defclass defstruct deftype define-condition
-    ;; Testing
-    deftest
-    ;; Lem-specific non-function definitions
-    define-editor-variable define-attribute
-    ;; Key bindings (not functions)
-    define-keys define-key define-named-key)
-  "Definition forms to exclude from call graph analysis")
-
 (defun extract-definition-name (form)
   "Extract the defined name from a definition form.
+Different definition macros have different syntax for specifying the name:
+- Standard CL: (defun NAME ...) - name is second element
+- Lem commands: (define-command NAME ...) or (define-command (NAME options) ...)
 Returns a symbol or NIL if the form structure is unrecognized."
   (when (and (consp form) (consp (cdr form)))
     (let ((form-head (car form))
@@ -179,31 +196,20 @@ Returns a symbol or NIL if the form structure is unrecognized."
   "Determine the type of a definition, including Lem-specific types.
 SYMBOL is the defined symbol.
 FORM-HEAD is the definition macro used (e.g., DEFUN, DEFINE-COMMAND).
-Returns :command, :major-mode, :minor-mode, :macro, :generic-function, :function, or NIL."
+Returns :command, :major-mode, :minor-mode, :macro, :generic-function, :function, or NIL.
+
+Lem-specific types are identified by the definition macro name (form-head)
+rather than runtime properties, allowing analysis of unloaded code."
   (cond
-    ;; Lem-specific types (checked via symbol properties)
-    ;; Check mode-object first because define-major-mode also creates a command
-    ((and (find-package :lem-core)
-          (get symbol (find-symbol "MODE-OBJECT" :lem-core)))
-     (let ((mode (get symbol (find-symbol "MODE-OBJECT" :lem-core))))
-       (typecase mode
-         ;; Note: We can't use lem-core::major-mode directly, so use class name check
-         (t (let ((class-name (class-name (class-of mode))))
-              (cond
-                ((search "MAJOR-MODE" (symbol-name class-name)) :major-mode)
-                ((search "MINOR-MODE" (symbol-name class-name)) :minor-mode)
-                (t :mode)))))))
-    ((and (find-package :lem-core)
-          (get symbol (find-symbol "COMMAND-CLASS" :lem-core)))
-     :command)
-    ;; Fallback: type based on form-head when property check fails
-    ((and form-head (member (symbol-name form-head) '("DEFINE-COMMAND") :test #'string-equal))
-     :command)
+    ;; Lem-specific types (identified by definition macro name)
+    ;; Check modes first because define-major-mode internally creates a command too
     ((and form-head (member (symbol-name form-head) '("DEFINE-MAJOR-MODE") :test #'string-equal))
      :major-mode)
     ((and form-head (member (symbol-name form-head) '("DEFINE-MINOR-MODE") :test #'string-equal))
      :minor-mode)
-    ;; Standard CL types (existing logic)
+    ((and form-head (member (symbol-name form-head) '("DEFINE-COMMAND") :test #'string-equal))
+     :command)
+    ;; Standard CL types (runtime introspection)
     ((macro-function symbol) :macro)
     ((and (fboundp symbol)
           (typep (fdefinition symbol) 'generic-function))
@@ -432,7 +438,9 @@ Uses sb-introspect:who-calls which relies on xref data from compilation."
        :root-package package))))
 
 (defun excluded-definition-form-p (form-head)
-  "Check if FORM-HEAD is in the exclusion list"
+  "Check if FORM-HEAD should be excluded from call graph analysis.
+Returns T for definition forms that don't create callable functions
+(e.g., defvar, defclass) or aren't relevant to code flow analysis."
   (member (symbol-name form-head)
           (mapcar #'symbol-name *excluded-definition-forms*)
           :test #'string-equal))
@@ -617,9 +625,6 @@ Shows all functions defined in the system and their call relationships."
   (if filepath
       (file-namestring filepath)
       "unknown"))
-
-(defparameter *unknown-source-id* "file:(unknown source)"
-  "ID for the container that holds functions without known source files")
 
 (defun graph-to-cytoscape-json (graph)
   "Convert a call-graph to Cytoscape.js compatible JSON string"

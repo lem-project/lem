@@ -155,34 +155,9 @@ Uses pop-to-buffer to display the source, then returns focus to canvas."
               (lem:redraw-display))))))))
 
 (defun jump-to-node-source (node-id)
-  "Jump to the source location of a node using lem-lisp-mode's M-. functionality"
-  ;; First, parse the node-id to get just the symbol name for find-definitions
-  (let* ((colon-pos (position #\: node-id))
-         (symbol-name (if colon-pos
-                          (subseq node-id (1+ colon-pos))
-                          node-id))
-         (lisp-mode-pkg (find-package :lem-lisp-mode)))
-    (if lisp-mode-pkg
-        (let ((find-fn (find-symbol "FIND-DEFINITIONS-BY-NAME" lisp-mode-pkg))
-              (display-fn (find-symbol "DISPLAY-XREF-LOCATIONS" :lem/language-mode)))
-          (if (and find-fn (fboundp find-fn) display-fn (fboundp display-fn))
-              (handler-case
-                  (let ((locations (funcall find-fn symbol-name)))
-                    (if locations
-                        (funcall display-fn locations)
-                        ;; Fallback if no locations found via lisp-mode
-                        (jump-to-node-source-fallback node-id)))
-                (error (e)
-                  (declare (ignore e))
-                  ;; Fallback on error
-                  (jump-to-node-source-fallback node-id)))
-              ;; Fallback if functions not available
-              (jump-to-node-source-fallback node-id)))
-        ;; Fallback if lem-lisp-mode not loaded
-        (jump-to-node-source-fallback node-id))))
-
-(defun jump-to-node-source-fallback (node-id)
-  "Fallback navigation using cached locations"
+  "Jump to the source location of a node.
+Uses cached source locations from call graph analysis, falling back to
+runtime introspection if needed."
   (let ((cached (get-cached-source-location node-id)))
     (if cached
         (destructuring-bind (file . line) cached

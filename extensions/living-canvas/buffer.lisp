@@ -778,11 +778,9 @@ Returns the pathname on success."
                      (when node
                        (setf (lem-living-canvas/call-graph:graph-node-position node) pos))))
                  positions)))
-    ;; Save with layout
-    (save-graph graph pathname :include-layout t)
-    ;; Update buffer's json cache
+    ;; Save with layout and cache the JSON (save-graph now returns JSON string)
     (setf (canvas-buffer-json buffer)
-          (graph-to-json graph :include-layout t))
+          (save-graph graph pathname :include-layout t))
     pathname))
 
 ;;; Buffer Update

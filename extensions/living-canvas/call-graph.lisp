@@ -733,56 +733,42 @@ Returns a JSON string in Living Canvas format."
     (let ((nodes-array '())
           (edges-array '())
           (groups-array '())
-          (files (make-hash-table :test 'equal))
-          (has-orphans nil))
-      ;; First pass: collect unique source files
+          ;; file-members: filepath -> list of node-ids (O(n) collection)
+          (file-members (make-hash-table :test 'equal))
+          (orphan-members '()))
+      ;; Single pass: collect file members and orphans
       (maphash (lambda (id node)
                  (declare (ignore id))
                  (let ((source-file (graph-node-source-file node)))
                    (if source-file
-                       (setf (gethash source-file files) t)
-                       (setf has-orphans t))))
+                       (push (graph-node-id node) (gethash source-file file-members))
+                       (push (graph-node-id node) orphan-members))))
                (call-graph-nodes graph))
-      ;; Create file groups
-      (maphash (lambda (filepath _)
-                 (declare (ignore _))
-                 (let ((group-id (make-file-node-id filepath))
-                       (members '()))
-                   ;; Collect members for this file
-                   (maphash (lambda (id node)
-                              (declare (ignore id))
-                              (when (equal (graph-node-source-file node) filepath)
-                                (push (graph-node-id node) members)))
-                            (call-graph-nodes graph))
-                   (push (alexandria:plist-hash-table
-                          (list "id" group-id
-                                "name" (short-filename filepath)
-                                "type" "file"
-                                "members" (coerce (nreverse members) 'vector)
-                                "attributes" (alexandria:plist-hash-table
-                                              (list "filepath" filepath)
-                                              :test 'equal))
-                          :test 'equal)
-                         groups-array)))
-               files)
+      ;; Create file groups from collected members
+      (maphash (lambda (filepath members)
+                 (push (alexandria:plist-hash-table
+                        (list "id" (make-file-node-id filepath)
+                              "name" (short-filename filepath)
+                              "type" "file"
+                              "members" (coerce (nreverse members) 'vector)
+                              "attributes" (alexandria:plist-hash-table
+                                            (list "filepath" filepath)
+                                            :test 'equal))
+                        :test 'equal)
+                       groups-array))
+               file-members)
       ;; Add unknown source group if needed
-      (when has-orphans
-        (let ((members '()))
-          (maphash (lambda (id node)
-                     (declare (ignore id))
-                     (unless (graph-node-source-file node)
-                       (push (graph-node-id node) members)))
-                   (call-graph-nodes graph))
-          (push (alexandria:plist-hash-table
-                 (list "id" *unknown-source-id*
-                       "name" "(unknown source)"
-                       "type" "file"
-                       "members" (coerce (nreverse members) 'vector)
-                       "attributes" (alexandria:plist-hash-table
-                                     (list "filepath" "")
-                                     :test 'equal))
-                 :test 'equal)
-                groups-array)))
+      (when orphan-members
+        (push (alexandria:plist-hash-table
+               (list "id" *unknown-source-id*
+                     "name" "(unknown source)"
+                     "type" "file"
+                     "members" (coerce (nreverse orphan-members) 'vector)
+                     "attributes" (alexandria:plist-hash-table
+                                   (list "filepath" "")
+                                   :test 'equal))
+               :test 'equal)
+              groups-array))
       ;; Convert nodes
       (maphash (lambda (id node)
                  (declare (ignore id))
@@ -839,14 +825,14 @@ Returns a JSON string in Living Canvas format."
       ;; Build metadata
       (let* ((root-pkg (call-graph-root-package graph))
              (inferred-scope-type (or scope-type
-                                      (cond ((= (hash-table-count files) 1) "file")
+                                      (cond ((= (hash-table-count file-members) 1) "file")
                                             (root-pkg "package")
                                             (t "system"))))
              (inferred-scope-name (or scope-name
                                       (cond (root-pkg (package-name root-pkg))
                                             (t ""))))
              (file-list (let ((lst '()))
-                          (maphash (lambda (k v) (declare (ignore v)) (push k lst)) files)
+                          (maphash (lambda (k v) (declare (ignore v)) (push k lst)) file-members)
                           (coerce (nreverse lst) 'vector)))
              (metadata (alexandria:plist-hash-table
                         (list "generator" "lem-living-canvas"
@@ -941,7 +927,9 @@ GRAPH: The call-graph structure to save.
 PATHNAME: The file path to save to.
 INCLUDE-LAYOUT: If T, include node positions.
 SCOPE-TYPE: Optional scope type for metadata.
-SCOPE-NAME: Optional scope name for metadata."
+SCOPE-NAME: Optional scope name for metadata.
+
+Returns the JSON string that was saved (for caching purposes)."
   (let ((json (graph-to-json graph
                              :include-layout include-layout
                              :scope-type scope-type
@@ -951,7 +939,7 @@ SCOPE-NAME: Optional scope name for metadata."
                             :if-exists :supersede
                             :if-does-not-exist :create)
       (write-string json stream))
-    pathname))
+    json))
 
 (defun load-graph (pathname)
   "Load call-graph from a JSON file.

@@ -1,14 +1,21 @@
 (defpackage :lem-living-canvas/buffer
   (:use :cl :lem)
   (:import-from :lem-living-canvas/call-graph
-                #:call-graph
-                #:graph-to-cytoscape-json
-                #:analyze-buffer)
+                #:graph-to-json
+                #:json-to-graph
+                #:analyze-buffer
+                #:save-graph)
+  (:import-from :lem-living-canvas/graph-format
+                #:convert-to-cytoscape)
   (:export #:canvas-buffer
            #:make-canvas-buffer
+           #:make-canvas-buffer-from-json
+           #:make-canvas-buffer-from-file
+           #:save-canvas-to-file
            #:canvas-buffer-graph
            #:canvas-buffer-source-buffer
            #:canvas-buffer-node-positions
+           #:canvas-buffer-json
            #:update-canvas-buffer))
 (in-package :lem-living-canvas/buffer)
 
@@ -16,14 +23,20 @@
 
 (defclass canvas-buffer (lem:html-buffer)
   ((graph :initarg :graph
+          :initform nil
           :accessor canvas-buffer-graph
           :documentation "The call graph data")
    (source-buffer :initarg :source-buffer
+                  :initform nil
                   :accessor canvas-buffer-source-buffer
                   :documentation "The source buffer being analyzed")
    (node-positions :initform (make-hash-table :test 'equal)
                    :accessor canvas-buffer-node-positions
-                   :documentation "Cached node positions for persistence"))
+                   :documentation "Cached node positions for persistence")
+   (json :initarg :json
+         :initform nil
+         :accessor canvas-buffer-json
+         :documentation "The Living Canvas JSON data (portable format)"))
   (:documentation "A buffer that displays a function call graph as an interactive canvas"))
 
 ;;; HTML Generation
@@ -710,24 +723,76 @@
 ;;; Buffer Creation
 
 (defun make-canvas-buffer (name source-buffer graph)
-  "Create a new canvas buffer displaying the given call graph"
-  (let* ((graph-json (graph-to-cytoscape-json graph))
-         (html (generate-canvas-html graph-json))
+  "Create a new canvas buffer displaying the given call graph.
+Uses the new data layer: graph -> Living Canvas JSON -> Cytoscape JSON -> HTML"
+  (let* ((living-canvas-json (graph-to-json graph))
+         (cytoscape-json (convert-to-cytoscape living-canvas-json))
+         (html (generate-canvas-html cytoscape-json))
          (buffer (lem:make-buffer name)))
     (change-class buffer 'canvas-buffer
                   :graph graph
                   :source-buffer source-buffer
+                  :json living-canvas-json
                   :html html)
     buffer))
+
+(defun make-canvas-buffer-from-json (name json-string &optional source-buffer)
+  "Create a new canvas buffer from Living Canvas JSON string.
+This allows displaying graphs loaded from files or external sources."
+  (let* ((cytoscape-json (convert-to-cytoscape json-string))
+         (html (generate-canvas-html cytoscape-json))
+         (graph (json-to-graph json-string))
+         (buffer (lem:make-buffer name)))
+    (change-class buffer 'canvas-buffer
+                  :graph graph
+                  :source-buffer source-buffer
+                  :json json-string
+                  :html html)
+    buffer))
+
+(defun make-canvas-buffer-from-file (name pathname &optional source-buffer)
+  "Create a new canvas buffer from a saved JSON file."
+  (unless (probe-file pathname)
+    (lem:editor-error "File not found: ~A" pathname))
+  (let ((json-string (with-open-file (stream pathname :direction :input)
+                       (let ((contents (make-string (file-length stream))))
+                         (read-sequence contents stream)
+                         contents))))
+    (make-canvas-buffer-from-json name json-string source-buffer)))
+
+(defun save-canvas-to-file (buffer pathname)
+  "Save the current canvas state (including positions) to a JSON file.
+Returns the pathname on success."
+  (let ((graph (canvas-buffer-graph buffer)))
+    (unless graph
+      (lem:editor-error "Buffer has no graph data"))
+    ;; Update positions from cached node-positions
+    (let ((positions (canvas-buffer-node-positions buffer)))
+      (when positions
+        (maphash (lambda (node-id pos)
+                   (let ((node (gethash node-id
+                                        (lem-living-canvas/call-graph:call-graph-nodes graph))))
+                     (when node
+                       (setf (lem-living-canvas/call-graph:graph-node-position node) pos))))
+                 positions)))
+    ;; Save with layout
+    (save-graph graph pathname :include-layout t)
+    ;; Update buffer's json cache
+    (setf (canvas-buffer-json buffer)
+          (graph-to-json graph :include-layout t))
+    pathname))
 
 ;;; Buffer Update
 
 (defun update-canvas-buffer (buffer)
-  "Update the canvas buffer with fresh graph data"
+  "Update the canvas buffer with fresh graph data.
+Uses the new data layer for conversion."
   (let* ((source-buffer (canvas-buffer-source-buffer buffer))
          (graph (analyze-buffer source-buffer))
-         (graph-json (graph-to-cytoscape-json graph)))
+         (living-canvas-json (graph-to-json graph))
+         (cytoscape-json (convert-to-cytoscape living-canvas-json)))
     (setf (canvas-buffer-graph buffer) graph)
+    (setf (canvas-buffer-json buffer) living-canvas-json)
     (setf (lem:html-buffer-html buffer)
-          (generate-canvas-html graph-json))
+          (generate-canvas-html cytoscape-json))
     buffer))

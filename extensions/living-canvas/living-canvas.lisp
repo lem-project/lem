@@ -3,19 +3,20 @@
   (:import-from :lem-living-canvas/call-graph
                 #:analyze-package
                 #:analyze-file
-                #:analyze-buffer
                 #:analyze-system
-                #:graph-to-cytoscape-json
                 #:get-source-location)
   (:import-from :lem-living-canvas/buffer
                 #:canvas-buffer
                 #:make-canvas-buffer
-                #:canvas-buffer-graph
-                #:canvas-buffer-source-buffer)
+                #:make-canvas-buffer-from-file
+                #:save-canvas-to-file
+                #:canvas-buffer-graph)
   (:export #:living-canvas
            #:living-canvas-current-file
            #:living-canvas-system
-           #:living-canvas-refresh))
+           #:living-canvas-refresh
+           #:living-canvas-save-graph
+           #:living-canvas-load-graph))
 (in-package :lem-living-canvas)
 
 ;;; Variables
@@ -303,6 +304,36 @@ including cross-package calls within the system."
           (lem-living-canvas/buffer:update-canvas-buffer buffer)
           (lem:message "Canvas refreshed"))
         (lem:message "Not in a canvas buffer"))))
+
+(lem:define-command living-canvas-save-graph (filename) ((:file "Save graph to: "))
+  "Save the current canvas graph to a JSON file.
+The saved file uses the Living Canvas JSON format, which is portable
+and can be loaded later or used with external tools."
+  (let ((buffer (lem:current-buffer)))
+    (unless (typep buffer 'lem-living-canvas/buffer:canvas-buffer)
+      (lem:editor-error "Not in a canvas buffer"))
+    (let ((pathname (pathname filename)))
+      ;; Ensure .json extension if not provided
+      (unless (equal (pathname-type pathname) "json")
+        (setf pathname (make-pathname :defaults pathname :type "json")))
+      (save-canvas-to-file buffer pathname)
+      (lem:message "Graph saved to ~A" pathname))))
+
+(lem:define-command living-canvas-load-graph (filename) ((:existing-file "Load graph from: "))
+  "Load a saved graph from a JSON file and display it.
+The file should be in Living Canvas JSON format."
+  (let ((pathname (pathname filename)))
+    (unless (probe-file pathname)
+      (lem:editor-error "File not found: ~A" pathname))
+    (let* ((name (format nil "*Canvas: ~A*" (file-namestring pathname)))
+           (canvas-buffer (make-canvas-buffer-from-file name pathname)))
+      ;; Populate source location cache if graph was loaded
+      (let ((graph (canvas-buffer-graph canvas-buffer)))
+        (when graph
+          (populate-source-location-cache graph)))
+      (lem:pop-to-buffer canvas-buffer)
+      (lem:change-buffer-mode canvas-buffer 'living-canvas-mode)
+      (lem:message "Graph loaded from ~A" pathname))))
 
 ;;; Minor Mode
 

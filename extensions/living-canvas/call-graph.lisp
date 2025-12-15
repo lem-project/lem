@@ -25,6 +25,12 @@
            #:analyze-file
            #:analyze-buffer
            #:analyze-system
+           ;; Living Canvas JSON API (portable format)
+           #:graph-to-json
+           #:json-to-graph
+           #:save-graph
+           #:load-graph
+           ;; Deprecated: use graph-to-json + convert-to-cytoscape instead
            #:graph-to-cytoscape-json
            #:get-source-location))
 (in-package :lem-living-canvas/call-graph)
@@ -241,8 +247,10 @@ Returns a formatted string like '(x y &optional z)' or nil."
           (format nil "(~{~(~A~)~^ ~})" arglist)))
     (error () nil)))
 
-(defun extract-called-symbols (form package)
-  "Extract all function symbols called within a form"
+(defun extract-called-symbols (form &optional package)
+  "Extract all function symbols called within a form.
+PACKAGE is reserved for future filtering but currently unused."
+  (declare (ignore package))
   (let ((calls '()))
     (labels ((walk (form)
                (cond
@@ -698,3 +706,261 @@ Shows all functions defined in the system and their call relationships."
         (list "elements" (coerce (nreverse elements) 'vector))
         :test 'equal)
        stream))))
+
+;;; Living Canvas JSON Format (Portable)
+;;;
+;;; This section provides functions to convert between call-graph structures
+;;; and the portable Living Canvas JSON format, which is independent of
+;;; any specific visualization library.
+
+(defun get-iso8601-timestamp ()
+  "Get current timestamp in ISO8601 format."
+  (multiple-value-bind (sec min hour day month year)
+      (decode-universal-time (get-universal-time) 0)
+    (format nil "~4,'0D-~2,'0D-~2,'0DT~2,'0D:~2,'0D:~2,'0DZ"
+            year month day hour min sec)))
+
+(defun graph-to-json (graph &key include-layout scope-type scope-name)
+  "Export call-graph to Living Canvas JSON format.
+This is the portable format independent of visualization libraries.
+
+INCLUDE-LAYOUT: If T, include position data in nodes.
+SCOPE-TYPE: The analysis scope type (\"file\", \"package\", \"system\").
+SCOPE-NAME: The name of the analyzed scope.
+
+Returns a JSON string in Living Canvas format."
+  (with-output-to-string (stream)
+    (let ((nodes-array '())
+          (edges-array '())
+          (groups-array '())
+          (files (make-hash-table :test 'equal))
+          (has-orphans nil))
+      ;; First pass: collect unique source files
+      (maphash (lambda (id node)
+                 (declare (ignore id))
+                 (let ((source-file (graph-node-source-file node)))
+                   (if source-file
+                       (setf (gethash source-file files) t)
+                       (setf has-orphans t))))
+               (call-graph-nodes graph))
+      ;; Create file groups
+      (maphash (lambda (filepath _)
+                 (declare (ignore _))
+                 (let ((group-id (make-file-node-id filepath))
+                       (members '()))
+                   ;; Collect members for this file
+                   (maphash (lambda (id node)
+                              (declare (ignore id))
+                              (when (equal (graph-node-source-file node) filepath)
+                                (push (graph-node-id node) members)))
+                            (call-graph-nodes graph))
+                   (push (alexandria:plist-hash-table
+                          (list "id" group-id
+                                "name" (short-filename filepath)
+                                "type" "file"
+                                "members" (coerce (nreverse members) 'vector)
+                                "attributes" (alexandria:plist-hash-table
+                                              (list "filepath" filepath)
+                                              :test 'equal))
+                          :test 'equal)
+                         groups-array)))
+               files)
+      ;; Add unknown source group if needed
+      (when has-orphans
+        (let ((members '()))
+          (maphash (lambda (id node)
+                     (declare (ignore id))
+                     (unless (graph-node-source-file node)
+                       (push (graph-node-id node) members)))
+                   (call-graph-nodes graph))
+          (push (alexandria:plist-hash-table
+                 (list "id" *unknown-source-id*
+                       "name" "(unknown source)"
+                       "type" "file"
+                       "members" (coerce (nreverse members) 'vector)
+                       "attributes" (alexandria:plist-hash-table
+                                     (list "filepath" "")
+                                     :test 'equal))
+                 :test 'equal)
+                groups-array)))
+      ;; Convert nodes
+      (maphash (lambda (id node)
+                 (declare (ignore id))
+                 (let* ((source-file (graph-node-source-file node))
+                        (source-loc (graph-node-source-location node))
+                        (line-number (when source-loc (cdr source-loc)))
+                        (position (graph-node-position node))
+                        (parent-id (if source-file
+                                       (make-file-node-id source-file)
+                                       *unknown-source-id*))
+                        (node-ht (alexandria:plist-hash-table
+                                  (list "id" (graph-node-id node)
+                                        "name" (graph-node-name node)
+                                        "package" (graph-node-package node)
+                                        "type" (string-downcase
+                                                (symbol-name (graph-node-type node)))
+                                        "parent" parent-id
+                                        "attributes"
+                                        (alexandria:plist-hash-table
+                                         (list "arglist" (or (graph-node-arglist node) "")
+                                               "docstring" (or (graph-node-docstring node) "")
+                                               "source"
+                                               (alexandria:plist-hash-table
+                                                (list "file" (or source-file "")
+                                                      "line" (or line-number 0))
+                                                :test 'equal))
+                                         :test 'equal))
+                                  :test 'equal)))
+                   ;; Add layout if requested and available
+                   (when (and include-layout position)
+                     (setf (gethash "layout" node-ht)
+                           (alexandria:plist-hash-table
+                            (list "position"
+                                  (alexandria:plist-hash-table
+                                   (list "x" (car position)
+                                         "y" (cdr position))
+                                   :test 'equal)
+                                  "pinned" nil)
+                            :test 'equal)))
+                   (push node-ht nodes-array)))
+               (call-graph-nodes graph))
+      ;; Convert edges
+      (loop :for edge :in (call-graph-edges graph)
+            :for i :from 0
+            :do (push (alexandria:plist-hash-table
+                       (list "id" (format nil "edge-~D" i)
+                             "source" (graph-edge-source edge)
+                             "target" (graph-edge-target edge)
+                             "type" (string-downcase
+                                     (symbol-name (graph-edge-call-type edge)))
+                             "attributes" (make-hash-table :test 'equal))
+                       :test 'equal)
+                      edges-array))
+      ;; Build metadata
+      (let* ((root-pkg (call-graph-root-package graph))
+             (inferred-scope-type (or scope-type
+                                      (cond ((= (hash-table-count files) 1) "file")
+                                            (root-pkg "package")
+                                            (t "system"))))
+             (inferred-scope-name (or scope-name
+                                      (cond (root-pkg (package-name root-pkg))
+                                            (t ""))))
+             (file-list (let ((lst '()))
+                          (maphash (lambda (k v) (declare (ignore v)) (push k lst)) files)
+                          (coerce (nreverse lst) 'vector)))
+             (metadata (alexandria:plist-hash-table
+                        (list "generator" "lem-living-canvas"
+                              "generated_at" (get-iso8601-timestamp)
+                              "scope" (alexandria:plist-hash-table
+                                       (list "type" inferred-scope-type
+                                             "name" inferred-scope-name
+                                             "files" file-list)
+                                       :test 'equal))
+                        :test 'equal)))
+        ;; Build final JSON structure
+        (yason:encode
+         (alexandria:plist-hash-table
+          (list "$schema" "living-canvas-graph-v1"
+                "version" "1.0"
+                "metadata" metadata
+                "nodes" (coerce (nreverse nodes-array) 'vector)
+                "edges" (coerce (nreverse edges-array) 'vector)
+                "groups" (coerce (nreverse groups-array) 'vector))
+          :test 'equal)
+         stream)))))
+
+(defun json-to-graph (json-string)
+  "Import call-graph from Living Canvas JSON.
+Returns a call-graph structure."
+  (let ((parsed (yason:parse json-string)))
+    (unless (and (hash-table-p parsed)
+                 (gethash "nodes" parsed)
+                 (gethash "edges" parsed))
+      (error "Invalid Living Canvas JSON structure"))
+    (let ((nodes-ht (make-hash-table :test 'equal))
+          (edges '())
+          (json-nodes (gethash "nodes" parsed))
+          (json-edges (gethash "edges" parsed)))
+      ;; Convert nodes (YASON returns lists, not vectors)
+      (loop :for json-node :in (coerce json-nodes 'list)
+            :do (let* ((id (gethash "id" json-node))
+                       (attributes (gethash "attributes" json-node))
+                       (source (when attributes (gethash "source" attributes)))
+                       (layout (gethash "layout" json-node))
+                       (position (when layout (gethash "position" layout)))
+                       (node (make-graph-node
+                              :id id
+                              :name (gethash "name" json-node)
+                              :package (or (gethash "package" json-node) "")
+                              :type (intern (string-upcase (gethash "type" json-node))
+                                            :keyword)
+                              :docstring (when attributes
+                                           (let ((doc (gethash "docstring" attributes)))
+                                             (when (and doc (not (equal doc ""))) doc)))
+                              :arglist (when attributes
+                                         (let ((args (gethash "arglist" attributes)))
+                                           (when (and args (not (equal args ""))) args)))
+                              :source-location (when (and source
+                                                          (gethash "file" source)
+                                                          (not (equal (gethash "file" source) "")))
+                                                 (cons (gethash "file" source)
+                                                       (or (gethash "line" source) 1)))
+                              :source-file (when (and source
+                                                      (gethash "file" source)
+                                                      (not (equal (gethash "file" source) "")))
+                                             (gethash "file" source))
+                              :position (when position
+                                          (cons (gethash "x" position)
+                                                (gethash "y" position))))))
+                  (setf (gethash id nodes-ht) node)))
+      ;; Convert edges (YASON returns lists, not vectors)
+      (loop :for json-edge :in (coerce json-edges 'list)
+            :do (let ((edge (make-graph-edge
+                             :source (gethash "source" json-edge)
+                             :target (gethash "target" json-edge)
+                             :call-type (let ((type-str (gethash "type" json-edge)))
+                                          (if type-str
+                                              (intern (string-upcase type-str) :keyword)
+                                              :direct)))))
+                  (push edge edges)))
+      ;; Determine root package from metadata if available
+      (let* ((metadata (gethash "metadata" parsed))
+             (scope (when metadata (gethash "scope" metadata)))
+             (scope-name (when scope (gethash "name" scope)))
+             (root-pkg (when (and scope-name (not (equal scope-name "")))
+                         (find-package scope-name))))
+        (make-call-graph
+         :nodes nodes-ht
+         :edges (nreverse edges)
+         :root-package root-pkg)))))
+
+(defun save-graph (graph pathname &key include-layout scope-type scope-name)
+  "Save call-graph to a JSON file.
+
+GRAPH: The call-graph structure to save.
+PATHNAME: The file path to save to.
+INCLUDE-LAYOUT: If T, include node positions.
+SCOPE-TYPE: Optional scope type for metadata.
+SCOPE-NAME: Optional scope name for metadata."
+  (let ((json (graph-to-json graph
+                             :include-layout include-layout
+                             :scope-type scope-type
+                             :scope-name scope-name)))
+    (with-open-file (stream pathname
+                            :direction :output
+                            :if-exists :supersede
+                            :if-does-not-exist :create)
+      (write-string json stream))
+    pathname))
+
+(defun load-graph (pathname)
+  "Load call-graph from a JSON file.
+
+PATHNAME: The file path to load from.
+Returns a call-graph structure."
+  (unless (probe-file pathname)
+    (error "File not found: ~A" pathname))
+  (with-open-file (stream pathname :direction :input)
+    (let ((json (make-string (file-length stream))))
+      (read-sequence json stream)
+      (json-to-graph json))))

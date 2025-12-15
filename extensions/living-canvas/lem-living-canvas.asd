@@ -7,5 +7,6 @@
                "yason")
   :serial t
   :components ((:file "call-graph")
+               (:file "graph-format")
                (:file "buffer")
                (:file "living-canvas")))

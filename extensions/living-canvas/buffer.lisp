@@ -83,6 +83,10 @@
     }
     #info-panel .type-badge.macro { background: #3d2d3d; color: #c586c0; }
     #info-panel .type-badge.generic-function { background: #2d3d3d; color: #4ec9b0; }
+    #info-panel .type-badge.command { background: #1e3a5f; color: #1e88e5; }
+    #info-panel .type-badge.major-mode { background: #1e3f1e; color: #66bb6a; }
+    #info-panel .type-badge.minor-mode { background: #2d3f2d; color: #a5d6a7; }
+    #info-panel .type-badge.mode { background: #1e3f2d; color: #4db6ac; }
     #info-panel .info-section {
       border-top: 1px solid #3c3c3c;
       padding-top: 8px;
@@ -331,6 +335,79 @@
             'height': 24,
             'padding': '8px',
             'shape': 'roundrectangle'
+          }
+        },
+        // Lem-specific node types
+        {
+          selector: 'node[type=\"command\"]',
+          style: {
+            'background-color': '#1e3a5f',
+            'border-color': '#1e88e5',
+            'border-width': 2,
+            'label': 'data(name)',
+            'color': '#d4d4d4',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'font-size': '10px',
+            'font-family': 'Consolas, Monaco, monospace',
+            'width': 'label',
+            'height': 24,
+            'padding': '8px',
+            'shape': 'roundrectangle'
+          }
+        },
+        {
+          selector: 'node[type=\"major-mode\"]',
+          style: {
+            'background-color': '#1e3f1e',
+            'border-color': '#66bb6a',
+            'border-width': 2,
+            'label': 'data(name)',
+            'color': '#d4d4d4',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'font-size': '10px',
+            'font-family': 'Consolas, Monaco, monospace',
+            'width': 'label',
+            'height': 24,
+            'padding': '8px',
+            'shape': 'diamond'
+          }
+        },
+        {
+          selector: 'node[type=\"minor-mode\"]',
+          style: {
+            'background-color': '#2d3f2d',
+            'border-color': '#a5d6a7',
+            'border-width': 2,
+            'label': 'data(name)',
+            'color': '#d4d4d4',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'font-size': '10px',
+            'font-family': 'Consolas, Monaco, monospace',
+            'width': 'label',
+            'height': 24,
+            'padding': '8px',
+            'shape': 'diamond'
+          }
+        },
+        {
+          selector: 'node[type=\"mode\"]',
+          style: {
+            'background-color': '#1e3f2d',
+            'border-color': '#4db6ac',
+            'border-width': 2,
+            'label': 'data(name)',
+            'color': '#d4d4d4',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'font-size': '10px',
+            'font-family': 'Consolas, Monaco, monospace',
+            'width': 'label',
+            'height': 24,
+            'padding': '8px',
+            'shape': 'diamond'
           }
         },
         {

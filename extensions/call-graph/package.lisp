@@ -21,6 +21,7 @@
    #:graph-edge-call-type
 
    #:call-graph
+   #:call-graph-p
    #:make-call-graph
    #:call-graph-nodes
    #:call-graph-edges

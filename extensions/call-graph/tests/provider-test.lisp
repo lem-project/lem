@@ -17,9 +17,11 @@
   :test)
 
 (defmethod provider-supports-p ((provider test-provider) source)
-  (member (type-of source) (test-provider-supported-types provider)))
+  (some (lambda (type) (typep source type))
+        (test-provider-supported-types provider)))
 
-(defmethod provider-analyze ((provider test-provider) source &key)
+(defmethod provider-analyze ((provider test-provider) source &key &allow-other-keys)
+  (declare (ignore source))
   (let ((graph (make-call-graph)))
     (add-node graph (make-graph-node
                      :id "TEST:ANALYZED"

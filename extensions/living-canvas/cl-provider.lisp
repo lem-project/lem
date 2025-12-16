@@ -336,7 +336,7 @@ TYPE can be :buffer, :file, :package, or :system."
   "Analyze a package and build its call graph."
   (let ((package (find-package package-designator)))
     (unless package
-      (error "Package ~A not found" package-designator))
+      (lem:editor-error "Package ~A not found" package-designator))
     (let ((graph (make-call-graph :root-package package))
           (symbols '()))
       ;; Collect all function symbols

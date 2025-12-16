@@ -124,21 +124,23 @@ If not provided, returns the data structure for the caller to encode."
     (maphash (lambda (filepath _)
                (declare (ignore _))
                (push (alist-to-hash-table
-                      `(("group" . "nodes")
-                        ("data" . (("id" . ,(make-file-node-id filepath))
-                                   ("name" . ,(short-filename filepath))
-                                   ("type" . "file")
-                                   ("filepath" . ,filepath)))))
+                      (list (cons "group" "nodes")
+                            (cons "data"
+                                  (list (cons "id" (make-file-node-id filepath))
+                                        (cons "name" (short-filename filepath))
+                                        (cons "type" "file")
+                                        (cons "filepath" filepath)))))
                      elements))
              files)
     ;; Add unknown source container if there are orphan nodes
     (when has-orphans
       (push (alist-to-hash-table
-             `(("group" . "nodes")
-               ("data" . (("id" . ,*unknown-source-id*)
-                          ("name" . "(unknown source)")
-                          ("type" . "file")
-                          ("filepath" . "")))))
+             (list (cons "group" "nodes")
+                   (cons "data"
+                         (list (cons "id" *unknown-source-id*)
+                               (cons "name" "(unknown source)")
+                               (cons "type" "file")
+                               (cons "filepath" "")))))
             elements))
     ;; Add function nodes with parent reference
     (maphash (lambda (id node)

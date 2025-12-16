@@ -217,18 +217,6 @@ rather than runtime properties, allowing analysis of unloaded code."
     ((fboundp symbol) :function)
     (t nil)))
 
-(defun get-function-arglist (symbol)
-  "Get the argument list of a function as a string.
-Returns nil if the arglist cannot be determined."
-  (handler-case
-      (let ((arglist (sb-introspect:function-lambda-list
-                      (if (macro-function symbol)
-                          (macro-function symbol)
-                          (fdefinition symbol)))))
-        (when arglist
-          (format nil "~{~A~^ ~}" arglist)))
-    (error () nil)))
-
 (defun format-arglist-for-display (symbol)
   "Format the argument list for display in the UI.
 Returns a formatted string like '(x y &optional z)' or nil."
@@ -256,33 +244,6 @@ Returns a formatted string like '(x y &optional z)' or nil."
                         (when pkg (setf *package* pkg))))
                     (push form forms))
           (nreverse forms)))
-    (error () nil)))
-
-(defun find-definition-in-forms (symbol forms)
-  "Find the defun/defmacro form that defines symbol"
-  (loop :for form :in forms
-        :when (and (consp form)
-                   (member (car form) '(defun defmacro defgeneric defmethod))
-                   (eq (cadr form) symbol))
-          :return form))
-
-(defun get-function-body (symbol)
-  "Get the source form of a function if available"
-  (handler-case
-      ;; First try function-lambda-expression for interpreted functions
-      (let ((lambda-expr (function-lambda-expression (fdefinition symbol))))
-        (if lambda-expr
-            lambda-expr
-            ;; Fall back to reading source file
-            (let ((source (sb-introspect:find-definition-source
-                           (fdefinition symbol))))
-              (when (and source
-                         (sb-introspect:definition-source-pathname source))
-                (let ((pathname (sb-introspect:definition-source-pathname source)))
-                  (when (probe-file pathname)
-                    (let* ((forms (read-all-forms-from-file pathname))
-                           (defn (find-definition-in-forms symbol forms)))
-                      defn)))))))
     (error () nil)))
 
 (defun function-to-symbol (fn)

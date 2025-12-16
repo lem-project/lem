@@ -149,30 +149,36 @@ If not provided, returns the data structure for the caller to encode."
                       (source-loc (graph-node-source-location node))
                       (line-number (when source-loc (cdr source-loc)))
                       (parent-id (if source-file
-                                     (make-file-node-id source-file)
-                                     *unknown-source-id*)))
+                                      (make-file-node-id source-file)
+                                      *unknown-source-id*)))
                  (push (alist-to-hash-table
-                        `(("group" . "nodes")
-                          ("data" . (("id" . ,(graph-node-id node))
-                                     ("name" . ,(graph-node-name node))
-                                     ("type" . ,(string-downcase
+                        (list (cons "group" "nodes")
+                              (cons "data"
+                                    (list (cons "id" (graph-node-id node))
+                                          (cons "name" (graph-node-name node))
+                                          (cons "type"
+                                                (string-downcase
                                                  (symbol-name (graph-node-type node))))
-                                     ("package" . ,(graph-node-package node))
-                                     ("docstring" . ,(or (graph-node-docstring node) ""))
-                                     ("arglist" . ,(or (graph-node-arglist node) ""))
-                                     ("sourceFile" . ,(or (short-filename source-file) ""))
-                                     ("lineNumber" . ,(or line-number 0))
-                                     ("parent" . ,parent-id)))))
+                                          (cons "package" (graph-node-package node))
+                                          (cons "docstring"
+                                                (or (graph-node-docstring node) ""))
+                                          (cons "arglist"
+                                                (or (graph-node-arglist node) ""))
+                                          (cons "sourceFile"
+                                                (or (short-filename source-file) ""))
+                                          (cons "lineNumber" (or line-number 0))
+                                          (cons "parent" parent-id)))))
                        elements)))
              (call-graph-nodes graph))
     ;; Add edges
     (loop :for edge :in (call-graph-edges graph)
           :for i :from 0
           :do (push (alist-to-hash-table
-                     `(("group" . "edges")
-                       ("data" . (("id" . ,(format nil "edge-~D" i))
-                                  ("source" . ,(graph-edge-source edge))
-                                  ("target" . ,(graph-edge-target edge))))))
+                     (list (cons "group" "edges")
+                           (cons "data"
+                                 (list (cons "id" (format nil "edge-~D" i))
+                                       (cons "source" (graph-edge-source edge))
+                                       (cons "target" (graph-edge-target edge))))))
                     elements))
     ;; Return data structure
     (let ((result (alexandria:plist-hash-table

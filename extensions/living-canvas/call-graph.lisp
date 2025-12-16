@@ -246,6 +246,69 @@ Returns a formatted string like '(x y &optional z)' or nil."
           (nreverse forms)))
     (error () nil)))
 
+;;; Source-based Call Detection
+;;;
+;;; sb-introspect functions rely on xref data from compilation, which may be
+;;; incomplete. This section provides source-based analysis as a fallback.
+
+(defun extract-called-symbols-from-form (form target-symbols)
+  "Extract symbols from FORM that are in TARGET-SYMBOLS set.
+Walks the form tree to find function calls and symbol references."
+  (let ((calls '()))
+    (labels ((walk (f)
+               (cond
+                 ;; Symbol - check if it's a target
+                 ((and (symbolp f)
+                       (gethash f target-symbols))
+                  (pushnew f calls))
+                 ;; (function sym) or #'sym
+                 ((and (consp f)
+                       (eq (car f) 'function)
+                       (symbolp (cadr f))
+                       (gethash (cadr f) target-symbols))
+                  (pushnew (cadr f) calls))
+                 ;; List - walk recursively
+                 ((consp f)
+                  (walk (car f))
+                  (walk (cdr f))))))
+      (handler-case
+          (walk form)
+        (error () nil)))
+    calls))
+
+(defun get-definition-body (form)
+  "Extract the body from a definition form.
+Handles defun, defmacro, define-command, etc."
+  (when (and (consp form) (consp (cdr form)))
+    (let ((head (car form)))
+      (cond
+        ;; (defun name args &body body) - body starts at 4th element
+        ((member head '(defun defmacro) :test #'string-equal)
+         (cdddr form))
+        ;; (define-command name args &body body) or (define-command (name opts) args &body body)
+        ((member head '(define-command lem:define-command) :test #'string-equal)
+         (cdddr form))
+        ;; Generic fallback - skip first 3 elements
+        (t (cdddr form))))))
+
+(defun extract-source-calls (pathname target-symbols)
+  "Extract call relationships from source file PATHNAME.
+Returns a list of (caller-symbol . callee-symbol) pairs."
+  (let ((forms (read-all-forms-from-file pathname))
+        (calls '()))
+    (dolist (form forms)
+      (when (and (consp form)
+                 (def-form-p (car form))
+                 (not (excluded-definition-form-p (car form))))
+        (let ((name (extract-definition-name form))
+              (body (get-definition-body form)))
+          (when (and name (symbolp name) (gethash name target-symbols))
+            (let ((callees (extract-called-symbols-from-form body target-symbols)))
+              (dolist (callee callees)
+                (unless (eq callee name)
+                  (push (cons name callee) calls))))))))
+    calls))
+
 (defun function-to-symbol (fn)
   "Try to get the symbol name for a function object"
   (handler-case
@@ -395,7 +458,8 @@ Returns a list of (symbol . form-head) pairs for each definition found."
         (nodes (make-hash-table :test 'equal))
         (edges '())
         (file-path (namestring pathname))
-        (symbols '()))  ; Store just symbols for edge analysis
+        (symbols '())
+        (symbol-set (make-hash-table :test 'eq)))
     (when definitions
       (let ((package (symbol-package (car (first definitions)))))
         ;; Create nodes for all definitions in the file
@@ -406,6 +470,7 @@ Returns a list of (symbol . form-head) pairs for each definition found."
                  (node-id (make-node-id sym))
                  (source-loc (get-source-location sym)))
             (push sym symbols)
+            (setf (gethash sym symbol-set) t)
             (setf (gethash node-id nodes)
                   (make-graph-node
                    :id node-id
@@ -416,7 +481,18 @@ Returns a list of (symbol . form-head) pairs for each definition found."
                    :arglist (format-arglist-for-display sym)
                    :source-location source-loc
                    :source-file (or (car source-loc) file-path)))))
-        ;; Create edges (only between functions in this file)
+        ;; Create edges using sb-introspect (may be incomplete)
+        (dolist (sym symbols)
+          (let ((callers (get-callers sym package))
+                (target-id (make-node-id sym)))
+            (dolist (caller callers)
+              (let ((source-id (make-node-id caller)))
+                (when (gethash source-id nodes)
+                  (push (make-graph-edge
+                         :source source-id
+                         :target target-id
+                         :call-type :direct)
+                        edges))))))
         (dolist (sym symbols)
           (let ((callees (get-callees sym package))
                 (source-id (make-node-id sym)))
@@ -428,6 +504,18 @@ Returns a list of (symbol . form-head) pairs for each definition found."
                          :target target-id
                          :call-type :direct)
                         edges))))))
+        ;; Source-based call detection (more reliable)
+        (let ((source-calls (extract-source-calls pathname symbol-set)))
+          (dolist (call source-calls)
+            (let ((source-id (make-node-id (car call)))
+                  (target-id (make-node-id (cdr call))))
+              (when (and (gethash source-id nodes)
+                         (gethash target-id nodes))
+                (push (make-graph-edge
+                       :source source-id
+                       :target target-id
+                       :call-type :direct)
+                      edges)))))
         (make-call-graph
          :nodes nodes
          :edges (remove-duplicates edges
@@ -480,7 +568,8 @@ Shows all functions defined in the system and their call relationships."
   (let ((files (get-system-source-files system-designator))
         (nodes (make-hash-table :test 'equal))
         (edges '())
-        (all-symbols '()))
+        (all-symbols '())
+        (symbol-set (make-hash-table :test 'eq)))
     (unless files
       (error "No source files found in system ~A" system-designator))
     ;; First pass: collect all function definitions from all files
@@ -494,6 +583,7 @@ Shows all functions defined in the system and their call relationships."
                  (source-loc (get-source-location sym)))
             (unless (gethash node-id nodes)
               (push sym all-symbols)
+              (setf (gethash sym symbol-set) t)
               (setf (gethash node-id nodes)
                     (make-graph-node
                      :id node-id
@@ -504,7 +594,7 @@ Shows all functions defined in the system and their call relationships."
                      :arglist (format-arglist-for-display sym)
                      :source-location source-loc
                      :source-file (or (car source-loc) file))))))))
-    ;; Second pass: create edges (cross-package calls allowed)
+    ;; Second pass: create edges using sb-introspect
     (dolist (sym all-symbols)
       (let ((source-id (make-node-id sym)))
         ;; Use find-function-callees for call relationships
@@ -524,6 +614,19 @@ Shows all functions defined in the system and their call relationships."
                                    :call-type :direct)
                                   edges)))))))))
           (error () nil))))
+    ;; Third pass: source-based call detection (more reliable)
+    (dolist (file files)
+      (let ((source-calls (extract-source-calls file symbol-set)))
+        (dolist (call source-calls)
+          (let ((source-id (make-node-id (car call)))
+                (target-id (make-node-id (cdr call))))
+            (when (and (gethash source-id nodes)
+                       (gethash target-id nodes))
+              (push (make-graph-edge
+                     :source source-id
+                     :target target-id
+                     :call-type :direct)
+                    edges))))))
     (make-call-graph
      :nodes nodes
      :edges (remove-duplicates edges

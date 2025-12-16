@@ -495,7 +495,7 @@ TYPE can be :buffer, :file, :package, or :system."
         (all-symbols '())
         (symbol-set (make-hash-table :test 'eq)))
     (unless files
-      (error "No source files found in system ~A" system-designator))
+      (lem:editor-error "No source files found in system ~A" system-designator))
     ;; Collect all definitions
     (dolist (file files)
       (let ((definitions (extract-definitions-from-file file)))

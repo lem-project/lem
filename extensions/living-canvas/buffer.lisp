@@ -611,7 +611,7 @@
         cy.elements().removeClass('faded highlighted');
         return;
       }
-      cy.elements().addClass('faded');
+      cy.elements().removeClass('highlighted').addClass('faded');
       cy.nodes().forEach(function(node) {
         if (node.data('name').toLowerCase().includes(query)) {
           node.removeClass('faded').addClass('highlighted');

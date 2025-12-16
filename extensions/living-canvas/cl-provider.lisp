@@ -470,7 +470,7 @@ TYPE can be :buffer, :file, :package, or :system."
   "Get all Lisp source files from an ASDF system."
   (let ((system (asdf:find-system system-designator nil)))
     (unless system
-      (error "System ~A not found" system-designator))
+      (lem:editor-error "System ~A not found" system-designator))
     (let ((files '()))
       (labels ((collect-files (component)
                  (typecase component

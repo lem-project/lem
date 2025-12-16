@@ -5,6 +5,9 @@
 ;;; These structures represent a language-agnostic call graph.
 ;;; They can be populated by any provider (Common Lisp, LSP, etc.)
 
+(defparameter *unknown-source-id* "file:(unknown source)"
+  "Sentinel ID for grouping functions whose source file cannot be determined.")
+
 (defstruct graph-node
   "Represents a function/symbol node in the call graph.
 

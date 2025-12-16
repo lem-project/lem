@@ -84,9 +84,6 @@ Slots:
 
 ;;; JSON Serialization for Cytoscape.js
 
-(defparameter *unknown-source-id* "file:(unknown source)"
-  "Sentinel ID for grouping functions whose source file cannot be determined.")
-
 (defun alist-to-hash-table (alist)
   "Convert an alist to a hash table for JSON encoding."
   (let ((ht (make-hash-table :test 'equal)))

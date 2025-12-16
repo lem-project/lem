@@ -3,17 +3,17 @@
 {
   async-process = {
     pname = "async-process";
-    version = "725da0ab1c21a29cc02e283236a2c2e88947fa65";
+    version = "3ea46fcd238fdda101b644221ecf5e311c171a21";
     src = fetchgit {
       url = "https://github.com/lem-project/async-process";
-      rev = "725da0ab1c21a29cc02e283236a2c2e88947fa65";
+      rev = "3ea46fcd238fdda101b644221ecf5e311c171a21";
       fetchSubmodules = false;
       deepClone = false;
       leaveDotGit = false;
       sparseCheckout = [ ];
-      sha256 = "sha256-CRK4BDooxTts9b4Hvl15zqvHYPDA6yovHEE0Dr0nod4=";
+      sha256 = "sha256-2qBjZ7ruhz6zmhkQBOkIQ/4eKH1Nvzfr5Gsa+0P8OFA=";
     };
-    date = "2025-12-10";
+    date = "2025-12-16";
   };
   jsonrpc = {
     pname = "jsonrpc";

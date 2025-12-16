@@ -108,10 +108,15 @@
               ninja
               pkg-config
             ];
-            buildInputs = with pkgs; [
-              webkitgtk_4_1
-              gtk3
-            ];
+            buildInputs =
+              if pkgs.stdenv.isLinux then
+                with pkgs;
+                [
+                  webkitgtk_4_1
+                  gtk3
+                ]
+              else
+                [ ];
             # Use FETCHCONTENT_SOURCE_DIR to skip network fetch and use pre-fetched source
             configurePhase = ''
               runHook preConfigure
@@ -125,12 +130,16 @@
               cmake --build build
               runHook postBuild
             '';
-            installPhase = ''
-              runHook preInstall
-              mkdir -p $out/lib
-              cp build/lib/libexample.so $out/lib/libwebview.so
-              runHook postInstall
-            '';
+            installPhase =
+              let
+                suffix = if pkgs.stdenv.isLinux then "so" else "dylib";
+              in
+              ''
+                runHook preInstall
+                mkdir -p $out/lib
+                cp build/lib/libexample.${suffix} $out/lib/libwebview.${suffix}
+                runHook postInstall
+              '';
           };
           # Common Lisp webview bindings
           cl-webview = lisp.buildASDFSystem {
@@ -264,9 +273,18 @@
               "lem-webview"
             ];
             # Patch default font in the bundled frontend (dist/ is what lem-server actually uses)
-            postPatch = (o.postPatch or "") + ''
-              sed -i 's/fontName:"Monospace"/fontName:"DejaVu Sans Mono"/' frontends/server/frontend/dist/assets/index.js
-            '';
+            postPatch =
+              (o.postPatch or "")
+              + (
+                if pkgs.stdenv.isLinux then
+                  ''
+                    sed -i 's/fontName:"Monospace"/fontName:"DejaVu Sans Mono"/' frontends/server/frontend/dist/assets/index.js
+                  ''
+                else
+                  ''
+                    sed -i 's/fontName:"Monospace"/fontName:"Menlo"/' frontends/server/frontend/dist/assets/index.js
+                  ''
+              );
             # Override buildScript to use lem-webview:main as entry point
             buildScript = pkgs.writeText "build-lem-webview.lisp" ''
               (defpackage :nix-cl-user (:use :cl))
@@ -294,23 +312,37 @@
                 float-features
                 command-line-arguments
               ]);
-            nativeLibs = with pkgs; [
-              webkitgtk_4_1
-              gtk3
-              stdenv.cc.cc.lib  # For libstdc++
-              c-webview
-            ];
+            nativeLibs =
+              if pkgs.stdenv.isLinux then
+                with pkgs;
+                [
+                  webkitgtk_4_1
+                  gtk3
+                  stdenv.cc.cc.lib # For libstdc++
+                  c-webview
+                ]
+              else
+                with pkgs;
+                [
+                  stdenv.cc.cc.lib # For libstdc++
+                  c-webview
+                ];
             # Include monospace font and configure fontconfig
-            postInstall = let
-              fontsConf = pkgs.makeFontsConf {
-                fontDirectories = [ pkgs.dejavu_fonts ];
-              };
-            in ''
-              wrapProgram $out/bin/lem \
-                --set FONTCONFIG_FILE "${fontsConf}" \
-                --prefix XDG_DATA_DIRS : "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}" \
-                --prefix XDG_DATA_DIRS : "${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}"
-            '';
+            postInstall =
+              let
+                fontsConf = pkgs.makeFontsConf {
+                  fontDirectories = [ pkgs.dejavu_fonts ];
+                };
+              in
+              if pkgs.stdenv.isLinux then
+                ''
+                  wrapProgram $out/bin/lem \
+                    --set FONTCONFIG_FILE "${fontsConf}" \
+                    --prefix XDG_DATA_DIRS : "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}" \
+                    --prefix XDG_DATA_DIRS : "${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}"
+                ''
+              else
+                '''';
           });
         in
         {

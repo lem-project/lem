@@ -19,14 +19,20 @@ https://github.com/lem-project/lem/releases/tag/nightly-latest
 
 ### Nix
 
-    $ nix profile add github:lem-project/lem#lem
+    $ nix profile add github:lem-project/lem#
+    $ nix profile add github:lem-project/lem#lem-ncurses
+    $ nix profile add github:lem-project/lem#lem-webview
+    $ nix profile add github:lem-project/lem#lem-sdl2
 
 Or run Lem temporarily (no install):
 
-    $ nix run github:lem-project/lem#lem
+    $ nix run github:lem-project/lem#
+    $ nix run github:lem-project/lem#lem-ncurses
+    $ nix run github:lem-project/lem#lem-webview
+    $ nix run github:lem-project/lem#lem-sdl2
 
 Use the overlay when you already have a flake-based NixOS/home-manager config and
-want `pkgs.lem` (and `apps.lem`) available from your `nixpkgs` set.
+want `pkgs.lem-ncurses` (and `apps.lem-ncurses`) available from your `nixpkgs` set.
 You can also consume `lem` as an overlay in `flake.nix`:
 
     {
@@ -40,7 +46,7 @@ You can also consume `lem` as an overlay in `flake.nix`:
           system = "x86_64-linux";
           modules = [
             { nixpkgs.overlays = [ lem.overlays.default ]; }
-            { environment.systemPackages = [ pkgs.lem ]; }
+            { environment.systemPackages = [ pkgs.lem-ncurses ]; }
           ];
         };
       };

@@ -15,13 +15,38 @@
         "x86_64-darwin"
         "x86_64-linux"
       ];
+
       imports = [
         inputs.flake-parts.flakeModules.easyOverlay
       ];
+
       perSystem =
         { pkgs, ... }:
         let
+          # --- Setup & Helpers ---
           lisp = pkgs.sbcl;
+
+          # Helper to generate the Lisp build script used by all variants
+          mkBuildScript =
+            {
+              entryPoint ? "lem:main",
+            }:
+            pkgs.writeText "build-lem.lisp" ''
+              (defpackage :nix-cl-user (:use :cl))
+              (in-package :nix-cl-user)
+
+              ;; Load ASDF
+              (load "${lem-base.asdfFasl}/asdf.${lem-base.faslExt}")
+              (asdf:initialize-output-translations '(:output-translations :disable-cache :inherit-configuration))
+
+              ;; Load Systems
+              (mapcar #'asdf:load-system (uiop:split-string (uiop:getenv "systems")))
+
+              ;; Dump Image
+              (setf uiop:*image-entry-point* #'${entryPoint})
+              (uiop:dump-image "lem" :executable t :compression t)
+            '';
+
           sources = import ./_sources/generated.nix {
             inherit (pkgs)
               fetchgit
@@ -30,10 +55,14 @@
               dockerTools
               ;
           };
+
+          # --- Core Lisp Dependencies ---
+
           micros = lisp.buildASDFSystem {
             inherit (sources.micros) pname src version;
             systems = [ "micros" ];
           };
+
           jsonrpc = lisp.buildASDFSystem {
             inherit (sources.jsonrpc) pname src version;
             systems = [
@@ -56,7 +85,6 @@
               quri
               fast-io
               trivial-utf-8
-              # For websocket transport
               websocket-driver
               clack
               clack-handler-hunchentoot
@@ -64,30 +92,29 @@
               hunchentoot
             ];
           };
-          c-async-process = pkgs.stdenv.mkDerivation {
-            inherit (sources.async-process) pname src version;
-            nativeBuildInputs = with pkgs; [
-              libtool
-              libffi.dev
-              automake
-              autoconf
-              pkg-config
-            ];
-            buildPhase = "make PREFIX=$out";
-          };
-          async-process = lisp.buildASDFSystem {
-            inherit (sources.async-process) pname src version;
-            systems = [ "async-process" ];
-            lispLibs = with lisp.pkgs; [
-              cffi
-            ];
-            nativeLibs = [
-              c-async-process
-            ];
-            nativeBuildInputs = with pkgs; [
-              pkg-config
-            ];
-          };
+
+          async-process =
+            let
+              c-lib = pkgs.stdenv.mkDerivation {
+                inherit (sources.async-process) pname src version;
+                nativeBuildInputs = with pkgs; [
+                  libtool
+                  libffi.dev
+                  automake
+                  autoconf
+                  pkg-config
+                ];
+                buildPhase = "make PREFIX=$out";
+              };
+            in
+            lisp.buildASDFSystem {
+              inherit (sources.async-process) pname src version;
+              systems = [ "async-process" ];
+              lispLibs = [ lisp.pkgs.cffi ];
+              nativeLibs = [ c-lib ];
+              nativeBuildInputs = [ pkgs.pkg-config ];
+            };
+
           lem-mailbox = lisp.buildASDFSystem {
             inherit (sources.lem-mailbox) pname src version;
             systems = [ "lem-mailbox" ];
@@ -98,7 +125,9 @@
               queues_dot_simple-cqueue
             ];
           };
-          # Build the webview C library from lem-project/webview
+
+          # --- Webview Specific Dependencies ---
+
           c-webview = pkgs.stdenv.mkDerivation {
             pname = "c-webview";
             version = "unstable";
@@ -110,14 +139,15 @@
             ];
             buildInputs =
               if pkgs.stdenv.isLinux then
-                with pkgs;
                 [
-                  webkitgtk_4_1
-                  gtk3
+                  pkgs.webkitgtk_4_1
+                  pkgs.webkitgtk_6_0
+                  pkgs.gtk3
                 ]
               else
                 [ ];
-            # Use FETCHCONTENT_SOURCE_DIR to skip network fetch and use pre-fetched source
+
+            # Use FETCHCONTENT to use pre-fetched source instead of network
             configurePhase = ''
               runHook preConfigure
               cmake -G Ninja -B build -S c \
@@ -125,23 +155,17 @@
                 -DFETCHCONTENT_SOURCE_DIR_WEBVIEW=${sources.webview-upstream.src}
               runHook postConfigure
             '';
-            buildPhase = ''
-              runHook preBuild
-              cmake --build build
-              runHook postBuild
-            '';
+            buildPhase = "cmake --build build";
             installPhase =
               let
                 suffix = if pkgs.stdenv.isLinux then "so" else "dylib";
               in
               ''
-                runHook preInstall
                 mkdir -p $out/lib
                 cp build/lib/libexample.${suffix} $out/lib/libwebview.${suffix}
-                runHook postInstall
               '';
           };
-          # Common Lisp webview bindings
+
           cl-webview = lisp.buildASDFSystem {
             inherit (sources.webview) pname src version;
             systems = [ "webview" ];
@@ -149,223 +173,197 @@
               cffi
               float-features
             ];
-            nativeLibs = [
-              c-webview
-            ];
-            # Minimal patch: remove :search-path and fix library name
+            nativeLibs = [ c-webview ];
             postPatch = ''
-              # Remove :search-path directive (change "(libwebview" to "libwebview")
+              # Fix library loading path and name in the Lisp binding
               sed -i 's/(define-foreign-library (libwebview/(define-foreign-library libwebview/' webview.lisp
-              # Delete the :search-path block (lines containing :search-path through arm64"))))
               sed -i '/:search-path/,/arm64"))))/d' webview.lisp
-              # Fix library name (remove version suffix)
               sed -i 's/"libwebview\.so\.0\.12\.0"/"libwebview.so"/' webview.lisp
             '';
           };
-          lem-fake-interface = lisp.buildASDFSystem {
-            pname = "lem-fake-interface";
+
+          # --- Lem Core Definition ---
+
+          # List of libraries common to all Lem frontends
+          commonLispLibs = with lisp.pkgs; [
+            micros
+            async-process
+            jsonrpc
+            lem-mailbox
+            deploy
+            iterate
+            closer-mop
+            trivia
+            alexandria
+            trivial-gray-streams
+            trivial-types
+            cl-ppcre
+            inquisitor
+            babel
+            bordeaux-threads
+            yason
+            log4cl
+            split-sequence
+            str
+            dexador
+            cl-mustache
+            esrap
+            parse-number
+            cl-package-locks
+            trivial-utf-8
+            swank
+            _3bmd
+            _3bmd-ext-code-blocks
+            lisp-preprocessor
+            trivial-ws
+            trivial-open-browser
+            frugal-uuid
+            hunchentoot
+          ];
+
+          # The base derivation that other variants inherit from
+          lem-base = lisp.buildASDFSystem {
+            pname = "lem-base";
             version = "unstable";
-            systems = [ "lem-fake-interface" ];
             src = ./.;
-            nativeBuildInputs = with pkgs; [
-              makeBinaryWrapper
-            ];
+            nativeBuildInputs = [ pkgs.makeBinaryWrapper ];
+            lispLibs = commonLispLibs;
+
             postPatch = ''
               sed -i '1i(pushnew :nix-build *features*)' lem.asd
             '';
-            buildScript = pkgs.writeText "build-lem.lisp" ''
-              (defpackage :nix-cl-user (:use :cl))
-              (in-package :nix-cl-user)
 
-              ;; Load ASDF
-              (load "${lem-fake-interface.asdfFasl}/asdf.${lem-fake-interface.faslExt}")
+            buildScript = mkBuildScript { entryPoint = "lem:main"; };
 
-              ;; Avoid writing to the global fasl cache
-              (asdf:initialize-output-translations '(:output-translations :disable-cache :inherit-configuration))
-
-              ;; Initial load
-              (mapcar #'asdf:load-system (uiop:split-string (uiop:getenv "systems")))
-
-              ;; Create executable
-              (setf uiop:*image-entry-point* #'lem:main)
-              (uiop:dump-image "lem" :executable t :compression t)
-            '';
             installPhase = ''
               runHook preInstall
-
               mkdir -p $out/bin
               install lem $out/bin
               wrapProgram $out/bin/lem \
                 --prefix LD_LIBRARY_PATH : "$LD_LIBRARY_PATH" \
                 --prefix DYLD_LIBRARY_PATH : "$DYLD_LIBRARY_PATH"
-
               runHook postInstall
             '';
-            lispLibs = with lisp.pkgs; [
-              micros
-              async-process
-              jsonrpc
-              lem-mailbox
-              deploy
-              iterate
-              closer-mop
-              trivia
-              alexandria
-              trivial-gray-streams
-              trivial-types
-              cl-ppcre
-              inquisitor
-              babel
-              bordeaux-threads
-              yason
-              log4cl
-              split-sequence
-              str
-              dexador
-              cl-mustache
-              esrap
-              parse-number
-              cl-package-locks
-              trivial-utf-8
-              swank
-              _3bmd
-              _3bmd-ext-code-blocks
-              lisp-preprocessor
-              trivial-ws
-              trivial-open-browser
-              frugal-uuid
-              # lem-mcp-server
-              hunchentoot
-            ];
           };
-          lem-cli = lem-fake-interface.overrideLispAttrs (o: {
-            pname = "lem";
+
+          # 1. Ncurses Variant
+          lem-ncurses = lem-base.overrideLispAttrs (o: {
+            pname = "lem-ncurses";
             meta.mainProgram = "lem";
-            systems = [
-              "lem-ncurses"
-              "lem-sdl2"
-            ];
+            systems = [ "lem-ncurses" ];
             lispLibs =
               o.lispLibs
               ++ (with lisp.pkgs; [
-                # lem-curses
                 cl-charms
                 cl-setlocale
-                # sdl2
+              ]);
+            nativeLibs = [ pkgs.ncurses ];
+          });
+
+          # 2. SDL2 Variant
+          lem-sdl2 = lem-base.overrideLispAttrs (o: {
+            pname = "lem-sdl2";
+            meta.mainProgram = "lem";
+            systems = [ "lem-sdl2" ];
+            lispLibs =
+              o.lispLibs
+              ++ (with lisp.pkgs; [
                 sdl2
                 sdl2-ttf
                 sdl2-image
                 trivial-main-thread
               ]);
             nativeLibs = with pkgs; [
-              # lem-curses
-              ncurses
-              # sdl2
               SDL2
               SDL2_ttf
               SDL2_image
             ];
           });
-          lem-webview = lem-fake-interface.overrideLispAttrs (o: {
+
+          # 3. Webview Variant
+          lem-webview = lem-base.overrideLispAttrs (o: {
             pname = "lem-webview";
             meta.mainProgram = "lem";
-            systems = [
-              "lem-webview"
-            ];
-            # Patch default font in the bundled frontend (dist/ is what lem-server actually uses)
-            postPatch =
-              (o.postPatch or "")
-              + (
-                if pkgs.stdenv.isLinux then
-                  ''
-                    sed -i 's/fontName:"Monospace"/fontName:"DejaVu Sans Mono"/' frontends/server/frontend/dist/assets/index.js
-                  ''
-                else
-                  ''
-                    sed -i 's/fontName:"Monospace"/fontName:"Menlo"/' frontends/server/frontend/dist/assets/index.js
-                  ''
-              );
-            # Override buildScript to use lem-webview:main as entry point
-            buildScript = pkgs.writeText "build-lem-webview.lisp" ''
-              (defpackage :nix-cl-user (:use :cl))
-              (in-package :nix-cl-user)
+            systems = [ "lem-webview" ];
 
-              ;; Load ASDF
-              (load "${lem-fake-interface.asdfFasl}/asdf.${lem-fake-interface.faslExt}")
+            # Use the specific webview entry point
+            buildScript = mkBuildScript { entryPoint = "lem-webview:main"; };
 
-              ;; Avoid writing to the global fasl cache
-              (asdf:initialize-output-translations '(:output-translations :disable-cache :inherit-configuration))
-
-              ;; Initial load
-              (mapcar #'asdf:load-system (uiop:split-string (uiop:getenv "systems")))
-
-              ;; Create executable with lem-webview:main as entry point
-              (setf uiop:*image-entry-point* #'lem-webview:main)
-              (uiop:dump-image "lem" :executable t :compression t)
-            '';
             lispLibs =
               o.lispLibs
-              ++ [
-                cl-webview
-              ]
+              ++ [ cl-webview ]
               ++ (with lisp.pkgs; [
                 float-features
                 command-line-arguments
               ]);
+
             nativeLibs =
               if pkgs.stdenv.isLinux then
-                with pkgs;
                 [
-                  webkitgtk_4_1
-                  gtk3
-                  stdenv.cc.cc.lib # For libstdc++
+                  pkgs.webkitgtk_4_1
+                  pkgs.webkitgtk_6_0
+                  pkgs.gtk3
+                  pkgs.stdenv.cc.cc.lib
                   c-webview
                 ]
               else
-                with pkgs;
                 [
-                  stdenv.cc.cc.lib # For libstdc++
+                  pkgs.stdenv.cc.cc.lib
                   c-webview
                 ];
-            # Include monospace font and configure fontconfig
+
+            postPatch =
+              (o.postPatch or "")
+              + (
+                if pkgs.stdenv.isLinux then
+                  ''sed -i 's/fontName:"Monospace"/fontName:"DejaVu Sans Mono"/' frontends/server/frontend/dist/assets/index.js''
+                else
+                  ''sed -i 's/fontName:"Monospace"/fontName:"Menlo"/' frontends/server/frontend/dist/assets/index.js''
+              );
+
             postInstall =
-              let
-                fontsConf = pkgs.makeFontsConf {
-                  fontDirectories = [ pkgs.dejavu_fonts ];
-                };
-              in
               if pkgs.stdenv.isLinux then
                 ''
                   wrapProgram $out/bin/lem \
-                    --set FONTCONFIG_FILE "${fontsConf}" \
+                    --set FONTCONFIG_FILE "${pkgs.makeFontsConf { fontDirectories = [ pkgs.dejavu_fonts ]; }}" \
                     --prefix XDG_DATA_DIRS : "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}" \
                     --prefix XDG_DATA_DIRS : "${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}"
                 ''
               else
-                '''';
+                "";
           });
         in
         {
           overlayAttrs = {
-            lem = lem-cli;
-            inherit lem-webview;
+            inherit lem-ncurses lem-sdl2 lem-webview;
           };
-          packages.lem = lem-cli;
-          packages.lem-webview = lem-webview;
-          apps.lem = {
-            type = "app";
-            program = lem-cli;
+
+          packages = {
+            inherit lem-ncurses lem-sdl2 lem-webview;
+            default = lem-ncurses;
           };
-          apps.lem-webview = {
-            type = "app";
-            program = lem-webview;
+
+          apps = {
+            lem-ncurses = {
+              type = "app";
+              program = lem-ncurses;
+            };
+            lem-sdl2 = {
+              type = "app";
+              program = lem-sdl2;
+            };
+            lem-webview = {
+              type = "app";
+              program = lem-webview;
+            };
+            default = {
+              type = "app";
+              program = lem-ncurses;
+            };
           };
+
           devShells.default = pkgs.mkShell {
-            packages = with pkgs; [
-              rlwrap
-              nixfmt
-              lem-cli
-            ];
+            packages = [ pkgs.nixfmt ];
           };
         };
     };

@@ -253,7 +253,10 @@ Returns a formatted string like '(x y &optional z)' or nil."
 
 (defun extract-called-symbols-from-form (form target-symbols)
   "Extract symbols from FORM that are in TARGET-SYMBOLS set.
-Walks the form tree to find function calls and symbol references."
+Walks the form tree to find function calls and symbol references.
+
+This provides source-based call detection as sb-introspect:find-function-callees
+relies on xref data from compilation which may be incomplete or unavailable."
   (let ((calls '()))
     (labels ((walk (f)
                (cond
@@ -278,7 +281,10 @@ Walks the form tree to find function calls and symbol references."
 
 (defun get-definition-body (form)
   "Extract the body from a definition form.
-Handles defun, defmacro, define-command, etc."
+Handles defun, defmacro, define-command, etc.
+
+Used by source-based call detection to analyze only the function body,
+excluding the function name and argument list from call analysis."
   (when (and (consp form) (consp (cdr form)))
     (let ((head (car form)))
       (cond
@@ -293,7 +299,10 @@ Handles defun, defmacro, define-command, etc."
 
 (defun extract-source-calls (pathname target-symbols)
   "Extract call relationships from source file PATHNAME.
-Returns a list of (caller-symbol . callee-symbol) pairs."
+Returns a list of (caller-symbol . callee-symbol) pairs.
+
+Parses source code directly to detect function calls, providing more reliable
+edge detection than sb-introspect when xref data is incomplete."
   (let ((forms (read-all-forms-from-file pathname))
         (calls '()))
     (dolist (form forms)
@@ -370,7 +379,7 @@ Uses sb-introspect:who-calls which relies on xref data from compilation."
   "Analyze a package and build its call graph"
   (let ((package (find-package package-designator)))
     (unless package
-      (error "Package ~A not found" package-designator))
+      (lem:editor-error "Package ~A not found" package-designator))
     (let ((nodes (make-hash-table :test 'equal))
           (edges '())
           (symbols '()))
@@ -545,7 +554,7 @@ Returns a list of (symbol . form-head) pairs for each definition found."
   "Get all Lisp source files from an ASDF system"
   (let ((system (asdf:find-system system-designator nil)))
     (unless system
-      (error "System ~A not found" system-designator))
+      (lem:editor-error "System ~A not found" system-designator))
     (let ((files '()))
       (labels ((collect-files (component)
                  (typecase component
@@ -571,7 +580,7 @@ Shows all functions defined in the system and their call relationships."
         (all-symbols '())
         (symbol-set (make-hash-table :test 'eq)))
     (unless files
-      (error "No source files found in system ~A" system-designator))
+      (lem:editor-error "No source files found in system ~A" system-designator))
     ;; First pass: collect all function definitions from all files
     ;; definitions is a list of (symbol . form-head) pairs
     (dolist (file files)

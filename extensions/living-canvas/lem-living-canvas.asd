@@ -2,10 +2,12 @@
   :description "Living Canvas - Visual function graph editor for Lem"
   :author "Lem Project"
   :license "MIT"
-  :depends-on ("alexandria"
+  :depends-on ("call-graph"
+               "alexandria"
                "lem/core"
+               "lem-lisp-mode"
                "yason")
   :serial t
-  :components ((:file "call-graph")
+  :components ((:file "cl-provider")
                (:file "buffer")
                (:file "living-canvas")))

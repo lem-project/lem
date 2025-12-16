@@ -1,17 +1,16 @@
 (defpackage :lem-living-canvas
   (:use :cl :lem)
-  (:import-from :lem-living-canvas/call-graph
+  (:import-from :call-graph
+                #:call-graph-nodes
+                #:graph-node-source-location)
+  (:import-from :lem-living-canvas/cl-provider
                 #:analyze-package
                 #:analyze-file
-                #:analyze-buffer
                 #:analyze-system
-                #:graph-to-cytoscape-json
                 #:get-source-location)
   (:import-from :lem-living-canvas/buffer
                 #:canvas-buffer
-                #:make-canvas-buffer
-                #:canvas-buffer-graph
-                #:canvas-buffer-source-buffer)
+                #:make-canvas-buffer)
   (:export #:living-canvas
            #:living-canvas-current-file
            #:living-canvas-system
@@ -65,10 +64,10 @@
 (defun populate-source-location-cache (graph)
   "Populate the source location cache from a graph"
   (maphash (lambda (node-id node)
-             (let ((location (lem-living-canvas/call-graph:graph-node-source-location node)))
+             (let ((location (graph-node-source-location node)))
                (when location
                  (cache-source-location node-id location))))
-           (lem-living-canvas/call-graph:call-graph-nodes graph)))
+           (call-graph-nodes graph)))
 
 ;;; Source Navigation
 
@@ -223,8 +222,7 @@ Drag nodes to rearrange the layout."
       (lem:editor-error "Package not found: ~A" package-name))
     (let* ((source-buffer (lem:current-buffer))
            (graph (analyze-package pkg))
-           (node-count (hash-table-count
-                        (lem-living-canvas/call-graph:call-graph-nodes graph))))
+           (node-count (hash-table-count (call-graph-nodes graph))))
       (if (zerop node-count)
           (lem:message "No functions found in package ~A" package-name)
           (progn
@@ -248,10 +246,9 @@ Only shows functions defined in this file."
       (lem:editor-error "Buffer has no associated file"))
     (unless (probe-file filename)
       (lem:editor-error "File not found: ~A" filename))
-    (let* ((graph (lem-living-canvas/call-graph:analyze-file filename))
+    (let* ((graph (analyze-file filename))
            (node-count (if graph
-                           (hash-table-count
-                            (lem-living-canvas/call-graph:call-graph-nodes graph))
+                           (hash-table-count (call-graph-nodes graph))
                            0)))
       (if (zerop node-count)
           (lem:message "No functions found in ~A (file may need to be loaded first)"
@@ -276,8 +273,7 @@ including cross-package calls within the system."
       (lem:editor-error "System not found: ~A" system-name))
     (let* ((source-buffer (lem:current-buffer))
            (graph (analyze-system system-name))
-           (node-count (hash-table-count
-                        (lem-living-canvas/call-graph:call-graph-nodes graph))))
+           (node-count (hash-table-count (call-graph-nodes graph))))
       (if (zerop node-count)
           (lem:message "No functions found in system ~A" system-name)
           (progn

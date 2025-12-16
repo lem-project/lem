@@ -1,8 +1,8 @@
 (defpackage :lem-living-canvas/buffer
   (:use :cl :lem)
-  (:import-from :lem-living-canvas/call-graph
-                #:call-graph
-                #:graph-to-cytoscape-json
+  (:import-from :call-graph
+                #:graph-to-cytoscape-json)
+  (:import-from :lem-living-canvas/cl-provider
                 #:analyze-buffer)
   (:export #:canvas-buffer
            #:make-canvas-buffer
@@ -707,11 +707,18 @@
 </body>
 </html>" graph-json))
 
+;;; JSON Encoding
+
+(defun encode-to-json (data)
+  "Encode data to JSON string using yason."
+  (with-output-to-string (stream)
+    (yason:encode data stream)))
+
 ;;; Buffer Creation
 
 (defun make-canvas-buffer (name source-buffer graph)
   "Create a new canvas buffer displaying the given call graph"
-  (let* ((graph-json (graph-to-cytoscape-json graph))
+  (let* ((graph-json (graph-to-cytoscape-json graph :encoder #'encode-to-json))
          (html (generate-canvas-html graph-json))
          (buffer (lem:make-buffer name)))
     (change-class buffer 'canvas-buffer
@@ -726,7 +733,7 @@
   "Update the canvas buffer with fresh graph data"
   (let* ((source-buffer (canvas-buffer-source-buffer buffer))
          (graph (analyze-buffer source-buffer))
-         (graph-json (graph-to-cytoscape-json graph)))
+         (graph-json (graph-to-cytoscape-json graph :encoder #'encode-to-json)))
     (setf (canvas-buffer-graph buffer) graph)
     (setf (lem:html-buffer-html buffer)
           (generate-canvas-html graph-json))

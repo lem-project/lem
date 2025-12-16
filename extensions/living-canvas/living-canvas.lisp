@@ -291,10 +291,6 @@ including cross-package calls within the system."
               (lem:message "Living Canvas: ~D functions in system ~A"
                            node-count system-name)))))))
 
-(lem:define-command living-canvas-lem-core () ()
-  "Display a call graph for lem-core package (demo)"
-  (living-canvas "LEM-CORE"))
-
 (lem:define-command living-canvas-refresh () ()
   "Refresh the current canvas view"
   (let ((buffer (lem:current-buffer)))

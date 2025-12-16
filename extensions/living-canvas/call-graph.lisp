@@ -241,37 +241,6 @@ Returns a formatted string like '(x y &optional z)' or nil."
           (format nil "(~{~(~A~)~^ ~})" arglist)))
     (error () nil)))
 
-(defun extract-called-symbols (form package)
-  "Extract all function symbols called within a form"
-  (let ((calls '()))
-    (labels ((walk (form)
-               (cond
-                 ;; Symbol reference
-                 ((and (symbolp form)
-                       (not (keywordp form))
-                       (fboundp form))
-                  (pushnew form calls))
-                 ;; (function sym) or #'sym
-                 ((and (consp form)
-                       (eq (car form) 'function)
-                       (symbolp (cadr form))
-                       (fboundp (cadr form)))
-                  (pushnew (cadr form) calls))
-                 ;; Regular function call (sym ...)
-                 ((consp form)
-                  (let ((head (car form)))
-                    ;; Check if head is a function call
-                    (when (and (symbolp head)
-                               (not (special-operator-p head))
-                               (fboundp head))
-                      (pushnew head calls))
-                    ;; Walk arguments
-                    (mapc #'walk (cdr form)))))))
-      (handler-case
-          (walk form)
-        (error () nil)))
-    calls))
-
 (defun read-all-forms-from-file (pathname)
   "Read all forms from a file, handling in-package correctly"
   (handler-case

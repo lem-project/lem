@@ -105,7 +105,7 @@ two
          ;; come back on the status on  the left:
          (lem-core/commands/window:previous-window)
          ;; and refresh.
-         (legit-status))))))
+         (show-legit-status))))))
 
 (define-command commit-abort () ()
   (when (or (not *prompt-to-abort-commit*)

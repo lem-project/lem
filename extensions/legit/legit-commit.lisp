@@ -30,8 +30,8 @@ Future:
   ((:file-namestring "COMMIT_EDITMSG")))
 
 ;; User parameters.
-(defparameter *prompt-for-commit-abort-p* t
-  "If non nil, prompt for confirmation before aborting the current commit message.")
+(defparameter *prompt-to-abort-commit* t
+  "If non t, abort the current commit message without asking for confirmation.")
 
 ;; Keys:
 ;; validate, abort.
@@ -108,7 +108,7 @@ two
          (show-legit-status))))))
 
 (define-command commit-abort () ()
-  (when (or (not *prompt-for-commit-abort-p*)
+  (when (or (not *prompt-to-abort-commit*)
             (prompt-for-y-or-n-p "Abort commit?"))
     (lem-core/commands/window:previous-window)
     (kill-buffer "*legit-commit*")))

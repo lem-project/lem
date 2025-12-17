@@ -78,8 +78,10 @@ install-webview-ncurses:
 
 test:
 	qlot install
-	.qlot/bin/rove lem-tests.asd
-	.qlot/bin/rove extensions/vi-mode/lem-vi-mode.asd
+	$(LISP) --load .qlot/setup.lisp \
+		--eval '(asdf:test-system "lem-tests")' \
+		--eval '(asdf:test-system "lem-vi-mode")' \
+		--quit
 
 doc:
 	qlot install

@@ -363,7 +363,57 @@
           };
 
           devShells.default = pkgs.mkShell {
-            packages = [ pkgs.nixfmt ];
+            packages = with pkgs; [
+              # Lisp development
+              sbcl
+              sbclPackages.qlot-cli
+
+              # Build tools
+              gnumake
+              pkg-config
+
+              # Native libraries for frontends
+              ncurses
+              SDL2
+              SDL2_ttf
+              SDL2_image
+
+              # SSL/TLS support
+              openssl
+
+              # Code formatting
+              nixfmt-rfc-style
+
+              # Development tools
+              direnv
+            ] ++ lib.optionals stdenv.isLinux [
+              # Linux-specific dependencies for webview frontend
+              webkitgtk_4_1
+              gtk3
+            ];
+
+            # Set up library paths for native dependencies
+            LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath (with pkgs; [
+              ncurses
+              SDL2
+              SDL2_ttf
+              SDL2_image
+              openssl
+            ] ++ lib.optionals pkgs.stdenv.isLinux [
+              webkitgtk_4_1
+              gtk3
+            ]);
+
+            shellHook = ''
+              echo "Lem development environment"
+              echo "  SBCL: $(sbcl --version)"
+              echo "  qlot: $(qlot --version 2>/dev/null || echo 'available')"
+              echo ""
+              echo "Quick start:"
+              echo "  qlot install    # Install dependencies"
+              echo "  make ncurses    # Build terminal version"
+              echo "  make sdl2       # Build GUI version"
+            '';
           };
         };
     };

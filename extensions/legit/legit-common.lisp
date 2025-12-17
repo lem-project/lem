@@ -5,7 +5,7 @@
   (:export :legit-status
            :legit-refresh
            :legit-quit
-           :*prompt-for-commit-abort-p*
+           :*prompt-to-abort-commit*
            :*ignore-all-space*
            :*show-stashes*
            :*vcs-existence-order*

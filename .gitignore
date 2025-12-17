@@ -36,6 +36,7 @@ build/*
 /systems/
 
 /result
+.direnv/
 
 TODO
 artifacts/

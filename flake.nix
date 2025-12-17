@@ -383,6 +383,9 @@
 
               # Code formatting
               nixfmt-rfc-style
+
+              # Development tools
+              direnv
             ] ++ lib.optionals stdenv.isLinux [
               # Linux-specific dependencies for webview frontend
               webkitgtk_4_1

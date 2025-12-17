@@ -32,7 +32,8 @@
                 :components ((:file "indent-test")
                              (:file "defstruct-to-defclass")))
                (:module "lisp-mode"
-                :components ((:file "package-inferred-system")))
+                :components ((:file "package-inferred-system")
+                             (:file "file-conversion")))
                (:file "killring")
                (:file "string-width-utils")
                (:file "syntax-test")

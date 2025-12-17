@@ -12,3 +12,7 @@
 
 (define-read-only-source quicklisp-dists (directory)
   (search "/dists/quicklisp/software/" directory))
+
+(define-read-only-source nix-store (directory)
+  "Mark Nix store files as read-only."
+  (search "/nix/store/" directory))

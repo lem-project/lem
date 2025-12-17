@@ -132,7 +132,7 @@ allows to learn about the file state: modified, deleted, ignored… "
    (concatenate 'list
                 *file-diff-args*
                 (list (format nil "-U~D" lem/porcelain:*diff-context-lines*))
-                (if cached '("--cached"))
+                (when cached '("--cached"))
                 (list file))))
 
 (defmethod show-commit-diff ((vcs vcs-git) ref &key ignore-all-space)

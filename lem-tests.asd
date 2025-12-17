@@ -3,6 +3,7 @@
                "lem-fake-interface"
                "lem-lisp-syntax"
                "lem-lisp-mode"
+               "lem-legit"
                #+sbcl "lem-mcp-server"
                "cl-ansi-text"
                "trivial-package-local-nicknames"
@@ -46,6 +47,7 @@
                (:file "scala-mode")
                (:file "completion")
                (:file "command-line-arguments")
-               (:file "window"))
+               (:file "window")
+               (:file "legit"))
   :perform (test-op (o c)
                     (symbol-call :rove :run c)))

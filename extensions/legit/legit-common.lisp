@@ -3,11 +3,13 @@
   (:use :cl
         :lem)
   (:export :legit-status
+           :legit-refresh
+           :legit-quit
            :*prompt-for-commit-abort-p*
            :*ignore-all-space*
            :*show-stashes*
            :*vcs-existence-order*
-	   :*peek-legit-keymap*
+           :*peek-legit-keymap*
            :peek-legit-discard-file
            :peek-legit-previous
            :peek-legit-next)

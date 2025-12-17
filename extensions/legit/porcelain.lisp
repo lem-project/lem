@@ -195,9 +195,9 @@ Mercurial:
 #|
 Interestingly, this returns the list of unstaged changes:
 "Unstaged changes after reset:
-M	src/ext/legit.lisp
-M	src/ext/peek-legit.lisp
-M	src/ext/porcelain.lisp
+M       src/ext/legit.lisp
+M       src/ext/peek-legit.lisp
+M       src/ext/porcelain.lisp
 ""
 |#
 

@@ -100,7 +100,7 @@
     (let* ((temp-dir (uiop:temporary-directory))
            (test-dir (merge-pathnames "lem-test-glob/" temp-dir))
            (lem-lisp-mode/internal::*file-conversion-map*
-             `(("/nix/store/*-test-lib/" . ,(namestring test-dir)))))
+             (list (cons "/nix/store/*-test-lib/" (namestring test-dir)))))
       (ensure-directories-exist test-dir)
       (unwind-protect
            (progn

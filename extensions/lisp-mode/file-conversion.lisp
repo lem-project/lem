@@ -130,7 +130,14 @@ Glob pattern syntax:
 
 (defun convert-remote-to-local-file (filename)
   "Convert remote FILENAME to local path using *file-conversion-map*.
-   Supports both simple prefix matching and glob patterns."
+
+This conversion is needed because source locations returned by the Lisp
+implementation (e.g., from find-definitions) may point to paths that differ
+from the actual source files. Common cases include:
+- Docker containers where /app/ maps to a local project directory
+- Nix builds where /nix/store/... paths should map to .qlot/ or project sources
+
+Supports both simple prefix matching and glob patterns."
   (loop :for (remote-pattern . local-pattern) :in *file-conversion-map*
         :do (if (has-glob-wildcard-p remote-pattern)
                 ;; Glob pattern matching
@@ -145,7 +152,12 @@ Glob pattern syntax:
 
 (defun convert-local-to-remote-file (filename)
   "Convert local FILENAME to remote path using *file-conversion-map*.
-   Note: Glob patterns in local-pattern are not supported for reverse conversion."
+
+This reverse conversion is needed when sending file paths back to the Lisp
+implementation, which expects paths in its own namespace (e.g., Docker container
+paths or Nix store paths) rather than local paths.
+
+Note: Glob patterns in local-pattern are not supported for reverse conversion."
   (loop :for (remote-pattern . local-pattern) :in *file-conversion-map*
         :do (unless (has-glob-wildcard-p local-pattern)
               (when (alexandria:starts-with-subseq local-pattern filename)

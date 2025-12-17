@@ -251,7 +251,7 @@ Notes:
                                       (case buffer
                                         (:status "*peek-legit*")
                                         (:commits-log "*legit-commits-log*")
-                                        (t (error "Unknown buffer name to display legit data: ~a" buffer))))))
+                                        (otherwise (error "Unknown buffer name to display legit data: ~a" buffer))))))
          (point (buffer-point (collector-buffer *collector*))))
     (declare (ignorable point))
     (funcall function *collector*)

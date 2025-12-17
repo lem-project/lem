@@ -297,10 +297,10 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
   It is the last point of the line preceding the following \"@@ \" line,
   or the end of buffer."
   (line-start end?)
-  (if (str:starts-with-p "@@ " (line-string end?))
-      ;; start searching from next line.
-      (setf end?
-            (move-to-next-virtual-line end?)))
+  (when (str:starts-with-p "@@ " (line-string end?))
+    ;; start searching from next line.
+    (setf end?
+          (move-to-next-virtual-line end?)))
   (move-point
    end?
    (or
@@ -520,7 +520,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
         (collector-insert "")
 
         ;; Is a git rebase in progress?
-        (let ((rebase-status (lem/porcelain::rebase-in-progress-p vcs)))
+        (let ((rebase-status (lem/porcelain:rebase-in-progress-p vcs)))
           (when (getf rebase-status :status)
             (collector-insert
              (format nil "!rebase in progress: ~a onto ~a"
@@ -578,7 +578,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                                                (case type
                                                  (:modified "modified")
                                                  (:deleted "deleted")
-                                                 (t ""))
+                                                 (otherwise ""))
                                                file)
                                        :attribute 'filename-attribute
                                        :read-only t)))
@@ -603,7 +603,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                                                  (:modified "modified")
                                                  (:added "created")
                                                  (:deleted "deleted")
-                                                 (t ""))
+                                                 (otherwise ""))
                                                file)
                                        :attribute 'filename-attribute
                                        :read-only t)))
@@ -731,7 +731,7 @@ If the legit window is already open, close it (toggle behavior)."
         (return-from legit-rebase-interactive))
 
       (run-function (lambda ()
-                      (lem/porcelain::rebase-interactively vcs :from commit-hash)))
+                      (lem/porcelain:rebase-interactively vcs :from commit-hash)))
 
       (let ((buffer (find-file-buffer ".git/rebase-merge/git-rebase-todo")))
         (when buffer
@@ -827,7 +827,7 @@ If the legit window is already open, close it (toggle behavior)."
   "Ask for a message and stash the current changes."
   (with-current-project (vcs)
     (let ((message (prompt-for-string "Stash message: ")))
-      (lem/porcelain::stash-push vcs :message message)
+      (lem/porcelain:stash-push vcs :message message)
       (show-legit-status))))
 
 (define-command legit-stash-pop () ()
@@ -835,7 +835,7 @@ If the legit window is already open, close it (toggle behavior)."
   (with-current-project (vcs)
     (let ((confirm (prompt-for-y-or-n-p "Pop the latest stash to the current branch? ")))
       (when confirm
-        (lem/porcelain::stash-pop vcs)
+        (lem/porcelain:stash-pop vcs)
         (show-legit-status)))))
 
 (define-command legit-quit () ()

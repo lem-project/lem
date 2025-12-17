@@ -2,8 +2,7 @@
   (:use :cl
     ;; let's import all the classes and methods defined in the main porcelain:
     :lem/porcelain)
-  (:import-from :trivial-types
-                :proper-list)
+  (:import-from :trivial-types)
   (:export :git-project-p)
   (:documentation "Implements the porcelain interface for git-based repos."))
 
@@ -132,7 +131,7 @@ allows to learn about the file state: modified, deleted, ignored… "
    (concatenate 'list
                 *file-diff-args*
                 (list (format nil "-U~D" lem/porcelain:*diff-context-lines*))
-                (if cached '("--cached"))
+                (when cached '("--cached"))
                 (list file))))
 
 (defmethod show-commit-diff ((vcs vcs-git) ref &key ignore-all-space)

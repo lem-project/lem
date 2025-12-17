@@ -30,8 +30,8 @@ Future:
   ((:file-namestring "COMMIT_EDITMSG")))
 
 ;; User parameters.
-(defparameter *prompt-to-abort-commit* t
-  "If non t, abort the current commit message without asking for confirmation.")
+(defparameter *prompt-for-commit-abort-p* t
+  "If non nil, prompt for confirmation before aborting the current commit message.")
 
 ;; Keys:
 ;; validate, abort.
@@ -99,7 +99,7 @@ two
       (t
        (with-current-project (vcs)
          (run-function (lambda ()
-                         (lem/porcelain::commit vcs cleaned-message))
+                         (lem/porcelain:commit vcs cleaned-message))
                        :message "commited")
          (kill-buffer (current-buffer))
          ;; come back on the status on  the left:
@@ -108,7 +108,7 @@ two
          (show-legit-status))))))
 
 (define-command commit-abort () ()
-  (when (or (not *prompt-to-abort-commit*)
+  (when (or (not *prompt-for-commit-abort-p*)
             (prompt-for-y-or-n-p "Abort commit?"))
     (lem-core/commands/window:previous-window)
     (kill-buffer "*legit-commit*")))
@@ -120,7 +120,7 @@ two
     (format s "~%")
     (format s "Commands:~&")
     (format s "Validate: ~{~A~^, ~}~&"
-            (or (lem/prompt-window:find-command-keybindings-in-keymap "commit-continue" *legit-commit-mode-keymap*) 
+            (or (lem/prompt-window:find-command-keybindings-in-keymap "commit-continue" *legit-commit-mode-keymap*)
                 " (unbound)"))
     (format s "Stop and quit: ~{~A~^, ~}~&"
             (lem/prompt-window:find-command-keybindings-in-keymap "commit-abort" *legit-commit-mode-keymap*))

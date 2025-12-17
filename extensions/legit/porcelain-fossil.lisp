@@ -3,8 +3,7 @@
     ;; we import all the classes and methods defined in the main porcelain:
      :lem/porcelain)
   (:shadow :push)
-  (:import-from :trivial-types
-                :proper-list)
+  (:import-from :trivial-types)
   (:export :fossil-project-p)
   (:documentation "Implements the porcelain interface for fossil-based repos."))
 

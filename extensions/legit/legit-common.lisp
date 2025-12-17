@@ -3,6 +3,8 @@
   (:use :cl
         :lem)
   (:export :legit-status
+           :legit-refresh
+           :legit-quit
            :*prompt-for-commit-abort-p*
            :*ignore-all-space*
            :*show-stashes*

@@ -19,6 +19,19 @@
        (makunbound 'lem/legit::*parent-window*))
      ,@body))
 
+(defun cleanup-legit-windows ()
+  "Clean up legit windows safely, switching away from them before deletion."
+  (when (and (boundp 'lem/legit::*parent-window*)
+             (not (lem:deleted-window-p lem/legit::*parent-window*)))
+    (setf (lem:current-window) lem/legit::*parent-window*))
+  (let ((lem/legit::*is-finalzing* t))
+    (when (and (boundp 'lem/legit::*peek-window*)
+               (not (lem:deleted-window-p lem/legit::*peek-window*)))
+      (lem:delete-window lem/legit::*peek-window*))
+    (when (and (boundp 'lem/legit::*source-window*)
+               (not (lem:deleted-window-p lem/legit::*source-window*)))
+      (lem:delete-window lem/legit::*source-window*))))
+
 (defmacro with-temp-git-repo (&body body)
   "Execute BODY in a temporary git repository."
   (let ((temp-dir (gensym "TEMP-DIR")))
@@ -96,19 +109,19 @@
           (let ((original-window (lem:current-window))
                 (collector (make-instance 'lem/legit::collector
                                           :buffer (lem:make-buffer "*test-legit*" :temporary t))))
-            ;; Call display
-            (lem/legit::display collector)
-            ;; Check that *parent-window* is set to original window
-            (ok (eq original-window lem/legit::*parent-window*))
-            ;; Check that new windows were created
-            (ok (boundp 'lem/legit::*peek-window*))
-            (ok (boundp 'lem/legit::*source-window*))
-            (ok (not (lem:deleted-window-p lem/legit::*peek-window*)))
-            (ok (not (lem:deleted-window-p lem/legit::*source-window*)))
-            ;; Cleanup
-            (let ((lem/legit::*is-finalzing* t))
-              (lem:delete-window lem/legit::*peek-window*)
-              (lem:delete-window lem/legit::*source-window*))))))))
+            (unwind-protect
+                 (progn
+                   ;; Call display
+                   (lem/legit::display collector)
+                   ;; Check that *parent-window* is set to original window
+                   (ok (eq original-window lem/legit::*parent-window*))
+                   ;; Check that new windows were created
+                   (ok (boundp 'lem/legit::*peek-window*))
+                   (ok (boundp 'lem/legit::*source-window*))
+                   (ok (not (lem:deleted-window-p lem/legit::*peek-window*)))
+                   (ok (not (lem:deleted-window-p lem/legit::*source-window*))))
+              ;; Cleanup - always run
+              (cleanup-legit-windows))))))))
 
 (deftest display/refresh-preserves-parent-window
   (testing "refresh preserves *parent-window*"
@@ -118,27 +131,27 @@
           (let ((original-window (lem:current-window))
                 (collector (make-instance 'lem/legit::collector
                                           :buffer (lem:make-buffer "*test-legit*" :temporary t))))
-            ;; Initial display
-            (lem/legit::display collector)
-            (ok (eq original-window lem/legit::*parent-window*))
-            (let ((first-peek-window lem/legit::*peek-window*)
-                  (first-source-window lem/legit::*source-window*))
-              ;; Refresh (call display again)
-              (let ((collector2 (make-instance 'lem/legit::collector
-                                               :buffer (lem:make-buffer "*test-legit-2*" :temporary t))))
-                (lem/legit::display collector2)
-                ;; *parent-window* should still be original window
-                (ok (eq original-window lem/legit::*parent-window*))
-                ;; Old windows should be deleted
-                (ok (lem:deleted-window-p first-peek-window))
-                (ok (lem:deleted-window-p first-source-window))
-                ;; New windows should exist
-                (ok (not (lem:deleted-window-p lem/legit::*peek-window*)))
-                (ok (not (lem:deleted-window-p lem/legit::*source-window*)))
-                ;; Cleanup
-                (let ((lem/legit::*is-finalzing* t))
-                  (lem:delete-window lem/legit::*peek-window*)
-                  (lem:delete-window lem/legit::*source-window*))))))))))
+            (unwind-protect
+                 (progn
+                   ;; Initial display
+                   (lem/legit::display collector)
+                   (ok (eq original-window lem/legit::*parent-window*))
+                   (let ((first-peek-window lem/legit::*peek-window*)
+                         (first-source-window lem/legit::*source-window*))
+                     ;; Refresh (call display again)
+                     (let ((collector2 (make-instance 'lem/legit::collector
+                                                      :buffer (lem:make-buffer "*test-legit-2*" :temporary t))))
+                       (lem/legit::display collector2)
+                       ;; *parent-window* should still be original window
+                       (ok (eq original-window lem/legit::*parent-window*))
+                       ;; Old windows should be deleted
+                       (ok (lem:deleted-window-p first-peek-window))
+                       (ok (lem:deleted-window-p first-source-window))
+                       ;; New windows should exist
+                       (ok (not (lem:deleted-window-p lem/legit::*peek-window*)))
+                       (ok (not (lem:deleted-window-p lem/legit::*source-window*))))))
+              ;; Cleanup - always run
+              (cleanup-legit-windows))))))))
 
 ;;; Integration tests with temporary git repository
 
@@ -148,14 +161,18 @@
       (with-fake-interface ()
         (with-legit-variables-unbound
           (with-temp-git-repo
-            ;; Initially closed
-            (ok (not (lem/legit::legit-status-active-p)))
-            ;; Open with legit-status
-            (lem/legit:legit-status)
-            (ok (lem/legit::legit-status-active-p))
-            ;; Close with legit-status (toggle)
-            (lem/legit:legit-status)
-            (ok (not (lem/legit::legit-status-active-p)))))))))
+            (unwind-protect
+                 (progn
+                   ;; Initially closed
+                   (ok (not (lem/legit::legit-status-active-p)))
+                   ;; Open with legit-status
+                   (lem/legit:legit-status)
+                   (ok (lem/legit::legit-status-active-p))
+                   ;; Close with legit-status (toggle)
+                   (lem/legit:legit-status)
+                   (ok (not (lem/legit::legit-status-active-p))))
+              ;; Cleanup - always run
+              (cleanup-legit-windows))))))))
 
 (deftest legit-refresh/keeps-window-open
   (testing "legit-refresh keeps the legit window open"
@@ -163,15 +180,17 @@
       (with-fake-interface ()
         (with-legit-variables-unbound
           (with-temp-git-repo
-            ;; Open legit
-            (lem/legit:legit-status)
-            (ok (lem/legit::legit-status-active-p))
-            (let ((original-parent lem/legit::*parent-window*))
-              ;; Refresh
-              (lem/legit:legit-refresh)
-              ;; Should still be open
-              (ok (lem/legit::legit-status-active-p))
-              ;; Parent window should be preserved
-              (ok (eq original-parent lem/legit::*parent-window*)))
-            ;; Cleanup
-            (lem/legit:legit-quit)))))))
+            (unwind-protect
+                 (progn
+                   ;; Open legit
+                   (lem/legit:legit-status)
+                   (ok (lem/legit::legit-status-active-p))
+                   (let ((original-parent lem/legit::*parent-window*))
+                     ;; Refresh
+                     (lem/legit:legit-refresh)
+                     ;; Should still be open
+                     (ok (lem/legit::legit-status-active-p))
+                     ;; Parent window should be preserved
+                     (ok (eq original-parent lem/legit::*parent-window*))))
+              ;; Cleanup - always run
+              (cleanup-legit-windows))))))))

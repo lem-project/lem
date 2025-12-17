@@ -1,12 +1,12 @@
-(defpackage :lem-living-canvas/cl-provider
-  (:use :cl :call-graph)
+(defpackage #:lem-living-canvas/cl-provider
+  (:use #:cl #:call-graph)
   (:export #:cl-call-graph-provider
            #:analyze-package
            #:analyze-file
            #:analyze-buffer
            #:analyze-system
            #:get-source-location))
-(in-package :lem-living-canvas/cl-provider)
+(in-package #:lem-living-canvas/cl-provider)
 
 ;;; Common Lisp Call Graph Provider
 ;;;

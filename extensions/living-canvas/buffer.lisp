@@ -1,8 +1,8 @@
-(defpackage :lem-living-canvas/buffer
-  (:use :cl :lem)
-  (:import-from :call-graph
+(defpackage #:lem-living-canvas/buffer
+  (:use #:cl #:lem)
+  (:import-from #:call-graph
                 #:graph-to-cytoscape-json)
-  (:import-from :lem-living-canvas/cl-provider
+  (:import-from #:lem-living-canvas/cl-provider
                 #:analyze-buffer)
   (:export #:canvas-buffer
            #:make-canvas-buffer
@@ -10,7 +10,7 @@
            #:canvas-buffer-source-buffer
            #:canvas-buffer-node-positions
            #:update-canvas-buffer))
-(in-package :lem-living-canvas/buffer)
+(in-package #:lem-living-canvas/buffer)
 
 ;;; Canvas Buffer Class
 

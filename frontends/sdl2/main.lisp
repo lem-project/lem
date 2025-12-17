@@ -499,3 +499,45 @@
 (defun char-width () (display:display-char-width (display:current-display)))
 (defun char-height () (display:display-char-height (display:current-display)))
 (defun current-renderer () (display:display-renderer (display:current-display)))
+
+(defmethod lem-if:display-fullscreen-p ((implementation sdl2))
+  (with-debug ("lem-if:display-fullscreen-p")
+    (display:with-display (display)
+      (not (null (member :fullscreen (sdl2:get-window-flags (display:display-window display))))))))
+
+;;;; Toggle Display Borderless
+
+(defgeneric lem-if::display-borderless-p (implementation)
+  (:documentation
+   "Return `t' if FRAME is borderless, `nil' otherwise. 
+Default IMPLEMENTATION should return `t' as fallback. ")
+  (:method (implementation) t)
+  (:method ((implementation sdl2))
+    (with-debug ("display-borderless-p")
+      (display:with-display (display)
+        (not (null (member :borderless (sdl2:get-window-flags (display:display-window display)))))))))
+
+(defmethod (setf lem-if::display-borderless-p) (boolean implementation)
+  (declare (ignore boolean implementation)))
+
+(defmethod (setf lem-if::display-borderless-p) (boolean (implementation sdl2))
+  (declare (ignore implementation))
+  (with-debug ("(setf lem-if::display-borderless-p)")
+    (sdl2:in-main-thread ()
+      (display:with-display (display)
+        (sdl2-ffi.functions:sdl-set-window-bordered (display:display-window display) 
+                                                    (if boolean 0 1))))))
+
+(in-package :lem-core)
+
+(defun lem-core::display-borderless-p ()
+  "Get/Set current display if borderless. 
+Return `t' for borderless (no-titlebar), `nil' for otherwise. "
+  (lem-if::display-borderless-p (implementation)))
+
+(defun (setf lem-core::display-borderless-p) (boolean)
+  (setf (lem-if::display-borderless-p (implementation)) boolean))
+
+(define-command toggle-frame-borderless () ()
+  "Toggles frame borderless. "
+  (setf (display-borderless-p) (not (display-borderless-p))))

@@ -15,7 +15,7 @@ async function main() {
   const editor = new Editor({
     canvas: canvas,
     fontName: 'Monospace',
-    fontSize: 19,
+    fontSize: 18,
     url: `${protocol}://${window.location.hostname}:${window.location.port}`,
     onExit: null,
     onClosed: null,

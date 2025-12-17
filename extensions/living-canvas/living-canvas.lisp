@@ -1,22 +1,21 @@
-(defpackage :lem-living-canvas
-  (:use :cl :lem)
-  (:import-from :lem-living-canvas/call-graph
+(defpackage #:lem-living-canvas
+  (:use #:cl #:lem)
+  (:import-from #:call-graph
+                #:call-graph-nodes
+                #:graph-node-source-location)
+  (:import-from #:lem-living-canvas/cl-provider
                 #:analyze-package
                 #:analyze-file
-                #:analyze-buffer
                 #:analyze-system
-                #:graph-to-cytoscape-json
                 #:get-source-location)
-  (:import-from :lem-living-canvas/buffer
+  (:import-from #:lem-living-canvas/buffer
                 #:canvas-buffer
-                #:make-canvas-buffer
-                #:canvas-buffer-graph
-                #:canvas-buffer-source-buffer)
+                #:make-canvas-buffer)
   (:export #:living-canvas
            #:living-canvas-current-file
            #:living-canvas-system
            #:living-canvas-refresh))
-(in-package :lem-living-canvas)
+(in-package #:lem-living-canvas)
 
 ;;; Variables
 
@@ -65,10 +64,10 @@
 (defun populate-source-location-cache (graph)
   "Populate the source location cache from a graph"
   (maphash (lambda (node-id node)
-             (let ((location (lem-living-canvas/call-graph:graph-node-source-location node)))
+             (let ((location (graph-node-source-location node)))
                (when location
                  (cache-source-location node-id location))))
-           (lem-living-canvas/call-graph:call-graph-nodes graph)))
+           (call-graph-nodes graph)))
 
 ;;; Source Navigation
 
@@ -223,21 +222,21 @@ Drag nodes to rearrange the layout."
       (lem:editor-error "Package not found: ~A" package-name))
     (let* ((source-buffer (lem:current-buffer))
            (graph (analyze-package pkg))
-           (node-count (hash-table-count
-                        (lem-living-canvas/call-graph:call-graph-nodes graph))))
-      (if (zerop node-count)
-          (lem:message "No functions found in package ~A" package-name)
-          (progn
-            ;; Pre-populate cache for fast source navigation
-            (populate-source-location-cache graph)
-            (let ((canvas-buffer (make-canvas-buffer
-                                  (format nil "*Canvas: ~A*" package-name)
-                                  source-buffer
-                                  graph)))
-              (lem:pop-to-buffer canvas-buffer)
-              (lem:change-buffer-mode canvas-buffer 'living-canvas-mode)
-              (lem:message "Living Canvas: ~D functions in ~A"
-                           node-count package-name)))))))
+           (node-count (hash-table-count (call-graph-nodes graph))))
+      (cond
+        ((zerop node-count)
+         (lem:message "No functions found in package ~A" package-name))
+        (t
+         ;; Pre-populate cache for fast source navigation
+         (populate-source-location-cache graph)
+         (let ((canvas-buffer (make-canvas-buffer
+                               (format nil "*Canvas: ~A*" package-name)
+                               source-buffer
+                               graph)))
+           (lem:pop-to-buffer canvas-buffer)
+           (lem:change-buffer-mode canvas-buffer 'living-canvas-mode)
+           (lem:message "Living Canvas: ~D functions in ~A"
+                        node-count package-name)))))))
 
 (lem:define-command living-canvas-current-file () ()
   "Display a call graph for the current file.
@@ -248,24 +247,24 @@ Only shows functions defined in this file."
       (lem:editor-error "Buffer has no associated file"))
     (unless (probe-file filename)
       (lem:editor-error "File not found: ~A" filename))
-    (let* ((graph (lem-living-canvas/call-graph:analyze-file filename))
+    (let* ((graph (analyze-file filename))
            (node-count (if graph
-                           (hash-table-count
-                            (lem-living-canvas/call-graph:call-graph-nodes graph))
+                           (hash-table-count (call-graph-nodes graph))
                            0)))
-      (if (zerop node-count)
-          (lem:message "No functions found in ~A (file may need to be loaded first)"
-                       (file-namestring filename))
-          (progn
-            (populate-source-location-cache graph)
-            (let ((canvas-buffer (make-canvas-buffer
-                                  (format nil "*Canvas: ~A*" (file-namestring filename))
-                                  buffer
-                                  graph)))
-              (lem:pop-to-buffer canvas-buffer)
-              (lem:change-buffer-mode canvas-buffer 'living-canvas-mode)
-              (lem:message "Living Canvas: ~D functions in ~A"
-                           node-count (file-namestring filename))))))))
+      (cond
+        ((zerop node-count)
+         (lem:message "No functions found in ~A (file may need to be loaded first)"
+                      (file-namestring filename)))
+        (t
+         (populate-source-location-cache graph)
+         (let ((canvas-buffer (make-canvas-buffer
+                               (format nil "*Canvas: ~A*" (file-namestring filename))
+                               buffer
+                               graph)))
+           (lem:pop-to-buffer canvas-buffer)
+           (lem:change-buffer-mode canvas-buffer 'living-canvas-mode)
+           (lem:message "Living Canvas: ~D functions in ~A"
+                        node-count (file-namestring filename))))))))
 
 (lem:define-command living-canvas-system (system-name) ((:string "System: "))
   "Display a function call graph for an ASDF system.
@@ -276,29 +275,30 @@ including cross-package calls within the system."
       (lem:editor-error "System not found: ~A" system-name))
     (let* ((source-buffer (lem:current-buffer))
            (graph (analyze-system system-name))
-           (node-count (hash-table-count
-                        (lem-living-canvas/call-graph:call-graph-nodes graph))))
-      (if (zerop node-count)
-          (lem:message "No functions found in system ~A" system-name)
-          (progn
-            (populate-source-location-cache graph)
-            (let ((canvas-buffer (make-canvas-buffer
-                                  (format nil "*Canvas: ~A*" system-name)
-                                  source-buffer
-                                  graph)))
-              (lem:pop-to-buffer canvas-buffer)
-              (lem:change-buffer-mode canvas-buffer 'living-canvas-mode)
-              (lem:message "Living Canvas: ~D functions in system ~A"
-                           node-count system-name)))))))
+           (node-count (hash-table-count (call-graph-nodes graph))))
+      (cond
+        ((zerop node-count)
+         (lem:message "No functions found in system ~A" system-name))
+        (t
+         (populate-source-location-cache graph)
+         (let ((canvas-buffer (make-canvas-buffer
+                               (format nil "*Canvas: ~A*" system-name)
+                               source-buffer
+                               graph)))
+           (lem:pop-to-buffer canvas-buffer)
+           (lem:change-buffer-mode canvas-buffer 'living-canvas-mode)
+           (lem:message "Living Canvas: ~D functions in system ~A"
+                        node-count system-name)))))))
 
 (lem:define-command living-canvas-refresh () ()
   "Refresh the current canvas view"
   (let ((buffer (lem:current-buffer)))
-    (if (typep buffer 'lem-living-canvas/buffer:canvas-buffer)
-        (progn
-          (lem-living-canvas/buffer:update-canvas-buffer buffer)
-          (lem:message "Canvas refreshed"))
-        (lem:message "Not in a canvas buffer"))))
+    (cond
+      ((typep buffer 'lem-living-canvas/buffer:canvas-buffer)
+       (lem-living-canvas/buffer:update-canvas-buffer buffer)
+       (lem:message "Canvas refreshed"))
+      (t
+       (lem:message "Not in a canvas buffer")))))
 
 ;;; Minor Mode
 

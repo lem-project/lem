@@ -6,18 +6,25 @@
                 :with-fake-interface))
 (in-package :lem-tests/legit)
 
-;;; Helper macros
+;; Note: This test file uses internal symbols (::) from lem/legit package
+;; because we need to test internal state management that is not part of
+;; the public API. This is standard practice for unit testing internals.
+
+;;; Helper functions and macros
+
+(defun call-with-legit-variables-unbound (function)
+  "Call FUNCTION with legit's special variables unbound."
+  (when (boundp 'lem/legit::*peek-window*)
+    (makunbound 'lem/legit::*peek-window*))
+  (when (boundp 'lem/legit::*source-window*)
+    (makunbound 'lem/legit::*source-window*))
+  (when (boundp 'lem/legit::*parent-window*)
+    (makunbound 'lem/legit::*parent-window*))
+  (funcall function))
 
 (defmacro with-legit-variables-unbound (&body body)
   "Execute BODY with legit's special variables unbound."
-  `(progn
-     (when (boundp 'lem/legit::*peek-window*)
-       (makunbound 'lem/legit::*peek-window*))
-     (when (boundp 'lem/legit::*source-window*)
-       (makunbound 'lem/legit::*source-window*))
-     (when (boundp 'lem/legit::*parent-window*)
-       (makunbound 'lem/legit::*parent-window*))
-     ,@body))
+  `(call-with-legit-variables-unbound (lambda () ,@body)))
 
 (defun cleanup-legit-windows ()
   "Clean up legit windows safely, switching away from them before deletion."
@@ -32,30 +39,33 @@
                (not (lem:deleted-window-p lem/legit::*source-window*)))
       (lem:delete-window lem/legit::*source-window*))))
 
+(defun call-with-temp-git-repo (function)
+  "Call FUNCTION in a temporary git repository."
+  (let ((temp-dir (uiop:ensure-directory-pathname
+                   (format nil "~A/lem-test-~A/"
+                           (uiop:temporary-directory)
+                           (get-universal-time)))))
+    (unwind-protect
+         (progn
+           (ensure-directories-exist temp-dir)
+           (uiop:with-current-directory (temp-dir)
+             ;; Initialize git repo
+             (uiop:run-program '("git" "init") :ignore-error-status t)
+             (uiop:run-program '("git" "config" "user.email" "test@test.com") :ignore-error-status t)
+             (uiop:run-program '("git" "config" "user.name" "Test") :ignore-error-status t)
+             ;; Create initial commit
+             (with-open-file (s (merge-pathnames "README.md" temp-dir)
+                                :direction :output :if-exists :supersede)
+               (write-string "# Test" s))
+             (uiop:run-program '("git" "add" ".") :ignore-error-status t)
+             (uiop:run-program '("git" "commit" "-m" "Initial commit") :ignore-error-status t)
+             (funcall function)))
+      ;; Cleanup
+      (uiop:delete-directory-tree temp-dir :validate t :if-does-not-exist :ignore))))
+
 (defmacro with-temp-git-repo (&body body)
   "Execute BODY in a temporary git repository."
-  (let ((temp-dir (gensym "TEMP-DIR")))
-    `(let ((,temp-dir (uiop:ensure-directory-pathname
-                       (format nil "~A/lem-test-~A/"
-                               (uiop:temporary-directory)
-                               (get-universal-time)))))
-       (unwind-protect
-            (progn
-              (ensure-directories-exist ,temp-dir)
-              (uiop:with-current-directory (,temp-dir)
-                ;; Initialize git repo
-                (uiop:run-program '("git" "init") :ignore-error-status t)
-                (uiop:run-program '("git" "config" "user.email" "test@test.com") :ignore-error-status t)
-                (uiop:run-program '("git" "config" "user.name" "Test") :ignore-error-status t)
-                ;; Create initial commit
-                (with-open-file (s (merge-pathnames "README.md" ,temp-dir)
-                                   :direction :output :if-exists :supersede)
-                  (write-string "# Test" s))
-                (uiop:run-program '("git" "add" ".") :ignore-error-status t)
-                (uiop:run-program '("git" "commit" "-m" "Initial commit") :ignore-error-status t)
-                ,@body))
-         ;; Cleanup
-         (uiop:delete-directory-tree ,temp-dir :validate t :if-does-not-exist :ignore)))))
+  `(call-with-temp-git-repo (lambda () ,@body)))
 
 ;;; Tests for legit-status-active-p
 

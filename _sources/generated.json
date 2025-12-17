@@ -61,7 +61,7 @@
     },
     "micros": {
         "cargoLocks": null,
-        "date": "2025-08-13",
+        "date": "2025-12-17",
         "extract": null,
         "name": "micros",
         "passthru": null,
@@ -71,13 +71,13 @@
             "fetchSubmodules": false,
             "leaveDotGit": false,
             "name": null,
-            "rev": "e1d3857400a9bf7d1c6c2852d9c7017a0dc52217",
-            "sha256": "sha256-NryjqfihHjRo4thBLmdeIaZuCNBFFWVDze55KD6nxrY=",
+            "rev": "2eca5500084632f47bf9919c50d22c96de7e745e",
+            "sha256": "sha256-DiAA1hQedC/9xpLY5+qEiKMeUzNECfi0FqhdnwVeOm0=",
             "sparseCheckout": [],
             "type": "git",
             "url": "https://github.com/lem-project/micros"
         },
-        "version": "e1d3857400a9bf7d1c6c2852d9c7017a0dc52217"
+        "version": "2eca5500084632f47bf9919c50d22c96de7e745e"
     },
     "webview": {
         "cargoLocks": null,

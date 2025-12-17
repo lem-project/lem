@@ -3,14 +3,15 @@
   (:import-from #:call-graph
                 #:call-graph-nodes
                 #:graph-node-source-location)
-  (:import-from #:lem-living-canvas/cl-provider
+  (:import-from #:lem-living-canvas/micros-cl-provider
                 #:analyze-package
                 #:analyze-file
-                #:analyze-system
-                #:get-source-location)
+                #:analyze-system)
   (:import-from #:lem-living-canvas/buffer
                 #:canvas-buffer
                 #:make-canvas-buffer)
+  (:import-from #:lem-lisp-mode/internal
+                #:check-connection)
   (:export #:living-canvas
            #:living-canvas-current-file
            #:living-canvas-system
@@ -121,13 +122,8 @@ Uses pop-to-buffer to display the source, then returns focus to canvas."
       (return-from show-node-source-popup))
     ;; Clear previous highlight
     (clear-highlight-overlay)
-    (let ((location (or (get-cached-source-location node-id)
-                        (let ((symbol (parse-node-id node-id)))
-                          (when symbol
-                            (let ((loc (get-source-location symbol)))
-                              (when loc
-                                (cache-source-location node-id loc)
-                                loc)))))))
+    ;; Use cached location (populated when graph is created via micros RPC)
+    (let ((location (get-cached-source-location node-id)))
       (when location
         (destructuring-bind (file . line) location
           (when (and file (probe-file file))
@@ -155,25 +151,17 @@ Uses pop-to-buffer to display the source, then returns focus to canvas."
 
 (defun jump-to-node-source (node-id)
   "Jump to the source location of a node.
-Uses cached source locations from call graph analysis, falling back to
-runtime introspection if needed."
+Uses cached source locations from call graph analysis (populated via micros RPC)."
   (let ((cached (get-cached-source-location node-id)))
     (if cached
         (destructuring-bind (file . line) cached
-          (when (probe-file file)
-            (lem:find-file file)
-            (lem:goto-line line)
-            (lem:message "Jumped to ~A" node-id)))
-        (let ((symbol (parse-node-id node-id)))
-          (when symbol
-            (let ((location (get-source-location symbol)))
-              (when location
-                (cache-source-location node-id location)
-                (destructuring-bind (file . line) location
-                  (when (probe-file file)
-                    (lem:find-file file)
-                    (lem:goto-line line)
-                    (lem:message "Jumped to ~A" node-id))))))))))
+          (if (probe-file file)
+              (progn
+                (lem:find-file file)
+                (lem:goto-line (or line 1))
+                (lem:message "Jumped to ~A" node-id))
+              (lem:message "Source file not found: ~A" file)))
+        (lem:message "No source location cached for ~A" node-id))))
 
 ;;; JSON-RPC Method Registration
 
@@ -216,7 +204,9 @@ Called when lem-server is available (WebView frontend)."
   "Display a function call graph for a package as an interactive canvas.
 Double-click a node to jump to its source code.
 Single-click to see function details.
-Drag nodes to rearrange the layout."
+Drag nodes to rearrange the layout.
+Requires a Lisp connection (via micros)."
+  (check-connection)
   (let ((pkg (find-package (string-upcase package-name))))
     (unless pkg
       (lem:editor-error "Package not found: ~A" package-name))
@@ -240,7 +230,9 @@ Drag nodes to rearrange the layout."
 
 (lem:define-command living-canvas-current-file () ()
   "Display a call graph for the current file.
-Only shows functions defined in this file."
+Only shows functions defined in this file.
+Requires a Lisp connection (via micros)."
+  (check-connection)
   (let* ((buffer (lem:current-buffer))
          (filename (lem:buffer-filename buffer)))
     (unless filename
@@ -269,7 +261,9 @@ Only shows functions defined in this file."
 (lem:define-command living-canvas-system (system-name) ((:string "System: "))
   "Display a function call graph for an ASDF system.
 Shows all functions defined in the system and their call relationships,
-including cross-package calls within the system."
+including cross-package calls within the system.
+Requires a Lisp connection (via micros)."
+  (check-connection)
   (let ((system (asdf:find-system system-name nil)))
     (unless system
       (lem:editor-error "System not found: ~A" system-name))

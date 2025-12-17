@@ -8,6 +8,6 @@
                "lem-lisp-mode"
                "yason")
   :serial t
-  :components ((:file "cl-provider")
+  :components ((:file "micros-cl-provider")
                (:file "buffer")
                (:file "living-canvas")))

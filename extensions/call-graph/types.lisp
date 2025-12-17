@@ -1,4 +1,4 @@
-(in-package :call-graph)
+(in-package #:call-graph)
 
 ;;; Data Structures
 ;;;

@@ -1,6 +1,6 @@
-(defpackage :call-graph/tests/provider
-  (:use :cl :rove :call-graph))
-(in-package :call-graph/tests/provider)
+(defpackage #:call-graph/tests/provider
+  (:use #:cl #:rove #:call-graph))
+(in-package #:call-graph/tests/provider)
 
 ;;; Test provider implementation for testing the protocol
 

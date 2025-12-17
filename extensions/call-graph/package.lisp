@@ -1,5 +1,5 @@
-(defpackage :call-graph
-  (:use :cl)
+(defpackage #:call-graph
+  (:use #:cl)
   (:export
    ;; Data structures
    #:graph-node

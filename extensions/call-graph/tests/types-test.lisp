@@ -1,6 +1,6 @@
-(defpackage :call-graph/tests/types
-  (:use :cl :rove :call-graph))
-(in-package :call-graph/tests/types)
+(defpackage #:call-graph/tests/types
+  (:use #:cl #:rove #:call-graph))
+(in-package #:call-graph/tests/types)
 
 ;;; graph-node tests
 

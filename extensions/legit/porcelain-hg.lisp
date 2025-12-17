@@ -2,7 +2,8 @@
     (:use :cl
      :lem/porcelain)
   (:shadow :push)
-  (:import-from :trivial-types)
+  (:import-from :trivial-types
+                :proper-list)
   (:export :hg-project-p)
   (:documentation "Implements the porcelain interface for hg-based repos."))
 

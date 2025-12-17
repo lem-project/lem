@@ -2,7 +2,8 @@
   (:use :cl
     ;; let's import all the classes and methods defined in the main porcelain:
     :lem/porcelain)
-  (:import-from :trivial-types)
+  (:import-from :trivial-types
+                :proper-list)
   (:export :git-project-p)
   (:documentation "Implements the porcelain interface for git-based repos."))
 

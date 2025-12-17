@@ -1,16 +1,19 @@
 (in-package :lem-lisp-mode/internal)
 
-(defvar *file-conversion-map* '()
+(defvar *file-conversion-map*
+  '(("/nix/store/*-source-patched/" . "./"))
   "This variable is an alist for converting remote file names to local file names.
 Uses include mapping files in docker to files in the local environment,
-or mapping Nix store paths to local .qlot directories.
+or mapping Nix store paths to local project directories.
 
-For example, set the following for Docker:
+Default: Maps Nix store source-patched paths to current project directory.
+
+For Docker environment:
 \(setf *file-conversion-map*
       `((\"/app/\" .
          ,(merge-pathnames \"common-lisp/my-project/\" (user-homedir-pathname)))))
 
-For Nix environment with glob patterns:
+For custom Nix patterns:
 \(setf *file-conversion-map*
       '((\"/nix/store/*-alexandria-*/\" . \"~/.qlot/dists/quicklisp/software/alexandria-*/\")
         (\"/nix/store/*-bordeaux-threads-*/\" . \"~/.qlot/dists/quicklisp/software/bordeaux-threads-*/\")))

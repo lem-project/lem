@@ -207,26 +207,24 @@ Single-click to see function details.
 Drag nodes to rearrange the layout.
 Requires a Lisp connection (via micros)."
   (check-connection)
-  (let ((pkg (find-package (string-upcase package-name))))
-    (unless pkg
-      (lem:editor-error "Package not found: ~A" package-name))
-    (let* ((source-buffer (lem:current-buffer))
-           (graph (analyze-package pkg))
-           (node-count (hash-table-count (call-graph-nodes graph))))
-      (cond
-        ((zerop node-count)
-         (lem:message "No functions found in package ~A" package-name))
-        (t
-         ;; Pre-populate cache for fast source navigation
-         (populate-source-location-cache graph)
-         (let ((canvas-buffer (make-canvas-buffer
-                               (format nil "*Canvas: ~A*" package-name)
-                               source-buffer
-                               graph)))
-           (lem:pop-to-buffer canvas-buffer)
-           (lem:change-buffer-mode canvas-buffer 'living-canvas-mode)
-           (lem:message "Living Canvas: ~D functions in ~A"
-                        node-count package-name)))))))
+  ;; Package validation happens on the connected runtime via micros
+  (let* ((source-buffer (lem:current-buffer))
+         (graph (analyze-package (string-upcase package-name)))
+         (node-count (hash-table-count (call-graph-nodes graph))))
+    (cond
+      ((zerop node-count)
+       (lem:message "No functions found in package ~A" package-name))
+      (t
+       ;; Pre-populate cache for fast source navigation
+       (populate-source-location-cache graph)
+       (let ((canvas-buffer (make-canvas-buffer
+                             (format nil "*Canvas: ~A*" package-name)
+                             source-buffer
+                             graph)))
+         (lem:pop-to-buffer canvas-buffer)
+         (lem:change-buffer-mode canvas-buffer 'living-canvas-mode)
+         (lem:message "Living Canvas: ~D functions in ~A"
+                      node-count package-name))))))
 
 (lem:define-command living-canvas-current-file () ()
   "Display a call graph for the current file.
@@ -264,25 +262,23 @@ Shows all functions defined in the system and their call relationships,
 including cross-package calls within the system.
 Requires a Lisp connection (via micros)."
   (check-connection)
-  (let ((system (asdf:find-system system-name nil)))
-    (unless system
-      (lem:editor-error "System not found: ~A" system-name))
-    (let* ((source-buffer (lem:current-buffer))
-           (graph (analyze-system system-name))
-           (node-count (hash-table-count (call-graph-nodes graph))))
-      (cond
-        ((zerop node-count)
-         (lem:message "No functions found in system ~A" system-name))
-        (t
-         (populate-source-location-cache graph)
-         (let ((canvas-buffer (make-canvas-buffer
-                               (format nil "*Canvas: ~A*" system-name)
-                               source-buffer
-                               graph)))
-           (lem:pop-to-buffer canvas-buffer)
-           (lem:change-buffer-mode canvas-buffer 'living-canvas-mode)
-           (lem:message "Living Canvas: ~D functions in system ~A"
-                        node-count system-name)))))))
+  ;; System validation happens on the connected runtime via micros
+  (let* ((source-buffer (lem:current-buffer))
+         (graph (analyze-system system-name))
+         (node-count (hash-table-count (call-graph-nodes graph))))
+    (cond
+      ((zerop node-count)
+       (lem:message "No functions found in system ~A" system-name))
+      (t
+       (populate-source-location-cache graph)
+       (let ((canvas-buffer (make-canvas-buffer
+                             (format nil "*Canvas: ~A*" system-name)
+                             source-buffer
+                             graph)))
+         (lem:pop-to-buffer canvas-buffer)
+         (lem:change-buffer-mode canvas-buffer 'living-canvas-mode)
+         (lem:message "Living Canvas: ~D functions in system ~A"
+                      node-count system-name))))))
 
 (lem:define-command living-canvas-refresh () ()
   "Refresh the current canvas view"

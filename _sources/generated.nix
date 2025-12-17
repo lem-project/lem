@@ -45,15 +45,15 @@
   };
   micros = {
     pname = "micros";
-    version = "da575de07240c37fd7f6586feb95e30cc569e92f";
+    version = "4476dee561b7557dcb3f8acc720b21ebfebbb0e5";
     src = fetchgit {
       url = "https://github.com/lem-project/micros";
-      rev = "da575de07240c37fd7f6586feb95e30cc569e92f";
+      rev = "4476dee561b7557dcb3f8acc720b21ebfebbb0e5";
       fetchSubmodules = false;
       deepClone = false;
       leaveDotGit = false;
       sparseCheckout = [ ];
-      sha256 = "sha256-JBGMVDEfbH96ag3OlnU49hpit9xydFQP4y8H08W/D4g=";
+      sha256 = "sha256-Ifb2I1O2FdOLWLFmb86yNd7dEyeBbN8oKtMSSm7uMWE=";
     };
     date = "2025-12-17";
   };

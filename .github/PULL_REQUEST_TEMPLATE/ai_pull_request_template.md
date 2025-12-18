@@ -5,7 +5,7 @@
 - [ ] Yes, AI-assisted (Human-led logic, AI-assisted implementation).
 - [ ] Yes, AI-generated (Logic primarily derived from prompt/vibe).
 
-**Tooling Used:** (e.g., Claude, GPT-4, Code-Contractor, Copilot)
+**Tooling Used:** (e.g., Claude Code, Codex, Gemini, Copilot)
 
 ---
 

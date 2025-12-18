@@ -14,7 +14,11 @@
    #:outgoing-call-to-edge-alist
    ;; Utilities
    #:buffer-has-call-hierarchy-p
-   #:make-node-id-from-item))
+   #:make-node-id-from-item
+   ;; Document symbol utilities
+   #:document-symbol-to-position
+   #:document-symbol-is-callable-p
+   #:flatten-document-symbols))
 (in-package #:lem-living-canvas/lsp-call-hierarchy)
 
 ;;; LSP Call Hierarchy Wrapper

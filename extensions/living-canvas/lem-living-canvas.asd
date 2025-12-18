@@ -11,6 +11,7 @@
   :serial t
   :components ((:file "micros-cl-provider")
                (:file "lsp-call-hierarchy")
+               (:file "lsp-provider")
                (:file "buffer")
                (:file "living-canvas"))
   :in-order-to ((test-op (test-op "lem-living-canvas/tests"))))
@@ -20,6 +21,7 @@
   :depends-on ("lem-living-canvas" "rove")
   :pathname "tests"
   :components ((:file "micros-cl-provider-test")
-               (:file "lsp-call-hierarchy-test"))
+               (:file "lsp-call-hierarchy-test")
+               (:file "lsp-provider-test"))
   :perform (test-op (op c)
                     (symbol-call :rove :run c)))

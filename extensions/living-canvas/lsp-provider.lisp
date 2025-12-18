@@ -31,8 +31,16 @@ Returns a list of DocumentSymbol objects."
 
 Returns a list of CallHierarchyItem objects suitable for use with
 call-graph-lsp:build-call-graph-from-hierarchy."
-  (let ((items '()))
-    (dolist (doc-symbol (collect-callable-symbols buffer))
+  (let* ((items '())
+         (callable-symbols (collect-callable-symbols buffer))
+         (total (length callable-symbols))
+         (current 0))
+    (lem:message "Preparing ~D symbols..." total)
+    (dolist (doc-symbol callable-symbols)
+      (incf current)
+      (when (zerop (mod current 5))
+        (lem:message "Preparing symbols... ~D/~D" current total)
+        (lem:redraw-display))
       (handler-case
           (let ((point (lsp-ch:document-symbol-to-position doc-symbol buffer)))
             (when-let ((prepared (lsp-ch:prepare-call-hierarchy buffer point)))
@@ -84,7 +92,8 @@ This function uses the LSP Call Hierarchy API via call-graph-lsp."
      :include-outgoing include-outgoing
      :progress-fn (lambda (current total)
                     (when (zerop (mod current 5))
-                      (lem:message "Analyzing symbols... ~D/~D" current total))))))
+                      (lem:message "Analyzing calls... ~D/~D" current total)
+                      (lem:redraw-display))))))
 
 ;;; ============================================================
 ;;; Task C-2: LSP Provider Class

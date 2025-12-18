@@ -26,17 +26,38 @@ Returns a list of DocumentSymbol objects."
     (let ((all-symbols (lsp-ch:flatten-document-symbols symbols)))
       (remove-if-not #'lsp-ch:document-symbol-is-callable-p all-symbols))))
 
+(defvar *lsp-connection-error* nil
+  "Flag set when LSP connection error occurs.")
+
+(defvar *max-symbols-to-analyze* 30
+  "Maximum number of symbols to analyze. Set to nil for no limit.")
+
 (defun prepare-call-hierarchy-items (buffer)
   "Collect CallHierarchyItem objects for all callable symbols in BUFFER.
 
 Returns a list of CallHierarchyItem objects suitable for use with
 call-graph-lsp:build-call-graph-from-hierarchy."
+  (setf *lsp-connection-error* nil)
   (let* ((items '())
-         (callable-symbols (collect-callable-symbols buffer))
+         (all-callable-symbols (collect-callable-symbols buffer))
+         (callable-symbols (if (and *max-symbols-to-analyze*
+                                    (> (length all-callable-symbols) *max-symbols-to-analyze*))
+                               (progn
+                                 (lem:message "Limiting to ~D of ~D symbols"
+                                              *max-symbols-to-analyze*
+                                              (length all-callable-symbols))
+                                 (subseq all-callable-symbols 0 *max-symbols-to-analyze*))
+                               all-callable-symbols))
          (total (length callable-symbols))
-         (current 0))
+         (current 0)
+         (error-count 0))
     (lem:message "Preparing ~D symbols..." total)
     (dolist (doc-symbol callable-symbols)
+      ;; Abort if too many errors (likely connection lost)
+      (when (> error-count 3)
+        (lem:message "Too many LSP errors, aborting...")
+        (setf *lsp-connection-error* t)
+        (return))
       (incf current)
       (when (zerop (mod current 5))
         (lem:message "Preparing symbols... ~D/~D" current total)
@@ -44,8 +65,12 @@ call-graph-lsp:build-call-graph-from-hierarchy."
       (handler-case
           (let ((point (lsp-ch:document-symbol-to-position doc-symbol buffer)))
             (when-let ((prepared (lsp-ch:prepare-call-hierarchy buffer point)))
-              (push (elt prepared 0) items)))
-        (error () nil)))
+              (push (elt prepared 0) items)
+              (setf error-count 0)))  ; Reset on success
+        (error (e)
+          (incf error-count)
+          (when (> error-count 3)
+            (lem:message "LSP connection error: ~A" e)))))
     (nreverse items)))
 
 (defun make-safe-incoming-calls-fn ()
@@ -79,9 +104,15 @@ This function uses the LSP Call Hierarchy API via call-graph-lsp."
     (return-from collect-file-call-hierarchy (make-call-graph)))
   (let ((items (prepare-call-hierarchy-items buffer))
         (total 0))
+    ;; Check for connection errors during preparation
+    (when *lsp-connection-error*
+      (lem:message "LSP connection lost. Showing partial results.")
+      (lem:redraw-display))
     (setf total (length items))
     (when (zerop total)
-      (return-from collect-file-call-hierarchy (make-call-graph)))
+      (if *lsp-connection-error*
+          (lem:editor-error "LSP connection lost during analysis")
+          (return-from collect-file-call-hierarchy (make-call-graph))))
     (lem:message "Analyzing ~D symbols..." total)
     ;; Use call-graph-lsp to build the graph
     (cg-lsp:build-call-graph-from-hierarchy

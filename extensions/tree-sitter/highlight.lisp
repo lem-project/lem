@@ -87,6 +87,61 @@
 ;; Errors
 (define-capture-mapping "error" 'lem:compiler-note-attribute)
 
+;;;; Markdown/Document-specific captures
+;; Headers
+(define-capture-mapping "markup.heading" 'lem:document-header1-attribute)
+(define-capture-mapping "markup.heading.1" 'lem:document-header1-attribute)
+(define-capture-mapping "markup.heading.2" 'lem:document-header2-attribute)
+(define-capture-mapping "markup.heading.3" 'lem:document-header3-attribute)
+(define-capture-mapping "markup.heading.4" 'lem:document-header4-attribute)
+(define-capture-mapping "markup.heading.5" 'lem:document-header5-attribute)
+(define-capture-mapping "markup.heading.6" 'lem:document-header6-attribute)
+;; nvim-treesitter conventions
+(define-capture-mapping "text.title" 'lem:document-header1-attribute)
+(define-capture-mapping "text.title.1" 'lem:document-header1-attribute)
+(define-capture-mapping "text.title.2" 'lem:document-header2-attribute)
+(define-capture-mapping "text.title.3" 'lem:document-header3-attribute)
+(define-capture-mapping "text.title.4" 'lem:document-header4-attribute)
+(define-capture-mapping "text.title.5" 'lem:document-header5-attribute)
+(define-capture-mapping "text.title.6" 'lem:document-header6-attribute)
+
+;; Text formatting
+(define-capture-mapping "markup.bold" 'lem:document-bold-attribute)
+(define-capture-mapping "markup.italic" 'lem:document-italic-attribute)
+(define-capture-mapping "markup.underline" 'lem:document-underline-attribute)
+(define-capture-mapping "text.strong" 'lem:document-bold-attribute)
+(define-capture-mapping "text.emphasis" 'lem:document-italic-attribute)
+
+;; Code blocks and inline code
+(define-capture-mapping "markup.raw" 'lem:document-code-block-attribute)
+(define-capture-mapping "markup.raw.block" 'lem:document-code-block-attribute)
+(define-capture-mapping "markup.raw.inline" 'lem:document-inline-code-attribute)
+(define-capture-mapping "text.literal" 'lem:document-code-block-attribute)
+
+;; Links and references
+(define-capture-mapping "markup.link" 'lem:document-link-attribute)
+(define-capture-mapping "markup.link.url" 'lem:document-link-attribute)
+(define-capture-mapping "markup.link.text" 'lem:syntax-string-attribute)
+(define-capture-mapping "text.uri" 'lem:document-link-attribute)
+(define-capture-mapping "text.reference" 'lem:document-link-attribute)
+
+;; Lists
+(define-capture-mapping "markup.list" 'lem:document-list-attribute)
+(define-capture-mapping "markup.list.checked" 'lem:document-task-list-attribute)
+(define-capture-mapping "markup.list.unchecked" 'lem:document-task-list-attribute)
+
+;; Block quotes
+(define-capture-mapping "markup.quote" 'lem:document-blockquote-attribute)
+
+;; Tables
+(define-capture-mapping "markup.table" 'lem:document-table-attribute)
+
+;; Metadata (frontmatter)
+(define-capture-mapping "markup.meta" 'lem:document-metadata-attribute)
+
+;; Punctuation special (for markdown markers)
+(define-capture-mapping "punctuation.special" 'lem:syntax-builtin-attribute)
+
 ;;;; Query Loading
 
 (defun load-highlight-query (language query-path)

@@ -166,6 +166,7 @@
           # Tree-sitter language grammars
           tree-sitter-grammars = {
             json = pkgs.tree-sitter-grammars.tree-sitter-json;
+            markdown = pkgs.tree-sitter-grammars.tree-sitter-markdown;
             # Add more languages here as needed:
             # javascript = pkgs.tree-sitter-grammars.tree-sitter-javascript;
             # python = pkgs.tree-sitter-grammars.tree-sitter-python;
@@ -314,7 +315,7 @@
               mkdir -p $out/bin
               install lem $out/bin
               wrapProgram $out/bin/lem \
-                --prefix LD_LIBRARY_PATH : "$LD_LIBRARY_PATH:${tree-sitter-grammars.json}" \
+                --prefix LD_LIBRARY_PATH : "$LD_LIBRARY_PATH:${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}" \
                 --prefix DYLD_LIBRARY_PATH : "$DYLD_LIBRARY_PATH"
               runHook postInstall
             '';
@@ -345,7 +346,7 @@
               mkdir -p $out/bin
               install lem $out/bin
               wrapProgram $out/bin/lem \
-                --prefix LD_LIBRARY_PATH : "$LD_LIBRARY_PATH:${tree-sitter-grammars.json}" \
+                --prefix LD_LIBRARY_PATH : "$LD_LIBRARY_PATH:${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}" \
                 --prefix DYLD_LIBRARY_PATH : "$DYLD_LIBRARY_PATH"
               runHook postInstall
             '';
@@ -403,12 +404,12 @@
                     --set FONTCONFIG_FILE "${pkgs.makeFontsConf { fontDirectories = [ pkgs.dejavu_fonts ]; }}" \
                     --prefix XDG_DATA_DIRS : "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}" \
                     --prefix XDG_DATA_DIRS : "${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}" \
-                    --prefix LD_LIBRARY_PATH : "${tree-sitter-grammars.json}"
+                    --prefix LD_LIBRARY_PATH : "${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}"
                 ''
               else
                 ''
                   wrapProgram $out/bin/lem \
-                    --prefix LD_LIBRARY_PATH : "${tree-sitter-grammars.json}"
+                    --prefix LD_LIBRARY_PATH : "${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}"
                 '';
           });
         in
@@ -463,6 +464,7 @@
               # Tree-sitter support
               tree-sitter
               pkgs.tree-sitter-grammars.tree-sitter-json
+              pkgs.tree-sitter-grammars.tree-sitter-markdown
 
               # Code formatting
               nixfmt-rfc-style
@@ -485,6 +487,7 @@
               pkgs.tree-sitter
               ts-wrapper
               pkgs.tree-sitter-grammars.tree-sitter-json
+              pkgs.tree-sitter-grammars.tree-sitter-markdown
             ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
               pkgs.webkitgtk_4_1
               pkgs.gtk3

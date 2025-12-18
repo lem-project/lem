@@ -9,7 +9,8 @@
                (:file "highlight")
                (:file "integration")
                (:module "languages"
-                :components ((:file "json"))))
+                :components ((:file "json")
+                             (:file "markdown"))))
   :in-order-to ((test-op (test-op "lem-tree-sitter/tests"))))
 
 (defsystem "lem-tree-sitter/tests"

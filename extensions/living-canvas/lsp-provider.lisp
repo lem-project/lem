@@ -180,91 +180,149 @@ This function uses the LSP Call Hierarchy API via call-graph-lsp."
                       (lem:redraw-display))))))
 
 ;;; ============================================================
-;;; Async Call Hierarchy Collection
+;;; Async Call Hierarchy Collection (Idle Timer Based)
 ;;; ============================================================
+;;;
+;;; LSP requests must run on the main thread (not thread-safe).
+;;; We use idle timers to process symbols in batches, yielding
+;;; between batches to keep the UI responsive.
 
-(defun prepare-call-hierarchy-items-throttled (buffer)
-  "Prepare call hierarchy items with throttling between requests.
+(defvar *lsp-batch-size* 5
+  "Number of items to process per timer tick.")
 
-Unlike `prepare-call-hierarchy-items`, this function:
-- Has no symbol limit
-- Inserts delays between LSP requests
-- Supports cancellation via `*lsp-analysis-cancel-flag*`"
-  (setf *lsp-connection-error* nil)
-  (let* ((items '())
-         (callable-symbols (collect-callable-symbols buffer))
-         (total (length callable-symbols))
-         (current 0)
-         (error-count 0))
-    (dolist (doc-symbol callable-symbols)
-      ;; Check for cancellation
-      (when *lsp-analysis-cancel-flag*
-        (error "Analysis cancelled"))
-      ;; Abort if too many consecutive errors
-      (when (> error-count 3)
-        (setf *lsp-connection-error* t)
-        (return))
-      (incf current)
-      ;; Progress update every 5 items
-      (when (zerop (mod current 5))
-        (lem:send-event
-         (lambda ()
-           (lem:message "Preparing symbols... ~D/~D" current total)
-           (lem:redraw-display))))
-      ;; Throttle requests
-      (sleep (/ *lsp-request-delay-ms* 1000.0))
-      ;; Make LSP request with retry
-      (let ((result (retry-with-backoff
-                     (lambda ()
-                       (let ((point (lsp-ch:document-symbol-to-position doc-symbol buffer)))
-                         (lsp-ch:prepare-call-hierarchy buffer point))))))
-        (cond
-          (result
-           (push (elt result 0) items)
-           (setf error-count 0))
-          (t
-           (incf error-count)))))
-    (nreverse items)))
+(defvar *lsp-async-timer* nil
+  "Current idle timer for async processing.")
 
-(defun collect-file-call-hierarchy-throttled (buffer &key include-incoming include-outgoing)
-  "Collect call hierarchy with throttled requests and cancellation support.
+(defstruct lsp-async-state
+  "State for incremental LSP analysis."
+  buffer
+  callback
+  include-incoming
+  include-outgoing
+  ;; Phase 1: Preparing items
+  doc-symbols           ; remaining document symbols to process
+  prepared-items        ; collected CallHierarchyItem objects
+  ;; Phase 2: Building graph (handled by build-call-graph)
+  phase                 ; :preparing or :building
+  total-symbols
+  current-symbol
+  error-count)
 
-This is the internal function used by async collection."
-  (let ((items (prepare-call-hierarchy-items-throttled buffer)))
-    ;; Check for cancellation
-    (when *lsp-analysis-cancel-flag*
-      (error "Analysis cancelled"))
-    ;; Check for connection errors during preparation
-    (when *lsp-connection-error*
-      (lem:send-event
-       (lambda ()
-         (lem:message "LSP connection issues. Showing partial results."))))
-    (when (zerop (length items))
-      (return-from collect-file-call-hierarchy-throttled (make-call-graph)))
-    ;; Build graph with throttled callbacks
-    (cg-lsp:build-call-graph-from-hierarchy
-     items
-     (make-throttled-incoming-calls-fn)
-     (make-throttled-outgoing-calls-fn)
-     :include-incoming include-incoming
-     :include-outgoing include-outgoing
-     :progress-fn (lambda (current total)
-                    (when *lsp-analysis-cancel-flag*
-                      (error "Analysis cancelled"))
-                    (when (zerop (mod current 5))
-                      (lem:send-event
-                       (lambda ()
-                         (lem:message "Analyzing calls... ~D/~D" current total)
-                         (lem:redraw-display))))))))
+(defvar *lsp-async-state* nil
+  "Current async analysis state.")
+
+(defun lsp-async-cleanup ()
+  "Clean up async analysis state."
+  (when *lsp-async-timer*
+    (lem:stop-timer *lsp-async-timer*)
+    (setf *lsp-async-timer* nil))
+  (setf *lsp-async-state* nil
+        *lsp-analysis-in-progress* nil))
+
+(defun lsp-async-tick ()
+  "Process one batch of LSP analysis. Called by idle timer."
+  (when (or (null *lsp-async-state*)
+            *lsp-analysis-cancel-flag*)
+    ;; Cancelled or no state
+    (let ((callback (and *lsp-async-state*
+                         (lsp-async-state-callback *lsp-async-state*))))
+      (lsp-async-cleanup)
+      (when callback
+        (funcall callback nil (make-condition 'simple-error
+                                              :format-control "Analysis cancelled"))))
+    (return-from lsp-async-tick))
+
+  (let ((state *lsp-async-state*))
+    (case (lsp-async-state-phase state)
+      (:preparing
+       (lsp-async-prepare-batch state))
+      (:building
+       (lsp-async-build-graph state)))))
+
+(defun lsp-async-prepare-batch (state)
+  "Process a batch of document symbols to prepare CallHierarchyItems."
+  (let ((buffer (lsp-async-state-buffer state))
+        (remaining (lsp-async-state-doc-symbols state))
+        (items (lsp-async-state-prepared-items state))
+        (error-count (lsp-async-state-error-count state))
+        (processed 0))
+    ;; Process up to *lsp-batch-size* symbols
+    (loop :while (and remaining (< processed *lsp-batch-size*))
+          :do
+             ;; Too many consecutive errors - abort
+             (when (> error-count 3)
+               (setf *lsp-connection-error* t)
+               (setf (lsp-async-state-doc-symbols state) nil)
+               (return))
+             (let ((doc-symbol (pop remaining)))
+               (incf processed)
+               (incf (lsp-async-state-current-symbol state))
+               (handler-case
+                   (let ((point (lsp-ch:document-symbol-to-position doc-symbol buffer)))
+                     (when-let ((prepared (lsp-ch:prepare-call-hierarchy buffer point)))
+                       (push (elt prepared 0) items)
+                       (setf error-count 0)))
+                 (error ()
+                   (incf error-count)))))
+    ;; Update state
+    (setf (lsp-async-state-doc-symbols state) remaining
+          (lsp-async-state-prepared-items state) items
+          (lsp-async-state-error-count state) error-count)
+    ;; Progress update
+    (lem:message "Preparing symbols... ~D/~D"
+                 (lsp-async-state-current-symbol state)
+                 (lsp-async-state-total-symbols state))
+    (lem:redraw-display)
+    ;; Check if done with preparation
+    (when (null remaining)
+      (setf (lsp-async-state-prepared-items state) (nreverse items)
+            (lsp-async-state-phase state) :building))))
+
+(defun lsp-async-build-graph (state)
+  "Build the call graph from prepared items."
+  ;; Stop the timer - we'll do this synchronously but with progress
+  (when *lsp-async-timer*
+    (lem:stop-timer *lsp-async-timer*)
+    (setf *lsp-async-timer* nil))
+
+  (let ((items (lsp-async-state-prepared-items state))
+        (callback (lsp-async-state-callback state))
+        (include-incoming (lsp-async-state-include-incoming state))
+        (include-outgoing (lsp-async-state-include-outgoing state)))
+    (handler-case
+        (let ((graph
+                (if (zerop (length items))
+                    (make-call-graph)
+                    (cg-lsp:build-call-graph-from-hierarchy
+                     items
+                     (make-safe-incoming-calls-fn)
+                     (make-safe-outgoing-calls-fn)
+                     :include-incoming include-incoming
+                     :include-outgoing include-outgoing
+                     :progress-fn (lambda (current total)
+                                    (when *lsp-analysis-cancel-flag*
+                                      (error "Analysis cancelled"))
+                                    (when (zerop (mod current 5))
+                                      (lem:message "Analyzing calls... ~D/~D" current total)
+                                      (lem:redraw-display)))))))
+          (lsp-async-cleanup)
+          (funcall callback graph nil))
+      (error (e)
+        (lsp-async-cleanup)
+        (funcall callback nil e)))))
 
 (defun collect-file-call-hierarchy-async (buffer callback
                                           &key (include-incoming nil)
                                                (include-outgoing t))
-  "Analyze BUFFER in a background thread.
+  "Analyze BUFFER incrementally using idle timers.
 
-CALLBACK is called with (graph error) when complete, via send-event.
+CALLBACK is called with (graph error) when complete.
 The GRAPH argument is a call-graph structure on success, or NIL on error.
 The ERROR argument is NIL on success, or the error condition on failure.
+
+Analysis runs on the main thread in small batches, yielding between
+batches to keep the UI responsive. Use `*lsp-analysis-cancel-flag*`
+to cancel.
 
 Example:
   (collect-file-call-hierarchy-async
@@ -278,21 +336,36 @@ Example:
     (return-from collect-file-call-hierarchy-async))
   (when *lsp-analysis-in-progress*
     (error "Analysis already in progress"))
-  (setf *lsp-analysis-in-progress* t
-        *lsp-analysis-cancel-flag* nil)
-  (bt2:make-thread
-   (lambda ()
-     (handler-case
-         (let ((graph (collect-file-call-hierarchy-throttled
-                       buffer
-                       :include-incoming include-incoming
-                       :include-outgoing include-outgoing)))
-           (setf *lsp-analysis-in-progress* nil)
-           (lem:send-event (lambda () (funcall callback graph nil))))
-       (error (e)
-         (setf *lsp-analysis-in-progress* nil)
-         (lem:send-event (lambda () (funcall callback nil e))))))
-   :name "living-canvas-lsp-worker"))
+
+  ;; Get all callable symbols upfront
+  (let ((doc-symbols (collect-callable-symbols buffer)))
+    (when (zerop (length doc-symbols))
+      (funcall callback (make-call-graph) nil)
+      (return-from collect-file-call-hierarchy-async))
+
+    ;; Initialize state
+    (setf *lsp-analysis-in-progress* t
+          *lsp-analysis-cancel-flag* nil
+          *lsp-connection-error* nil
+          *lsp-async-state* (make-lsp-async-state
+                             :buffer buffer
+                             :callback callback
+                             :include-incoming include-incoming
+                             :include-outgoing include-outgoing
+                             :doc-symbols doc-symbols
+                             :prepared-items '()
+                             :phase :preparing
+                             :total-symbols (length doc-symbols)
+                             :current-symbol 0
+                             :error-count 0))
+
+    ;; Start idle timer
+    (lem:message "Starting analysis of ~D symbols..." (length doc-symbols))
+    (setf *lsp-async-timer*
+          (lem:start-timer (lem:make-idle-timer 'lsp-async-tick
+                                                :name "lsp-async-analysis")
+                           *lsp-request-delay-ms*
+                           :repeat t))))
 
 ;;; ============================================================
 ;;; Task C-2: LSP Provider Class

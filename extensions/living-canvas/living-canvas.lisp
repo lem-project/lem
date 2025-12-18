@@ -10,7 +10,10 @@
                 #:analyze-system)
   (:import-from #:lem-living-canvas/lsp-provider
                 #:lsp-call-hierarchy-provider
-                #:collect-file-call-hierarchy)
+                #:collect-file-call-hierarchy
+                #:collect-file-call-hierarchy-async
+                #:*lsp-analysis-in-progress*
+                #:*lsp-analysis-cancel-flag*)
   (:import-from #:lem-living-canvas/lsp-call-hierarchy
                 #:buffer-has-call-hierarchy-p)
   (:import-from #:lem-living-canvas/buffer
@@ -24,6 +27,7 @@
            #:living-canvas-refresh
            #:living-canvas-lsp
            #:living-canvas-lsp-full
+           #:living-canvas-lsp-cancel
            #:living-canvas-export-json))
 (in-package #:lem-living-canvas)
 
@@ -299,56 +303,76 @@ Requires a Lisp connection (via micros)."
       (t
        (lem:message "Not in a canvas buffer")))))
 
+(defun display-lsp-graph (source-buffer graph suffix)
+  "Display the analyzed call GRAPH in a canvas buffer.
+SUFFIX is added to the buffer name (e.g. \"LSP\" or \"LSP Full\")."
+  (let ((node-count (hash-table-count (call-graph-nodes graph))))
+    (cond
+      ((zerop node-count)
+       (lem:message "No callable symbols found in buffer"))
+      (t
+       (populate-source-location-cache graph)
+       (let* ((filename (or (lem:buffer-filename source-buffer) "untitled"))
+              (canvas-buffer (make-canvas-buffer
+                              (format nil "*Canvas: ~A (~A)*"
+                                      (file-namestring filename)
+                                      suffix)
+                              source-buffer
+                              graph)))
+         (lem:pop-to-buffer canvas-buffer)
+         (lem:change-buffer-mode canvas-buffer 'living-canvas-mode)
+         (lem:message "Living Canvas (~A): ~D functions" suffix node-count))))))
+
 (lem:define-command living-canvas-lsp () ()
   "Display a call graph for the current file using LSP Call Hierarchy.
-Shows outgoing calls only (faster). Use living-canvas-lsp-full for both directions.
-Works with any language that has an LSP server supporting Call Hierarchy."
+Shows outgoing calls only. Analysis runs in background to avoid freezing UI.
+Use living-canvas-lsp-full for both directions.
+Use living-canvas-lsp-cancel to abort a running analysis."
+  (when *lsp-analysis-in-progress*
+    (lem:editor-error "Analysis already in progress. Use M-x living-canvas-lsp-cancel to abort."))
   (let ((buffer (lem:current-buffer)))
     (unless (buffer-has-call-hierarchy-p buffer)
       (lem:editor-error "LSP Call Hierarchy not available for this buffer"))
-    (let* ((graph (collect-file-call-hierarchy buffer
-                                               :include-incoming nil
-                                               :include-outgoing t))
-           (node-count (hash-table-count (call-graph-nodes graph))))
-      (cond
-        ((zerop node-count)
-         (lem:message "No callable symbols found in buffer"))
-        (t
-         (populate-source-location-cache graph)
-         (let* ((filename (or (lem:buffer-filename buffer) "untitled"))
-                (canvas-buffer (make-canvas-buffer
-                                (format nil "*Canvas: ~A (LSP)*"
-                                        (file-namestring filename))
-                                buffer
-                                graph)))
-           (lem:pop-to-buffer canvas-buffer)
-           (lem:change-buffer-mode canvas-buffer 'living-canvas-mode)
-           (lem:message "Living Canvas (LSP): ~D functions" node-count)))))))
+    (lem:message "Starting LSP analysis (outgoing calls)...")
+    (collect-file-call-hierarchy-async
+     buffer
+     (lambda (graph error)
+       (cond
+         (error
+          (lem:message "Analysis failed: ~A" error))
+         (t
+          (display-lsp-graph buffer graph "LSP"))))
+     :include-incoming nil
+     :include-outgoing t)))
 
 (lem:define-command living-canvas-lsp-full () ()
   "Display a full call graph with both incoming and outgoing calls.
-This makes more LSP requests and may be slower. Use living-canvas-lsp for faster results."
+Analysis runs in background to avoid freezing UI.
+Use living-canvas-lsp-cancel to abort a running analysis."
+  (when *lsp-analysis-in-progress*
+    (lem:editor-error "Analysis already in progress. Use M-x living-canvas-lsp-cancel to abort."))
   (let ((buffer (lem:current-buffer)))
     (unless (buffer-has-call-hierarchy-p buffer)
       (lem:editor-error "LSP Call Hierarchy not available for this buffer"))
-    (let* ((graph (collect-file-call-hierarchy buffer
-                                               :include-incoming t
-                                               :include-outgoing t))
-           (node-count (hash-table-count (call-graph-nodes graph))))
-      (cond
-        ((zerop node-count)
-         (lem:message "No callable symbols found in buffer"))
-        (t
-         (populate-source-location-cache graph)
-         (let* ((filename (or (lem:buffer-filename buffer) "untitled"))
-                (canvas-buffer (make-canvas-buffer
-                                (format nil "*Canvas: ~A (LSP Full)*"
-                                        (file-namestring filename))
-                                buffer
-                                graph)))
-           (lem:pop-to-buffer canvas-buffer)
-           (lem:change-buffer-mode canvas-buffer 'living-canvas-mode)
-           (lem:message "Living Canvas (LSP Full): ~D functions" node-count)))))))
+    (lem:message "Starting LSP analysis (incoming + outgoing calls)...")
+    (collect-file-call-hierarchy-async
+     buffer
+     (lambda (graph error)
+       (cond
+         (error
+          (lem:message "Analysis failed: ~A" error))
+         (t
+          (display-lsp-graph buffer graph "LSP Full"))))
+     :include-incoming t
+     :include-outgoing t)))
+
+(lem:define-command living-canvas-lsp-cancel () ()
+  "Cancel the running LSP analysis."
+  (if *lsp-analysis-in-progress*
+      (progn
+        (setf *lsp-analysis-cancel-flag* t)
+        (lem:message "Cancellation requested..."))
+      (lem:message "No analysis in progress")))
 
 (lem:define-command living-canvas-export-json () ()
   "Export the current canvas graph as JSON to a new buffer.

@@ -2,11 +2,17 @@
   (:use #:cl #:lem)
   (:import-from #:call-graph
                 #:call-graph-nodes
+                #:call-graph-to-json
                 #:graph-node-source-location)
   (:import-from #:lem-living-canvas/micros-cl-provider
                 #:analyze-package
                 #:analyze-file
                 #:analyze-system)
+  (:import-from #:lem-living-canvas/lsp-provider
+                #:lsp-call-hierarchy-provider
+                #:collect-file-call-hierarchy)
+  (:import-from #:lem-living-canvas/lsp-call-hierarchy
+                #:buffer-has-call-hierarchy-p)
   (:import-from #:lem-living-canvas/buffer
                 #:canvas-buffer
                 #:make-canvas-buffer)
@@ -15,7 +21,10 @@
   (:export #:living-canvas
            #:living-canvas-current-file
            #:living-canvas-system
-           #:living-canvas-refresh))
+           #:living-canvas-refresh
+           #:living-canvas-lsp
+           #:living-canvas-lsp-full
+           #:living-canvas-export-json))
 (in-package #:lem-living-canvas)
 
 ;;; Variables
@@ -287,6 +296,76 @@ Requires a Lisp connection (via micros)."
       ((typep buffer 'lem-living-canvas/buffer:canvas-buffer)
        (lem-living-canvas/buffer:update-canvas-buffer buffer)
        (lem:message "Canvas refreshed"))
+      (t
+       (lem:message "Not in a canvas buffer")))))
+
+(lem:define-command living-canvas-lsp () ()
+  "Display a call graph for the current file using LSP Call Hierarchy.
+Shows outgoing calls only (faster). Use living-canvas-lsp-full for both directions.
+Works with any language that has an LSP server supporting Call Hierarchy."
+  (let ((buffer (lem:current-buffer)))
+    (unless (buffer-has-call-hierarchy-p buffer)
+      (lem:editor-error "LSP Call Hierarchy not available for this buffer"))
+    (let* ((graph (collect-file-call-hierarchy buffer
+                                               :include-incoming nil
+                                               :include-outgoing t))
+           (node-count (hash-table-count (call-graph-nodes graph))))
+      (cond
+        ((zerop node-count)
+         (lem:message "No callable symbols found in buffer"))
+        (t
+         (populate-source-location-cache graph)
+         (let* ((filename (or (lem:buffer-filename buffer) "untitled"))
+                (canvas-buffer (make-canvas-buffer
+                                (format nil "*Canvas: ~A (LSP)*"
+                                        (file-namestring filename))
+                                buffer
+                                graph)))
+           (lem:pop-to-buffer canvas-buffer)
+           (lem:change-buffer-mode canvas-buffer 'living-canvas-mode)
+           (lem:message "Living Canvas (LSP): ~D functions" node-count)))))))
+
+(lem:define-command living-canvas-lsp-full () ()
+  "Display a full call graph with both incoming and outgoing calls.
+This makes more LSP requests and may be slower. Use living-canvas-lsp for faster results."
+  (let ((buffer (lem:current-buffer)))
+    (unless (buffer-has-call-hierarchy-p buffer)
+      (lem:editor-error "LSP Call Hierarchy not available for this buffer"))
+    (let* ((graph (collect-file-call-hierarchy buffer
+                                               :include-incoming t
+                                               :include-outgoing t))
+           (node-count (hash-table-count (call-graph-nodes graph))))
+      (cond
+        ((zerop node-count)
+         (lem:message "No callable symbols found in buffer"))
+        (t
+         (populate-source-location-cache graph)
+         (let* ((filename (or (lem:buffer-filename buffer) "untitled"))
+                (canvas-buffer (make-canvas-buffer
+                                (format nil "*Canvas: ~A (LSP Full)*"
+                                        (file-namestring filename))
+                                buffer
+                                graph)))
+           (lem:pop-to-buffer canvas-buffer)
+           (lem:change-buffer-mode canvas-buffer 'living-canvas-mode)
+           (lem:message "Living Canvas (LSP Full): ~D functions" node-count)))))))
+
+(lem:define-command living-canvas-export-json () ()
+  "Export the current canvas graph as JSON to a new buffer.
+Useful for debugging and data exchange."
+  (let ((buffer (lem:current-buffer)))
+    (cond
+      ((typep buffer 'lem-living-canvas/buffer:canvas-buffer)
+       (let* ((graph (lem-living-canvas/buffer:canvas-buffer-graph buffer))
+              (json-string (call-graph-to-json graph)))
+         (let ((json-buffer (lem:make-buffer "*Call Graph JSON*"
+                                             :temporary t
+                                             :enable-undo-p nil)))
+           (lem:erase-buffer json-buffer)
+           (lem:with-point ((point (lem:buffer-point json-buffer)))
+             (lem:insert-string point json-string))
+           (lem:pop-to-buffer json-buffer)
+           (lem:message "Exported call graph to JSON"))))
       (t
        (lem:message "Not in a canvas buffer")))))
 

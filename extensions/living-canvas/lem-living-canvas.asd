@@ -3,6 +3,7 @@
   :author "Lem Project"
   :license "MIT"
   :depends-on ("call-graph"
+               "call-graph-lsp"
                "alexandria"
                "lem/core"
                "lem-lisp-mode"

@@ -1,21 +1,17 @@
 (defpackage #:lem-living-canvas/lsp-call-hierarchy
   (:use #:cl)
   (:import-from #:alexandria #:when-let)
-  (:local-nicknames (:request :lem-language-client/request))
+  (:local-nicknames (:request :lem-language-client/request)
+                    (:lsp :lem-lsp-base/protocol-3-17))
   (:export
-   ;; LSP request functions
+   ;; LSP request functions (Lem-specific)
    #:get-document-symbols
    #:prepare-call-hierarchy
    #:get-incoming-calls
    #:get-outgoing-calls
-   ;; Conversion functions
-   #:call-hierarchy-item-to-node-alist
-   #:incoming-call-to-edge-alist
-   #:outgoing-call-to-edge-alist
-   ;; Utilities
+   ;; Buffer utilities (Lem-specific)
    #:buffer-has-call-hierarchy-p
-   #:make-node-id-from-item
-   ;; Document symbol utilities
+   ;; Document symbol utilities (Lem-specific)
    #:document-symbol-to-position
    #:document-symbol-is-callable-p
    #:flatten-document-symbols))
@@ -131,101 +127,7 @@ Returns a list of CallHierarchyOutgoingCall objects."
                     :item item))))
 
 ;;; ============================================================
-;;; Task B-2: CallHierarchyItem → alist Conversion
-;;; ============================================================
-
-(defun uri-to-filepath (uri)
-  "Convert a file URI to a local file path.
-
-Example: \"file:///path/to/file.go\" -> \"/path/to/file.go\""
-  (if (and uri (>= (length uri) 7) (string= "file://" (subseq uri 0 7)))
-      (subseq uri 7)
-      uri))
-
-(defun make-node-id-from-item (item)
-  "Create a unique node ID from a CallHierarchyItem.
-
-Format: \"<uri>:<name>:<line>\" to ensure uniqueness for overloaded functions."
-  (let ((uri (lem-lsp-base/protocol-3-17:call-hierarchy-item-uri item))
-        (name (lem-lsp-base/protocol-3-17:call-hierarchy-item-name item))
-        (range (lem-lsp-base/protocol-3-17:call-hierarchy-item-selection-range item)))
-    (format nil "~A:~A:~A"
-            uri
-            name
-            (lem-lsp-base/protocol-3-17:position-line
-             (lem-lsp-base/protocol-3-17:range-start range)))))
-
-(defun symbol-kind-to-type-keyword (kind)
-  "Convert LSP SymbolKind to a type keyword for call-graph."
-  (case kind
-    (#.lem-lsp-base/protocol-3-17:symbol-kind-function :function)
-    (#.lem-lsp-base/protocol-3-17:symbol-kind-method :method)
-    (#.lem-lsp-base/protocol-3-17:symbol-kind-constructor :constructor)
-    (#.lem-lsp-base/protocol-3-17:symbol-kind-class :class)
-    (#.lem-lsp-base/protocol-3-17:symbol-kind-interface :interface)
-    (#.lem-lsp-base/protocol-3-17:symbol-kind-module :module)
-    (#.lem-lsp-base/protocol-3-17:symbol-kind-namespace :namespace)
-    (#.lem-lsp-base/protocol-3-17:symbol-kind-property :property)
-    (#.lem-lsp-base/protocol-3-17:symbol-kind-field :field)
-    (#.lem-lsp-base/protocol-3-17:symbol-kind-variable :variable)
-    (#.lem-lsp-base/protocol-3-17:symbol-kind-constant :constant)
-    (t :function)))
-
-(defun call-hierarchy-item-to-node-alist (item)
-  "Convert a CallHierarchyItem to a node alist for call-graph JSON format.
-
-Returns an alist with keys: id, name, package, type, docstring, arglist,
-sourceFile, sourceLine."
-  (let* ((name (lem-lsp-base/protocol-3-17:call-hierarchy-item-name item))
-         (kind (lem-lsp-base/protocol-3-17:call-hierarchy-item-kind item))
-         (uri (lem-lsp-base/protocol-3-17:call-hierarchy-item-uri item))
-         (detail (handler-case
-                     (lem-lsp-base/protocol-3-17:call-hierarchy-item-detail item)
-                   (unbound-slot () nil)))
-         (range (lem-lsp-base/protocol-3-17:call-hierarchy-item-selection-range item))
-         (line (1+ (lem-lsp-base/protocol-3-17:position-line
-                    (lem-lsp-base/protocol-3-17:range-start range))))
-         (filepath (uri-to-filepath uri)))
-    (list (cons "id" (make-node-id-from-item item))
-          (cons "name" name)
-          (cons "package" (or (pathname-name filepath) ""))
-          (cons "type" (string-downcase
-                        (symbol-name (symbol-kind-to-type-keyword kind))))
-          (cons "docstring" nil)
-          (cons "arglist" detail)
-          (cons "sourceFile" filepath)
-          (cons "sourceLine" line))))
-
-(defun incoming-call-to-edge-alist (incoming-call target-id)
-  "Convert a CallHierarchyIncomingCall to an edge alist.
-
-INCOMING-CALL is the LSP response object.
-TARGET-ID is the node ID of the target (the function being called).
-
-Returns an alist with keys: source, target, callType."
-  (let* ((from-item (lem-lsp-base/protocol-3-17:call-hierarchy-incoming-call-from
-                     incoming-call))
-         (source-id (make-node-id-from-item from-item)))
-    (list (cons "source" source-id)
-          (cons "target" target-id)
-          (cons "callType" "direct"))))
-
-(defun outgoing-call-to-edge-alist (outgoing-call source-id)
-  "Convert a CallHierarchyOutgoingCall to an edge alist.
-
-OUTGOING-CALL is the LSP response object.
-SOURCE-ID is the node ID of the source (the function making the call).
-
-Returns an alist with keys: source, target, callType."
-  (let* ((to-item (lem-lsp-base/protocol-3-17:call-hierarchy-outgoing-call-to
-                   outgoing-call))
-         (target-id (make-node-id-from-item to-item)))
-    (list (cons "source" source-id)
-          (cons "target" target-id)
-          (cons "callType" "direct"))))
-
-;;; ============================================================
-;;; Additional utilities for document symbols
+;;; Document symbol utilities
 ;;; ============================================================
 
 (defun document-symbol-to-position (doc-symbol buffer)

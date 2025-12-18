@@ -126,6 +126,51 @@
             ];
           };
 
+          # --- Tree-sitter Support ---
+
+          # C wrapper library for tree-sitter (handles by-value struct returns)
+          ts-wrapper = pkgs.stdenv.mkDerivation {
+            pname = "ts-wrapper";
+            version = "0.1.0";
+            src = ./libraries/cl-tree-sitter/c-wrapper;
+            buildInputs = [ pkgs.tree-sitter ];
+            buildPhase = ''
+              gcc -shared -fPIC -o libts-wrapper.so ts-wrapper.c \
+                -I${pkgs.tree-sitter}/include \
+                -L${pkgs.tree-sitter}/lib \
+                -ltree-sitter
+            '';
+            installPhase = ''
+              mkdir -p $out/lib
+              cp libts-wrapper.so $out/lib/
+            '';
+          };
+
+          # cl-tree-sitter Lisp bindings
+          cl-tree-sitter = lisp.buildASDFSystem {
+            pname = "cl-tree-sitter";
+            version = "0.1.0";
+            src = ./libraries/cl-tree-sitter;
+            systems = [ "cl-tree-sitter" ];
+            lispLibs = with lisp.pkgs; [
+              cffi
+              alexandria
+              trivial-garbage
+            ];
+            nativeLibs = [
+              pkgs.tree-sitter
+              ts-wrapper
+            ];
+          };
+
+          # Tree-sitter language grammars
+          tree-sitter-grammars = {
+            json = pkgs.tree-sitter-grammars.tree-sitter-json;
+            # Add more languages here as needed:
+            # javascript = pkgs.tree-sitter-grammars.tree-sitter-javascript;
+            # python = pkgs.tree-sitter-grammars.tree-sitter-python;
+          };
+
           # --- Webview Specific Dependencies ---
 
           c-webview = pkgs.stdenv.mkDerivation {
@@ -190,6 +235,7 @@
             async-process
             jsonrpc
             lem-mailbox
+            cl-tree-sitter
             deploy
             iterate
             closer-mop
@@ -250,21 +296,35 @@
           lem-ncurses = lem-base.overrideLispAttrs (o: {
             pname = "lem-ncurses";
             meta.mainProgram = "lem";
-            systems = [ "lem-ncurses" ];
+            systems = [ "lem-ncurses" "cl-tree-sitter" "lem-tree-sitter" ];
             lispLibs =
               o.lispLibs
               ++ (with lisp.pkgs; [
                 cl-charms
                 cl-setlocale
               ]);
-            nativeLibs = [ pkgs.ncurses ];
+            nativeLibs = [
+              pkgs.ncurses
+              pkgs.tree-sitter
+              ts-wrapper
+            ];
+            # Add tree-sitter grammar paths (grammars don't have lib/ subdir)
+            installPhase = ''
+              runHook preInstall
+              mkdir -p $out/bin
+              install lem $out/bin
+              wrapProgram $out/bin/lem \
+                --prefix LD_LIBRARY_PATH : "$LD_LIBRARY_PATH:${tree-sitter-grammars.json}" \
+                --prefix DYLD_LIBRARY_PATH : "$DYLD_LIBRARY_PATH"
+              runHook postInstall
+            '';
           });
 
           # 2. SDL2 Variant
           lem-sdl2 = lem-base.overrideLispAttrs (o: {
             pname = "lem-sdl2";
             meta.mainProgram = "lem";
-            systems = [ "lem-sdl2" ];
+            systems = [ "lem-sdl2" "cl-tree-sitter" "lem-tree-sitter" ];
             lispLibs =
               o.lispLibs
               ++ (with lisp.pkgs; [
@@ -277,14 +337,25 @@
               SDL2
               SDL2_ttf
               SDL2_image
+              tree-sitter
+              ts-wrapper
             ];
+            installPhase = ''
+              runHook preInstall
+              mkdir -p $out/bin
+              install lem $out/bin
+              wrapProgram $out/bin/lem \
+                --prefix LD_LIBRARY_PATH : "$LD_LIBRARY_PATH:${tree-sitter-grammars.json}" \
+                --prefix DYLD_LIBRARY_PATH : "$DYLD_LIBRARY_PATH"
+              runHook postInstall
+            '';
           });
 
           # 3. Webview Variant
           lem-webview = lem-base.overrideLispAttrs (o: {
             pname = "lem-webview";
             meta.mainProgram = "lem";
-            systems = [ "lem-webview" ];
+            systems = [ "lem-webview" "cl-tree-sitter" "lem-tree-sitter" ];
 
             # Use the specific webview entry point
             buildScript = mkBuildScript { entryPoint = "lem-webview:main"; };
@@ -305,11 +376,15 @@
                   pkgs.gtk3
                   pkgs.stdenv.cc.cc.lib
                   c-webview
+                  pkgs.tree-sitter
+                  ts-wrapper
                 ]
               else
                 [
                   pkgs.stdenv.cc.cc.lib
                   c-webview
+                  pkgs.tree-sitter
+                  ts-wrapper
                 ];
 
             postPatch =
@@ -327,10 +402,14 @@
                   wrapProgram $out/bin/lem \
                     --set FONTCONFIG_FILE "${pkgs.makeFontsConf { fontDirectories = [ pkgs.dejavu_fonts ]; }}" \
                     --prefix XDG_DATA_DIRS : "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}" \
-                    --prefix XDG_DATA_DIRS : "${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}"
+                    --prefix XDG_DATA_DIRS : "${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}" \
+                    --prefix LD_LIBRARY_PATH : "${tree-sitter-grammars.json}"
                 ''
               else
-                "";
+                ''
+                  wrapProgram $out/bin/lem \
+                    --prefix LD_LIBRARY_PATH : "${tree-sitter-grammars.json}"
+                '';
           });
         in
         {
@@ -381,6 +460,10 @@
               # SSL/TLS support
               openssl
 
+              # Tree-sitter support
+              tree-sitter
+              pkgs.tree-sitter-grammars.tree-sitter-json
+
               # Code formatting
               nixfmt-rfc-style
 
@@ -393,15 +476,18 @@
             ];
 
             # Set up library paths for native dependencies
-            LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath (with pkgs; [
-              ncurses
-              SDL2
-              SDL2_ttf
-              SDL2_image
-              openssl
-            ] ++ lib.optionals pkgs.stdenv.isLinux [
-              webkitgtk_4_1
-              gtk3
+            LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath ([
+              pkgs.ncurses
+              pkgs.SDL2
+              pkgs.SDL2_ttf
+              pkgs.SDL2_image
+              pkgs.openssl
+              pkgs.tree-sitter
+              ts-wrapper
+              pkgs.tree-sitter-grammars.tree-sitter-json
+            ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
+              pkgs.webkitgtk_4_1
+              pkgs.gtk3
             ]);
 
             shellHook = ''

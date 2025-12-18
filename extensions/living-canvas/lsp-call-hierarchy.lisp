@@ -45,7 +45,7 @@
 
 (defun make-text-document-position-params (buffer point)
   "Create TextDocumentPositionParams for BUFFER at POINT."
-  (make-instance 'lem-lsp-base/protocol-3-17:text-document-position-params
+  (make-instance 'lsp:text-document-position-params
                  :text-document (make-text-document-identifier buffer)
                  :position (lem-lsp-base/utils:point-to-lsp-position point)))
 
@@ -58,7 +58,7 @@
   (when-let ((workspace (buffer-workspace buffer)))
     (handler-case
         (let ((caps (workspace-server-capabilities workspace)))
-          (lem-lsp-base/protocol-3-17:server-capabilities-call-hierarchy-provider caps))
+          (lsp:server-capabilities-call-hierarchy-provider caps))
       (unbound-slot () nil))))
 
 (defun buffer-has-document-symbol-p (buffer)
@@ -66,7 +66,7 @@
   (when-let ((workspace (buffer-workspace buffer)))
     (handler-case
         (let ((caps (workspace-server-capabilities workspace)))
-          (lem-lsp-base/protocol-3-17:server-capabilities-document-symbol-provider caps))
+          (lsp:server-capabilities-document-symbol-provider caps))
       (unbound-slot () nil))))
 
 ;;; ============================================================
@@ -82,8 +82,8 @@ the server doesn't support this feature or buffer is not connected."
     (when (buffer-has-document-symbol-p buffer)
       (request:request
        (workspace-client workspace)
-       (make-instance 'lem-lsp-base/protocol-3-17:text-document/document-symbol)
-       (make-instance 'lem-lsp-base/protocol-3-17:document-symbol-params
+       (make-instance 'lsp:text-document/document-symbol)
+       (make-instance 'lsp:document-symbol-params
                       :text-document (make-text-document-identifier buffer))))))
 
 (defun prepare-call-hierarchy (buffer point)
@@ -95,8 +95,8 @@ support this feature or no item is found at the position."
     (when (buffer-has-call-hierarchy-p buffer)
       (request:request
        (workspace-client workspace)
-       (make-instance 'lem-lsp-base/protocol-3-17:text-document/prepare-call-hierarchy)
-       (make-instance 'lem-lsp-base/protocol-3-17:call-hierarchy-prepare-params
+       (make-instance 'lsp:text-document/prepare-call-hierarchy)
+       (make-instance 'lsp:call-hierarchy-prepare-params
                       :text-document (make-text-document-identifier buffer)
                       :position (lem-lsp-base/utils:point-to-lsp-position point))))))
 
@@ -110,8 +110,8 @@ Returns a list of CallHierarchyIncomingCall objects."
   (when-let ((workspace (buffer-workspace (lem:current-buffer))))
     (request:request
      (workspace-client workspace)
-     (make-instance 'lem-lsp-base/protocol-3-17:call-hierarchy/incoming-calls)
-     (make-instance 'lem-lsp-base/protocol-3-17:call-hierarchy-incoming-calls-params
+     (make-instance 'lsp:call-hierarchy/incoming-calls)
+     (make-instance 'lsp:call-hierarchy-incoming-calls-params
                     :item item))))
 
 (defun get-outgoing-calls (item)
@@ -122,8 +122,8 @@ Returns a list of CallHierarchyOutgoingCall objects."
   (when-let ((workspace (buffer-workspace (lem:current-buffer))))
     (request:request
      (workspace-client workspace)
-     (make-instance 'lem-lsp-base/protocol-3-17:call-hierarchy/outgoing-calls)
-     (make-instance 'lem-lsp-base/protocol-3-17:call-hierarchy-outgoing-calls-params
+     (make-instance 'lsp:call-hierarchy/outgoing-calls)
+     (make-instance 'lsp:call-hierarchy-outgoing-calls-params
                     :item item))))
 
 ;;; ============================================================
@@ -134,10 +134,10 @@ Returns a list of CallHierarchyOutgoingCall objects."
   "Get the point position from a DocumentSymbol for use with prepare-call-hierarchy.
 
 Returns a point at the start of the symbol's selection range."
-  (let* ((range (lem-lsp-base/protocol-3-17:document-symbol-selection-range doc-symbol))
-         (start (lem-lsp-base/protocol-3-17:range-start range))
-         (line (lem-lsp-base/protocol-3-17:position-line start))
-         (character (lem-lsp-base/protocol-3-17:position-character start)))
+  (let* ((range (lsp:document-symbol-selection-range doc-symbol))
+         (start (lsp:range-start range))
+         (line (lsp:position-line start))
+         (character (lsp:position-character start)))
     (lem:with-point ((point (lem:buffer-point buffer)))
       (lem:move-to-line point (1+ line))
       (lem:line-offset point 0 character)
@@ -145,10 +145,10 @@ Returns a point at the start of the symbol's selection range."
 
 (defun document-symbol-is-callable-p (doc-symbol)
   "Return T if the DocumentSymbol represents a callable (function, method, etc.)."
-  (let ((kind (lem-lsp-base/protocol-3-17:document-symbol-kind doc-symbol)))
-    (member kind (list lem-lsp-base/protocol-3-17:symbol-kind-function
-                       lem-lsp-base/protocol-3-17:symbol-kind-method
-                       lem-lsp-base/protocol-3-17:symbol-kind-constructor))))
+  (let ((kind (lsp:document-symbol-kind doc-symbol)))
+    (member kind (list lsp:symbol-kind-function
+                       lsp:symbol-kind-method
+                       lsp:symbol-kind-constructor))))
 
 (defun flatten-document-symbols (symbols)
   "Flatten nested DocumentSymbols into a flat list.
@@ -159,7 +159,7 @@ DocumentSymbol can have children; this recursively collects all symbols."
                (dolist (sym (coerce syms 'list))
                  (push sym result)
                  (handler-case
-                     (let ((children (lem-lsp-base/protocol-3-17:document-symbol-children sym)))
+                     (let ((children (lsp:document-symbol-children sym)))
                        (when children
                          (collect children)))
                    (unbound-slot () nil)))))

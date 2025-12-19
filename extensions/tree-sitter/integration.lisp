@@ -210,8 +210,8 @@
                              :highlight-query-path query-path)))
                 (lem:set-syntax-parser syntax-table parser)
                 t))
-          (error (e)
-            (lem:message "Tree-sitter ~A not available: ~A" language e)
+          (error ()
+            ;; Silently fail - tree-sitter is optional
             nil))))))
 
 (defun enable-tree-sitter-for-json ()
@@ -236,10 +236,8 @@
         (enable-tree-sitter-for-mode (symbol-value table) "markdown")))))
 
 (defun enable-tree-sitter-for-all-modes ()
-  "Enable tree-sitter for all supported existing modes."
+  "Enable tree-sitter for all supported existing modes.
+   Call this after Lem has initialized, e.g., from init.lisp."
   (enable-tree-sitter-for-json)
   (enable-tree-sitter-for-yaml)
   (enable-tree-sitter-for-markdown))
-
-;; Automatically enable tree-sitter for existing modes when this file loads
-(enable-tree-sitter-for-all-modes)

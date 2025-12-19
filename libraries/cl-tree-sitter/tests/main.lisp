@@ -1,6 +1,5 @@
 (defpackage :cl-tree-sitter/tests
-  (:use :cl :rove)
-  (:local-nicknames (:ts :cl-tree-sitter)))
+  (:use :cl :rove))
 (in-package :cl-tree-sitter/tests)
 
 ;;;; Test Utilities
@@ -94,7 +93,7 @@
       (let ((query (ts:query-compile lang "(string) @string")))
         (ok (typep query 'ts:ts-query))
         (ok (= 1 (ts:query-capture-count query)))
-        (ok (string= "string" (ts:query-capture-name query 0)))))))
+        (ok (string= "string" (ts:get-capture-name-by-index query 0)))))))
 
 (deftest test-query-captures
   (skip-unless-json-available)

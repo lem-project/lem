@@ -208,7 +208,7 @@
    #:query-delete
    #:query-pattern-count
    #:query-capture-count
-   ;; Note: query-capture-name is exported from types as struct accessor
+   #:get-capture-name-by-index
 
    #:with-query-cursor
    #:query-exec

@@ -45,7 +45,7 @@
    READ-FN: (byte-offset point) -> string or nil
    This is for parsing buffers or streams."
   ;; For now, use parse-string. Full input API requires TSInput struct.
-  (declare (ignore read-fn old-tree))
+  (declare (ignore parser read-fn old-tree))
   (error "parser-parse with read function not yet implemented"))
 
 (defun parser-reset (parser)

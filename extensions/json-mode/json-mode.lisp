@@ -55,6 +55,7 @@
      :syntax-table *json-syntax-table*
      :mode-hook *json-mode-hook*
      :formatter #'js-prettier)
+  (lem-tree-sitter:enable-tree-sitter-for-mode *json-syntax-table* "json")
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'indent-tabs-mode) nil
         (variable-value 'tab-width) 2

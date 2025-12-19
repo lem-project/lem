@@ -214,30 +214,3 @@
             ;; Silently fail - tree-sitter is optional
             nil))))))
 
-(defun enable-tree-sitter-for-json ()
-  "Enable tree-sitter for json-mode if available."
-  (when (find-package :lem-json-mode)
-    (alexandria:when-let ((table (find-symbol "*JSON-SYNTAX-TABLE*" :lem-json-mode)))
-      (when (boundp table)
-        (enable-tree-sitter-for-mode (symbol-value table) "json")))))
-
-(defun enable-tree-sitter-for-yaml ()
-  "Enable tree-sitter for yaml-mode if available."
-  (when (find-package :lem-yaml-mode)
-    (alexandria:when-let ((table (find-symbol "*YAML-SYNTAX-TABLE*" :lem-yaml-mode)))
-      (when (boundp table)
-        (enable-tree-sitter-for-mode (symbol-value table) "yaml")))))
-
-(defun enable-tree-sitter-for-markdown ()
-  "Enable tree-sitter for markdown-mode if available."
-  (when (find-package :lem-markdown-mode)
-    (alexandria:when-let ((table (find-symbol "*MARKDOWN-SYNTAX-TABLE*" :lem-markdown-mode)))
-      (when (boundp table)
-        (enable-tree-sitter-for-mode (symbol-value table) "markdown")))))
-
-(defun enable-tree-sitter-for-all-modes ()
-  "Enable tree-sitter for all supported existing modes.
-   Call this after Lem has initialized, e.g., from init.lisp."
-  (enable-tree-sitter-for-json)
-  (enable-tree-sitter-for-yaml)
-  (enable-tree-sitter-for-markdown))

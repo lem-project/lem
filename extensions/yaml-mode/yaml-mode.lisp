@@ -45,6 +45,7 @@
      :keymap *yaml-mode-keymap*
      :syntax-table *yaml-syntax-table*
      :mode-hook *yaml-mode-hook*)
+  (lem-tree-sitter:enable-tree-sitter-for-mode *yaml-syntax-table* "yaml")
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'indent-tabs-mode) nil
         (variable-value 'tab-width) 2

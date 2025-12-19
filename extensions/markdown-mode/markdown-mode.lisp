@@ -18,6 +18,7 @@
      :keymap *markdown-mode-keymap*
      :syntax-table *markdown-syntax-table*
      :mode-hook *markdown-mode-hook*)
+  (lem-tree-sitter:enable-tree-sitter-for-mode *markdown-syntax-table* "markdown")
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'indent-tabs-mode) nil
         (variable-value 'tab-width) 4

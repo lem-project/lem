@@ -1,5 +1,7 @@
 (defpackage :lem-tree-sitter/languages/markdown
   (:use :cl :lem :lem/language-mode)
+  (:local-nicknames (:ts :cl-tree-sitter)
+                    (:lem-ts :lem-tree-sitter)))
 (in-package :lem-tree-sitter/languages/markdown)
 
 ;;;; Markdown Tree-sitter Support

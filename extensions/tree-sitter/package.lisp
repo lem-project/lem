@@ -21,8 +21,5 @@
    #:register-treesitter-language
    #:treesitter-language-available-p
 
-   ;; Mode integration
-   #:define-treesitter-mode
-
    ;; Utilities
    #:tree-sitter-available-p))

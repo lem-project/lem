@@ -15,7 +15,7 @@
     (4 :capture)
     (5 :structure)
     (6 :language)
-    (t :unknown)))
+    (otherwise :unknown)))
 
 ;;;; Query Compilation
 

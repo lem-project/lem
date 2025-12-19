@@ -241,9 +241,9 @@
   "Define a major mode that uses tree-sitter for syntax highlighting.
    LANGUAGE: tree-sitter language name
    HIGHLIGHT-QUERY-PATH: path to highlights.scm query file"
-  (let ((hook-var (intern (format nil "*~A-HOOK*" name)))
-        (syntax-table-var (or syntax-table
-                              (intern (format nil "*~A-SYNTAX-TABLE*" name)))))
+  (let ((hook-symbol (intern (format nil "*~A-HOOK*" name)))
+        (syntax-table-symbol (or syntax-table
+                                 (intern (format nil "*~A-SYNTAX-TABLE*" name)))))
     `(progn
        ;; Register language if query path provided
        ,(when language
@@ -251,19 +251,19 @@
                                          :highlight-query-path ,highlight-query-path))
 
        ;; Ensure syntax table exists
-       (defvar ,syntax-table-var
+       (defvar ,syntax-table-symbol
          (lem:make-syntax-table))
 
        ;; Define the mode
        (lem:define-major-mode ,name ,superclasses
            (:name ,mode-name
-            :syntax-table ,syntax-table-var
-            :mode-hook ,(or mode-hook hook-var))
+            :syntax-table ,syntax-table-symbol
+            :mode-hook ,(or mode-hook hook-symbol))
          ;; Initialize tree-sitter parser if available
          (when (treesitter-language-available-p ,language)
            (let ((parser (make-treesitter-parser
                           ,language
                           :highlight-query-path ,highlight-query-path)))
-             (lem:set-syntax-parser ,syntax-table-var parser)))
+             (lem:set-syntax-parser ,syntax-table-symbol parser)))
          (setf (lem:variable-value 'lem/buffer/internal:enable-syntax-highlight) t)
          ,@options))))

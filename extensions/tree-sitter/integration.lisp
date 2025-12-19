@@ -181,48 +181,6 @@
                            (string char) :encoding :utf-8))
           :finally (return i))))
 
-;;;; Language Registration
-
-(defvar *treesitter-languages* (make-hash-table :test 'equal)
-  "Registered tree-sitter languages with their configurations.")
-
-(defstruct language-config
-  "Configuration for a tree-sitter language."
-  name
-  grammar-path
-  highlight-query-path
-  loaded-p)
-
-(defun register-treesitter-language (name &key grammar-path highlight-query-path)
-  "Register a tree-sitter language for use with Lem."
-  (setf (gethash name *treesitter-languages*)
-        (make-language-config :name name
-                              :grammar-path grammar-path
-                              :highlight-query-path highlight-query-path
-                              :loaded-p nil)))
-
-(defun ensure-language-loaded (name)
-  "Ensure a language is loaded. Returns T if successful."
-  (let ((config (gethash name *treesitter-languages*)))
-    (when config
-      (unless (language-config-loaded-p config)
-        (handler-case
-            (progn
-              (if (language-config-grammar-path config)
-                  (ts:load-language name (language-config-grammar-path config))
-                  (ts:load-language-from-system name))
-              (setf (language-config-loaded-p config) t))
-          (error (e)
-            (lem:message "Failed to load tree-sitter language ~A: ~A" name e)
-            (return-from ensure-language-loaded nil))))
-      (language-config-loaded-p config))))
-
-(defun treesitter-language-available-p (name)
-  "Check if a tree-sitter language is available."
-  (and (ts:tree-sitter-available-p)
-       (or (ts:get-language name)
-           (ensure-language-loaded name))))
-
 ;;;; Utility Functions
 
 (defun tree-sitter-available-p ()

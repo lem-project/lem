@@ -37,11 +37,6 @@
       (error (e)
         (message "Tree-sitter Markdown not available: ~A" e)))))
 
-;; Register language
-(lem-ts:register-treesitter-language
- "markdown"
- :highlight-query-path *markdown-ts-highlight-query-path*)
-
 ;;;; Markdown mode with tree-sitter highlighting
 
 (define-major-mode markdown-ts-mode language-mode

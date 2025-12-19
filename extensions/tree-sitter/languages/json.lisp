@@ -36,11 +36,6 @@
       (error (e)
         (message "Tree-sitter JSON not available: ~A" e)))))
 
-;; Register language
-(lem-ts:register-treesitter-language
- "json"
- :highlight-query-path *json-ts-highlight-query-path*)
-
 ;;;; Provide as an alternative to lem-json-mode
 ;;; Users can choose to use tree-sitter based highlighting
 

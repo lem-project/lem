@@ -17,9 +17,5 @@
    #:make-treesitter-parser
    #:treesitter-parser-language-name
 
-   ;; Language registration
-   #:register-treesitter-language
-   #:treesitter-language-available-p
-
    ;; Utilities
    #:tree-sitter-available-p))

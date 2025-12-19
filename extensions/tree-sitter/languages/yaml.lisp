@@ -37,11 +37,6 @@
       (error (e)
         (message "Tree-sitter YAML not available: ~A" e)))))
 
-;; Register language
-(lem-ts:register-treesitter-language
- "yaml"
- :highlight-query-path *yaml-ts-highlight-query-path*)
-
 ;;;; YAML mode with tree-sitter highlighting
 
 (define-major-mode yaml-ts-mode language-mode

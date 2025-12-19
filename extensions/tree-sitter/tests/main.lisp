@@ -41,10 +41,3 @@
             (ok (string= "json" (lem-ts:treesitter-parser-language-name parser))))))
     (error ()
       (skip "JSON grammar not available"))))
-
-(deftest test-language-registration
-  (testing "language registration"
-    (lem-ts:register-treesitter-language
-     "test-lang"
-     :highlight-query-path "/nonexistent/path")
-    (ok t "Registration completed")))

@@ -17,5 +17,9 @@
    #:make-treesitter-parser
    #:treesitter-parser-language-name
 
+   ;; Enable tree-sitter for existing modes
+   #:enable-tree-sitter-for-mode
+   #:enable-tree-sitter-for-all-modes
+
    ;; Utilities
    #:tree-sitter-available-p))

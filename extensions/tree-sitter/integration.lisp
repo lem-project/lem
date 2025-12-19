@@ -186,3 +186,60 @@
 (defun tree-sitter-available-p ()
   "Check if tree-sitter is available."
   (ts:tree-sitter-available-p))
+
+(defun query-path-for (language)
+  "Get the path to the highlight query for LANGUAGE."
+  (asdf:system-relative-pathname
+   :lem-tree-sitter (format nil "queries/~A/highlights.scm" language)))
+
+;;;; Enable tree-sitter for existing modes
+
+(defun enable-tree-sitter-for-mode (syntax-table language)
+  "Enable tree-sitter syntax highlighting for a mode's syntax table.
+   SYNTAX-TABLE: The mode's syntax table to update
+   LANGUAGE: tree-sitter language name (e.g., \"json\")"
+  (when (tree-sitter-available-p)
+    (let ((query-path (query-path-for language)))
+      (when (probe-file query-path)
+        (handler-case
+            (progn
+              (unless (ts:get-language language)
+                (ts:load-language-from-system language))
+              (let ((parser (make-treesitter-parser
+                             language
+                             :highlight-query-path query-path)))
+                (lem:set-syntax-parser syntax-table parser)
+                t))
+          (error (e)
+            (lem:message "Tree-sitter ~A not available: ~A" language e)
+            nil))))))
+
+(defun enable-tree-sitter-for-json ()
+  "Enable tree-sitter for json-mode if available."
+  (when (find-package :lem-json-mode)
+    (alexandria:when-let ((table (find-symbol "*JSON-SYNTAX-TABLE*" :lem-json-mode)))
+      (when (boundp table)
+        (enable-tree-sitter-for-mode (symbol-value table) "json")))))
+
+(defun enable-tree-sitter-for-yaml ()
+  "Enable tree-sitter for yaml-mode if available."
+  (when (find-package :lem-yaml-mode)
+    (alexandria:when-let ((table (find-symbol "*YAML-SYNTAX-TABLE*" :lem-yaml-mode)))
+      (when (boundp table)
+        (enable-tree-sitter-for-mode (symbol-value table) "yaml")))))
+
+(defun enable-tree-sitter-for-markdown ()
+  "Enable tree-sitter for markdown-mode if available."
+  (when (find-package :lem-markdown-mode)
+    (alexandria:when-let ((table (find-symbol "*MARKDOWN-SYNTAX-TABLE*" :lem-markdown-mode)))
+      (when (boundp table)
+        (enable-tree-sitter-for-mode (symbol-value table) "markdown")))))
+
+(defun enable-tree-sitter-for-all-modes ()
+  "Enable tree-sitter for all supported existing modes."
+  (enable-tree-sitter-for-json)
+  (enable-tree-sitter-for-yaml)
+  (enable-tree-sitter-for-markdown))
+
+;; Automatically enable tree-sitter for existing modes when this file loads
+(enable-tree-sitter-for-all-modes)

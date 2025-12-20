@@ -247,6 +247,31 @@
     const funcNodes = nodes.filter(n => n.data && n.data.type !== 'file');
     console.log('File nodes:', fileNodes.length, 'Function nodes:', funcNodes.length);
 
+    // Precompute node labels (function name + arglist) for display on nodes
+    function normalizeWhitespace(s) {
+      return String(s || '').replace(/\\s+/g, ' ').trim();
+    }
+
+    function formatArglistForNode(arglist) {
+      const normalized = normalizeWhitespace(arglist);
+      const withFallback = normalized ? normalized : '()';
+      const maxLen = 48;
+      return withFallback.length > maxLen
+        ? withFallback.slice(0, maxLen - 1) + '…'
+        : withFallback;
+    }
+
+    const argLabelTypes = new Set(['function', 'macro', 'generic-function', 'command']);
+    function addDisplayLabels(nodeElements) {
+      (nodeElements || []).forEach((n) => {
+        if (!n || !n.data || !argLabelTypes.has(n.data.type)) return;
+        const name = n.data.name || n.data.id || '';
+        const args = formatArglistForNode(n.data.arglist);
+        n.data.displayLabel = name + '\\n' + args;
+      });
+    }
+    addDisplayLabels(nodes);
+
     // Update debug info
     const debugEl = document.getElementById('debug-info');
     debugEl.textContent = 'Data: ' + nodes.length + ' nodes, ' + edges.length + ' edges (' + fileNodes.length + ' files)';
@@ -288,17 +313,19 @@
             'background-color': '#2d2d2d',
             'border-color': '#569cd6',
             'border-width': 2,
-            'label': 'data(name)',
+            'label': 'data(displayLabel)',
             'color': '#d4d4d4',
             'text-valign': 'center',
             'text-halign': 'center',
             'font-size': '10px',
+            'line-height': 1.1,
             'font-family': 'Consolas, Monaco, monospace',
             'width': 'label',
-            'height': 24,
+            'height': 'label',
             'padding': '8px',
             'shape': 'roundrectangle',
-            'text-wrap': 'none'
+            'text-wrap': 'wrap',
+            'text-max-width': 260
           }
         },
         {
@@ -307,16 +334,19 @@
             'background-color': '#3d2d3d',
             'border-color': '#c586c0',
             'border-width': 2,
-            'label': 'data(name)',
+            'label': 'data(displayLabel)',
             'color': '#d4d4d4',
             'text-valign': 'center',
             'text-halign': 'center',
             'font-size': '10px',
+            'line-height': 1.1,
             'font-family': 'Consolas, Monaco, monospace',
             'width': 'label',
-            'height': 24,
+            'height': 'label',
             'padding': '8px',
-            'shape': 'roundrectangle'
+            'shape': 'roundrectangle',
+            'text-wrap': 'wrap',
+            'text-max-width': 260
           }
         },
         {
@@ -325,16 +355,19 @@
             'background-color': '#2d3d3d',
             'border-color': '#4ec9b0',
             'border-width': 2,
-            'label': 'data(name)',
+            'label': 'data(displayLabel)',
             'color': '#d4d4d4',
             'text-valign': 'center',
             'text-halign': 'center',
             'font-size': '10px',
+            'line-height': 1.1,
             'font-family': 'Consolas, Monaco, monospace',
             'width': 'label',
-            'height': 24,
+            'height': 'label',
             'padding': '8px',
-            'shape': 'roundrectangle'
+            'shape': 'roundrectangle',
+            'text-wrap': 'wrap',
+            'text-max-width': 260
           }
         },
         // Lem-specific node types
@@ -344,16 +377,19 @@
             'background-color': '#1e3a5f',
             'border-color': '#1e88e5',
             'border-width': 2,
-            'label': 'data(name)',
+            'label': 'data(displayLabel)',
             'color': '#d4d4d4',
             'text-valign': 'center',
             'text-halign': 'center',
             'font-size': '10px',
+            'line-height': 1.1,
             'font-family': 'Consolas, Monaco, monospace',
             'width': 'label',
-            'height': 24,
+            'height': 'label',
             'padding': '8px',
-            'shape': 'roundrectangle'
+            'shape': 'roundrectangle',
+            'text-wrap': 'wrap',
+            'text-max-width': 260
           }
         },
         {
@@ -656,6 +692,8 @@
 
     // API for Lem
     window.updateGraph = function(data) {
+      const newNodes = data.elements ? data.elements.filter(e => e.group === 'nodes') : [];
+      addDisplayLabels(newNodes);
       cy.json({ elements: data.elements });
       runLayout();
     };

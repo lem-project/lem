@@ -13,11 +13,17 @@
     (set-syntax-parser table (lem-markdown-mode/syntax-parser:make-syntax-parser))
     table))
 
+(defun tree-sitter-query-path ()
+  "Return the path to the tree-sitter highlight query for Markdown."
+  (asdf:system-relative-pathname :lem-markdown-mode "tree-sitter/highlights.scm"))
+
 (define-major-mode markdown-mode language-mode
     (:name "Markdown"
      :keymap *markdown-mode-keymap*
      :syntax-table *markdown-syntax-table*
      :mode-hook *markdown-mode-hook*)
+  (lem-tree-sitter:enable-tree-sitter-for-mode
+   *markdown-syntax-table* "markdown" (tree-sitter-query-path))
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'indent-tabs-mode) nil
         (variable-value 'tab-width) 4

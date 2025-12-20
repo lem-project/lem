@@ -40,11 +40,17 @@
     (set-syntax-parser table tmlanguage)
     table))
 
+(defun tree-sitter-query-path ()
+  "Return the path to the tree-sitter highlight query for YAML."
+  (asdf:system-relative-pathname :lem-yaml-mode "tree-sitter/highlights.scm"))
+
 (define-major-mode yaml-mode language-mode
     (:name "Yaml"
      :keymap *yaml-mode-keymap*
      :syntax-table *yaml-syntax-table*
      :mode-hook *yaml-mode-hook*)
+  (lem-tree-sitter:enable-tree-sitter-for-mode
+   *yaml-syntax-table* "yaml" (tree-sitter-query-path))
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'indent-tabs-mode) nil
         (variable-value 'tab-width) 2

@@ -292,7 +292,8 @@
                "lem-bookmark"
                "lem-mcp-server"
                #+sbcl
-               "lem-living-canvas"))
+               "lem-living-canvas"
+               "lem-tree-sitter"))
 
 (defsystem "lem"
   :version "2.3.0"

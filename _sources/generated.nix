@@ -45,17 +45,31 @@
   };
   micros = {
     pname = "micros";
-    version = "4476dee561b7557dcb3f8acc720b21ebfebbb0e5";
+    version = "2ec61c8d6028d219cc511a0e41d9228761c84251";
     src = fetchgit {
       url = "https://github.com/lem-project/micros";
-      rev = "4476dee561b7557dcb3f8acc720b21ebfebbb0e5";
+      rev = "2ec61c8d6028d219cc511a0e41d9228761c84251";
       fetchSubmodules = false;
       deepClone = false;
       leaveDotGit = false;
       sparseCheckout = [ ];
-      sha256 = "sha256-Ifb2I1O2FdOLWLFmb86yNd7dEyeBbN8oKtMSSm7uMWE=";
+      sha256 = "sha256-HGcKeHy5foq2M1sKQRr7eahYLTESBbQAr7ufz1+Dyhw=";
     };
     date = "2025-12-17";
+  };
+  tree-sitter-cl = {
+    pname = "tree-sitter-cl";
+    version = "431b572d0e49d64a78320cc5f4b4a90391024ce6";
+    src = fetchgit {
+      url = "https://github.com/lem-project/tree-sitter-cl";
+      rev = "431b572d0e49d64a78320cc5f4b4a90391024ce6";
+      fetchSubmodules = false;
+      deepClone = false;
+      leaveDotGit = false;
+      sparseCheckout = [ ];
+      sha256 = "sha256-XbChbpGoS1oDB7r3PiNBqbZUqAAYSgW+vF9xtMqky4Y=";
+    };
+    date = "2025-12-20";
   };
   webview = {
     pname = "webview";

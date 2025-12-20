@@ -1,6 +1,17 @@
 (in-package :lem-tree-sitter)
 
 ;;;; Tree-sitter Parser for Lem
+;;;;
+;;;; Note: This module uses lem/buffer/internal::syntax-parser and
+;;;; lem/buffer/internal::%syntax-scan-region because Lem's syntax parsing
+;;;; infrastructure is implemented in the internal package. The syntax-parser
+;;;; class and %syntax-scan-region method are the official extension points
+;;;; for custom syntax parsers, but they are not yet exported from the public
+;;;; API. This internal access is necessary to integrate tree-sitter as a
+;;;; drop-in replacement for regex-based syntax highlighting.
+
+(defgeneric treesitter-parser-language-name (parser)
+  (:documentation "Return the tree-sitter language name associated with PARSER (e.g., \"json\")."))
 
 (defclass treesitter-parser (lem/buffer/internal::syntax-parser)
   ((language-name :initarg :language-name

@@ -2,9 +2,8 @@
   (:use :cl)
   (:local-nicknames (:ts :tree-sitter))
   (:export
-   #:*capture-attribute-map*
    #:capture-to-attribute
-   #:define-capture-mapping
+   #:make-default-capture-attribute-map
    #:load-highlight-query))
 
 (uiop:define-package :lem-tree-sitter

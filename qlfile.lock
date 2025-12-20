@@ -50,3 +50,7 @@
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/webview.git")
   :version "git-607daff93e9e716a76c5dbd08c48b5233c96b9a3"))
+("tree-sitter-cl" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/lem-project/tree-sitter-cl.git")
+  :version "git-bb3271daef1aabaee63d8ec32a1030b25c3d24c7"))

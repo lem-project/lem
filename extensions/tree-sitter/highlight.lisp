@@ -151,5 +151,5 @@
       (let ((source (uiop:read-file-string query-path)))
         (ts:query-compile (ts:get-language language) source))
     (error (e)
-      (lem:message "Failed to load highlight query ~A: ~A" query-path e)
+      (log:warn "Failed to load highlight query ~A: ~A" query-path e)
       nil)))

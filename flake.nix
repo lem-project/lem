@@ -134,16 +134,24 @@
             version = "0.1.0";
             src = "${sources.tree-sitter-cl.src}/c-wrapper";
             buildInputs = [ pkgs.tree-sitter ];
-            buildPhase = ''
-              gcc -shared -fPIC -o libts-wrapper.so ts-wrapper.c \
-                -I${pkgs.tree-sitter}/include \
-                -L${pkgs.tree-sitter}/lib \
-                -ltree-sitter
-            '';
-            installPhase = ''
-              mkdir -p $out/lib
-              cp libts-wrapper.so $out/lib/
-            '';
+            buildPhase =
+              let
+                ext = if pkgs.stdenv.isDarwin then "dylib" else "so";
+              in
+              ''
+                $CC -shared -fPIC -o libts-wrapper.${ext} ts-wrapper.c \
+                  -I${pkgs.tree-sitter}/include \
+                  -L${pkgs.tree-sitter}/lib \
+                  -ltree-sitter
+              '';
+            installPhase =
+              let
+                ext = if pkgs.stdenv.isDarwin then "dylib" else "so";
+              in
+              ''
+                mkdir -p $out/lib
+                cp libts-wrapper.${ext} $out/lib/
+              '';
           };
 
           # tree-sitter-cl Lisp bindings (from github.com/lem-project/tree-sitter-cl)

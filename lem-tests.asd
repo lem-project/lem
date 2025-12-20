@@ -5,6 +5,8 @@
                "lem-lisp-mode"
                "lem-legit"
                #+sbcl "lem-mcp-server"
+               "lem-tree-sitter"
+               "lem-yaml-mode"
                "cl-ansi-text"
                "trivial-package-local-nicknames"
                "rove"
@@ -34,6 +36,8 @@
                (:module "lisp-mode"
                 :components ((:file "package-inferred-system")
                              (:file "file-conversion")))
+               (:module "tree-sitter"
+                :components ((:file "main")))
                (:file "killring")
                (:file "string-width-utils")
                (:file "syntax-test")

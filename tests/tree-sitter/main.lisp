@@ -1,9 +1,9 @@
-(defpackage :lem-tree-sitter/tests
+(defpackage :lem-tests/tree-sitter
   (:use :cl :rove)
   (:local-nicknames (:ts :tree-sitter)
                     (:lem-ts :lem-tree-sitter))
   (:import-from :lem-yaml-mode))
-(in-package :lem-tree-sitter/tests)
+(in-package :lem-tests/tree-sitter)
 
 ;;;; Test Utilities
 

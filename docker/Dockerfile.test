@@ -4,7 +4,32 @@ USER root
 RUN apt-get update && apt-get install -y \
     build-essential \
     libssl-dev \
+    git \
+    nodejs \
+    npm \
     && rm -rf /var/lib/apt/lists/*
+
+# Install tree-sitter CLI
+RUN npm install -g tree-sitter-cli
+
+# Build tree-sitter library from source (Ubuntu package may be too old)
+WORKDIR /tmp
+RUN git clone --depth 1 https://github.com/tree-sitter/tree-sitter.git && \
+    cd tree-sitter && \
+    make && \
+    make install && \
+    ldconfig
+
+# Build tree-sitter grammars for testing
+RUN git clone --depth 1 https://github.com/tree-sitter/tree-sitter-json.git && \
+    cd tree-sitter-json && \
+    cc -shared -fPIC -o /usr/local/lib/libtree-sitter-json.so -I src src/parser.c
+
+RUN git clone --depth 1 https://github.com/ikatyang/tree-sitter-yaml.git && \
+    cd tree-sitter-yaml && \
+    cc -shared -fPIC -o /usr/local/lib/libtree-sitter-yaml.so -I src src/parser.c src/scanner.c
+
+RUN ldconfig
 
 WORKDIR /app
 COPY . .

@@ -302,7 +302,6 @@
                "lem-mcp-server"
                #+sbcl
                "lem-living-canvas"
-               #+nix-build
                "lem-tree-sitter"))
 
 (defsystem "lem"

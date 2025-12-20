@@ -59,15 +59,15 @@
   };
   tree-sitter-cl = {
     pname = "tree-sitter-cl";
-    version = "bb3271daef1aabaee63d8ec32a1030b25c3d24c7";
+    version = "cad0aae95c50e222207d087af0c1dfa35a35ca55";
     src = fetchgit {
       url = "https://github.com/lem-project/tree-sitter-cl";
-      rev = "bb3271daef1aabaee63d8ec32a1030b25c3d24c7";
+      rev = "cad0aae95c50e222207d087af0c1dfa35a35ca55";
       fetchSubmodules = false;
       deepClone = false;
       leaveDotGit = false;
       sparseCheckout = [ ];
-      sha256 = "sha256-1zQelkBde7oN5Ih4dJS3ZrCwSEJcjFBqOfhR7R62yAw=";
+      sha256 = "sha256-U1bDM6cINZ1RtOJos+Qz4F+4DXSjxnQ2Y16A7qoN7eA=";
     };
     date = "2025-12-20";
   };

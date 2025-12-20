@@ -53,4 +53,4 @@
 ("tree-sitter-cl" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/tree-sitter-cl.git")
-  :version "git-cad0aae95c50e222207d087af0c1dfa35a35ca55"))
+  :version "git-bfc3471b165856a20c3379f538a00ec256785a44"))

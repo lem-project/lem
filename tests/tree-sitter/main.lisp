@@ -9,8 +9,11 @@
 
 (defun skip-unless-available ()
   "Skip tests if tree-sitter is not available."
-  (unless (lem-ts:tree-sitter-available-p)
-    (skip "tree-sitter library not available")))
+  (handler-case
+      (unless (lem-ts:tree-sitter-available-p)
+        (skip "tree-sitter library not available"))
+    (error ()
+      (skip "tree-sitter library not available"))))
 
 ;;;; Basic Tests
 
@@ -57,12 +60,13 @@
 
 (defun skip-unless-yaml-available ()
   "Skip tests if tree-sitter or YAML grammar is not available."
-  (unless (lem-ts:tree-sitter-available-p)
-    (skip "tree-sitter library not available"))
   (handler-case
-      (ts:load-language-from-system "yaml")
+      (progn
+        (unless (lem-ts:tree-sitter-available-p)
+          (skip "tree-sitter library not available"))
+        (ts:load-language-from-system "yaml"))
     (error ()
-      (skip "YAML grammar not available"))))
+      (skip "tree-sitter or YAML grammar not available"))))
 
 (defun get-parser-highlight-query (parser)
   "Get the highlight query from the parser."

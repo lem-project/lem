@@ -7,13 +7,17 @@
 
 ;;;; Test Utilities
 
-(defmacro with-tree-sitter-test (&body body)
-  "Execute BODY, skipping if tree-sitter library is not available.
+(defun call-with-tree-sitter-test (thunk)
+  "Call THUNK, skipping if tree-sitter library is not available.
    Catches FFI errors that occur when native library is missing."
-  `(handler-case
-       (progn ,@body)
-     (error (e)
-       (skip (format nil "tree-sitter not available: ~A" e)))))
+  (handler-case
+      (funcall thunk)
+    (error (e)
+      (skip (format nil "tree-sitter not available: ~A" e)))))
+
+(defmacro with-tree-sitter-test (&body body)
+  "Execute BODY, skipping if tree-sitter library is not available."
+  `(call-with-tree-sitter-test (lambda () ,@body)))
 
 ;;;; Basic Tests
 

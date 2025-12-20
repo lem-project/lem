@@ -117,33 +117,12 @@
                 (lem:line-start p)))))
 
 ;;;; Position Conversion Utilities
+;;;; Using Lem's built-in byte offset functions from src/buffer/internal/basic.lisp
 
 (defun position-to-byte (buffer point)
-  "Convert buffer position to byte offset.
-   Assumes UTF-8 encoding."
-  (let ((byte-offset 0)
-        (target-line (lem:line-number-at-point point))
-        (target-col (lem:point-charpos point)))
-    (lem:with-point ((p (lem:buffer-start-point buffer)))
-      (loop :for line-num :from 1
-            :do (let* ((line (lem/buffer/internal::point-line p))
-                       (str (lem/buffer/line:line-string line)))
-                  (cond
-                    ((< line-num target-line)
-                     ;; Add full line + newline
-                     (incf byte-offset
-                           (+ (babel:string-size-in-octets str :encoding :utf-8)
-                              1)))  ; newline
-                    ((= line-num target-line)
-                     ;; Add chars up to target column
-                     (incf byte-offset
-                           (babel:string-size-in-octets
-                            (subseq str 0 (min target-col (length str)))
-                            :encoding :utf-8))
-                     (return byte-offset))
-                    (t (return byte-offset))))
-                (unless (lem:line-offset p 1)
-                  (return byte-offset))))))
+  "Convert buffer position to byte offset using Lem's point-bytes."
+  (declare (ignore buffer))
+  (lem:point-bytes point))
 
 (defun byte-range-to-points (buffer start-byte end-byte)
   "Convert byte offsets to points. Returns (values start-point end-point)."
@@ -152,34 +131,10 @@
     (values start-point end-point)))
 
 (defun byte-to-point (buffer byte-offset)
-  "Convert byte offset to a point. Returns nil if out of range."
+  "Convert byte offset to a point using Lem's move-to-bytes."
   (lem:with-point ((p (lem:buffer-start-point buffer)))
-    (let ((current-byte 0))
-      (loop :do (let* ((line (lem/buffer/internal::point-line p))
-                       (str (lem/buffer/line:line-string line))
-                       (line-bytes (babel:string-size-in-octets str :encoding :utf-8))
-                       (line-end-byte (+ current-byte line-bytes 1)))  ; +1 for newline
-                  (cond
-                    ((<= current-byte byte-offset (1- line-end-byte))
-                     ;; Found the line, now find column
-                     (let ((col (byte-offset-to-char-offset str (- byte-offset current-byte))))
-                       (lem:line-start p)
-                       (lem:character-offset p col)
-                       (return (lem:copy-point p :temporary))))
-                    (t
-                     (setf current-byte line-end-byte)
-                     (unless (lem:line-offset p 1)
-                       (return nil)))))))))
-
-(defun byte-offset-to-char-offset (string byte-offset)
-  "Convert a byte offset within a string to a character offset."
-  (let ((bytes 0))
-    (loop :for i :from 0 :below (length string)
-          :for char := (char string i)
-          :while (< bytes byte-offset)
-          :do (incf bytes (babel:string-size-in-octets
-                           (string char) :encoding :utf-8))
-          :finally (return i))))
+    (lem:move-to-bytes p byte-offset)
+    (lem:copy-point p :temporary)))
 
 ;;;; Utility Functions
 

@@ -155,20 +155,24 @@
    SYNTAX-TABLE: The mode's syntax table to update
    LANGUAGE: tree-sitter language name (e.g., \"json\")
    QUERY-PATH: Path to the highlights.scm query file"
-  (when (tree-sitter-available-p)
-    (when (probe-file query-path)
-      (handler-case
-          (progn
-            (unless (ts:get-language language)
-              (ts:load-language-from-system language))
-            (let ((parser (make-treesitter-parser
-                           language
-                           :highlight-query-path query-path)))
-              (lem:set-syntax-parser syntax-table parser)
-              t))
-        (error ()
-          ;; Silently fail - tree-sitter is optional
-          nil)))))
+  (unless (tree-sitter-available-p)
+    (log:debug "tree-sitter library not available")
+    (return-from enable-tree-sitter-for-mode nil))
+  (unless (probe-file query-path)
+    (log:debug "Highlight query file not found: ~A" query-path)
+    (return-from enable-tree-sitter-for-mode nil))
+  (handler-case
+      (progn
+        (unless (ts:get-language language)
+          (ts:load-language-from-system language))
+        (let ((parser (make-treesitter-parser
+                       language
+                       :highlight-query-path query-path)))
+          (lem:set-syntax-parser syntax-table parser)
+          t))
+    (error (e)
+      (log:warn "Failed to enable tree-sitter for ~A: ~A" language e)
+      nil)))
 
 ;;;; Incremental Parsing Support
 

@@ -50,7 +50,6 @@
     (when (and existing-tree
                cached-tick
                (eql current-tick cached-tick))
-      (clear-attributes-in-region start end)
       (apply-tree-highlights parser existing-tree buffer start end)
       (return-from lem/buffer/internal::%syntax-scan-region))
     ;; Buffer changed - need to reparse

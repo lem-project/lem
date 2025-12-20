@@ -51,12 +51,7 @@
 
 (defun clear-attributes-in-region (start end)
   "Clear syntax highlighting attributes in the region from START to END."
-  (lem:with-point ((p start))
-    (loop :while (lem:point<= p end)
-          :do (let ((line (lem/buffer/internal::point-line p)))
-                (lem/buffer/line:line-clear-property line :attribute))
-              (unless (lem:line-offset p 1)
-                (return)))))
+  (lem:remove-text-property start end :attribute))
 
 (defun get-buffer-text (buffer)
   "Get the full text of a buffer as a string."
@@ -111,21 +106,8 @@
       (apply-attribute-between-points start-point end-point attribute))))
 
 (defun apply-attribute-between-points (start end attribute)
-  "Apply attribute between two points, handling multi-line spans."
-  (lem:with-point ((p start))
-    (loop :while (lem:point< p end)
-          :do (let* ((line (lem/buffer/internal::point-line p))
-                     (line-end (lem:line-end (lem:copy-point p :temporary)))
-                     (col-start (lem:point-charpos p))
-                     (col-end (if (lem:point<= line-end end)
-                                  (lem/buffer/line:line-length line)
-                                  (lem:point-charpos end))))
-                (when (< col-start col-end)
-                  (lem/buffer/line:line-add-property line col-start col-end
-                                                     :attribute attribute nil))
-                (unless (lem:line-offset p 1)
-                  (return))
-                (lem:line-start p)))))
+  "Apply attribute between two points using public API."
+  (lem:put-text-property start end :attribute attribute))
 
 ;;;; Position Conversion Utilities
 ;;;; Using Lem's built-in byte offset functions from src/buffer/internal/basic.lisp

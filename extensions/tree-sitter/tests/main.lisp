@@ -45,15 +45,15 @@
 
 ;;;; YAML Buffer Attribute Tests
 
-(defun line-has-attribute-p (line)
-  "Check if a line has any syntax highlighting attributes."
-  (getf (lem/buffer/line:line-plist line) :attribute))
-
-(defun get-line-at (buffer line-number)
-  "Get the line object at LINE-NUMBER (1-indexed) in BUFFER."
+(defun get-point-at-line (buffer line-number)
+  "Get a point at the start of LINE-NUMBER (1-indexed) in BUFFER."
   (lem:with-point ((p (lem:buffer-start-point buffer)))
     (lem:line-offset p (1- line-number))
-    (lem/buffer/internal::point-line p)))
+    (lem:copy-point p :temporary)))
+
+(defun point-has-attribute-p (point)
+  "Check if POINT has a syntax highlighting attribute."
+  (lem:text-property-at point :attribute))
 
 (defun skip-unless-yaml-available ()
   "Skip tests if tree-sitter or YAML grammar is not available."
@@ -68,15 +68,11 @@
   "Get the highlight query from the parser."
   (slot-value parser 'lem-tree-sitter::highlight-query))
 
-(defun get-attribute-ranges (line)
-  "Get list of (start end) ranges with attributes on LINE."
-  (mapcar (lambda (attr)
-            (list (first attr) (second attr)))
-          (getf (lem/buffer/line:line-plist line) :attribute)))
-
-(defun has-attribute-at-range-p (line start end)
-  "Check if LINE has an attribute covering exactly START to END."
-  (member (list start end) (get-attribute-ranges line) :test #'equal))
+(defun has-attribute-at-position-p (buffer line-number charpos)
+  "Check if position (LINE-NUMBER, CHARPOS) has an attribute."
+  (lem:with-point ((p (get-point-at-line buffer line-number)))
+    (lem:character-offset p charpos)
+    (point-has-attribute-p p)))
 
 (deftest test-highlight-position-accuracy
   (skip-unless-yaml-available)
@@ -99,16 +95,19 @@
           (lem:set-syntax-parser syntax-table parser)
           (lem:syntax-scan-region (lem:buffer-start-point buffer)
                                   (lem:buffer-end-point buffer))
-          (let* ((line (get-line-at buffer 1))
-                 (ranges (get-attribute-ranges line)))
-            (testing "attributes are applied"
-              (ok ranges))
-            ;; "key" is at position 0-3
-            (testing "key is highlighted at position 0-3"
-              (ok (has-attribute-at-range-p line 0 3)))
-            ;; "value" is at position 5-10
-            (testing "value is highlighted at position 5-10"
-              (ok (has-attribute-at-range-p line 5 10)))))))))
+          ;; Check attributes at specific positions using public API
+          (testing "attributes are applied at start"
+            (ok (has-attribute-at-position-p buffer 1 0)))
+          ;; "key" is at position 0-2 (chars 0,1,2)
+          (testing "key is highlighted at position 0"
+            (ok (has-attribute-at-position-p buffer 1 0)))
+          (testing "key is highlighted at position 2"
+            (ok (has-attribute-at-position-p buffer 1 2)))
+          ;; "value" is at position 5-9 (chars 5,6,7,8,9)
+          (testing "value is highlighted at position 5"
+            (ok (has-attribute-at-position-p buffer 1 5)))
+          (testing "value is highlighted at position 9"
+            (ok (has-attribute-at-position-p buffer 1 9))))))))
 
 (deftest test-multiline-highlight-positions
   (skip-unless-yaml-available)
@@ -131,18 +130,18 @@ second: 2")
           (lem:set-syntax-parser syntax-table parser)
           (lem:syntax-scan-region (lem:buffer-start-point buffer)
                                   (lem:buffer-end-point buffer))
-          ;; Line 1: "first: 1" - "first" at 0-5, "1" at 7-8
-          (let ((line1 (get-line-at buffer 1)))
-            (testing "line 1: 'first' at 0-5"
-              (ok (has-attribute-at-range-p line1 0 5)))
-            (testing "line 1: '1' at 7-8"
-              (ok (has-attribute-at-range-p line1 7 8))))
-          ;; Line 2: "second: 2" - "second" at 0-6, "2" at 8-9
-          (let ((line2 (get-line-at buffer 2)))
-            (testing "line 2: 'second' at 0-6"
-              (ok (has-attribute-at-range-p line2 0 6)))
-            (testing "line 2: '2' at 8-9"
-              (ok (has-attribute-at-range-p line2 8 9)))))))))
+          ;; Line 1: "first: 1" - "first" at 0-4, "1" at 7
+          (testing "line 1: 'first' is highlighted"
+            (ok (has-attribute-at-position-p buffer 1 0))
+            (ok (has-attribute-at-position-p buffer 1 4)))
+          (testing "line 1: '1' is highlighted"
+            (ok (has-attribute-at-position-p buffer 1 7)))
+          ;; Line 2: "second: 2" - "second" at 0-5, "2" at 8
+          (testing "line 2: 'second' is highlighted"
+            (ok (has-attribute-at-position-p buffer 2 0))
+            (ok (has-attribute-at-position-p buffer 2 5)))
+          (testing "line 2: '2' is highlighted"
+            (ok (has-attribute-at-position-p buffer 2 8))))))))
 
 (deftest test-yaml-buffer-attributes
   (skip-unless-yaml-available)
@@ -180,12 +179,12 @@ count: 42
           ;; Trigger syntax scanning
           (lem:syntax-scan-region (lem:buffer-start-point buffer)
                                   (lem:buffer-end-point buffer))
-          ;; Verify attributes are applied
+          ;; Verify attributes are applied using public API
           (testing "comment line has attributes"
-            (ok (line-has-attribute-p (get-line-at buffer 1))))
+            (ok (has-attribute-at-position-p buffer 1 0)))
           (testing "key-value line has attributes"
-            (ok (line-has-attribute-p (get-line-at buffer 2))))
+            (ok (has-attribute-at-position-p buffer 2 0)))
           (testing "boolean value line has attributes"
-            (ok (line-has-attribute-p (get-line-at buffer 3))))
+            (ok (has-attribute-at-position-p buffer 3 0)))
           (testing "number value line has attributes"
-            (ok (line-has-attribute-p (get-line-at buffer 4)))))))))
+            (ok (has-attribute-at-position-p buffer 4 0))))))))

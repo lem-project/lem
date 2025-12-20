@@ -1,12 +1,3 @@
-;; Register libraries/ subdirectories for ASDF
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (let ((libraries-dir (uiop:subpathname (uiop:pathname-directory-pathname
-                                          (or *load-truename* *compile-file-truename*))
-                                         "libraries/")))
-    (when (uiop:directory-exists-p libraries-dir)
-      (dolist (subdir (uiop:subdirectories libraries-dir))
-        (pushnew subdir asdf:*central-registry* :test #'equal)))))
-
 #+ros.installing
 (uiop:with-current-directory ((uiop:pathname-directory-pathname *load-truename*))
   (unless (uiop:directory-exists-p (merge-pathnames #P".qlot/"))

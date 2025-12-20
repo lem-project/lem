@@ -43,10 +43,6 @@ validation:
           Loop keywords must use colons: `(loop :for x :in list :do ...)`
           NOT: `(loop for x in list do ...)`
 
-      - name: trim_whitespace_rule
-        prompt: |
-          No trailing whitespace. Files must end with a newline.
-
       - name: naming_conventions_rule
         prompt: |
           Naming conventions:

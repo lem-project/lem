@@ -137,32 +137,27 @@
   "Check if tree-sitter is available."
   (ts:tree-sitter-available-p))
 
-(defun query-path-for (language)
-  "Get the path to the highlight query for LANGUAGE."
-  (asdf:system-relative-pathname
-   :lem-tree-sitter (format nil "queries/~A/highlights.scm" language)))
-
 ;;;; Enable tree-sitter for existing modes
 
-(defun enable-tree-sitter-for-mode (syntax-table language)
+(defun enable-tree-sitter-for-mode (syntax-table language query-path)
   "Enable tree-sitter syntax highlighting for a mode's syntax table.
    SYNTAX-TABLE: The mode's syntax table to update
-   LANGUAGE: tree-sitter language name (e.g., \"json\")"
+   LANGUAGE: tree-sitter language name (e.g., \"json\")
+   QUERY-PATH: Path to the highlights.scm query file"
   (when (tree-sitter-available-p)
-    (let ((query-path (query-path-for language)))
-      (when (probe-file query-path)
-        (handler-case
-            (progn
-              (unless (ts:get-language language)
-                (ts:load-language-from-system language))
-              (let ((parser (make-treesitter-parser
-                             language
-                             :highlight-query-path query-path)))
-                (lem:set-syntax-parser syntax-table parser)
-                t))
-          (error ()
-            ;; Silently fail - tree-sitter is optional
-            nil))))))
+    (when (probe-file query-path)
+      (handler-case
+          (progn
+            (unless (ts:get-language language)
+              (ts:load-language-from-system language))
+            (let ((parser (make-treesitter-parser
+                           language
+                           :highlight-query-path query-path)))
+              (lem:set-syntax-parser syntax-table parser)
+              t))
+        (error ()
+          ;; Silently fail - tree-sitter is optional
+          nil)))))
 
 ;;;; Incremental Parsing Support
 

@@ -89,7 +89,7 @@
         (lem:insert-string (lem:buffer-point buffer) yaml-content)
         (lem:buffer-start (lem:buffer-point buffer))
         (let* ((query-path (asdf:system-relative-pathname
-                            :lem-tree-sitter "queries/yaml/highlights.scm"))
+                            :lem-yaml-mode "tree-sitter/highlights.scm"))
                (parser (lem-ts:make-treesitter-parser
                         "yaml" :highlight-query-path query-path)))
           (lem:set-syntax-parser syntax-table parser)
@@ -124,7 +124,7 @@ second: 2")
         (lem:insert-string (lem:buffer-point buffer) yaml-content)
         (lem:buffer-start (lem:buffer-point buffer))
         (let* ((query-path (asdf:system-relative-pathname
-                            :lem-tree-sitter "queries/yaml/highlights.scm"))
+                            :lem-yaml-mode "tree-sitter/highlights.scm"))
                (parser (lem-ts:make-treesitter-parser
                         "yaml" :highlight-query-path query-path)))
           (lem:set-syntax-parser syntax-table parser)
@@ -165,7 +165,7 @@ count: 42
         (lem:buffer-start (lem:buffer-point buffer))
         ;; Create tree-sitter parser with highlight query
         (let* ((query-path (asdf:system-relative-pathname
-                            :lem-tree-sitter "queries/yaml/highlights.scm"))
+                            :lem-yaml-mode "tree-sitter/highlights.scm"))
                (parser (lem-ts:make-treesitter-parser
                         "yaml" :highlight-query-path query-path)))
           (testing "parser is created"

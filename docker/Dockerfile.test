@@ -27,7 +27,9 @@ RUN git clone --depth 1 https://github.com/tree-sitter/tree-sitter-json.git && \
 
 RUN git clone --depth 1 https://github.com/ikatyang/tree-sitter-yaml.git && \
     cd tree-sitter-yaml && \
-    c++ -shared -fPIC -o /usr/local/lib/libtree-sitter-yaml.so -I src src/parser.c src/scanner.cc
+    cc -c -fPIC -I src src/parser.c -o parser.o && \
+    c++ -c -fPIC -I src src/scanner.cc -o scanner.o && \
+    c++ -shared -o /usr/local/lib/libtree-sitter-yaml.so parser.o scanner.o
 
 RUN ldconfig
 

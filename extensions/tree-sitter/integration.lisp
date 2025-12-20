@@ -125,14 +125,10 @@
 
 (defun byte-to-point (buffer byte-offset)
   "Convert byte offset to a point using Lem's move-to-bytes.
-   Note: move-to-bytes has an off-by-one behavior for byte-offset > 0,
-   so we advance until we reach the correct byte position."
+   Uses (1+ byte-offset) to compensate for move-to-bytes behavior,
+   consistent with lisp-mode and language-server patterns."
   (lem:with-point ((p (lem:buffer-start-point buffer)))
-    (lem:move-to-bytes p byte-offset)
-    ;; Advance until we reach the correct byte position
-    (loop :while (and (< (lem:point-bytes p) byte-offset)
-                      (not (lem:end-buffer-p p)))
-          :do (lem:character-offset p 1))
+    (lem:move-to-bytes p (1+ byte-offset))
     (lem:copy-point p :temporary)))
 
 ;;;; Utility Functions

@@ -1,6 +1,6 @@
 (uiop:define-package :lem-tree-sitter/highlight
   (:use :cl)
-  (:local-nicknames (:ts :cl-tree-sitter))
+  (:local-nicknames (:ts :tree-sitter))
   (:export
    #:*capture-attribute-map*
    #:capture-to-attribute
@@ -9,7 +9,7 @@
 
 (uiop:define-package :lem-tree-sitter
   (:use :cl :lem)
-  (:local-nicknames (:ts :cl-tree-sitter)
+  (:local-nicknames (:ts :tree-sitter)
                     (:highlight :lem-tree-sitter/highlight))
   (:export
    ;; Parser class

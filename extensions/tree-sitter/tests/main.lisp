@@ -1,6 +1,6 @@
 (defpackage :lem-tree-sitter/tests
   (:use :cl :rove)
-  (:local-nicknames (:ts :cl-tree-sitter)
+  (:local-nicknames (:ts :tree-sitter)
                     (:lem-ts :lem-tree-sitter)))
 (in-package :lem-tree-sitter/tests)
 

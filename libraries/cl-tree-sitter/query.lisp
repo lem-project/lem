@@ -1,4 +1,4 @@
-(in-package :cl-tree-sitter/query)
+(in-package :tree-sitter/query)
 
 ;;;; Query Error Types
 

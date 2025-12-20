@@ -1,4 +1,4 @@
-(in-package :cl-tree-sitter/ffi)
+(in-package :tree-sitter/ffi)
 
 ;;;; Library Definition
 

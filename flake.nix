@@ -146,12 +146,12 @@
             '';
           };
 
-          # cl-tree-sitter Lisp bindings
-          cl-tree-sitter = lisp.buildASDFSystem {
-            pname = "cl-tree-sitter";
+          # tree-sitter-cl Lisp bindings
+          tree-sitter-cl = lisp.buildASDFSystem {
+            pname = "tree-sitter-cl";
             version = "0.1.0";
             src = ./libraries/cl-tree-sitter;
-            systems = [ "cl-tree-sitter" ];
+            systems = [ "tree-sitter-cl" ];
             lispLibs = with lisp.pkgs; [
               cffi
               alexandria
@@ -237,7 +237,7 @@
             async-process
             jsonrpc
             lem-mailbox
-            cl-tree-sitter
+            tree-sitter-cl
             deploy
             iterate
             closer-mop
@@ -298,7 +298,7 @@
           lem-ncurses = lem-base.overrideLispAttrs (o: {
             pname = "lem-ncurses";
             meta.mainProgram = "lem";
-            systems = [ "lem-ncurses" "cl-tree-sitter" "lem-tree-sitter" ];
+            systems = [ "lem-ncurses" "tree-sitter-cl" "lem-tree-sitter" ];
             lispLibs =
               o.lispLibs
               ++ (with lisp.pkgs; [
@@ -326,7 +326,7 @@
           lem-sdl2 = lem-base.overrideLispAttrs (o: {
             pname = "lem-sdl2";
             meta.mainProgram = "lem";
-            systems = [ "lem-sdl2" "cl-tree-sitter" "lem-tree-sitter" ];
+            systems = [ "lem-sdl2" "tree-sitter-cl" "lem-tree-sitter" ];
             lispLibs =
               o.lispLibs
               ++ (with lisp.pkgs; [
@@ -357,7 +357,7 @@
           lem-webview = lem-base.overrideLispAttrs (o: {
             pname = "lem-webview";
             meta.mainProgram = "lem";
-            systems = [ "lem-webview" "cl-tree-sitter" "lem-tree-sitter" ];
+            systems = [ "lem-webview" "tree-sitter-cl" "lem-tree-sitter" ];
 
             # Use the specific webview entry point
             buildScript = mkBuildScript { entryPoint = "lem-webview:main"; };

@@ -1,4 +1,4 @@
-(in-package :cl-tree-sitter/types)
+(in-package :tree-sitter/types)
 
 ;;;; Language Class
 

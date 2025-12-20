@@ -3,7 +3,7 @@
   :author "Lem Project"
   :license "MIT"
   :description "Tree-sitter integration for Lem editor"
-  :depends-on ("lem/core" "cl-tree-sitter" "babel" "alexandria")
+  :depends-on ("lem/core" "tree-sitter-cl" "babel" "alexandria")
   :serial t
   :components ((:file "package")
                (:file "highlight")

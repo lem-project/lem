@@ -1,4 +1,4 @@
-(in-package :cl-tree-sitter/node)
+(in-package :tree-sitter/node)
 
 ;;;; Tree Operations
 

@@ -1,4 +1,4 @@
-(in-package :cl-tree-sitter/language)
+(in-package :tree-sitter/language)
 
 ;;;; Language Registry
 

@@ -1,6 +1,6 @@
-(defpackage :cl-tree-sitter/tests
+(defpackage :tree-sitter/tests
   (:use :cl :rove))
-(in-package :cl-tree-sitter/tests)
+(in-package :tree-sitter/tests)
 
 ;;;; Test Utilities
 

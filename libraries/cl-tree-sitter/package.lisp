@@ -1,4 +1,4 @@
-(uiop:define-package :cl-tree-sitter/ffi
+(uiop:define-package :tree-sitter/ffi
   (:use :cl)
   (:export
    ;; Library
@@ -85,9 +85,9 @@
    #:ts-node-raw
    #:ts-tree-cursor))
 
-(uiop:define-package :cl-tree-sitter/types
+(uiop:define-package :tree-sitter/types
   (:use :cl)
-  (:local-nicknames (:ffi :cl-tree-sitter/ffi))
+  (:local-nicknames (:ffi :tree-sitter/ffi))
   (:export
    ;; Classes
    #:ts-parser
@@ -133,10 +133,10 @@
    #:ts-input-edit-old-end-point
    #:ts-input-edit-new-end-point))
 
-(uiop:define-package :cl-tree-sitter/parser
+(uiop:define-package :tree-sitter/parser
   (:use :cl)
-  (:local-nicknames (:ffi :cl-tree-sitter/ffi)
-                    (:types :cl-tree-sitter/types))
+  (:local-nicknames (:ffi :tree-sitter/ffi)
+                    (:types :tree-sitter/types))
   (:export
    #:make-parser
    #:parser-set-language
@@ -146,10 +146,10 @@
    #:parser-delete
    #:with-parser))
 
-(uiop:define-package :cl-tree-sitter/node
+(uiop:define-package :tree-sitter/node
   (:use :cl)
-  (:local-nicknames (:ffi :cl-tree-sitter/ffi)
-                    (:types :cl-tree-sitter/types))
+  (:local-nicknames (:ffi :tree-sitter/ffi)
+                    (:types :tree-sitter/types))
   (:export
    ;; Tree operations
    #:tree-root-node
@@ -198,11 +198,11 @@
    ;; Edit
    #:make-input-edit))
 
-(uiop:define-package :cl-tree-sitter/query
+(uiop:define-package :tree-sitter/query
   (:use :cl)
-  (:local-nicknames (:ffi :cl-tree-sitter/ffi)
-                    (:types :cl-tree-sitter/types)
-                    (:node :cl-tree-sitter/node))
+  (:local-nicknames (:ffi :tree-sitter/ffi)
+                    (:types :tree-sitter/types)
+                    (:node :tree-sitter/node))
   (:export
    #:query-compile
    #:query-delete
@@ -223,10 +223,10 @@
    #:capture-index
    #:capture-name))
 
-(uiop:define-package :cl-tree-sitter/language
+(uiop:define-package :tree-sitter/language
   (:use :cl)
-  (:local-nicknames (:ffi :cl-tree-sitter/ffi)
-                    (:types :cl-tree-sitter/types))
+  (:local-nicknames (:ffi :tree-sitter/ffi)
+                    (:types :tree-sitter/types))
   (:export
    #:load-language
    #:load-language-from-system
@@ -237,16 +237,16 @@
    #:language-symbol-count
    #:language-symbol-name))
 
-(uiop:define-package :cl-tree-sitter
+(uiop:define-package :tree-sitter
   (:use :cl)
   (:nicknames :ts)
-  (:import-from :cl-tree-sitter/ffi
+  (:import-from :tree-sitter/ffi
    #:tree-sitter-available-p)
   (:use-reexport
-   :cl-tree-sitter/types
-   :cl-tree-sitter/parser
-   :cl-tree-sitter/node
-   :cl-tree-sitter/query
-   :cl-tree-sitter/language)
+   :tree-sitter/types
+   :tree-sitter/parser
+   :tree-sitter/node
+   :tree-sitter/query
+   :tree-sitter/language)
   (:export
    #:tree-sitter-available-p))

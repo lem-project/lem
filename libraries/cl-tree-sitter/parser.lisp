@@ -1,4 +1,4 @@
-(in-package :cl-tree-sitter/parser)
+(in-package :tree-sitter/parser)
 
 ;;;; Parser Creation and Management
 
@@ -16,7 +16,7 @@
    LANGUAGE can be a ts-language object or a language name string."
   (let ((lang (etypecase language
                 (types:ts-language language)
-                (string (cl-tree-sitter/language:get-language language)))))
+                (string (tree-sitter/language:get-language language)))))
     (unless lang
       (error "Language not found: ~A" language))
     (unless (ffi:ts-parser-set-language (types:ts-parser-ptr parser)

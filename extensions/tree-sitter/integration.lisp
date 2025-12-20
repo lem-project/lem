@@ -21,7 +21,10 @@
                  :documentation "Cached source for incremental parsing")
    (pending-edits :initform nil
                   :accessor treesitter-parser-pending-edits
-                  :documentation "List of pending edits for incremental parsing"))
+                  :documentation "List of pending edits for incremental parsing")
+   (cached-tick :initform nil
+                :accessor treesitter-parser-cached-tick
+                :documentation "Last parsed buffer-modified-tick for cache validation"))
   (:documentation "Tree-sitter based syntax parser for Lem."))
 
 (defun make-treesitter-parser (language-name &key highlight-query-path)
@@ -40,14 +43,23 @@
 (defmethod lem/buffer/internal::%syntax-scan-region ((parser treesitter-parser) start end)
   "Scan region using tree-sitter and apply syntax highlighting."
   (let* ((buffer (lem:point-buffer start))
-         (source (get-buffer-text buffer)))
-    ;; Clear old attributes in the region
-    (clear-attributes-in-region start end)
-    ;; Parse the buffer
-    (let ((tree (parse-buffer-text parser source)))
-      (when tree
-        ;; Apply highlighting
-        (apply-tree-highlights parser tree buffer start end)))))
+         (current-tick (lem:buffer-modified-tick buffer))
+         (cached-tick (treesitter-parser-cached-tick parser))
+         (existing-tree (treesitter-parser-tree parser)))
+    ;; If buffer unchanged and we have a cached tree, just apply highlights
+    (when (and existing-tree
+               cached-tick
+               (eql current-tick cached-tick))
+      (clear-attributes-in-region start end)
+      (apply-tree-highlights parser existing-tree buffer start end)
+      (return-from lem/buffer/internal::%syntax-scan-region))
+    ;; Buffer changed - need to reparse
+    (let ((source (get-buffer-text buffer)))
+      (clear-attributes-in-region start end)
+      (let ((tree (parse-buffer-text parser source)))
+        (when tree
+          (setf (treesitter-parser-cached-tick parser) current-tick)
+          (apply-tree-highlights parser tree buffer start end))))))
 
 (defun clear-attributes-in-region (start end)
   "Clear syntax highlighting attributes in the region from START to END."

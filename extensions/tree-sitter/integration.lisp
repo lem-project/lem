@@ -18,7 +18,10 @@
                     :documentation "Compiled highlight query")
    (source-cache :initform nil
                  :accessor treesitter-parser-source-cache
-                 :documentation "Cached source for incremental parsing"))
+                 :documentation "Cached source for incremental parsing")
+   (pending-edits :initform nil
+                  :accessor treesitter-parser-pending-edits
+                  :documentation "List of pending edits for incremental parsing"))
   (:documentation "Tree-sitter based syntax parser for Lem."))
 
 (defun make-treesitter-parser (language-name &key highlight-query-path)
@@ -60,8 +63,16 @@
   (lem:buffer-text buffer))
 
 (defun parse-buffer-text (parser source)
-  "Parse source text, reusing old tree if possible."
-  (let ((old-tree (treesitter-parser-tree parser)))
+  "Parse source text, using incremental parsing when possible."
+  (let ((old-tree (treesitter-parser-tree parser))
+        (pending-edits (treesitter-parser-pending-edits parser)))
+    ;; Apply pending edits to old tree for incremental parsing
+    (when (and old-tree pending-edits)
+      (dolist (edit (nreverse pending-edits))
+        (ts:tree-edit old-tree edit)))
+    ;; Clear pending edits
+    (setf (treesitter-parser-pending-edits parser) nil)
+    ;; Parse (tree-sitter will reuse unchanged parts when old-tree has edits applied)
     (setf (treesitter-parser-source-cache parser) source)
     (let ((new-tree (ts:parser-parse-string (treesitter-parser-handle parser)
                                             source
@@ -131,9 +142,15 @@
     (values start-point end-point)))
 
 (defun byte-to-point (buffer byte-offset)
-  "Convert byte offset to a point using Lem's move-to-bytes."
+  "Convert byte offset to a point using Lem's move-to-bytes.
+   Note: move-to-bytes has an off-by-one behavior for byte-offset > 0,
+   so we advance until we reach the correct byte position."
   (lem:with-point ((p (lem:buffer-start-point buffer)))
     (lem:move-to-bytes p byte-offset)
+    ;; Advance until we reach the correct byte position
+    (loop :while (and (< (lem:point-bytes p) byte-offset)
+                      (not (lem:end-buffer-p p)))
+          :do (lem:character-offset p 1))
     (lem:copy-point p :temporary)))
 
 ;;;; Utility Functions
@@ -169,3 +186,54 @@
             ;; Silently fail - tree-sitter is optional
             nil))))))
 
+;;;; Incremental Parsing Support
+
+(defun get-buffer-treesitter-parser (buffer)
+  "Get the treesitter-parser for BUFFER, if any."
+  (let* ((syntax-table (lem:buffer-syntax-table buffer))
+         (parser (when syntax-table
+                   (lem:syntax-table-parser syntax-table))))
+    (when (typep parser 'treesitter-parser)
+      parser)))
+
+(defun point-to-ts-point (point)
+  "Convert a Lem point to a tree-sitter point (0-indexed row, byte column)."
+  (let* ((row (1- (lem:line-number-at-point point)))  ; 0-indexed
+         (line-start (lem:copy-point point :temporary)))
+    (lem:line-start line-start)
+    (let ((column-bytes (- (lem:point-bytes point)
+                           (lem:point-bytes line-start))))
+      (ts:make-ts-point row column-bytes))))
+
+(defun record-tree-sitter-edit (start end old-len)
+  "Record an edit for incremental tree-sitter parsing.
+   START: point at start of changed region
+   END: point at end of changed region (after change)
+   OLD-LEN: length of old text that was replaced"
+  (let* ((buffer (lem:point-buffer start))
+         (parser (get-buffer-treesitter-parser buffer)))
+    (when parser
+      (let* ((start-byte (lem:point-bytes start))
+             (new-end-byte (lem:point-bytes end))
+             ;; old-end-byte = start-byte + old-len (in bytes)
+             ;; We need to calculate bytes from old-len (chars)
+             ;; Since old text is already deleted, we approximate using the difference
+             (old-end-byte (+ start-byte old-len))
+             (start-point (point-to-ts-point start))
+             (new-end-point (point-to-ts-point end))
+             ;; For old-end-point, we approximate since old text is gone
+             ;; This is a limitation - we set it same as start for deletions
+             (old-end-point (if (zerop old-len)
+                                start-point
+                                ;; Approximate: assume single line edit
+                                (ts:make-ts-point
+                                 (ts:ts-point-row start-point)
+                                 (+ (ts:ts-point-column start-point) old-len)))))
+        (push (ts:make-ts-input-edit start-byte old-end-byte new-end-byte
+                                     start-point old-end-point new-end-point)
+              (treesitter-parser-pending-edits parser))))))
+
+;; Register global hook for incremental parsing
+;; This checks if buffer has a treesitter-parser and records edits accordingly
+(lem:add-hook (lem:variable-value 'lem:after-change-functions :global)
+              'record-tree-sitter-edit)

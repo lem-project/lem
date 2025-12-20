@@ -68,6 +68,82 @@
   "Get the highlight query from the parser."
   (slot-value parser 'lem-tree-sitter::highlight-query))
 
+(defun get-attribute-ranges (line)
+  "Get list of (start end) ranges with attributes on LINE."
+  (mapcar (lambda (attr)
+            (list (first attr) (second attr)))
+          (getf (lem/buffer/line:line-plist line) :attribute)))
+
+(defun has-attribute-at-range-p (line start end)
+  "Check if LINE has an attribute covering exactly START to END."
+  (member (list start end) (get-attribute-ranges line) :test #'equal))
+
+(deftest test-highlight-position-accuracy
+  (skip-unless-yaml-available)
+  (testing "tree-sitter applies highlights at correct byte positions"
+    (lem:with-current-buffers ()
+      ;; Simple test: "key: value" - key should be 0-3, value should be 5-10
+      (let* ((yaml-content "key: value")
+             (syntax-table (lem:make-syntax-table))
+             (buffer (lem:make-buffer "*position-test*"
+                                      :temporary t
+                                      :enable-undo-p nil
+                                      :syntax-table syntax-table)))
+        (setf (lem:variable-value 'lem:enable-syntax-highlight :buffer buffer) t)
+        (lem:insert-string (lem:buffer-point buffer) yaml-content)
+        (lem:buffer-start (lem:buffer-point buffer))
+        (let* ((query-path (asdf:system-relative-pathname
+                            :lem-tree-sitter "queries/yaml/highlights.scm"))
+               (parser (lem-ts:make-treesitter-parser
+                        "yaml" :highlight-query-path query-path)))
+          (lem:set-syntax-parser syntax-table parser)
+          (lem:syntax-scan-region (lem:buffer-start-point buffer)
+                                  (lem:buffer-end-point buffer))
+          (let* ((line (get-line-at buffer 1))
+                 (ranges (get-attribute-ranges line)))
+            (testing "attributes are applied"
+              (ok ranges))
+            ;; "key" is at position 0-3
+            (testing "key is highlighted at position 0-3"
+              (ok (has-attribute-at-range-p line 0 3)))
+            ;; "value" is at position 5-10
+            (testing "value is highlighted at position 5-10"
+              (ok (has-attribute-at-range-p line 5 10)))))))))
+
+(deftest test-multiline-highlight-positions
+  (skip-unless-yaml-available)
+  (testing "multi-line highlights have correct positions"
+    (lem:with-current-buffers ()
+      (let* ((yaml-content "first: 1
+second: 2")
+             (syntax-table (lem:make-syntax-table))
+             (buffer (lem:make-buffer "*multiline-test*"
+                                      :temporary t
+                                      :enable-undo-p nil
+                                      :syntax-table syntax-table)))
+        (setf (lem:variable-value 'lem:enable-syntax-highlight :buffer buffer) t)
+        (lem:insert-string (lem:buffer-point buffer) yaml-content)
+        (lem:buffer-start (lem:buffer-point buffer))
+        (let* ((query-path (asdf:system-relative-pathname
+                            :lem-tree-sitter "queries/yaml/highlights.scm"))
+               (parser (lem-ts:make-treesitter-parser
+                        "yaml" :highlight-query-path query-path)))
+          (lem:set-syntax-parser syntax-table parser)
+          (lem:syntax-scan-region (lem:buffer-start-point buffer)
+                                  (lem:buffer-end-point buffer))
+          ;; Line 1: "first: 1" - "first" at 0-5, "1" at 7-8
+          (let ((line1 (get-line-at buffer 1)))
+            (testing "line 1: 'first' at 0-5"
+              (ok (has-attribute-at-range-p line1 0 5)))
+            (testing "line 1: '1' at 7-8"
+              (ok (has-attribute-at-range-p line1 7 8))))
+          ;; Line 2: "second: 2" - "second" at 0-6, "2" at 8-9
+          (let ((line2 (get-line-at buffer 2)))
+            (testing "line 2: 'second' at 0-6"
+              (ok (has-attribute-at-range-p line2 0 6)))
+            (testing "line 2: '2' at 8-9"
+              (ok (has-attribute-at-range-p line2 8 9)))))))))
+
 (deftest test-yaml-buffer-attributes
   (skip-unless-yaml-available)
   (testing "tree-sitter applies attributes to YAML buffer"

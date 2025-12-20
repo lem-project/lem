@@ -71,13 +71,33 @@
             "fetchSubmodules": false,
             "leaveDotGit": false,
             "name": null,
-            "rev": "4476dee561b7557dcb3f8acc720b21ebfebbb0e5",
-            "sha256": "sha256-Ifb2I1O2FdOLWLFmb86yNd7dEyeBbN8oKtMSSm7uMWE=",
+            "rev": "2ec61c8d6028d219cc511a0e41d9228761c84251",
+            "sha256": "sha256-HGcKeHy5foq2M1sKQRr7eahYLTESBbQAr7ufz1+Dyhw=",
             "sparseCheckout": [],
             "type": "git",
             "url": "https://github.com/lem-project/micros"
         },
-        "version": "4476dee561b7557dcb3f8acc720b21ebfebbb0e5"
+        "version": "2ec61c8d6028d219cc511a0e41d9228761c84251"
+    },
+    "tree-sitter-cl": {
+        "cargoLocks": null,
+        "date": "2025-12-20",
+        "extract": null,
+        "name": "tree-sitter-cl",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "rev": "bb3271daef1aabaee63d8ec32a1030b25c3d24c7",
+            "sha256": "sha256-1zQelkBde7oN5Ih4dJS3ZrCwSEJcjFBqOfhR7R62yAw=",
+            "sparseCheckout": [],
+            "type": "git",
+            "url": "https://github.com/lem-project/tree-sitter-cl"
+        },
+        "version": "bb3271daef1aabaee63d8ec32a1030b25c3d24c7"
     },
     "webview": {
         "cargoLocks": null,

@@ -132,7 +132,7 @@
           ts-wrapper = pkgs.stdenv.mkDerivation {
             pname = "ts-wrapper";
             version = "0.1.0";
-            src = ./libraries/cl-tree-sitter/c-wrapper;
+            src = "${sources.tree-sitter-cl.src}/c-wrapper";
             buildInputs = [ pkgs.tree-sitter ];
             buildPhase = ''
               gcc -shared -fPIC -o libts-wrapper.so ts-wrapper.c \
@@ -146,11 +146,9 @@
             '';
           };
 
-          # tree-sitter-cl Lisp bindings
+          # tree-sitter-cl Lisp bindings (from github.com/lem-project/tree-sitter-cl)
           tree-sitter-cl = lisp.buildASDFSystem {
-            pname = "tree-sitter-cl";
-            version = "0.1.0";
-            src = ./libraries/cl-tree-sitter;
+            inherit (sources.tree-sitter-cl) pname version src;
             systems = [ "tree-sitter-cl" ];
             lispLibs = with lisp.pkgs; [
               cffi

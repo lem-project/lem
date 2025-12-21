@@ -7,4 +7,5 @@
   :serial t
   :components ((:file "package")
                (:file "highlight")
+               (:file "indent")
                (:file "integration")))

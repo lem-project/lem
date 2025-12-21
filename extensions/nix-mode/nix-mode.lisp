@@ -105,6 +105,10 @@
   "Return the path to the tree-sitter highlight query for Nix."
   (asdf:system-relative-pathname :lem-nix-mode "tree-sitter/highlights.scm"))
 
+(defun tree-sitter-indent-query-path ()
+  "Return the path to the tree-sitter indent query for Nix."
+  (asdf:system-relative-pathname :lem-nix-mode "tree-sitter/indents.scm"))
+
 (defun try-enable-tree-sitter ()
   "Try to enable tree-sitter for Nix mode. Falls back to tmlanguage if unavailable."
   (ignore-errors
@@ -112,7 +116,8 @@
                (fboundp (find-symbol "TREE-SITTER-AVAILABLE-P" :lem-tree-sitter))
                (funcall (find-symbol "TREE-SITTER-AVAILABLE-P" :lem-tree-sitter)))
       (funcall (find-symbol "ENABLE-TREE-SITTER-FOR-MODE" :lem-tree-sitter)
-               *nix-syntax-table* "nix" (tree-sitter-query-path))
+               *nix-syntax-table* "nix" (tree-sitter-query-path)
+               :indent-query-path (tree-sitter-indent-query-path))
       t)))
 
 ;;; Major Mode Definition

@@ -128,11 +128,18 @@
 
           # --- Tree-sitter Support ---
 
+          # Use local tree-sitter-cl if available, otherwise use nvfetcher source
+          tree-sitter-cl-src =
+            let
+              localPath = /home/user/lem-project/tree-sitter-cl;
+            in
+            if builtins.pathExists localPath then localPath else sources.tree-sitter-cl.src;
+
           # C wrapper library for tree-sitter (handles by-value struct returns)
           ts-wrapper = pkgs.stdenv.mkDerivation {
             pname = "ts-wrapper";
             version = "0.1.0";
-            src = "${sources.tree-sitter-cl.src}/c-wrapper";
+            src = "${tree-sitter-cl-src}/c-wrapper";
             buildInputs = [ pkgs.tree-sitter ];
             buildPhase =
               let
@@ -156,7 +163,9 @@
 
           # tree-sitter-cl Lisp bindings (from github.com/lem-project/tree-sitter-cl)
           tree-sitter-cl = lisp.buildASDFSystem {
-            inherit (sources.tree-sitter-cl) pname version src;
+            pname = "tree-sitter-cl";
+            version = sources.tree-sitter-cl.version;
+            src = tree-sitter-cl-src;
             systems = [ "tree-sitter-cl" ];
             lispLibs = with lisp.pkgs; [
               cffi
@@ -174,6 +183,7 @@
             json = pkgs.tree-sitter-grammars.tree-sitter-json;
             markdown = pkgs.tree-sitter-grammars.tree-sitter-markdown;
             yaml = pkgs.tree-sitter-grammars.tree-sitter-yaml;
+            nix = pkgs.tree-sitter-grammars.tree-sitter-nix;
             # Add more languages here as needed:
             # javascript = pkgs.tree-sitter-grammars.tree-sitter-javascript;
             # python = pkgs.tree-sitter-grammars.tree-sitter-python;
@@ -322,7 +332,7 @@
               mkdir -p $out/bin
               install lem $out/bin
               wrapProgram $out/bin/lem \
-                --prefix LD_LIBRARY_PATH : "$LD_LIBRARY_PATH:${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}:${tree-sitter-grammars.yaml}" \
+                --prefix LD_LIBRARY_PATH : "$LD_LIBRARY_PATH:${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}:${tree-sitter-grammars.yaml}:${tree-sitter-grammars.nix}" \
                 --prefix DYLD_LIBRARY_PATH : "$DYLD_LIBRARY_PATH"
               runHook postInstall
             '';
@@ -353,7 +363,7 @@
               mkdir -p $out/bin
               install lem $out/bin
               wrapProgram $out/bin/lem \
-                --prefix LD_LIBRARY_PATH : "$LD_LIBRARY_PATH:${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}:${tree-sitter-grammars.yaml}" \
+                --prefix LD_LIBRARY_PATH : "$LD_LIBRARY_PATH:${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}:${tree-sitter-grammars.yaml}:${tree-sitter-grammars.nix}" \
                 --prefix DYLD_LIBRARY_PATH : "$DYLD_LIBRARY_PATH"
               runHook postInstall
             '';
@@ -411,12 +421,12 @@
                     --set FONTCONFIG_FILE "${pkgs.makeFontsConf { fontDirectories = [ pkgs.dejavu_fonts ]; }}" \
                     --prefix XDG_DATA_DIRS : "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}" \
                     --prefix XDG_DATA_DIRS : "${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}" \
-                    --prefix LD_LIBRARY_PATH : "${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}:${tree-sitter-grammars.yaml}"
+                    --prefix LD_LIBRARY_PATH : "${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}:${tree-sitter-grammars.yaml}:${tree-sitter-grammars.nix}"
                 ''
               else
                 ''
                   wrapProgram $out/bin/lem \
-                    --prefix LD_LIBRARY_PATH : "${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}:${tree-sitter-grammars.yaml}"
+                    --prefix LD_LIBRARY_PATH : "${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}:${tree-sitter-grammars.yaml}:${tree-sitter-grammars.nix}"
                 '';
           });
         in
@@ -473,6 +483,7 @@
               pkgs.tree-sitter-grammars.tree-sitter-json
               pkgs.tree-sitter-grammars.tree-sitter-markdown
               pkgs.tree-sitter-grammars.tree-sitter-yaml
+              pkgs.tree-sitter-grammars.tree-sitter-nix
 
               # Code formatting
               nixfmt-rfc-style
@@ -497,12 +508,17 @@
               pkgs.tree-sitter-grammars.tree-sitter-json
               pkgs.tree-sitter-grammars.tree-sitter-markdown
               pkgs.tree-sitter-grammars.tree-sitter-yaml
+              pkgs.tree-sitter-grammars.tree-sitter-nix
             ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
               pkgs.webkitgtk_4_1
               pkgs.gtk3
             ]);
 
             shellHook = ''
+              # Prioritize local tree-sitter-cl c-wrapper for development
+              if [ -f "$HOME/lem-project/tree-sitter-cl/c-wrapper/libts-wrapper.so" ]; then
+                export LD_LIBRARY_PATH="$HOME/lem-project/tree-sitter-cl/c-wrapper:$LD_LIBRARY_PATH"
+              fi
               echo "Lem development environment"
               echo "  SBCL: $(sbcl --version)"
               echo "  qlot: $(qlot --version 2>/dev/null || echo 'available')"

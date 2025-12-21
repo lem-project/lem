@@ -1,5 +1,8 @@
 (defpackage :lem-nix-mode/indent
   (:use :cl :lem :lem/language-mode)
+  (:local-nicknames (:ts :tree-sitter)
+                    (:ts-ext :lem-tree-sitter)
+                    (:ts-indent :lem-tree-sitter/indent))
   (:export :*indent-size*
            :calc-indent))
 (in-package :lem-nix-mode/indent)
@@ -23,79 +26,49 @@
   '("}" "]" ")" "in")
   "Node types that are closers and should dedent.")
 
-;;; Tree-sitter API wrappers (dynamic lookup for safety)
-
-(defun ts-tree-root-node (tree)
-  "Get root node from tree."
-  (funcall (find-symbol "TREE-ROOT-NODE" :tree-sitter) tree))
-
-(defun ts-node-named-descendant-for-byte-range (node start end)
-  "Get named descendant for byte range."
-  (funcall (find-symbol "NODE-NAMED-DESCENDANT-FOR-BYTE-RANGE" :tree-sitter)
-           node start end))
-
-(defun ts-node-descendant-for-byte-range (node start end)
-  "Get any descendant (including anonymous nodes) for byte range."
-  (funcall (find-symbol "NODE-DESCENDANT-FOR-BYTE-RANGE" :tree-sitter)
-           node start end))
-
-(defun ts-node-start-byte (node)
-  "Get start byte of node."
-  (funcall (find-symbol "NODE-START-BYTE" :tree-sitter) node))
-
-(defun ts-point-row (point)
-  "Get row from point."
-  (funcall (find-symbol "POINT-ROW" :tree-sitter) point))
-
-(defun ts-node-parent (node)
-  "Get parent of node."
-  (funcall (find-symbol "NODE-PARENT" :tree-sitter) node))
-
-(defun ts-node-type (node)
-  "Get type of node."
-  (funcall (find-symbol "NODE-TYPE" :tree-sitter) node))
-
-(defun ts-node-start-point (node)
-  "Get start point of node."
-  (funcall (find-symbol "NODE-START-POINT" :tree-sitter) node))
-
-(defun ts-point-column (point)
-  "Get column from point."
-  (funcall (find-symbol "POINT-COLUMN" :tree-sitter) point))
-
 ;;; Tree-sitter integration
 
 (defun get-buffer-treesitter-parser (buffer)
   "Get the treesitter-parser for BUFFER, if any."
-  (when (find-package :lem-tree-sitter)
-    (let ((func (find-symbol "GET-BUFFER-TREESITTER-PARSER" :lem-tree-sitter)))
-      (when (and func (fboundp func))
-        (funcall func buffer)))))
+  (ts-ext:get-buffer-treesitter-parser buffer))
 
 (defun treesitter-parser-tree (parser)
   "Get the syntax tree from a treesitter parser."
   (when parser
-    (let ((accessor (find-symbol "TREESITTER-PARSER-TREE" :lem-tree-sitter)))
-      (when (and accessor (fboundp accessor))
-        (funcall accessor parser)))))
+    (ts-ext:treesitter-parser-tree parser)))
+
+(defun treesitter-parser-indent-query (parser)
+  "Get the indent query from a treesitter parser."
+  (when parser
+    (ts-ext:treesitter-parser-indent-query parser)))
 
 (defun tree-sitter-available-for-buffer-p (buffer)
   "Check if tree-sitter is available and has a valid tree for BUFFER."
-  (and (find-package :tree-sitter)
-       (let ((parser (get-buffer-treesitter-parser buffer)))
-         (and parser (treesitter-parser-tree parser)))))
+  (let ((parser (get-buffer-treesitter-parser buffer)))
+    (and parser (treesitter-parser-tree parser))))
 
 (defun get-node-at-byte (buffer byte-offset &key (named t))
   "Get the tree-sitter node at BYTE-OFFSET in BUFFER.
 If NAMED is T (default), returns only named nodes.
-If NAMED is NIL, returns any node including anonymous ones."
+If NAMED is NIL, returns any node including anonymous ones.
+Uses tree cursor to find the deepest node at the given byte offset."
   (let ((parser (get-buffer-treesitter-parser buffer)))
     (when parser
       (alexandria:when-let ((tree (treesitter-parser-tree parser)))
-        (let ((root (ts-tree-root-node tree)))
-          (if named
-              (ts-node-named-descendant-for-byte-range root byte-offset byte-offset)
-              (ts-node-descendant-for-byte-range root byte-offset byte-offset)))))))
+        (let ((root (ts:tree-root-node tree)))
+          ;; Walk down from root to find deepest node containing byte-offset
+          (labels ((find-node (node)
+                     (let ((start (ts:node-start-byte node))
+                           (end (ts:node-end-byte node)))
+                       (when (and (<= start byte-offset) (< byte-offset end))
+                         ;; Check children for a more specific match
+                         (let ((children (if named
+                                             (ts:node-named-children node)
+                                             (ts:node-children node))))
+                           (or (some #'find-node children)
+                               (when (or (not named) (ts:node-named-p node))
+                                 node)))))))
+            (find-node root)))))))
 
 (defun node-indent-contributing-p (node-type)
   "Check if NODE-TYPE contributes to indentation."
@@ -106,9 +79,9 @@ If NAMED is NIL, returns any node including anonymous ones."
 If SKIP-FIRST is T, don't count NODE itself (used when on the opening line of a container)."
   (let ((depth 0)
         (first t))
-    (loop :for current := node :then (ts-node-parent current)
+    (loop :for current := node :then (ts:node-parent current)
           :while current
-          :do (let ((node-type (ts-node-type current)))
+          :do (let ((node-type (ts:node-type current)))
                 (when (node-indent-contributing-p node-type)
                   (if (and first skip-first)
                       (setf first nil)
@@ -137,41 +110,41 @@ If SKIP-FIRST is T, don't count NODE itself (used when on the opening line of a 
 
 (defun get-node-line-indent (buffer node)
   "Get the indentation of the line where NODE starts in BUFFER."
-  (let* ((start-point (ts-node-start-point node))
-         (row (ts-point-row start-point)))
+  (let* ((start-point (ts:node-start-point node))
+         (row (ts:ts-point-row start-point)))
     (get-line-indent-at-row buffer row)))
 
 (defun get-parent-container-indent (buffer node)
   "Get the indentation of the line where the parent container starts."
-  (loop :for parent := (ts-node-parent node) :then (ts-node-parent parent)
+  (loop :for parent := (ts:node-parent node) :then (ts:node-parent parent)
         :while parent
-        :when (node-indent-contributing-p (ts-node-type parent))
+        :when (node-indent-contributing-p (ts:node-type parent))
         :do (return (get-node-line-indent buffer parent))
         :finally (return 0)))
 
 (defun current-line-starts-with-closer-ts-p (point)
   "Check if current line starts with a closing token using tree-sitter."
   (alexandria:when-let ((node (get-node-at-line-start point)))
-    (member (ts-node-type node) *nix-closer-node-types* :test #'string=)))
+    (member (ts:node-type node) *nix-closer-node-types* :test #'string=)))
 
 (defun find-parent-of-type (node types)
   "Find the first ancestor of NODE with a type in TYPES list."
-  (loop :for parent := (ts-node-parent node) :then (ts-node-parent parent)
+  (loop :for parent := (ts:node-parent node) :then (ts:node-parent parent)
         :while parent
-        :when (member (ts-node-type parent) types :test #'string=)
+        :when (member (ts:node-type parent) types :test #'string=)
         :do (return parent)))
 
 (defun is-in-binding-set-p (node)
   "Check if NODE is inside a binding_set or IS a binding_set."
   ;; First check if node itself is binding_set
-  (when (string= (ts-node-type node) "binding_set")
+  (when (string= (ts:node-type node) "binding_set")
     (return-from is-in-binding-set-p t))
   ;; Then check ancestors
-  (loop :for parent := (ts-node-parent node) :then (ts-node-parent parent)
+  (loop :for parent := (ts:node-parent node) :then (ts:node-parent parent)
         :while parent
-        :when (string= (ts-node-type parent) "binding_set")
+        :when (string= (ts:node-type parent) "binding_set")
         :do (return t)
-        :when (string= (ts-node-type parent) "let_expression")
+        :when (string= (ts:node-type parent) "let_expression")
         :do (return nil)))  ; Found let before binding_set means we're in body
 
 (defun is-let-body-p (node)
@@ -185,8 +158,8 @@ If SKIP-FIRST is T, don't count NODE itself (used when on the opening line of a 
 
 (defun node-starts-at-line-p (node current-line-row)
   "Check if NODE starts at CURRENT-LINE-ROW (0-indexed)."
-  (let ((start-point (ts-node-start-point node)))
-    (= (ts-point-row start-point) current-line-row)))
+  (let ((start-point (ts:node-start-point node)))
+    (= (ts:ts-point-row start-point) current-line-row)))
 
 (defun calc-indent-tree-sitter (point)
   "Calculate indentation using tree-sitter."
@@ -204,12 +177,12 @@ If SKIP-FIRST is T, don't count NODE itself (used when on the opening line of a 
              (named-node (get-node-at-byte buffer byte-offset :named t)))
         (unless (or any-node named-node)
           (return-from calc-indent-tree-sitter nil))
-        (let ((any-type (when any-node (ts-node-type any-node)))
-              (named-type (when named-node (ts-node-type named-node))))
+        (let ((any-type (when any-node (ts:node-type any-node)))
+              (named-type (when named-node (ts:node-type named-node))))
           (cond
             ;; Closing brace/bracket - align with the line where parent container starts
             ((and any-type (member any-type '("}" "]" ")") :test #'string=))
-             (alexandria:when-let ((parent (ts-node-parent any-node)))
+             (alexandria:when-let ((parent (ts:node-parent any-node)))
                (get-node-line-indent buffer parent)))
             ;; Closing '' of indented string - align with opening
             ((and named-type (string= named-type "indented_string_expression")
@@ -423,17 +396,31 @@ Searches for keywords anywhere on the line, not just at the start."
           ((line-contains-keyword-p p close-keyword)
            (incf depth)))))))
 
+(defun calc-indent-from-indent-query (point)
+  "Calculate indentation using tree-sitter indent query.
+Returns the indent level or NIL if indent query is not available."
+  (let* ((buffer (point-buffer point))
+         (parser (get-buffer-treesitter-parser buffer)))
+    (when parser
+      (alexandria:when-let ((tree (treesitter-parser-tree parser)))
+        (alexandria:when-let ((indent-query (treesitter-parser-indent-query parser)))
+          (ts-indent:calc-indent-from-query tree indent-query point *indent-size*))))))
+
 (defun calc-indent (point)
   "Calculate indentation for POINT in Nix mode.
-Uses tree-sitter when available, falls back to heuristics otherwise."
+Uses tree-sitter indent query when available, then falls back to tree-sitter
+traversal, and finally to heuristics."
   (line-start point)
   ;; First line always has indent 0
   (when (buffer-first-line-p point)
     (return-from calc-indent 0))
-  ;; Try tree-sitter first
+  ;; Try tree-sitter indent query first (preferred)
+  (alexandria:when-let ((query-indent (calc-indent-from-indent-query point)))
+    (return-from calc-indent query-indent))
+  ;; Fallback 1: tree-sitter manual traversal
   (alexandria:when-let ((ts-indent (calc-indent-tree-sitter point)))
     (return-from calc-indent ts-indent))
-  ;; Fallback to heuristic-based indentation
+  ;; Fallback 2: heuristic-based indentation
   (calc-indent-fallback point))
 
 (defun calc-indent-fallback (point)

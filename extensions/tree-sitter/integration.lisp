@@ -27,6 +27,10 @@
                     :accessor treesitter-parser-highlight-query
                     :initform nil
                     :documentation "Compiled highlight query")
+   (indent-query :initarg :indent-query
+                 :accessor treesitter-parser-indent-query
+                 :initform nil
+                 :documentation "Compiled indent query for tree-sitter based indentation")
    (source-cache :initform nil
                  :accessor treesitter-parser-source-cache
                  :documentation "Cached source for incremental parsing")
@@ -38,16 +42,21 @@
                 :documentation "Last parsed buffer-modified-tick for cache validation"))
   (:documentation "Tree-sitter based syntax parser for Lem."))
 
-(defun make-treesitter-parser (language-name &key highlight-query-path)
-  "Create a treesitter-parser for the given language."
+(defun make-treesitter-parser (language-name &key highlight-query-path indent-query-path)
+  "Create a treesitter-parser for the given language.
+HIGHLIGHT-QUERY-PATH: Path to highlights.scm for syntax highlighting.
+INDENT-QUERY-PATH: Path to indents.scm for tree-sitter based indentation."
   (let* ((language (ts:get-language language-name))
          (parser (ts:make-parser language))
-         (query (when highlight-query-path
-                  (highlight:load-highlight-query language-name highlight-query-path))))
+         (highlight-query (when highlight-query-path
+                            (highlight:load-highlight-query language-name highlight-query-path)))
+         (indent-query (when indent-query-path
+                         (indent:load-indent-query language-name indent-query-path))))
     (make-instance 'treesitter-parser
                    :language-name language-name
                    :parser parser
-                   :highlight-query query)))
+                   :highlight-query highlight-query
+                   :indent-query indent-query)))
 
 ;;;; Core Integration: %syntax-scan-region
 
@@ -161,11 +170,12 @@
 
 ;;;; Enable tree-sitter for existing modes
 
-(defun enable-tree-sitter-for-mode (syntax-table language query-path)
+(defun enable-tree-sitter-for-mode (syntax-table language query-path &key indent-query-path)
   "Enable tree-sitter syntax highlighting for a mode's syntax table.
    SYNTAX-TABLE: The mode's syntax table to update
    LANGUAGE: tree-sitter language name (e.g., \"json\")
-   QUERY-PATH: Path to the highlights.scm query file"
+   QUERY-PATH: Path to the highlights.scm query file
+   INDENT-QUERY-PATH: Optional path to indents.scm for tree-sitter based indentation"
   (unless (tree-sitter-available-p)
     (log:debug "tree-sitter library not available")
     (return-from enable-tree-sitter-for-mode nil))
@@ -178,7 +188,10 @@
           (ts:load-language-from-system language))
         (let ((parser (make-treesitter-parser
                        language
-                       :highlight-query-path query-path)))
+                       :highlight-query-path query-path
+                       :indent-query-path (when (and indent-query-path
+                                                     (probe-file indent-query-path))
+                                            indent-query-path))))
           (lem:set-syntax-parser syntax-table parser)
           t))
     (error (e)

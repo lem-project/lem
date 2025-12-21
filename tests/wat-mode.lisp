@@ -1,11 +1,11 @@
-(defpackage :lem-wat-mode/tests
+(defpackage :lem-tests/wat-mode
   (:use :cl :rove :lem)
   (:import-from :lem-wat-mode
                 :wat-mode
                 :*wat-syntax-table*)
   (:import-from :lem-wat-mode/indent
                 :calc-indent))
-(in-package :lem-wat-mode/tests)
+(in-package :lem-tests/wat-mode)
 
 ;;;; Test Utilities
 

@@ -8,12 +8,4 @@
                (:file "wat-mode")
                (:file "lsp-config")
                (:module "tree-sitter"
-                :components ((:static-file "highlights.scm"))))
-  :in-order-to ((test-op (test-op "lem-wat-mode/tests"))))
-
-(defsystem "lem-wat-mode/tests"
-  :depends-on ("lem-wat-mode" "rove")
-  :serial t
-  :pathname "tests"
-  :components ((:file "main"))
-  :perform (test-op (op c) (symbol-call :rove '#:run c)))
+                :components ((:static-file "highlights.scm")))))

@@ -2,6 +2,8 @@
   (:use :cl))
 (in-package :lem-wat-mode/lsp-config)
 
+;; After verifying functionality, the initialization process wasn't working correctly, so it has been commented out.
+#+(or)
 (lem-lsp-mode:define-language-spec (wat-spec lem-wat-mode:wat-mode)
   :language-id "wat"
   :root-uri-patterns '("*.wat" "*.wast")

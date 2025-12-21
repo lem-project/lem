@@ -269,6 +269,7 @@
                "lem-haskell-mode"
                "lem-ocaml-mode"
                "lem-asm-mode"
+               "lem-wat-mode"
                "lem-makefile-mode"
                "lem-shell-mode"
                "lem-sql-mode"

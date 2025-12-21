@@ -7,6 +7,7 @@
                #+sbcl "lem-mcp-server"
                "lem-tree-sitter"
                "lem-yaml-mode"
+               "lem-wat-mode"
                "cl-ansi-text"
                "trivial-package-local-nicknames"
                "rove"
@@ -50,6 +51,7 @@
                (:file "interp")
                (:file "file")
                (:file "scala-mode")
+               (:file "wat-mode")
                (:file "completion")
                (:file "command-line-arguments")
                (:file "window")

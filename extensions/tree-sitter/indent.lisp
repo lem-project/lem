@@ -11,10 +11,13 @@
 (defun load-indent-query (language-name query-path)
   "Load and compile an indent query from QUERY-PATH for LANGUAGE-NAME.
 Returns the compiled query or NIL if loading fails."
-  (ignore-errors
-    (let ((language (ts:get-language language-name))
-          (source (uiop:read-file-string query-path)))
-      (ts:query-compile language source))))
+  (handler-case
+      (let ((language (ts:get-language language-name))
+            (source (uiop:read-file-string query-path)))
+        (ts:query-compile language source))
+    (error (e)
+      (log:debug "Failed to load indent query: ~A" e)
+      nil)))
 
 ;;; Indent Calculation
 
@@ -83,19 +86,22 @@ INDENT-SIZE is the number of spaces per indent level.
 
 Returns the calculated indentation in spaces, or NIL if calculation fails."
   (when (and tree query)
-    (ignore-errors
-      (let* ((root (ts:tree-root-node tree))
-             ;; Get current row (0-indexed)
-             (current-row (1- (lem:line-number-at-point point)))
-             ;; Get all captures from the entire tree
-             (captures (collect-indent-captures query root))
-             ;; Filter captures relevant to the current line's ancestors
-             ;; For now, we use all captures up to and including current row
-             (relevant-captures
-               (remove-if (lambda (cap)
-                            (> (indent-capture-start-row cap) current-row))
-                          captures))
-             ;; Compute indent level
-             (indent-level (compute-indent-level relevant-captures current-row)))
-        ;; Return indent in spaces, minimum 0
-        (max 0 (* indent-level indent-size))))))
+    (handler-case
+        (let* ((root (ts:tree-root-node tree))
+               ;; Get current row (0-indexed)
+               (current-row (1- (lem:line-number-at-point point)))
+               ;; Get all captures from the entire tree
+               (captures (collect-indent-captures query root))
+               ;; Filter captures relevant to the current line's ancestors
+               ;; For now, we use all captures up to and including current row
+               (relevant-captures
+                 (remove-if (lambda (cap)
+                              (> (indent-capture-start-row cap) current-row))
+                            captures))
+               ;; Compute indent level
+               (indent-level (compute-indent-level relevant-captures current-row)))
+          ;; Return indent in spaces, minimum 0
+          (max 0 (* indent-level indent-size)))
+      (error (e)
+        (log:debug "Indent query error: ~A" e)
+        nil))))

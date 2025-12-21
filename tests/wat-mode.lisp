@@ -30,11 +30,11 @@
 
 (deftest test-wat-mode-exists
   (testing "wat-mode is defined"
-    (ok (find-mode 'wat-mode))))
+    (ok (find-mode 'lem-wat-mode:wat-mode))))
 
 (deftest test-wat-mode-name
   (testing "wat-mode has correct display name"
-    (ok (string= "WAT" (mode-name (find-mode 'wat-mode))))))
+    (ok (string= "WAT" (mode-name (find-mode 'lem-wat-mode:wat-mode))))))
 
 ;;;; Syntax Table Tests
 
@@ -95,20 +95,20 @@
 (deftest test-file-type-wat
   (testing ".wat files use wat-mode"
     (let ((mode (get-file-mode "test.wat")))
-      (ok (eq mode 'wat-mode)))))
+      (ok (eq mode 'lem-wat-mode:wat-mode)))))
 
 (deftest test-file-type-wast
   (testing ".wast files use wat-mode"
     (let ((mode (get-file-mode "test.wast")))
-      (ok (eq mode 'wast-mode)))))
+      (ok (eq mode 'lem-wat-mode:wat-mode)))))
 
 ;;;; Comment Variable Tests
 
 (deftest test-line-comment-variable
   (testing "line-comment is set to ;;"
     (with-wat-buffer (buffer "(module)")
-      (change-buffer-mode (current-buffer) 'wat-mode)
-      (ok (string= ";;" (variable-value 'line-comment))))))
+      (change-buffer-mode (current-buffer) 'lem-wat-mode:wat-mode)
+      (ok (string= ";;" (variable-value 'lem/language-mode:line-comment))))))
 
 ;;;; Sample WAT Code Tests
 

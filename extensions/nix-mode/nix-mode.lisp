@@ -1,9 +1,11 @@
 (defpackage :lem-nix-mode
   (:use :cl :lem :lem/language-mode :lem/language-mode-tools)
+  (:local-nicknames (:indent :lem-nix-mode/indent))
   (:export :*nix-mode-hook*
            :*nix-mode-keymap*
            :*nix-syntax-table*
-           :nix-mode))
+           :nix-mode
+           :nix-insert-indent))
 (in-package :lem-nix-mode)
 
 ;;; Nix Keywords
@@ -127,6 +129,17 @@
         (variable-value 'tab-width) 2
         (variable-value 'line-comment) "#"
         (variable-value 'insertion-line-comment) "# "
-        (variable-value 'calc-indent-function) 'lem-nix-mode/indent:calc-indent))
+        (variable-value 'calc-indent-function) 'indent:calc-indent))
 
 (define-file-type ("nix") nix-mode)
+
+;;; Tab Indent Command
+;;; Tab inserts spaces directly; newline-and-indent uses calc-indent for smart indentation
+
+(define-command nix-insert-indent () ()
+  "Insert spaces for indentation (default 2 spaces).
+Unlike the standard indent command, this simply inserts spaces without calculating context."
+  (insert-string (current-point)
+                 (make-string indent:*indent-size* :initial-element #\Space)))
+
+(define-key *nix-mode-keymap* "Tab" 'nix-insert-indent)

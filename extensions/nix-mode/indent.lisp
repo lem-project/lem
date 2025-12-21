@@ -1,6 +1,7 @@
 (defpackage :lem-nix-mode/indent
   (:use :cl :lem :lem/language-mode)
-  (:export :calc-indent))
+  (:export :*indent-size*
+           :calc-indent))
 (in-package :lem-nix-mode/indent)
 
 (defparameter *indent-size* 2

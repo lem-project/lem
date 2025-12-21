@@ -4,7 +4,9 @@
                 :wat-mode
                 :*wat-syntax-table*)
   (:import-from :lem-wat-mode/indent
-                :calc-indent))
+                :calc-indent)
+  (:import-from :lem-core
+                :get-mode-object))
 (in-package :lem-tests/wat-mode)
 
 ;;;; Test Utilities
@@ -30,11 +32,11 @@
 
 (deftest test-wat-mode-exists
   (testing "wat-mode is defined"
-    (ok (find-mode 'lem-wat-mode:wat-mode))))
+    (ok (get-mode-object 'lem-wat-mode:wat-mode))))
 
 (deftest test-wat-mode-name
   (testing "wat-mode has correct display name"
-    (ok (string= "WAT" (mode-name (find-mode 'lem-wat-mode:wat-mode))))))
+    (ok (string= "WAT" (mode-name (get-mode-object 'lem-wat-mode:wat-mode))))))
 
 ;;;; Syntax Table Tests
 

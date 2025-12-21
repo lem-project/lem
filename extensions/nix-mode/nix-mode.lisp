@@ -134,12 +134,18 @@
 (define-file-type ("nix") nix-mode)
 
 ;;; Tab Indent Command
-;;; Tab inserts spaces directly; newline-and-indent uses calc-indent for smart indentation
+;;; Tab moves to indentation or inserts spaces; newline-and-indent uses calc-indent
 
 (define-command nix-insert-indent () ()
-  "Insert spaces for indentation (default 2 spaces).
-Unlike the standard indent command, this simply inserts spaces without calculating context."
-  (insert-string (current-point)
-                 (make-string indent:*indent-size* :initial-element #\Space)))
+  "Move to indentation position, or insert spaces if already there.
+If point is before the first non-whitespace character, move to it.
+If point is already at the first non-whitespace character, insert spaces."
+  (let ((point (current-point))
+        (original-pos (position-at-point (current-point))))
+    (back-to-indentation point)
+    (when (= original-pos (position-at-point point))
+      ;; Already at indentation position, insert spaces
+      (insert-string point
+                     (make-string indent:*indent-size* :initial-element #\Space)))))
 
 (define-key *nix-mode-keymap* "Tab" 'nix-insert-indent)

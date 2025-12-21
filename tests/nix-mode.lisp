@@ -1,8 +1,10 @@
-(defpackage :lem-nix-mode/tests/indent
+(defpackage :lem-tests/nix-mode
   (:use :cl :rove :lem)
+  (:import-from :lem-nix-mode
+                :*nix-syntax-table*)
   (:import-from :lem-nix-mode/indent
                 :calc-indent))
-(in-package :lem-nix-mode/tests/indent)
+(in-package :lem-tests/nix-mode)
 
 (defun try-enable-tree-sitter-for-syntax-table (syntax-table)
   "Try to enable tree-sitter for the given SYNTAX-TABLE."
@@ -17,9 +19,9 @@
   "Create a test buffer with Nix syntax table and TEXT content.
    Attempts to enable tree-sitter for accurate indentation."
   ;; First try to enable tree-sitter on the syntax table
-  (try-enable-tree-sitter-for-syntax-table lem-nix-mode:*nix-syntax-table*)
+  (try-enable-tree-sitter-for-syntax-table *nix-syntax-table*)
   (let ((buffer (make-buffer "*nix-indent-test*"
-                             :syntax-table lem-nix-mode:*nix-syntax-table*
+                             :syntax-table *nix-syntax-table*
                              :temporary t)))
     (setf (variable-value 'tab-width :buffer buffer) 2)
     (insert-string (buffer-point buffer) text)

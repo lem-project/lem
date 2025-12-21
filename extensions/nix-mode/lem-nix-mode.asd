@@ -6,9 +6,3 @@
                (:file "lsp-config")
                (:module "tree-sitter"
                 :components ((:static-file "highlights.scm")))))
-
-(defsystem "lem-nix-mode/tests"
-  :depends-on ("lem-nix-mode" "rove")
-  :components ((:module "tests"
-                :components ((:file "indent-test"))))
-  :perform (test-op (op c) (symbol-call :rove '#:run c)))

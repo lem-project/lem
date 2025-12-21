@@ -8,6 +8,7 @@
                "lem-tree-sitter"
                "lem-yaml-mode"
                "lem-wat-mode"
+               "lem-nix-mode"
                "cl-ansi-text"
                "trivial-package-local-nicknames"
                "rove"
@@ -52,6 +53,7 @@
                (:file "file")
                (:file "scala-mode")
                (:file "wat-mode")
+               (:file "nix-mode")
                (:file "completion")
                (:file "command-line-arguments")
                (:file "window")

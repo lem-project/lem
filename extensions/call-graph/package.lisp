@@ -37,6 +37,15 @@
    ;; JSON serialization
    #:graph-to-cytoscape-json
 
+   ;; JSON format (intermediate representation)
+   #:graph-node-to-alist
+   #:graph-edge-to-alist
+   #:call-graph-to-alist
+   #:call-graph-to-json
+   #:alist-to-graph-node
+   #:alist-to-graph-edge
+   #:json-to-call-graph
+
    ;; Provider protocol
    #:call-graph-provider
    #:provider-name

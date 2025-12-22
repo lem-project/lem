@@ -25,11 +25,11 @@
 
 **Purpose**: Project initialization and verify environment
 
-- [ ] T001 Verify tree-sitter-cl is loadable in Lem REPL
-- [ ] T002 [P] Verify tree-sitter-python grammar is available via `(ts:load-language-from-system "python")`
-- [ ] T003 [P] Verify tree-sitter-javascript grammar is available via `(ts:load-language-from-system "javascript")`
-- [ ] T004 [P] Verify tree-sitter-typescript grammar is available via `(ts:load-language-from-system "typescript")`
-- [ ] T005 Document grammar installation instructions in specs/001-multi-language-canvas/quickstart.md if missing
+- [X] T001 Verify tree-sitter-cl is loadable in Lem REPL
+- [X] T002 [P] Verify tree-sitter-python grammar is available via `(ts:load-language-from-system "python")`
+- [X] T003 [P] Verify tree-sitter-javascript grammar is available via `(ts:load-language-from-system "javascript")`
+- [X] T004 [P] Verify tree-sitter-typescript grammar is available via `(ts:load-language-from-system "typescript")`
+- [X] T005 Document grammar installation instructions in specs/001-multi-language-canvas/quickstart.md if missing
 
 ---
 
@@ -41,22 +41,22 @@
 
 ### Tests for Foundational
 
-- [ ] T006 [P] Create test file for provider registry at extensions/call-graph/tests/registry-test.lisp
-- [ ] T007 [P] Write failing test for `register-provider` in extensions/call-graph/tests/registry-test.lisp
-- [ ] T008 [P] Write failing test for `find-provider` with priority ordering in extensions/call-graph/tests/registry-test.lisp
-- [ ] T009 [P] Write failing test for `list-providers` in extensions/call-graph/tests/registry-test.lisp
+- [X] T006 [P] Create test file for provider registry at extensions/call-graph/tests/registry-test.lisp
+- [X] T007 [P] Write failing test for `register-provider` in extensions/call-graph/tests/registry-test.lisp
+- [X] T008 [P] Write failing test for `find-provider` with priority ordering in extensions/call-graph/tests/registry-test.lisp
+- [X] T009 [P] Write failing test for `list-providers` in extensions/call-graph/tests/registry-test.lisp
 
 ### Implementation for Foundational
 
-- [ ] T010 Add `(:file "registry")` component to extensions/call-graph/lem-call-graph.asd
-- [ ] T011 Create provider-registry class in extensions/call-graph/registry.lisp with `providers` and `language-map` slots
-- [ ] T012 Implement `register-provider` function in extensions/call-graph/registry.lisp
-- [ ] T013 Implement `unregister-provider` function in extensions/call-graph/registry.lisp
-- [ ] T014 Implement `find-provider` function with priority sorting in extensions/call-graph/registry.lisp
-- [ ] T015 Implement `list-providers` function in extensions/call-graph/registry.lisp
-- [ ] T016 Define `*provider-registry*` global instance in extensions/call-graph/registry.lisp
-- [ ] T017 Export registry symbols in extensions/call-graph/package.lisp
-- [ ] T018 Verify all registry tests pass with `(asdf:test-system "lem-call-graph")`
+- [X] T010 Add `(:file "registry")` component to extensions/call-graph/lem-call-graph.asd
+- [X] T011 Create provider-registry class in extensions/call-graph/registry.lisp with `providers` and `language-map` slots
+- [X] T012 Implement `register-provider` function in extensions/call-graph/registry.lisp
+- [X] T013 Implement `unregister-provider` function in extensions/call-graph/registry.lisp
+- [X] T014 Implement `find-provider` function with priority sorting in extensions/call-graph/registry.lisp
+- [X] T015 Implement `list-providers` function in extensions/call-graph/registry.lisp
+- [X] T016 Define `*provider-registry*` global instance in extensions/call-graph/registry.lisp
+- [X] T017 Export registry symbols in extensions/call-graph/package.lisp
+- [X] T018 Verify all registry tests pass with `(asdf:test-system "lem-call-graph")`
 
 **Checkpoint**: Provider registry ready - user story implementation can now begin
 
@@ -72,26 +72,26 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T019 [P] [US1] Create test file for language detection at extensions/living-canvas/tests/language-detection-test.lisp
-- [ ] T020 [P] [US1] Write failing test for `detect-language` with Python buffer in extensions/living-canvas/tests/language-detection-test.lisp
-- [ ] T021 [P] [US1] Write failing test for `detect-language` with JavaScript file extension in extensions/living-canvas/tests/language-detection-test.lisp
-- [ ] T022 [P] [US1] Write failing test for `detect-language` with Common Lisp major mode in extensions/living-canvas/tests/language-detection-test.lisp
-- [ ] T023 [P] [US1] Write failing test for unsupported language error message in extensions/living-canvas/tests/language-detection-test.lisp
+- [X] T019 [P] [US1] Create test file for language detection at extensions/living-canvas/tests/language-detection-test.lisp
+- [X] T020 [P] [US1] Write failing test for `detect-language` with Python buffer in extensions/living-canvas/tests/language-detection-test.lisp
+- [X] T021 [P] [US1] Write failing test for `detect-language` with JavaScript file extension in extensions/living-canvas/tests/language-detection-test.lisp
+- [X] T022 [P] [US1] Write failing test for `detect-language` with Common Lisp major mode in extensions/living-canvas/tests/language-detection-test.lisp
+- [X] T023 [P] [US1] Write failing test for unsupported language error message in extensions/living-canvas/tests/language-detection-test.lisp
 
 ### Implementation for User Story 1
 
-- [ ] T024 [US1] Add `(:file "language-detection")` component to extensions/living-canvas/lem-living-canvas.asd (before living-canvas.lisp)
-- [ ] T025 [US1] Create defpackage `:lem-living-canvas/language` in extensions/living-canvas/language-detection.lisp
-- [ ] T026 [US1] Define `*mode-language-map*` alist mapping major modes to language keywords in extensions/living-canvas/language-detection.lisp
-- [ ] T027 [US1] Define `*extension-language-map*` alist mapping file extensions to language keywords in extensions/living-canvas/language-detection.lisp
-- [ ] T028 [US1] Implement `language-for-buffer` function using major mode lookup in extensions/living-canvas/language-detection.lisp
-- [ ] T029 [US1] Implement `language-for-file` function using pathname-type lookup in extensions/living-canvas/language-detection.lisp
-- [ ] T030 [US1] Implement `detect-language` function with fallback chain (mode → extension) in extensions/living-canvas/language-detection.lisp
-- [ ] T031 [US1] Export language detection symbols in extensions/living-canvas/package.lisp
-- [ ] T032 [US1] Modify `living-canvas-current-file` command to use `detect-language` and `find-provider` in extensions/living-canvas/living-canvas.lisp
-- [ ] T033 [US1] Add error handling for unsupported languages with editor-error message in extensions/living-canvas/living-canvas.lisp
-- [ ] T034 [US1] Add backward compatibility fallback for Common Lisp to use existing micros provider in extensions/living-canvas/living-canvas.lisp
-- [ ] T035 [US1] Verify all US1 tests pass with `(asdf:test-system "lem-living-canvas")`
+- [X] T024 [US1] Add `(:file "language-detection")` component to extensions/living-canvas/lem-living-canvas.asd (before living-canvas.lisp)
+- [X] T025 [US1] Create defpackage `:lem-living-canvas/language` in extensions/living-canvas/language-detection.lisp
+- [X] T026 [US1] Define `*mode-language-map*` alist mapping major modes to language keywords in extensions/living-canvas/language-detection.lisp
+- [X] T027 [US1] Define `*extension-language-map*` alist mapping file extensions to language keywords in extensions/living-canvas/language-detection.lisp
+- [X] T028 [US1] Implement `language-for-buffer` function using major mode lookup in extensions/living-canvas/language-detection.lisp
+- [X] T029 [US1] Implement `language-for-file` function using pathname-type lookup in extensions/living-canvas/language-detection.lisp
+- [X] T030 [US1] Implement `detect-language` function with fallback chain (mode → extension) in extensions/living-canvas/language-detection.lisp
+- [X] T031 [US1] Export language detection symbols in extensions/living-canvas/package.lisp
+- [X] T032 [US1] Modify `living-canvas-current-file` command to use `detect-language` and `find-provider` in extensions/living-canvas/living-canvas.lisp
+- [X] T033 [US1] Add error handling for unsupported languages with editor-error message in extensions/living-canvas/living-canvas.lisp
+- [X] T034 [US1] Add backward compatibility fallback for Common Lisp to use existing micros provider in extensions/living-canvas/living-canvas.lisp
+- [X] T035 [US1] Verify all US1 tests pass with `(asdf:test-system "lem-living-canvas")`
 
 **Checkpoint**: Language detection works, commands dispatch to correct providers, unsupported languages show helpful messages
 
@@ -107,33 +107,33 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T036 [P] [US2] Create test file for Python provider at extensions/living-canvas/tests/python-provider-test.lisp
-- [ ] T037 [P] [US2] Write failing test for `provider-supports-p` with Python buffer in extensions/living-canvas/tests/python-provider-test.lisp
-- [ ] T038 [P] [US2] Write failing test for `provider-supports-p` with .py pathname in extensions/living-canvas/tests/python-provider-test.lisp
-- [ ] T039 [P] [US2] Write failing test for `provider-analyze` extracting function definitions in extensions/living-canvas/tests/python-provider-test.lisp
-- [ ] T040 [P] [US2] Write failing test for `provider-analyze` extracting call edges in extensions/living-canvas/tests/python-provider-test.lisp
-- [ ] T041 [P] [US2] Write failing test for source-location population in graph nodes in extensions/living-canvas/tests/python-provider-test.lisp
+- [X] T036 [P] [US2] Create test file for Python provider at extensions/living-canvas/tests/python-provider-test.lisp
+- [X] T037 [P] [US2] Write failing test for `provider-supports-p` with Python buffer in extensions/living-canvas/tests/python-provider-test.lisp
+- [X] T038 [P] [US2] Write failing test for `provider-supports-p` with .py pathname in extensions/living-canvas/tests/python-provider-test.lisp
+- [X] T039 [P] [US2] Write failing test for `provider-analyze` extracting function definitions in extensions/living-canvas/tests/python-provider-test.lisp
+- [X] T040 [P] [US2] Write failing test for `provider-analyze` extracting call edges in extensions/living-canvas/tests/python-provider-test.lisp
+- [X] T041 [P] [US2] Write failing test for source-location population in graph nodes in extensions/living-canvas/tests/python-provider-test.lisp
 
 ### Implementation for User Story 2
 
-- [ ] T042 [US2] Add `"lem-tree-sitter"` to :depends-on in extensions/living-canvas/lem-living-canvas.asd
-- [ ] T043 [US2] Add `(:file "python-provider")` component to extensions/living-canvas/lem-living-canvas.asd (after language-detection)
-- [ ] T044 [US2] Create defpackage `:lem-living-canvas/python` in extensions/living-canvas/python-provider.lisp
-- [ ] T045 [US2] Define `tree-sitter-python-provider` class with `definition-query` and `call-query` slots in extensions/living-canvas/python-provider.lisp
-- [ ] T046 [US2] Implement `initialize-instance :after` to load Python grammar and compile queries in extensions/living-canvas/python-provider.lisp
-- [ ] T047 [US2] Implement `provider-name` returning `:tree-sitter-python` in extensions/living-canvas/python-provider.lisp
-- [ ] T048 [US2] Implement `provider-priority` returning 5 in extensions/living-canvas/python-provider.lisp
-- [ ] T049 [US2] Implement `provider-languages` returning `'(:python)` in extensions/living-canvas/python-provider.lisp
-- [ ] T050 [US2] Implement `provider-supports-p` checking buffer mode or .py extension in extensions/living-canvas/python-provider.lisp
-- [ ] T051 [US2] Implement helper `extract-text-from-source` for buffer/pathname/string in extensions/living-canvas/python-provider.lisp
-- [ ] T052 [US2] Implement `extract-definitions` using tree-sitter queries in extensions/living-canvas/python-provider.lisp
-- [ ] T053 [US2] Implement `extract-calls` using tree-sitter queries in extensions/living-canvas/python-provider.lisp
-- [ ] T054 [US2] Implement `find-enclosing-function` helper for call context in extensions/living-canvas/python-provider.lisp
-- [ ] T055 [US2] Implement `provider-analyze` combining definitions and calls into call-graph in extensions/living-canvas/python-provider.lisp
-- [ ] T056 [US2] Add auto-registration of Python provider on load in extensions/living-canvas/python-provider.lisp
-- [ ] T057 [US2] Export Python provider symbols in extensions/living-canvas/package.lisp
-- [ ] T058 [US2] Verify all US2 tests pass with `(asdf:test-system "lem-living-canvas")`
-- [ ] T059 [US2] Manual test: Open Python file, run living-canvas-current-file, verify graph displays
+- [X] T042 [US2] Add `"lem-tree-sitter"` to :depends-on in extensions/living-canvas/lem-living-canvas.asd
+- [X] T043 [US2] Add `(:file "python-provider")` component to extensions/living-canvas/lem-living-canvas.asd (after language-detection)
+- [X] T044 [US2] Create defpackage `:lem-living-canvas/python` in extensions/living-canvas/python-provider.lisp
+- [X] T045 [US2] Define `tree-sitter-python-provider` class with `definition-query` and `call-query` slots in extensions/living-canvas/python-provider.lisp
+- [X] T046 [US2] Implement `initialize-instance :after` to load Python grammar and compile queries in extensions/living-canvas/python-provider.lisp
+- [X] T047 [US2] Implement `provider-name` returning `:tree-sitter-python` in extensions/living-canvas/python-provider.lisp
+- [X] T048 [US2] Implement `provider-priority` returning 5 in extensions/living-canvas/python-provider.lisp
+- [X] T049 [US2] Implement `provider-languages` returning `'(:python)` in extensions/living-canvas/python-provider.lisp
+- [X] T050 [US2] Implement `provider-supports-p` checking buffer mode or .py extension in extensions/living-canvas/python-provider.lisp
+- [X] T051 [US2] Implement helper `extract-text-from-source` for buffer/pathname/string in extensions/living-canvas/python-provider.lisp
+- [X] T052 [US2] Implement `extract-definitions` using tree-sitter queries in extensions/living-canvas/python-provider.lisp
+- [X] T053 [US2] Implement `extract-calls` using tree-sitter queries in extensions/living-canvas/python-provider.lisp
+- [X] T054 [US2] Implement `find-enclosing-function` helper for call context in extensions/living-canvas/python-provider.lisp
+- [X] T055 [US2] Implement `provider-analyze` combining definitions and calls into call-graph in extensions/living-canvas/python-provider.lisp
+- [X] T056 [US2] Add auto-registration of Python provider on load in extensions/living-canvas/python-provider.lisp
+- [X] T057 [US2] Export Python provider symbols in extensions/living-canvas/package.lisp
+- [X] T058 [US2] Verify all US2 tests pass with `(asdf:test-system "lem-living-canvas")`
+- [X] T059 [US2] Manual test: Open Python file, run living-canvas-current-file, verify graph displays
 
 **Checkpoint**: Python files show call graphs with function nodes, edges, and source jump functionality
 
@@ -149,31 +149,31 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T060 [P] [US3] Create test file for JS provider at extensions/living-canvas/tests/js-provider-test.lisp
-- [ ] T061 [P] [US3] Write failing test for `provider-supports-p` with JavaScript buffer in extensions/living-canvas/tests/js-provider-test.lisp
-- [ ] T062 [P] [US3] Write failing test for `provider-supports-p` with .ts pathname in extensions/living-canvas/tests/js-provider-test.lisp
-- [ ] T063 [P] [US3] Write failing test for `provider-analyze` extracting function declarations in extensions/living-canvas/tests/js-provider-test.lisp
-- [ ] T064 [P] [US3] Write failing test for `provider-analyze` extracting arrow functions in extensions/living-canvas/tests/js-provider-test.lisp
-- [ ] T065 [P] [US3] Write failing test for `provider-analyze` extracting method definitions in extensions/living-canvas/tests/js-provider-test.lisp
+- [X] T060 [P] [US3] Create test file for JS provider at extensions/living-canvas/tests/js-provider-test.lisp
+- [X] T061 [P] [US3] Write failing test for `provider-supports-p` with JavaScript buffer in extensions/living-canvas/tests/js-provider-test.lisp
+- [X] T062 [P] [US3] Write failing test for `provider-supports-p` with .ts pathname in extensions/living-canvas/tests/js-provider-test.lisp
+- [X] T063 [P] [US3] Write failing test for `provider-analyze` extracting function declarations in extensions/living-canvas/tests/js-provider-test.lisp
+- [X] T064 [P] [US3] Write failing test for `provider-analyze` extracting arrow functions in extensions/living-canvas/tests/js-provider-test.lisp
+- [X] T065 [P] [US3] Write failing test for `provider-analyze` extracting method definitions in extensions/living-canvas/tests/js-provider-test.lisp
 
 ### Implementation for User Story 3
 
-- [ ] T066 [US3] Add `(:file "js-provider")` component to extensions/living-canvas/lem-living-canvas.asd (after python-provider)
-- [ ] T067 [US3] Create defpackage `:lem-living-canvas/javascript` in extensions/living-canvas/js-provider.lisp
-- [ ] T068 [US3] Define `tree-sitter-js-provider` class with `definition-query` and `call-query` slots in extensions/living-canvas/js-provider.lisp
-- [ ] T069 [US3] Implement `initialize-instance :after` to load JavaScript grammar and compile queries in extensions/living-canvas/js-provider.lisp
-- [ ] T070 [US3] Implement `provider-name` returning `:tree-sitter-javascript` in extensions/living-canvas/js-provider.lisp
-- [ ] T071 [US3] Implement `provider-priority` returning 5 in extensions/living-canvas/js-provider.lisp
-- [ ] T072 [US3] Implement `provider-languages` returning `'(:javascript :typescript)` in extensions/living-canvas/js-provider.lisp
-- [ ] T073 [US3] Implement `provider-supports-p` checking buffer mode or .js/.ts/.jsx/.tsx extension in extensions/living-canvas/js-provider.lisp
-- [ ] T074 [US3] Implement tree-sitter queries for function declarations, arrow functions, methods in extensions/living-canvas/js-provider.lisp
-- [ ] T075 [US3] Implement tree-sitter queries for call expressions and method calls in extensions/living-canvas/js-provider.lisp
-- [ ] T076 [US3] Implement `provider-analyze` for JavaScript/TypeScript files in extensions/living-canvas/js-provider.lisp
-- [ ] T077 [US3] Add auto-registration of JS provider on load in extensions/living-canvas/js-provider.lisp
-- [ ] T078 [US3] Export JavaScript provider symbols in extensions/living-canvas/package.lisp
-- [ ] T079 [US3] Add TypeScript extension mapping to language-detection in extensions/living-canvas/language-detection.lisp
-- [ ] T080 [US3] Verify all US3 tests pass with `(asdf:test-system "lem-living-canvas")`
-- [ ] T081 [US3] Manual test: Open TypeScript file, run living-canvas-current-file, verify graph displays
+- [X] T066 [US3] Add `(:file "js-provider")` component to extensions/living-canvas/lem-living-canvas.asd (after python-provider)
+- [X] T067 [US3] Create defpackage `:lem-living-canvas/javascript` in extensions/living-canvas/js-provider.lisp
+- [X] T068 [US3] Define `tree-sitter-js-provider` class with `definition-query` and `call-query` slots in extensions/living-canvas/js-provider.lisp
+- [X] T069 [US3] Implement `initialize-instance :after` to load JavaScript grammar and compile queries in extensions/living-canvas/js-provider.lisp
+- [X] T070 [US3] Implement `provider-name` returning `:tree-sitter-javascript` in extensions/living-canvas/js-provider.lisp
+- [X] T071 [US3] Implement `provider-priority` returning 5 in extensions/living-canvas/js-provider.lisp
+- [X] T072 [US3] Implement `provider-languages` returning `'(:javascript :typescript)` in extensions/living-canvas/js-provider.lisp
+- [X] T073 [US3] Implement `provider-supports-p` checking buffer mode or .js/.ts/.jsx/.tsx extension in extensions/living-canvas/js-provider.lisp
+- [X] T074 [US3] Implement tree-sitter queries for function declarations, arrow functions, methods in extensions/living-canvas/js-provider.lisp
+- [X] T075 [US3] Implement tree-sitter queries for call expressions and method calls in extensions/living-canvas/js-provider.lisp
+- [X] T076 [US3] Implement `provider-analyze` for JavaScript/TypeScript files in extensions/living-canvas/js-provider.lisp
+- [X] T077 [US3] Add auto-registration of JS provider on load in extensions/living-canvas/js-provider.lisp
+- [X] T078 [US3] Export JavaScript provider symbols in extensions/living-canvas/package.lisp
+- [X] T079 [US3] Add TypeScript extension mapping to language-detection in extensions/living-canvas/language-detection.lisp
+- [X] T080 [US3] Verify all US3 tests pass with `(asdf:test-system "lem-living-canvas")`
+- [X] T081 [US3] Manual test: Open TypeScript file, run living-canvas-current-file, verify graph displays
 
 **Checkpoint**: JavaScript and TypeScript files show call graphs with function nodes, edges, and source jump functionality
 
@@ -187,17 +187,17 @@
 
 ### Tests for User Story 4
 
-- [ ] T082 [P] [US4] Write test creating minimal provider subclass in extensions/call-graph/tests/registry-test.lisp
-- [ ] T083 [P] [US4] Write test verifying custom provider is selected over default in extensions/call-graph/tests/registry-test.lisp
+- [X] T082 [P] [US4] Write test creating minimal provider subclass in extensions/call-graph/tests/registry-test.lisp
+- [X] T083 [P] [US4] Write test verifying custom provider is selected over default in extensions/call-graph/tests/registry-test.lisp
 
 ### Implementation for User Story 4
 
-- [ ] T084 [US4] Add docstrings to all provider protocol methods in extensions/call-graph/provider.lisp
-- [ ] T085 [US4] Add `define-call-graph-provider` convenience macro to extensions/call-graph/provider.lisp (per contracts/provider-interface.lisp)
-- [ ] T086 [US4] Add `provider-error` condition class to extensions/call-graph/provider.lisp
-- [ ] T087 [US4] Add `provider-unavailable` condition class to extensions/call-graph/provider.lisp
-- [ ] T088 [US4] Export all provider protocol symbols in extensions/call-graph/package.lisp
-- [ ] T089 [US4] Verify all US4 tests pass with `(asdf:test-system "lem-call-graph")`
+- [X] T084 [US4] Add docstrings to all provider protocol methods in extensions/call-graph/provider.lisp
+- [X] T085 [US4] Add `define-call-graph-provider` convenience macro to extensions/call-graph/provider.lisp (per contracts/provider-interface.lisp)
+- [X] T086 [US4] Add `provider-error` condition class to extensions/call-graph/provider.lisp
+- [X] T087 [US4] Add `provider-unavailable` condition class to extensions/call-graph/provider.lisp
+- [X] T088 [US4] Export all provider protocol symbols in extensions/call-graph/package.lisp
+- [X] T089 [US4] Verify all US4 tests pass with `(asdf:test-system "lem-call-graph")`
 
 **Checkpoint**: Provider protocol is fully documented and usable by extension developers
 
@@ -207,14 +207,14 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T090 [P] Add docstrings to all exported functions in extensions/living-canvas/*.lisp
-- [ ] T091 [P] Add docstrings to all exported functions in extensions/call-graph/*.lisp
-- [ ] T092 Ensure all loop macros use `:for ... :do` syntax per contract.yml in all new files
-- [ ] T093 Verify naming conventions (kebab-case, *earmuffs*) in all new files
-- [ ] T094 Update extensions/living-canvas/tests/main.lisp to include new test files
-- [ ] T095 Run full test suite with `make test` and fix any failures
-- [ ] T096 [P] Update specs/001-multi-language-canvas/quickstart.md with actual implementation details
-- [ ] T097 Manual regression test: Verify Common Lisp living-canvas still works unchanged
+- [X] T090 [P] Add docstrings to all exported functions in extensions/living-canvas/*.lisp
+- [X] T091 [P] Add docstrings to all exported functions in extensions/call-graph/*.lisp
+- [X] T092 Ensure all loop macros use `:for ... :do` syntax per contract.yml in all new files
+- [X] T093 Verify naming conventions (kebab-case, *earmuffs*) in all new files
+- [X] T094 Update extensions/living-canvas/tests/main.lisp to include new test files
+- [X] T095 Run full test suite with `make test` and fix any failures
+- [X] T096 [P] Update specs/001-multi-language-canvas/quickstart.md with actual implementation details
+- [X] T097 Manual regression test: Verify Common Lisp living-canvas still works unchanged
 - [ ] T098 Performance test: Verify < 3s analysis time for 100-function file
 
 ---

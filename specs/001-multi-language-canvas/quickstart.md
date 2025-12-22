@@ -17,14 +17,43 @@ This guide walks through implementing multi-language support for Living Canvas. 
    make sdl2  # or make ncurses
    ```
 
-2. **tree-sitter Grammars**
-   ```bash
-   # Via Nix (recommended)
-   nix develop
+2. **tree-sitter Grammars Installation**
 
-   # Or system packages
-   # Ubuntu/Debian
-   apt install libtree-sitter-dev tree-sitter-python tree-sitter-javascript
+   Tree-sitter grammars must be compiled and installed as shared libraries.
+
+   **Option A: Via Nix (recommended)**
+   ```bash
+   nix develop
+   # Grammar libraries are automatically available
+   ```
+
+   **Option B: Build from source**
+   ```bash
+   # Install tree-sitter CLI
+   npm install -g tree-sitter-cli
+
+   # Build Python grammar
+   git clone https://github.com/tree-sitter/tree-sitter-python
+   cd tree-sitter-python
+   tree-sitter generate
+   cc -shared -fPIC -o libtree-sitter-python.so src/parser.c src/scanner.c -I.
+   sudo cp libtree-sitter-python.so /usr/local/lib/
+
+   # Build JavaScript grammar
+   git clone https://github.com/tree-sitter/tree-sitter-javascript
+   cd tree-sitter-javascript
+   tree-sitter generate
+   cc -shared -fPIC -o libtree-sitter-javascript.so src/parser.c src/scanner.c -I.
+   sudo cp libtree-sitter-javascript.so /usr/local/lib/
+
+   # Update library cache (Linux)
+   sudo ldconfig
+   ```
+
+   **Option C: System packages (if available)**
+   ```bash
+   # Ubuntu/Debian (may not have latest grammars)
+   apt install libtree-sitter-dev
 
    # macOS
    brew install tree-sitter
@@ -34,9 +63,24 @@ This guide walks through implementing multi-language support for Living Canvas. 
    ```lisp
    ;; In Lem REPL
    (ql:quickload :tree-sitter-cl)
-   (ts:load-language-from-system "python")
-   (ts:list-languages)  ; Should include "python"
+
+   ;; Check if tree-sitter is available
+   (tree-sitter:tree-sitter-available-p)  ; Should return T
+
+   ;; Load grammars
+   (tree-sitter:load-language-from-system "python")
+   (tree-sitter:load-language-from-system "javascript")
+
+   ;; Verify grammars are loaded
+   (tree-sitter:get-language "python")     ; Should return language object
+   (tree-sitter:get-language "javascript") ; Should return language object
    ```
+
+4. **Diagnose Provider Status**
+   ```
+   M-x living-canvas-diagnose
+   ```
+   This shows the status of all providers and which grammars are loaded.
 
 ## Implementation Steps
 

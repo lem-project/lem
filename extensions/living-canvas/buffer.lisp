@@ -261,7 +261,7 @@
         : withFallback;
     }
 
-    const argLabelTypes = new Set(['function', 'macro', 'generic-function', 'command']);
+    const argLabelTypes = new Set(['function', 'macro', 'generic-function', 'command', 'method']);
     function addDisplayLabels(nodeElements) {
       (nodeElements || []).forEach((n) => {
         if (!n || !n.data || !argLabelTypes.has(n.data.type)) return;
@@ -444,6 +444,48 @@
             'height': 24,
             'padding': '8px',
             'shape': 'diamond'
+          }
+        },
+        // Class nodes (Python/JS classes)
+        {
+          selector: 'node[type=\"class\"]',
+          style: {
+            'background-color': '#2d2d3d',
+            'border-color': '#9cdcfe',
+            'border-width': 2,
+            'label': 'data(name)',
+            'color': '#d4d4d4',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'font-size': '11px',
+            'font-weight': 'bold',
+            'font-family': 'Consolas, Monaco, monospace',
+            'width': 'label',
+            'height': 'label',
+            'padding': '10px',
+            'shape': 'roundrectangle'
+          }
+        },
+        // Method nodes (class methods)
+        {
+          selector: 'node[type=\"method\"]',
+          style: {
+            'background-color': '#2d3d2d',
+            'border-color': '#4ec9b0',
+            'border-width': 2,
+            'label': 'data(displayLabel)',
+            'color': '#d4d4d4',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'font-size': '10px',
+            'line-height': 1.1,
+            'font-family': 'Consolas, Monaco, monospace',
+            'width': 'label',
+            'height': 'label',
+            'padding': '8px',
+            'shape': 'roundrectangle',
+            'text-wrap': 'wrap',
+            'text-max-width': 260
           }
         },
         {

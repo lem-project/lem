@@ -21,8 +21,8 @@
        (ignore-errors
          (funcall (find-symbol "TREE-SITTER-AVAILABLE-P" :tree-sitter)))
        (ignore-errors
-         (let ((provider (make-instance 'lem-living-canvas/javascript:tree-sitter-js-provider)))
-           (slot-value provider 'lem-living-canvas/javascript::language))))
+         (let ((provider (make-instance 'lem-js-mode/call-graph:tree-sitter-js-provider)))
+           (slot-value provider 'lem-js-mode/call-graph::language))))
   "True if JavaScript tree-sitter provider initialized successfully (grammar available).")
 
 ;;; Test data - JavaScript/TypeScript source code samples
@@ -116,7 +116,7 @@ function processUser(name: string, age: number) {
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-supports-p returns T for .js files"
-        (let ((provider (make-instance 'lem-living-canvas/javascript:tree-sitter-js-provider)))
+        (let ((provider (make-instance 'lem-js-mode/call-graph:tree-sitter-js-provider)))
           (ok (call-graph:provider-supports-p provider #P"app.js"))
           (ok (call-graph:provider-supports-p provider #P"/path/to/script.mjs"))
           (ok (call-graph:provider-supports-p provider #P"component.jsx"))))))
@@ -127,7 +127,7 @@ function processUser(name: string, age: number) {
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-supports-p returns T for .ts/.tsx files"
-        (let ((provider (make-instance 'lem-living-canvas/javascript:tree-sitter-js-provider)))
+        (let ((provider (make-instance 'lem-js-mode/call-graph:tree-sitter-js-provider)))
           (ok (call-graph:provider-supports-p provider #P"app.ts"))
           (ok (call-graph:provider-supports-p provider #P"component.tsx"))))))
 
@@ -135,7 +135,7 @@ function processUser(name: string, age: number) {
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-supports-p returns NIL for non-JS files"
-        (let ((provider (make-instance 'lem-living-canvas/javascript:tree-sitter-js-provider)))
+        (let ((provider (make-instance 'lem-js-mode/call-graph:tree-sitter-js-provider)))
           (ok (null (call-graph:provider-supports-p provider #P"test.py")))
           (ok (null (call-graph:provider-supports-p provider #P"main.lisp")))))))
 
@@ -145,7 +145,7 @@ function processUser(name: string, age: number) {
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-analyze creates nodes for function declarations"
-        (let* ((provider (make-instance 'lem-living-canvas/javascript:tree-sitter-js-provider))
+        (let* ((provider (make-instance 'lem-js-mode/call-graph:tree-sitter-js-provider))
                (graph (call-graph:provider-analyze provider *simple-js-code*
                                                    :type :string))
                (nodes (call-graph-nodes graph)))
@@ -162,7 +162,7 @@ function processUser(name: string, age: number) {
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-analyze creates nodes for arrow functions"
-        (let* ((provider (make-instance 'lem-living-canvas/javascript:tree-sitter-js-provider))
+        (let* ((provider (make-instance 'lem-js-mode/call-graph:tree-sitter-js-provider))
                (graph (call-graph:provider-analyze provider *js-arrow-functions*
                                                    :type :string))
                (nodes (call-graph-nodes graph)))
@@ -179,7 +179,7 @@ function processUser(name: string, age: number) {
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-analyze handles class methods"
-        (let* ((provider (make-instance 'lem-living-canvas/javascript:tree-sitter-js-provider))
+        (let* ((provider (make-instance 'lem-js-mode/call-graph:tree-sitter-js-provider))
                (graph (call-graph:provider-analyze provider *js-class-code*
                                                    :type :string))
                (nodes (call-graph-nodes graph)))
@@ -192,7 +192,7 @@ function processUser(name: string, age: number) {
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-analyze creates edges for function calls"
-        (let* ((provider (make-instance 'lem-living-canvas/javascript:tree-sitter-js-provider))
+        (let* ((provider (make-instance 'lem-js-mode/call-graph:tree-sitter-js-provider))
                (graph (call-graph:provider-analyze provider *js-with-calls*
                                                    :type :string))
                (edges (call-graph-edges graph)))
@@ -210,7 +210,7 @@ function processUser(name: string, age: number) {
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "nodes have source location information"
-        (let* ((provider (make-instance 'lem-living-canvas/javascript:tree-sitter-js-provider))
+        (let* ((provider (make-instance 'lem-js-mode/call-graph:tree-sitter-js-provider))
                (graph (call-graph:provider-analyze provider *simple-js-code*
                                                    :type :string))
                (nodes (call-graph-nodes graph)))
@@ -230,7 +230,7 @@ function processUser(name: string, age: number) {
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-analyze handles TypeScript code"
-        (let* ((provider (make-instance 'lem-living-canvas/javascript:tree-sitter-js-provider))
+        (let* ((provider (make-instance 'lem-js-mode/call-graph:tree-sitter-js-provider))
                (graph (call-graph:provider-analyze provider *typescript-code*
                                                    :type :string))
                (nodes (call-graph-nodes graph)))
@@ -243,21 +243,21 @@ function processUser(name: string, age: number) {
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-name returns :tree-sitter-javascript"
-        (let ((provider (make-instance 'lem-living-canvas/javascript:tree-sitter-js-provider)))
+        (let ((provider (make-instance 'lem-js-mode/call-graph:tree-sitter-js-provider)))
           (ok (eq :tree-sitter-javascript (call-graph:provider-name provider)))))))
 
 (deftest provider-priority-returns-number
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-priority returns a positive number"
-        (let ((provider (make-instance 'lem-living-canvas/javascript:tree-sitter-js-provider)))
+        (let ((provider (make-instance 'lem-js-mode/call-graph:tree-sitter-js-provider)))
           (ok (plusp (call-graph:provider-priority provider)))))))
 
 (deftest provider-languages-returns-js-ts
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-languages includes :javascript and :typescript"
-        (let ((provider (make-instance 'lem-living-canvas/javascript:tree-sitter-js-provider)))
+        (let ((provider (make-instance 'lem-js-mode/call-graph:tree-sitter-js-provider)))
           (ok (member :javascript (call-graph:provider-languages provider)))
           (ok (member :typescript (call-graph:provider-languages provider)))))))
 
@@ -267,7 +267,7 @@ function processUser(name: string, age: number) {
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-analyze handles empty code"
-        (let* ((provider (make-instance 'lem-living-canvas/javascript:tree-sitter-js-provider))
+        (let* ((provider (make-instance 'lem-js-mode/call-graph:tree-sitter-js-provider))
                (graph (call-graph:provider-analyze provider "" :type :string)))
           (ok (call-graph:call-graph-p graph))
           (ok (zerop (hash-table-count (call-graph-nodes graph))))))))
@@ -276,7 +276,7 @@ function processUser(name: string, age: number) {
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-analyze handles code with syntax errors gracefully"
-        (let* ((provider (make-instance 'lem-living-canvas/javascript:tree-sitter-js-provider))
+        (let* ((provider (make-instance 'lem-js-mode/call-graph:tree-sitter-js-provider))
                ;; tree-sitter is error-tolerant, should still parse what it can
                (graph (call-graph:provider-analyze provider
                                                    "function broken(

@@ -1,4 +1,4 @@
-(defpackage #:lem-living-canvas/javascript
+(defpackage #:lem-go-mode/call-graph
   (:use #:cl)
   (:local-nicknames (:ts :tree-sitter))
   (:import-from #:call-graph
@@ -17,55 +17,42 @@
                 #:*provider-registry*
                 #:register-provider
                 #:find-provider)
-  (:export #:tree-sitter-js-provider
-           #:make-js-provider))
-(in-package #:lem-living-canvas/javascript)
+  (:export #:tree-sitter-go-provider
+           #:make-go-provider))
+(in-package #:lem-go-mode/call-graph)
 
-;;; Tree-sitter JavaScript/TypeScript Provider
+;;; Tree-sitter Go Provider
 ;;;
-;;; This provider uses tree-sitter-cl to parse JavaScript and TypeScript source code
+;;; This provider uses tree-sitter-cl to parse Go source code
 ;;; and extract function definitions and call relationships.
 
 ;;; Tree-sitter Query Definitions
 ;;;
-;;; These queries extract function definitions and calls from JS/TS AST.
+;;; These queries extract function definitions and calls from Go AST.
 
-(defparameter *js-definitions-query*
+(defparameter *go-definitions-query*
   "(function_declaration
      name: (identifier) @function.name) @function
 
-   (lexical_declaration
-     (variable_declarator
-       name: (identifier) @arrow.name
-       value: (arrow_function))) @arrow
+   (method_declaration
+     name: (field_identifier) @method.name) @method"
+  "Tree-sitter query for Go function and method definitions.")
 
-   (variable_declaration
-     (variable_declarator
-       name: (identifier) @arrow.name
-       value: (arrow_function))) @arrow
-
-   (method_definition
-     name: (property_identifier) @method.name) @method
-
-   (class_declaration
-     name: (identifier) @class.name) @class"
-  "Tree-sitter query for JavaScript function, arrow function, and method definitions.")
-
-(defparameter *js-calls-query*
+(defparameter *go-calls-query*
   "(call_expression
      function: (identifier) @call.function)
 
    (call_expression
-     function: (member_expression
-       property: (property_identifier) @call.method))"
-  "Tree-sitter query for JavaScript function and method calls.")
+     function: (selector_expression
+       field: (field_identifier) @call.method))"
+  "Tree-sitter query for Go function and method calls.")
 
 ;;; Provider Class
 
-(defclass tree-sitter-js-provider (call-graph-provider)
+(defclass tree-sitter-go-provider (call-graph-provider)
   ((language :initform nil
              :accessor provider-ts-language
-             :documentation "Cached tree-sitter JavaScript language object")
+             :documentation "Cached tree-sitter Go language object")
    (parser :initform nil
            :accessor provider-ts-parser
            :documentation "Cached tree-sitter parser instance")
@@ -75,71 +62,65 @@
    (calls-query :initform nil
                 :accessor provider-calls-query
                 :documentation "Compiled calls query"))
-  (:documentation "Call graph provider for JavaScript/TypeScript using tree-sitter parsing.
+  (:documentation "Call graph provider for Go using tree-sitter parsing.
 
-Uses tree-sitter-cl bindings to parse JavaScript source code and extract
-function declarations, arrow functions, methods, and call relationships.
-Also works with TypeScript since TS is a superset of JS."))
+Uses tree-sitter-cl bindings to parse Go source code and extract
+function definitions, methods, and call relationships."))
 
-(defmethod initialize-instance :after ((provider tree-sitter-js-provider) &key)
+(defmethod initialize-instance :after ((provider tree-sitter-go-provider) &key)
   "Initialize tree-sitter language and compile queries."
   (when (ts:tree-sitter-available-p)
     (handler-case
         (progn
-          ;; Load JavaScript grammar
-          (unless (ts:get-language "javascript")
-            (ts:load-language-from-system "javascript"))
-          (let ((lang (ts:get-language "javascript")))
+          ;; Load Go grammar
+          (unless (ts:get-language "go")
+            (ts:load-language-from-system "go"))
+          (let ((lang (ts:get-language "go")))
             (setf (provider-ts-language provider) lang)
             (setf (provider-ts-parser provider) (ts:make-parser lang))
             ;; Compile queries
             (setf (provider-definitions-query provider)
-                  (ts:query-compile lang *js-definitions-query*))
+                  (ts:query-compile lang *go-definitions-query*))
             (setf (provider-calls-query provider)
-                  (ts:query-compile lang *js-calls-query*))))
+                  (ts:query-compile lang *go-calls-query*))))
       (error (e)
-        (warn "Failed to initialize JavaScript tree-sitter provider: ~A" e)))))
+        (warn "Failed to initialize Go tree-sitter provider: ~A" e)))))
 
 ;;; Provider Protocol Implementation
 
-(defmethod provider-name ((provider tree-sitter-js-provider))
-  :tree-sitter-javascript)
+(defmethod provider-name ((provider tree-sitter-go-provider))
+  :tree-sitter-go)
 
-(defmethod provider-priority ((provider tree-sitter-js-provider))
+(defmethod provider-priority ((provider tree-sitter-go-provider))
   5)  ; Lower than LSP providers (10), higher than default (0)
 
-(defmethod provider-languages ((provider tree-sitter-js-provider))
-  '(:javascript :typescript))
+(defmethod provider-languages ((provider tree-sitter-go-provider))
+  '(:go))
 
-(defmethod provider-supports-p ((provider tree-sitter-js-provider) source)
-  "Return T if SOURCE is a JavaScript or TypeScript file or buffer."
+(defmethod provider-supports-p ((provider tree-sitter-go-provider) source)
+  "Return T if SOURCE is a Go file or buffer."
   (and (provider-ts-language provider)  ; Check provider is initialized
        (typecase source
          (pathname
-          (member (pathname-type source)
-                  '("js" "mjs" "cjs" "jsx" "ts" "mts" "cts" "tsx")
-                  :test #'string-equal))
+          (string-equal (pathname-type source) "go"))
          (string t)  ; Accept raw source code strings
          (t
           ;; For Lem buffers, check major mode or filename
           (when (and (find-package :lem)
                      (typep source (find-symbol "BUFFER" :lem)))
-            (let ((mode-name (string-downcase
-                              (symbol-name
-                               (funcall (find-symbol "BUFFER-MAJOR-MODE" :lem) source)))))
-              (or (string= mode-name "js-mode")
-                  (string= mode-name "typescript-mode")
-                  (let ((filename (funcall (find-symbol "BUFFER-FILENAME" :lem) source)))
-                    (and filename
-                         (member (pathname-type (pathname filename))
-                                 '("js" "mjs" "cjs" "jsx" "ts" "mts" "cts" "tsx")
-                                 :test #'string-equal))))))))))
+            (or (string= "go-mode"
+                         (string-downcase
+                          (symbol-name
+                           (funcall (find-symbol "BUFFER-MAJOR-MODE" :lem) source))))
+                (let ((filename (funcall (find-symbol "BUFFER-FILENAME" :lem) source)))
+                  (and filename
+                       (string-equal (pathname-type (pathname filename)) "go")))))))))
 
-(defmethod provider-analyze ((provider tree-sitter-js-provider) source &key type)
+(defmethod provider-analyze ((provider tree-sitter-go-provider) source &key type)
   "Analyze SOURCE and return a call-graph structure.
 
 Arguments:
-  SOURCE - JavaScript/TypeScript source code (string, pathname, or buffer)
+  SOURCE - Go source code (string, pathname, or buffer)
   TYPE   - Optional type hint (:string, :file, :buffer)
 
 Returns:
@@ -196,7 +177,7 @@ Returns:
   "Parse TEXT with tree-sitter and extract call graph.
 
 Arguments:
-  PROVIDER    - The JavaScript provider instance
+  PROVIDER    - The Go provider instance
   TEXT        - Source code string
   SOURCE-FILE - Optional source file path for location info
 
@@ -219,6 +200,20 @@ Returns:
               (add-edge graph edge))))))
     graph))
 
+(defun extract-parameters (func-node source-text)
+  "Extract parameters from a function_declaration or method_declaration node.
+
+Arguments:
+  FUNC-NODE   - Tree-sitter function/method declaration node
+  SOURCE-TEXT - Original source code text
+
+Returns:
+  Parameter string like \"(x int, y string)\" or \"()\" if no parameters"
+  (let ((params-node (find-child-by-type func-node "parameter_list")))
+    (if params-node
+        (node-text params-node source-text)
+        "()")))
+
 (defun extract-definitions (root query source-file source-text)
   "Extract function and method definitions from AST.
 
@@ -238,39 +233,9 @@ Returns:
         (cond
           ((string= name "function.name")
            (push (make-function-node node source-file :function source-text) nodes))
-          ((string= name "arrow.name")
-           (push (make-function-node node source-file :function source-text) nodes))
           ((string= name "method.name")
-           (push (make-function-node node source-file :method source-text) nodes))
-          ((string= name "class.name")
-           (push (make-class-node node source-file source-text) nodes)))))
+           (push (make-function-node node source-file :method source-text) nodes)))))
     (remove-duplicates nodes :key #'call-graph:graph-node-id :test #'string=)))
-
-(defun extract-js-parameters (node source-text)
-  "Extract parameters from a JavaScript function node.
-
-Arguments:
-  NODE        - Tree-sitter node (parent of the name identifier)
-  SOURCE-TEXT - Original source code text
-
-Returns:
-  Parameter string like \"(x, y)\" or \"()\" if no parameters"
-  (let* ((node-type (ts:node-type node))
-         (params-node
-           (cond
-             ;; function_declaration, method_definition -> formal_parameters
-             ((or (string= node-type "function_declaration")
-                  (string= node-type "method_definition"))
-              (find-child-by-type node "formal_parameters"))
-             ;; variable_declarator with arrow_function
-             ((string= node-type "variable_declarator")
-              (let ((arrow (find-child-by-type node "arrow_function")))
-                (when arrow
-                  (find-child-by-type arrow "formal_parameters"))))
-             (t nil))))
-    (if params-node
-        (node-text params-node source-text)
-        "()")))
 
 (defun make-function-node (name-node source-file type source-text)
   "Create a graph-node for a function or method definition.
@@ -286,36 +251,15 @@ Returns:
   (let* ((name (node-text name-node source-text))
          (start-point (ts:node-start-point name-node))
          (line (1+ (ts:ts-point-row start-point)))
-         ;; Get parent node to extract parameters
+         ;; Get parent function/method declaration to extract parameters
          (parent (ts:node-parent name-node))
-         (arglist (when parent (extract-js-parameters parent source-text))))
+         (arglist (when parent (extract-parameters parent source-text))))
     (make-graph-node
-     :id (make-node-id "module" name)
+     :id (make-node-id "main" name)
      :name name
-     :package "module"
+     :package "main"
      :type type
      :arglist (or arglist "()")
-     :source-file source-file
-     :source-location (when source-file (cons source-file line)))))
-
-(defun make-class-node (name-node source-file source-text)
-  "Create a graph-node for a class definition.
-
-Arguments:
-  NAME-NODE   - Tree-sitter node for the class name
-  SOURCE-FILE - Source file path
-  SOURCE-TEXT - Original source code text
-
-Returns:
-  A graph-node structure"
-  (let* ((name (node-text name-node source-text))
-         (start-point (ts:node-start-point name-node))
-         (line (1+ (ts:ts-point-row start-point))))
-    (make-graph-node
-     :id (make-node-id "module" name)
-     :name name
-     :package "module"
-     :type :class
      :source-file source-file
      :source-location (when source-file (cons source-file line)))))
 
@@ -343,7 +287,7 @@ Returns:
              (when (and caller (member called-name def-names :test #'string=))
                (push (make-graph-edge
                       :source (call-graph:graph-node-id caller)
-                      :target (make-node-id "module" called-name))
+                      :target (make-node-id "main" called-name))
                      edges))))
           ((string= name "call.method")
            ;; Method calls - track if calling a known method
@@ -352,7 +296,7 @@ Returns:
              (when (and caller (member called-name def-names :test #'string=))
                (push (make-graph-edge
                       :source (call-graph:graph-node-id caller)
-                      :target (make-node-id "module" called-name))
+                      :target (make-node-id "main" called-name))
                      edges)))))))
     (remove-duplicates edges
                        :test (lambda (a b)
@@ -375,21 +319,10 @@ Returns:
     (loop :while (and parent (not (ts:node-null-p parent)))
           :do (let ((parent-type (ts:node-type parent)))
                 (when (or (string= parent-type "function_declaration")
-                          (string= parent-type "arrow_function")
-                          (string= parent-type "method_definition"))
-                  ;; Find the name
+                          (string= parent-type "method_declaration"))
+                  ;; Find the name child
                   (let ((name-node (or (find-child-by-type parent "identifier")
-                                       (find-child-by-type parent "property_identifier"))))
-                    (when name-node
-                      (let* ((name (node-text name-node source-text))
-                             (def (find name definitions
-                                        :key #'call-graph:graph-node-name
-                                        :test #'string=)))
-                        (when def
-                          (return-from find-enclosing-function def))))))
-                ;; For arrow functions in variable declarations, check the parent
-                (when (string= parent-type "variable_declarator")
-                  (let ((name-node (find-child-by-type parent "identifier")))
+                                       (find-child-by-type parent "field_identifier"))))
                     (when name-node
                       (let* ((name (node-text name-node source-text))
                              (def (find name definitions
@@ -430,29 +363,30 @@ Returns:
 
 ;;; Provider Registration
 ;;;
-;;; Automatically register the JavaScript provider when this module is loaded
+;;; Register the Go provider after Lem initialization to ensure
+;;; tree-sitter grammars are available in the library path.
 
-(defun make-js-provider ()
-  "Create and return a new JavaScript tree-sitter provider instance."
-  (make-instance 'tree-sitter-js-provider))
+(defun make-go-provider ()
+  "Create and return a new Go tree-sitter provider instance."
+  (make-instance 'tree-sitter-go-provider))
 
-(defun register-js-provider ()
-  "Register the JavaScript provider with the global registry.
+(defun register-go-provider ()
+  "Register the Go provider with the global registry.
 
 Called both at load time and via after-init-hook to handle cases
 where tree-sitter grammars become available after initial load."
   (when (ts:tree-sitter-available-p)
     (handler-case
-        (let ((provider (make-js-provider)))
+        (let ((provider (make-go-provider)))
           (when (provider-ts-language provider)
             ;; Only register if not already registered
-            (unless (find-provider *provider-registry* :javascript)
-              (register-provider *provider-registry* provider '(:javascript :typescript)))))
+            (unless (find-provider *provider-registry* :go)
+              (register-provider *provider-registry* provider '(:go)))))
       (error (e)
-        (warn "Failed to register JavaScript provider: ~A" e)))))
+        (warn "Failed to register Go provider: ~A" e)))))
 
 ;; Try to register on load (may fail if grammars not yet available)
-(register-js-provider)
+(register-go-provider)
 
 ;; Also register after Lem init (grammars should be available by then)
-(lem:add-hook lem:*after-init-hook* 'register-js-provider)
+(lem:add-hook lem:*after-init-hook* 'register-go-provider)

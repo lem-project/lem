@@ -1,4 +1,4 @@
-(defpackage #:lem-living-canvas/python
+(defpackage #:lem-python-mode/call-graph
   (:use #:cl)
   (:local-nicknames (:ts :tree-sitter))
   (:import-from #:call-graph
@@ -19,7 +19,7 @@
                 #:find-provider)
   (:export #:tree-sitter-python-provider
            #:make-python-provider))
-(in-package #:lem-living-canvas/python)
+(in-package #:lem-python-mode/call-graph)
 
 ;;; Tree-sitter Python Provider
 ;;;

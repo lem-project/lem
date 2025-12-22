@@ -415,22 +415,22 @@ because tree-sitter grammars were not yet available."
     ;; Try to register Python provider
     (ignore-errors
       (unless (find-provider *provider-registry* :python)
-        (let ((provider (make-instance 'lem-living-canvas/python:tree-sitter-python-provider)))
-          (when (slot-value provider 'lem-living-canvas/python::language)
+        (let ((provider (make-instance 'lem-python-mode/call-graph:tree-sitter-python-provider)))
+          (when (slot-value provider 'lem-python-mode/call-graph::language)
             (call-graph:register-provider *provider-registry* provider '(:python))
             (incf count)))))
     ;; Try to register JavaScript provider
     (ignore-errors
       (unless (find-provider *provider-registry* :javascript)
-        (let ((provider (make-instance 'lem-living-canvas/javascript:tree-sitter-js-provider)))
-          (when (slot-value provider 'lem-living-canvas/javascript::language)
+        (let ((provider (make-instance 'lem-js-mode/call-graph:tree-sitter-js-provider)))
+          (when (slot-value provider 'lem-js-mode/call-graph::language)
             (call-graph:register-provider *provider-registry* provider '(:javascript :typescript))
             (incf count)))))
     ;; Try to register Go provider
     (ignore-errors
       (unless (find-provider *provider-registry* :go)
-        (let ((provider (make-instance 'lem-living-canvas/go:tree-sitter-go-provider)))
-          (when (slot-value provider 'lem-living-canvas/go::language)
+        (let ((provider (make-instance 'lem-go-mode/call-graph:tree-sitter-go-provider)))
+          (when (slot-value provider 'lem-go-mode/call-graph::language)
             (call-graph:register-provider *provider-registry* provider '(:go))
             (incf count)))))
     (if (zerop count)

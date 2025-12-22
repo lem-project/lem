@@ -21,8 +21,8 @@
        (ignore-errors
          (funcall (find-symbol "TREE-SITTER-AVAILABLE-P" :tree-sitter)))
        (ignore-errors
-         (let ((provider (make-instance 'lem-living-canvas/python:tree-sitter-python-provider)))
-           (slot-value provider 'lem-living-canvas/python::language))))
+         (let ((provider (make-instance 'lem-python-mode/call-graph:tree-sitter-python-provider)))
+           (slot-value provider 'lem-python-mode/call-graph::language))))
   "True if Python tree-sitter provider initialized successfully (grammar available).")
 
 ;;; Test data - Python source code samples
@@ -83,7 +83,7 @@ def main():
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-supports-p returns T for .py files"
-        (let ((provider (make-instance 'lem-living-canvas/python:tree-sitter-python-provider)))
+        (let ((provider (make-instance 'lem-python-mode/call-graph:tree-sitter-python-provider)))
           (ok (call-graph:provider-supports-p provider #P"test.py"))
           (ok (call-graph:provider-supports-p provider #P"/path/to/script.py"))
           (ok (call-graph:provider-supports-p provider #P"module.pyw"))))))
@@ -94,7 +94,7 @@ def main():
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-supports-p returns NIL for non-Python files"
-        (let ((provider (make-instance 'lem-living-canvas/python:tree-sitter-python-provider)))
+        (let ((provider (make-instance 'lem-python-mode/call-graph:tree-sitter-python-provider)))
           (ok (null (call-graph:provider-supports-p provider #P"test.js")))
           (ok (null (call-graph:provider-supports-p provider #P"main.lisp")))
           (ok (null (call-graph:provider-supports-p provider #P"script.ts")))))))
@@ -105,7 +105,7 @@ def main():
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-analyze creates nodes for function definitions"
-        (let* ((provider (make-instance 'lem-living-canvas/python:tree-sitter-python-provider))
+        (let* ((provider (make-instance 'lem-python-mode/call-graph:tree-sitter-python-provider))
                (graph (call-graph:provider-analyze provider *simple-python-code*
                                                    :type :string))
                (nodes (call-graph-nodes graph)))
@@ -122,7 +122,7 @@ def main():
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-analyze creates edges for function calls"
-        (let* ((provider (make-instance 'lem-living-canvas/python:tree-sitter-python-provider))
+        (let* ((provider (make-instance 'lem-python-mode/call-graph:tree-sitter-python-provider))
                (graph (call-graph:provider-analyze provider *python-with-calls*
                                                    :type :string))
                (edges (call-graph-edges graph)))
@@ -140,7 +140,7 @@ def main():
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "nodes have source location information"
-        (let* ((provider (make-instance 'lem-living-canvas/python:tree-sitter-python-provider))
+        (let* ((provider (make-instance 'lem-python-mode/call-graph:tree-sitter-python-provider))
                (graph (call-graph:provider-analyze provider *simple-python-code*
                                                    :type :string))
                (nodes (call-graph-nodes graph)))
@@ -160,7 +160,7 @@ def main():
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-analyze handles class methods"
-        (let* ((provider (make-instance 'lem-living-canvas/python:tree-sitter-python-provider))
+        (let* ((provider (make-instance 'lem-python-mode/call-graph:tree-sitter-python-provider))
                (graph (call-graph:provider-analyze provider *python-class-code*
                                                    :type :string))
                (nodes (call-graph-nodes graph)))
@@ -173,7 +173,7 @@ def main():
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "nodes have correct type (function)"
-        (let* ((provider (make-instance 'lem-living-canvas/python:tree-sitter-python-provider))
+        (let* ((provider (make-instance 'lem-python-mode/call-graph:tree-sitter-python-provider))
                (graph (call-graph:provider-analyze provider *simple-python-code*
                                                    :type :string))
                (nodes (call-graph-nodes graph)))
@@ -190,21 +190,21 @@ def main():
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-name returns :tree-sitter-python"
-        (let ((provider (make-instance 'lem-living-canvas/python:tree-sitter-python-provider)))
+        (let ((provider (make-instance 'lem-python-mode/call-graph:tree-sitter-python-provider)))
           (ok (eq :tree-sitter-python (call-graph:provider-name provider)))))))
 
 (deftest provider-priority-returns-number
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-priority returns a positive number"
-        (let ((provider (make-instance 'lem-living-canvas/python:tree-sitter-python-provider)))
+        (let ((provider (make-instance 'lem-python-mode/call-graph:tree-sitter-python-provider)))
           (ok (plusp (call-graph:provider-priority provider)))))))
 
 (deftest provider-languages-returns-python
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-languages includes :python"
-        (let ((provider (make-instance 'lem-living-canvas/python:tree-sitter-python-provider)))
+        (let ((provider (make-instance 'lem-python-mode/call-graph:tree-sitter-python-provider)))
           (ok (member :python (call-graph:provider-languages provider)))))))
 
 ;;; Edge case tests
@@ -213,7 +213,7 @@ def main():
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-analyze handles empty code"
-        (let* ((provider (make-instance 'lem-living-canvas/python:tree-sitter-python-provider))
+        (let* ((provider (make-instance 'lem-python-mode/call-graph:tree-sitter-python-provider))
                (graph (call-graph:provider-analyze provider "" :type :string)))
           (ok (call-graph:call-graph-p graph))
           (ok (zerop (hash-table-count (call-graph-nodes graph))))))))
@@ -222,7 +222,7 @@ def main():
   (if (not *provider-initialized*)
       (skip "Tree-sitter not available")
       (testing "provider-analyze handles code with syntax errors gracefully"
-        (let* ((provider (make-instance 'lem-living-canvas/python:tree-sitter-python-provider))
+        (let* ((provider (make-instance 'lem-python-mode/call-graph:tree-sitter-python-provider))
                ;; tree-sitter is error-tolerant, should still parse what it can
                (graph (call-graph:provider-analyze provider
                                                    "def broken(

@@ -44,7 +44,7 @@ Python開発者として、Pythonファイルを開いてLiving Canvasを起動�
 **Acceptance Scenarios**:
 
 1. **Given** Pythonファイルが開いている状態, **When** `living-canvas-current-file`を実行, **Then** そのファイル内の関数・メソッドがノードとして表示される
-2. **Given** Pythonプロジェクト内にいる状態, **When** `living-canvas`コマンドでモジュール名を指定, **Then** 指定モジュール内の全関数のグラフが表示される
+2. *(Phase 2)* **Given** Pythonプロジェクト内にいる状態, **When** `living-canvas`コマンドでモジュール名を指定, **Then** 指定モジュール内の全関数のグラフが表示される
 3. **Given** グラフが表示されている状態, **When** ノードをダブルクリック, **Then** 対応するPythonソースコードの関数定義にジャンプする
 
 ---
@@ -60,7 +60,7 @@ JavaScript/TypeScript開発者として、JS/TSファイルを開いてLiving Ca
 **Acceptance Scenarios**:
 
 1. **Given** TypeScriptファイルが開いている状態, **When** `living-canvas-current-file`を実行, **Then** export された関数・クラスがノードとして表示される
-2. **Given** npmプロジェクト内にいる状態, **When** `living-canvas-system`でパッケージ名を指定, **Then** パッケージ内の関数グラフが表示される
+2. *(Phase 2)* **Given** npmプロジェクト内にいる状態, **When** `living-canvas-system`でパッケージ名を指定, **Then** パッケージ内の関数グラフが表示される
 3. **Given** グラフが表示されている状態, **When** ノードをダブルクリック, **Then** 対応するJS/TSソースコードの定義にジャンプする
 
 ---
@@ -124,7 +124,7 @@ JavaScript/TypeScript開発者として、JS/TSファイルを開いてLiving Ca
 ## Assumptions
 
 - 各言語プロバイダーは静的解析（AST/tree-sitter）を主要な解析手段として使用する
-- Python解析にはPython標準ライブラリのASTモジュールを使用する
+- Python解析にはtree-sitterを使用する（研究フェーズでPython ASTより優先と決定）
 - JavaScript/TypeScript解析にはtree-sitterを使用する
 - LSP連携はオプショナルな拡張機能として提供し、より詳細な型情報や参照解析に活用する
 - プロバイダーは外部プロセス（言語サーバー等）に依存せず単独で動作する

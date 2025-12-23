@@ -287,6 +287,7 @@
                "lem-lua-mode"
                #-os-windows "lem-terminal"
                "lem-legit"
+               "lem-smart-parens-mode"
                "lem-dashboard"
                "lem-copilot"
                "lem-claude-code"

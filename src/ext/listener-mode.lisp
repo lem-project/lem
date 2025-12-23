@@ -56,8 +56,8 @@
      :keymap *listener-mode-keymap*))
 
 (define-key *listener-mode-keymap* "Return" 'listener-return)
-(define-key *listener-mode-keymap* "M-p" 'listener-previous-input)
-(define-key *listener-mode-keymap* "M-n" 'listener-next-input)
+(define-key *listener-mode-keymap* "M-p" 'listener-previous-startswith-input)
+(define-key *listener-mode-keymap* "M-n" 'listener-next-startswith-input)
 (define-key *listener-mode-keymap* "M-r" 'listener-isearch-history)
 (define-key *listener-mode-keymap* "C-c M-o" 'listener-clear-buffer)
 (define-key *listener-mode-keymap* "C-c C-u" 'listener-clear-input)
@@ -132,6 +132,7 @@
     (change-input-start-point point)))
 
 (define-command listener-return () ()
+  "Validate the current input and let the listener execute the expression."
   (if (point< (current-point)
               (input-start-point (current-buffer)))
       (insert-character (current-point) #\newline)
@@ -171,6 +172,9 @@
       (replace-textarea buffer str))))
 
 (define-command listener-previous-startswith-input () ()
+  "Find the previous prompt starting with the current input.
+
+  See also `listener-previous-input`."
   (block nil
     (let* ((buffer (current-buffer))
            (point (buffer-point buffer))
@@ -190,6 +194,9 @@
                 (return))))))))
 
 (define-command listener-next-startswith-input () ()
+  "Find the next prompt starting with the current input.
+
+  See also `listener-next-input`."
   (block nil
     (let* ((buffer (current-buffer))
            (point (buffer-point buffer))
@@ -212,6 +219,7 @@
                 (rollback))))))))
 
 (define-command listener-previous-input () ()
+  "Get and insert the previous REPL input."
   (backup-edit-string (current-buffer))
   (multiple-value-bind (str win)
       (lem/common/history:previous-history (current-listener-history))
@@ -219,6 +227,7 @@
       (replace-textarea (current-buffer) str))))
 
 (define-command listener-next-input () ()
+  "Get and insert the next REPL input."
   (backup-edit-string (current-buffer))
   (multiple-value-bind (str win)
       (lem/common/history:next-history (current-listener-history))
@@ -228,6 +237,7 @@
 
 (define-command listener-previous-matching-input (regexp)
     ((prompt-for-string "Previous element matching (regexp): "))
+  "Interactively prompt for a regexp and search previous inputs."
   (backup-edit-string (current-buffer))
   (multiple-value-bind (str win)
       (lem/common/history:previous-matching (current-listener-history) regexp)
@@ -244,9 +254,11 @@
                              buffer))
 
 (define-command listener-clear-buffer () ()
+  "Clear all listener's buffer."
   (clear-listener (current-buffer)))
 
 (define-command listener-clear-input () ()
+  "Clear the current prompt input."
   (delete-between-points (input-start-point (current-buffer))
                          (buffer-end-point (current-buffer))))
 
@@ -340,6 +352,7 @@
           :start-index (1+ *history-matched-index*)))))))
 
 (define-command listener-isearch-history () ()
+  "Interactively search a matching input in the listener input history."
   (let ((buffer (current-buffer)))
     (buffer-end (buffer-point buffer))
     (let ((*listener-buffer* buffer)

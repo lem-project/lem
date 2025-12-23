@@ -2,20 +2,31 @@
   (:use #:cl #:lem)
   (:import-from #:call-graph
                 #:call-graph-nodes
-                #:graph-node-source-location)
+                #:graph-node-source-location
+                #:*provider-registry*
+                #:find-provider
+                #:provider-analyze)
   (:import-from #:lem-living-canvas/micros-cl-provider
                 #:analyze-package
                 #:analyze-file
                 #:analyze-system)
+  (:import-from #:lem-living-canvas/language
+                #:detect-language
+                #:language-for-file)
   (:import-from #:lem-living-canvas/buffer
                 #:canvas-buffer
                 #:make-canvas-buffer)
   (:import-from #:lem-lisp-mode/internal
-                #:check-connection)
+                #:check-connection
+                #:connected-p)
   (:export #:living-canvas
            #:living-canvas-current-file
            #:living-canvas-system
-           #:living-canvas-refresh))
+           #:living-canvas-refresh
+           #:living-canvas-current-buffer
+           #:living-canvas-reload-providers
+           #:living-canvas-diagnose
+           #:get-provider-status))
 (in-package #:lem-living-canvas)
 
 ;;; Variables
@@ -289,6 +300,188 @@ Requires a Lisp connection (via micros)."
        (lem:message "Canvas refreshed"))
       (t
        (lem:message "Not in a canvas buffer")))))
+
+;;; Multi-Language Support via Provider Registry
+
+(defun analyze-with-provider (source language)
+  "Analyze SOURCE using a registered provider for LANGUAGE.
+
+Arguments:
+  SOURCE   - The source to analyze (buffer or pathname)
+  LANGUAGE - Language keyword (e.g., :python)
+
+Returns:
+  A call-graph structure, or nil if no suitable provider is found"
+  (let ((provider (find-provider *provider-registry* language source)))
+    (cond
+      (provider
+       (provider-analyze provider source))
+      ((eq language :common-lisp)
+       ;; Fallback to micros provider for Common Lisp
+       (typecase source
+         (lem:buffer (analyze-file (lem:buffer-filename source)))
+         (pathname (analyze-file source))
+         (t nil)))
+      (t nil))))
+
+(defun supported-language-p (language)
+  "Return T if LANGUAGE has a registered provider or is Common Lisp.
+
+Arguments:
+  LANGUAGE - Language keyword (e.g., :python)
+
+Returns:
+  T if analysis is available for this language"
+  (or (eq language :common-lisp)
+      (find-provider *provider-registry* language)))
+
+(defun get-provider-status (language)
+  "Get detailed status information about provider availability for LANGUAGE.
+
+Arguments:
+  LANGUAGE - Language keyword (e.g., :python)
+
+Returns:
+  A string describing the provider status"
+  (cond
+    ((eq language :common-lisp)
+     (if (connected-p)
+         "Common Lisp (micros connection active)"
+         "Common Lisp (requires micros connection - use M-x slime)"))
+    (t
+     (let ((providers (call-graph:list-providers *provider-registry* language)))
+       (if providers
+           (format nil "~A (provider: ~A)"
+                   language
+                   (call-graph:provider-name (first providers)))
+           (format nil "~A (no provider - tree-sitter grammar may not be installed)"
+                   language))))))
+
+(lem:define-command living-canvas-current-buffer () ()
+  "Display a call graph for the current buffer.
+
+Automatically detects the programming language and selects the
+appropriate provider. Supports:
+  - Common Lisp (via micros connection)
+  - Python, JavaScript, TypeScript (via tree-sitter providers)
+
+The command uses the provider registry to find the best available
+provider for the detected language."
+  (let* ((buffer (lem:current-buffer))
+         (filename (lem:buffer-filename buffer))
+         (language (detect-language buffer)))
+    (unless filename
+      (lem:editor-error "Buffer has no associated file"))
+    (unless (probe-file filename)
+      (lem:editor-error "File not found: ~A" filename))
+    (unless language
+      (lem:editor-error "Cannot detect language for ~A" (file-namestring filename)))
+    (unless (supported-language-p language)
+      (lem:editor-error "No call graph provider available for ~A~%~A"
+                        language
+                        (get-provider-status language)))
+
+    ;; For Common Lisp, require micros connection
+    (when (eq language :common-lisp)
+      (check-connection))
+
+    (let* ((graph (analyze-with-provider buffer language))
+           (node-count (if graph
+                           (hash-table-count (call-graph-nodes graph))
+                           0)))
+      (cond
+        ((zerop node-count)
+         (lem:message "No functions found in ~A" (file-namestring filename)))
+        (t
+         (populate-source-location-cache graph)
+         (let ((canvas-buffer (make-canvas-buffer
+                               (format nil "*Canvas: ~A*" (file-namestring filename))
+                               buffer
+                               graph)))
+           (lem:pop-to-buffer canvas-buffer)
+           (lem:change-buffer-mode canvas-buffer 'living-canvas-mode)
+           (lem:message "Living Canvas: ~D functions in ~A (~A)"
+                        node-count (file-namestring filename)
+                        language)))))))
+
+;;; Provider Management
+
+(lem:define-command living-canvas-reload-providers () ()
+  "Reload and re-register all tree-sitter providers.
+
+Use this command if providers failed to register at startup
+because tree-sitter grammars were not yet available."
+  (let ((count 0))
+    ;; Try to register Python provider
+    (ignore-errors
+      (unless (find-provider *provider-registry* :python)
+        (let ((provider (make-instance 'lem-python-mode/call-graph:tree-sitter-python-provider)))
+          (when (slot-value provider 'lem-python-mode/call-graph::language)
+            (call-graph:register-provider *provider-registry* provider '(:python))
+            (incf count)))))
+    ;; Try to register JavaScript provider
+    (ignore-errors
+      (unless (find-provider *provider-registry* :javascript)
+        (let ((provider (make-instance 'lem-js-mode/call-graph:tree-sitter-js-provider)))
+          (when (slot-value provider 'lem-js-mode/call-graph::language)
+            (call-graph:register-provider *provider-registry* provider '(:javascript :typescript))
+            (incf count)))))
+    ;; Try to register Go provider
+    (ignore-errors
+      (unless (find-provider *provider-registry* :go)
+        (let ((provider (make-instance 'lem-go-mode/call-graph:tree-sitter-go-provider)))
+          (when (slot-value provider 'lem-go-mode/call-graph::language)
+            (call-graph:register-provider *provider-registry* provider '(:go))
+            (incf count)))))
+    (if (zerop count)
+        (lem:message "Providers already registered or tree-sitter grammars not available.")
+        (lem:message "Registered ~D provider(s). Use M-x living-canvas-diagnose to verify." count))))
+
+;;; Diagnostics
+
+(lem:define-command living-canvas-diagnose () ()
+  "Show diagnostic information about Living Canvas providers.
+
+Displays the status of all registered providers and their capabilities.
+Useful for troubleshooting when providers are not working."
+  (let ((ts-available (and (find-package :tree-sitter)
+                           (ignore-errors
+                             (funcall (find-symbol "TREE-SITTER-AVAILABLE-P" :tree-sitter)))))
+        (providers (call-graph:list-providers *provider-registry*))
+        (lisp-connected (connected-p)))
+    (lem:with-pop-up-typeout-window (out (lem:make-buffer "*Living Canvas Diagnostics*") :erase t)
+      (format out "=== Living Canvas Provider Diagnostics ===~%~%")
+
+      ;; Tree-sitter status
+      (format out "Tree-sitter Status:~%")
+      (format out "  Available: ~A~%" (if ts-available "Yes" "No"))
+      (when ts-available
+        (dolist (lang '("python" "javascript" "typescript" "go"))
+          (let ((loaded (ignore-errors
+                          (funcall (find-symbol "GET-LANGUAGE" :tree-sitter) lang))))
+            (format out "  ~A grammar: ~A~%" lang (if loaded "Loaded" "Not loaded")))))
+      (format out "~%")
+
+      ;; Common Lisp status
+      (format out "Common Lisp Status:~%")
+      (format out "  Micros connection: ~A~%" (if lisp-connected "Connected" "Not connected"))
+      (format out "~%")
+
+      ;; Registered providers
+      (format out "Registered Providers:~%")
+      (if providers
+          (dolist (provider providers)
+            (format out "  ~A (priority: ~A, languages: ~A)~%"
+                    (call-graph:provider-name provider)
+                    (call-graph:provider-priority provider)
+                    (call-graph:provider-languages provider)))
+          (format out "  (none)~%"))
+      (format out "~%")
+
+      ;; Language support summary
+      (format out "Language Support:~%")
+      (dolist (lang '(:common-lisp :python :javascript :typescript :go))
+        (format out "  ~A: ~A~%" lang (get-provider-status lang))))))
 
 ;;; Minor Mode
 

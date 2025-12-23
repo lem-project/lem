@@ -42,4 +42,21 @@
    #:provider-name
    #:provider-supports-p
    #:provider-analyze
-   #:provider-priority))
+   #:provider-priority
+   #:provider-languages
+   #:define-call-graph-provider
+
+   ;; Provider conditions
+   #:provider-error
+   #:provider-error-provider
+   #:provider-error-message
+   #:provider-unavailable
+   #:provider-unavailable-reason
+
+   ;; Provider registry
+   #:provider-registry
+   #:*provider-registry*
+   #:register-provider
+   #:unregister-provider
+   #:find-provider
+   #:list-providers))

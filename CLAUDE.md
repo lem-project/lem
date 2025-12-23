@@ -87,3 +87,11 @@ User config locations (in order):
 - Architecture details: `docs/ARCHITECTURE.md`
 - Extension development: `docs/extension-development.md`
 - Online docs: https://lem-project.github.io/
+
+## Recent Changes
+- 001-multi-language-canvas: Added Common Lisp (SBCL), tree-sitter-cl FFI bindings + lem/core, tree-sitter-cl, lem-call-graph (existing), lem-tree-sitter
+- 001-multi-language-canvas: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+
+## Active Technologies
+- Common Lisp (SBCL), tree-sitter-cl FFI bindings + lem/core, tree-sitter-cl, lem-call-graph (existing), lem-tree-sitter (001-multi-language-canvas)
+- N/A (in-memory graph structures, optional position caching) (001-multi-language-canvas)

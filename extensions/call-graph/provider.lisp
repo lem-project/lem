@@ -45,6 +45,16 @@ Used for automatic registration and provider discovery.")
 
 ;;; Provider Conditions
 
+;; Reader function declarations for exported condition accessors
+(defgeneric provider-error-provider (condition)
+  (:documentation "Return the provider that encountered the error."))
+
+(defgeneric provider-error-message (condition)
+  (:documentation "Return the error message, or NIL if not specified."))
+
+(defgeneric provider-unavailable-reason (condition)
+  (:documentation "Return the reason why the provider is unavailable, or NIL."))
+
 (define-condition provider-error (error)
   ((provider :initarg :provider
              :reader provider-error-provider
@@ -81,6 +91,22 @@ required runtime not connected, etc."))
 
 ;;; Provider Definition Macro
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun %parse-provider-options (options)
+    "Parse provider definition options at macro-expansion time.
+Returns values: (provider-name priority languages class-options).
+Signals an error if :provider-name is not specified."
+    (let ((provider-name (cadr (assoc :provider-name options)))
+          (priority (or (cadr (assoc :priority options)) 5))
+          (languages (cadr (assoc :languages options)))
+          (class-options (remove-if (lambda (opt)
+                                      (member (car opt)
+                                              '(:provider-name :priority :languages)))
+                                    options)))
+      (unless provider-name
+        (error "define-call-graph-provider requires :provider-name option"))
+      (values provider-name priority languages class-options))))
+
 (defmacro define-call-graph-provider (name (&rest superclasses) slots &body options)
   "Define a new call graph provider class with common boilerplate.
 
@@ -92,38 +118,30 @@ OPTIONS are class options plus special provider options:
   :provider-name    - Keyword name for the provider (required)
   :priority         - Provider priority (default 5)
   :languages        - List of supported language keywords
-  :register         - If T, auto-register with *provider-registry*
+
+To register the provider, call register-provider explicitly after load:
+  (register-provider *provider-registry*
+                     (make-instance 'my-python-provider)
+                     '(:python))
 
 Example:
   (define-call-graph-provider my-python-provider ()
     ((parser :accessor my-provider-parser))
     (:provider-name :my-python)
     (:priority 5)
-    (:languages (:python))
-    (:register t))"
-  (let* ((superclasses (or superclasses '(call-graph-provider)))
-         (provider-name (cadr (assoc :provider-name options)))
-         (priority (or (cadr (assoc :priority options)) 5))
-         (languages (cadr (assoc :languages options)))
-         (register (cadr (assoc :register options)))
-         (class-options (remove-if (lambda (opt)
-                                     (member (car opt)
-                                             '(:provider-name :priority :languages :register)))
-                                   options)))
-    (unless provider-name
-      (error "define-call-graph-provider requires :provider-name option"))
-    `(progn
-       (defclass ,name ,superclasses
-         ,slots
-         ,@class-options)
-       (defmethod provider-name ((provider ,name))
-         ,provider-name)
-       (defmethod provider-priority ((provider ,name))
-         ,priority)
-       ,@(when languages
-           `((defmethod provider-languages ((provider ,name))
-               ',languages)))
-       ,@(when register
-           `((let ((provider (make-instance ',name)))
-               (register-provider *provider-registry* provider ',languages)))))))
+    (:languages (:python)))"
+  (multiple-value-bind (provider-name priority languages class-options)
+      (%parse-provider-options options)
+    (let ((superclasses (or superclasses '(call-graph-provider))))
+      `(progn
+         (defclass ,name ,superclasses
+           ,slots
+           ,@class-options)
+         (defmethod provider-name ((provider ,name))
+           ,provider-name)
+         (defmethod provider-priority ((provider ,name))
+           ,priority)
+         ,@(when languages
+             `((defmethod provider-languages ((provider ,name))
+                 ',languages)))))))
 

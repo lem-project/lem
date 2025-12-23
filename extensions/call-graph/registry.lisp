@@ -5,6 +5,17 @@
 ;;; This module provides a central registry for call graph providers.
 ;;; Providers are registered with language keywords and selected by priority.
 
+(defvar *provider-registry* nil
+  "Global provider registry instance.
+
+This is a well-documented global like `lem:*current-buffer*`.
+The registry is shared across the editor lifetime and accessed via
+registry-passing functions (register-provider, find-provider, etc.).
+Direct mutation should be avoided; use the registry API functions.
+
+This registry is used by living-canvas to find appropriate providers
+for different programming languages.")
+
 (defclass provider-registry ()
   ((providers
     :initform (make-hash-table :test 'eq)
@@ -19,11 +30,8 @@
 Manages provider registration, lookup, and selection based on language
 and priority. Providers are indexed both by name and by supported languages."))
 
-(defvar *provider-registry* (make-instance 'provider-registry)
-  "Global provider registry instance.
-
-This registry is used by living-canvas to find appropriate providers
-for different programming languages.")
+;; Initialize the global registry after class definition
+(setf *provider-registry* (make-instance 'provider-registry))
 
 (defun register-provider (registry provider languages)
   "Register PROVIDER in REGISTRY for LANGUAGES.

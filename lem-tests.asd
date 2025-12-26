@@ -43,6 +43,7 @@
                (:file "killring")
                (:file "string-width-utils")
                (:file "syntax-test")
+               (:file "syntax-scanner")
                (:file "buffer-list-test")
                (:file "popup-window")
                (:file "prompt")

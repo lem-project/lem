@@ -188,14 +188,28 @@
             (ng (viewport-needs-scan-p buffer 10 40)
                 "Viewport within scanned range should not need scan")
 
-            ;; Step 4: Scroll to unscanned region (lines 60-90)
-            (ok (viewport-needs-scan-p buffer 60 90)
-                "Viewport outside scanned range needs scan")
-            (update-scanned-region buffer 60 90)
-            ;; Region should now be 1-90
+            ;; Step 4: Scroll to adjacent region (lines 45-75) - contiguous with 1-50
+            (ok (viewport-needs-scan-p buffer 45 75)
+                "Viewport extending beyond scanned range needs scan")
+            (update-scanned-region buffer 45 75)
+            ;; Region should now be 1-75 (extended because contiguous)
             (let ((region (buffer-scanned-region buffer)))
               (ok (= (second region) 1))
-              (ok (= (third region) 90))))
+              (ok (= (third region) 75)))
+
+            ;; Step 5: Jump to non-contiguous region (lines 90-100)
+            ;; This should NOT extend but replace (gap between 75 and 90)
+            (ok (viewport-needs-scan-p buffer 90 100)
+                "Non-contiguous viewport needs scan")
+            (update-scanned-region buffer 90 100)
+            ;; Region should now be 90-100 (replaced, not extended)
+            (let ((region (buffer-scanned-region buffer)))
+              (ok (= (second region) 90) "Start should be 90 (replaced)")
+              (ok (= (third region) 100) "End should be 100 (replaced)"))
+
+            ;; Step 6: Previous region (1-75) now needs scan again
+            (ok (viewport-needs-scan-p buffer 1 30)
+                "Previous region needs scan after jump to non-contiguous area"))
         (lem:delete-buffer buffer)))))
 
 (deftest syntax-scan-after-edit

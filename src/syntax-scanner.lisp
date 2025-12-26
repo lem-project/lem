@@ -13,18 +13,30 @@
 (defun (setf buffer-scanned-region) (value buffer)
   (setf (buffer-value buffer 'scanned-region) value))
 
+(defun regions-contiguous-p (old-start old-end new-start new-end)
+  "Check if two line ranges are contiguous (adjacent or overlapping)."
+  ;; Contiguous if: new range starts before or at old-end+1
+  ;;            AND new range ends after or at old-start-1
+  (and (<= new-start (1+ old-end))
+       (>= new-end (1- old-start))))
+
 (defun update-scanned-region (buffer start-line end-line)
-  "Update the scanned region, extending it if within the same tick."
+  "Update the scanned region, extending it only if contiguous within the same tick."
   (let ((current-tick (buffer-modified-tick buffer))
         (region (buffer-scanned-region buffer)))
     (if (and region (eql (first region) current-tick))
-        ;; Same tick: extend the scanned region
+        ;; Same tick: extend only if contiguous, otherwise replace
         (let ((old-start (second region))
               (old-end (third region)))
-          (setf (buffer-scanned-region buffer)
-                (list current-tick
-                      (min old-start start-line)
-                      (max old-end end-line))))
+          (if (regions-contiguous-p old-start old-end start-line end-line)
+              ;; Contiguous: extend the region
+              (setf (buffer-scanned-region buffer)
+                    (list current-tick
+                          (min old-start start-line)
+                          (max old-end end-line)))
+              ;; Not contiguous: replace with new region
+              (setf (buffer-scanned-region buffer)
+                    (list current-tick start-line end-line))))
         ;; Different tick: reset the region
         (setf (buffer-scanned-region buffer)
               (list current-tick start-line end-line)))))

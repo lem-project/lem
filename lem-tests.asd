@@ -5,6 +5,9 @@
                "lem-lisp-mode"
                "lem-legit"
                #+sbcl "lem-mcp-server"
+               #+sbcl "lem-language-server"
+               #+sbcl "lem-language-client"
+               #+sbcl "lem-lsp-mode"
                "lem-tree-sitter"
                "lem-yaml-mode"
                "lem-wat-mode"
@@ -25,8 +28,16 @@
                #+sbcl
                (:module "language-server"
                 :components ((:file "utils")
+                             (:file "test-utils")
                              (:file "micros-tests")
-                             (:file "tests")))
+                             (:file "tests")
+                             (:file "language-features-tests")))
+               #+sbcl
+               (:module "lsp-mode"
+                :components ((:file "mock-client")
+                             (:file "test-utils")
+                             (:file "tests")
+                             (:file "integration-tests")))
                #+sbcl
                (:module "mcp-server"
                 :components ((:file "utils")

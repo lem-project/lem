@@ -30,7 +30,11 @@
 
 (defclass mock-server (server)
   ((exit-status :initform nil
-                :accessor mock-server-exit-status)))
+                :accessor mock-server-exit-status)
+   (canned-responses :initform (make-hash-table :test 'equal)
+                     :accessor mock-server-canned-responses)
+   (response-history :initform '()
+                     :accessor mock-server-response-history)))
 
 (defclass tcp-server (server)
   ((port :initarg :port
@@ -132,7 +136,25 @@
   (remote-eval-sync-internal server expression package-name))
 
 (defmethod remote-eval-sync ((server mock-server) expression package-name)
-  )
+  "Return canned response for mock-server based on expression's operator.
+If no canned response is set, returns nil."
+  (declare (ignore package-name))
+  (let* ((operator (if (consp expression) (car expression) expression))
+         (response (gethash operator (mock-server-canned-responses server))))
+    (push (list :expression expression :response response)
+          (mock-server-response-history server))
+    response))
+
+(defun set-mock-response (expression-key response &optional (server (current-server)))
+  "Set a canned response for the mock server.
+EXPRESSION-KEY should be the operator symbol (e.g., 'micros:find-definitions-for-emacs).
+RESPONSE is the value to return when remote-eval-sync is called with that operator."
+  (setf (gethash expression-key (mock-server-canned-responses server)) response))
+
+(defun clear-mock-responses (&optional (server (current-server)))
+  "Clear all canned responses from the mock server."
+  (clrhash (mock-server-canned-responses server))
+  (setf (mock-server-response-history server) '()))
 
 (defmethod server-jsonrpc-connection ((server server))
   (jsonrpc::transport-connection (jsonrpc::jsonrpc-transport (server-jsonrpc-server server))))

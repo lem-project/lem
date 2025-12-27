@@ -7,10 +7,16 @@ RUN apt-get update && apt-get install -y \
     git \
     nodejs \
     npm \
+    golang-go \
     && rm -rf /var/lib/apt/lists/*
 
-# Install tree-sitter CLI
-RUN npm install -g tree-sitter-cli
+# Install tree-sitter CLI and LSP servers
+RUN npm install -g tree-sitter-cli typescript-language-server typescript
+
+# Install gopls
+ENV GOPATH=/go
+ENV PATH=$PATH:/go/bin
+RUN go install golang.org/x/tools/gopls@latest
 
 # Build tree-sitter library from source (Ubuntu package may be too old)
 WORKDIR /tmp

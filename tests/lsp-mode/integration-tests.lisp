@@ -26,12 +26,16 @@
     (zerop (nth-value 2 (uiop:run-program (list "which" command)
                                            :ignore-error-status t)))))
 
-(defun skip-if-not-installed (server-command server-name)
-  "Skip the test if the LSP server is not installed."
-  (unless *run-integration-tests-p*
-    (skip (format nil "Integration tests disabled (set LEM_RUN_INTEGRATION_TESTS=1 to enable)")))
-  (unless (lsp-server-installed-p server-command)
-    (skip (format nil "~A not installed (command: ~A)" server-name server-command))))
+(defun should-run-integration-test-p (server-command server-name)
+  "Check if integration test should run. Returns T if it should run, NIL if skipped."
+  (cond
+    ((not *run-integration-tests-p*)
+     (skip (format nil "Integration tests disabled (set LEM_RUN_INTEGRATION_TESTS=1 to enable)"))
+     nil)
+    ((not (lsp-server-installed-p server-command))
+     (skip (format nil "~A not installed (command: ~A)" server-name server-command))
+     nil)
+    (t t)))
 
 (defmacro with-temp-directory ((dir-var) &body body)
   "Execute BODY with DIR-VAR bound to a temporary directory path."
@@ -57,8 +61,8 @@
 (defmacro defintegration-test (name (&key server-command server-name) &body body)
   "Define an integration test that requires an external LSP server."
   `(deftest ,name
-     (skip-if-not-installed ,server-command ,server-name)
-     ,@body))
+     (when (should-run-integration-test-p ,server-command ,server-name)
+       ,@body)))
 
 ;;; Note: Full integration tests require a running event loop and proper
 ;;; LSP server lifecycle management. The macros above (defintegration-test,
@@ -69,14 +73,32 @@
 ;;; 2. Ensure the required LSP server is installed
 ;;; 3. Use defintegration-test macro to define tests that will skip
 ;;;    gracefully when the server is not available
-;;;
-;;; Example:
-;;;   (defintegration-test gopls-completion
-;;;       (:server-command "gopls" :server-name "gopls")
-;;;     (testing "completion works"
-;;;       (with-test-file ("test.go" "package main\nfunc main() { fmt.Pr }")
-;;;         ;; test completion here
-;;;         )))
+
+;;;; gopls Integration Tests
+
+(defintegration-test gopls-server-available
+    (:server-command "gopls" :server-name "gopls (Go LSP)")
+  (testing "gopls can be executed"
+    (multiple-value-bind (output error-output exit-code)
+        (uiop:run-program '("gopls" "version")
+                          :output :string
+                          :error-output :string
+                          :ignore-error-status t)
+      (declare (ignore output error-output))
+      (ok (zerop exit-code) "gopls version command should succeed"))))
+
+;;;; typescript-language-server Integration Tests
+
+(defintegration-test typescript-server-available
+    (:server-command "typescript-language-server" :server-name "TypeScript LSP")
+  (testing "typescript-language-server can be executed"
+    (multiple-value-bind (output error-output exit-code)
+        (uiop:run-program '("typescript-language-server" "--version")
+                          :output :string
+                          :error-output :string
+                          :ignore-error-status t)
+      (declare (ignore output error-output))
+      (ok (zerop exit-code) "typescript-language-server --version should succeed"))))
 
 ;;; Test runner
 

@@ -61,24 +61,22 @@
      ,@body))
 
 ;;; Note: Full integration tests require a running event loop and proper
-;;; LSP server lifecycle management. The tests below are placeholders
-;;; that demonstrate the intended test structure.
-
-;;;; gopls Integration Tests
-
-(defintegration-test gopls-server-installed
-    (:server-command "gopls" :server-name "gopls (Go LSP)")
-  (testing "gopls is available"
-    (ok (lsp-server-installed-p "gopls")
-        "gopls should be installed")))
-
-;;;; typescript-language-server Integration Tests
-
-(defintegration-test typescript-server-installed
-    (:server-command "typescript-language-server" :server-name "TypeScript LSP")
-  (testing "typescript-language-server is available"
-    (ok (lsp-server-installed-p "typescript-language-server")
-        "typescript-language-server should be installed")))
+;;; LSP server lifecycle management. The macros above (defintegration-test,
+;;; with-test-file, etc.) provide the infrastructure for writing such tests.
+;;;
+;;; To add integration tests:
+;;; 1. Set LEM_RUN_INTEGRATION_TESTS=1 environment variable
+;;; 2. Ensure the required LSP server is installed
+;;; 3. Use defintegration-test macro to define tests that will skip
+;;;    gracefully when the server is not available
+;;;
+;;; Example:
+;;;   (defintegration-test gopls-completion
+;;;       (:server-command "gopls" :server-name "gopls")
+;;;     (testing "completion works"
+;;;       (with-test-file ("test.go" "package main\nfunc main() { fmt.Pr }")
+;;;         ;; test completion here
+;;;         )))
 
 ;;; Test runner
 

@@ -62,7 +62,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 ;; git commands.
 ;; Some are defined on peek-legit too.
-(define-key *global-keymap* "C-x g" 'legit-status)
+(define-key *global-prefix-keymap* "g" 'legit-status)
 (define-key *legit-diff-mode-keymap* "s" 'legit-stage-hunk)
 (define-key *legit-diff-mode-keymap* "u" 'legit-unstage-hunk)
 (define-key *legit-diff-mode-keymap* "n" 'legit-goto-next-hunk)

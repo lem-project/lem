@@ -4,13 +4,18 @@
   (:export :git-gutter-mode
            :git-gutter-set-ref
            :git-gutter-refresh
-           :*git-gutter-ref*))
+           :git-gutter-toggle-line-highlight
+           :*git-gutter-ref*
+           :*git-gutter-highlight-line*))
 (in-package :lem-git-gutter)
 
 ;;; Configuration
 
 (defvar *git-gutter-ref* "HEAD"
   "The git ref to compare against. Defaults to HEAD.")
+
+(defvar *git-gutter-highlight-line* nil
+  "When non-nil, highlight the entire line for added/modified lines.")
 
 ;;; Attributes
 
@@ -96,9 +101,9 @@
     (otherwise nil)))
 
 (defun create-line-overlays (buffer changes)
-  "Create overlays for changed lines."
+  "Create overlays for changed lines when *git-gutter-highlight-line* is non-nil."
   (clear-git-gutter-overlays buffer)
-  (when changes
+  (when (and *git-gutter-highlight-line* changes)
     (let ((overlays nil))
       (with-point ((point (buffer-point buffer)))
         (buffer-start point)
@@ -199,3 +204,9 @@
   "Refresh git gutter for current buffer."
   (update-git-gutter-for-buffer (current-buffer))
   (message "Git gutter refreshed"))
+
+(define-command git-gutter-toggle-line-highlight () ()
+  "Toggle line highlighting for git gutter."
+  (setf *git-gutter-highlight-line* (not *git-gutter-highlight-line*))
+  (update-all-buffers)
+  (message "Git gutter line highlight: ~A" (if *git-gutter-highlight-line* "on" "off")))

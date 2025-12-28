@@ -6,7 +6,8 @@
            :git-gutter-refresh
            :git-gutter-toggle-line-highlight
            :*git-gutter-ref*
-           :*git-gutter-highlight-line*))
+           :*git-gutter-highlight-line*
+           :*git-gutter-update-delay*))
 (in-package :lem-git-gutter)
 
 ;;; Configuration
@@ -16,6 +17,9 @@
 
 (defvar *git-gutter-highlight-line* nil
   "When non-nil, highlight the entire line for added/modified lines.")
+
+(defvar *git-gutter-update-delay* 300
+  "Delay in milliseconds before updating gutter after edit.")
 
 ;;; Attributes
 
@@ -57,7 +61,7 @@
           :return nil))
 
 (defun get-git-diff-for-buffer (buffer ref)
-  "Get git diff for a buffer's file.
+  "Get git diff for a buffer's file (on disk).
    Returns the diff output string or nil."
   (alexandria:when-let ((filepath (buffer-filename buffer)))
     (let ((directory (or (buffer-directory buffer)
@@ -66,6 +70,40 @@
         (uiop:with-current-directory (git-root)
           (let ((relative-path (enough-namestring filepath git-root)))
             (run-git (list "diff" "--no-color" "-U0" ref "--" relative-path))))))))
+
+(defun get-original-content (ref relative-path)
+  "Get the original file content from git ref.
+   Returns the content string or nil if not found."
+  (let ((result (run-git (list "show" (format nil "~A:~A" ref relative-path)))))
+    (when (and result (plusp (length result)))
+      result)))
+
+(defun get-git-diff-for-unsaved-buffer (buffer ref)
+  "Get git diff for unsaved buffer content using temp files.
+   Returns the diff output string or nil."
+  (alexandria:when-let ((filepath (buffer-filename buffer)))
+    (let ((directory (or (buffer-directory buffer)
+                         (uiop:pathname-directory-pathname filepath))))
+      (alexandria:when-let ((git-root (find-git-root directory)))
+        (uiop:with-current-directory (git-root)
+          (let* ((relative-path (enough-namestring filepath git-root))
+                 (original-content (get-original-content ref relative-path)))
+            (when original-content
+              (uiop:with-temporary-file (:pathname original-path :stream original-stream
+                                         :direction :output
+                                         :element-type 'character)
+                (write-string original-content original-stream)
+                (finish-output original-stream)
+                (close original-stream)
+                (uiop:with-temporary-file (:pathname buffer-path :stream buffer-stream
+                                           :direction :output
+                                           :element-type 'character)
+                  (write-string (buffer-text buffer) buffer-stream)
+                  (finish-output buffer-stream)
+                  (close buffer-stream)
+                  (run-git (list "diff" "--no-color" "-U0" "--no-index"
+                                 (namestring original-path)
+                                 (namestring buffer-path))))))))))))
 
 ;;; Buffer State Management
 
@@ -91,6 +129,25 @@
     (delete-overlay overlay))
   (setf (buffer-git-gutter-overlays buffer) nil))
 
+(defun buffer-git-gutter-timer (buffer)
+  "Get the git gutter update timer for buffer."
+  (buffer-value buffer 'git-gutter-timer))
+
+(defun (setf buffer-git-gutter-timer) (timer buffer)
+  "Set the git gutter update timer for buffer."
+  (setf (buffer-value buffer 'git-gutter-timer) timer))
+
+(defun cancel-buffer-git-gutter-timer (buffer)
+  "Cancel pending update timer for buffer."
+  (alexandria:when-let ((timer (buffer-git-gutter-timer buffer)))
+    (stop-timer timer)
+    (setf (buffer-git-gutter-timer buffer) nil)))
+
+(defun cancel-all-git-gutter-timers ()
+  "Cancel all pending git gutter update timers."
+  (dolist (buffer (buffer-list))
+    (cancel-buffer-git-gutter-timer buffer)))
+
 (defun change-type-to-line-attribute (change-type)
   "Return the line attribute for a change type.
    Returns nil for :deleted since we don't highlight the entire line."
@@ -115,8 +172,11 @@
       (setf (buffer-git-gutter-overlays buffer) overlays))))
 
 (defun update-git-gutter-for-buffer (buffer)
-  "Update the git gutter diff information for buffer."
-  (let ((diff-output (get-git-diff-for-buffer buffer *git-gutter-ref*)))
+  "Update the git gutter diff information for buffer.
+   Uses unsaved buffer content if buffer is modified."
+  (let ((diff-output (if (buffer-modified-p buffer)
+                         (get-git-diff-for-unsaved-buffer buffer *git-gutter-ref*)
+                         (get-git-diff-for-buffer buffer *git-gutter-ref*))))
     (if (and diff-output (plusp (length diff-output)))
         (let ((changes (diff-parser:parse-git-diff diff-output)))
           (setf (buffer-git-gutter-changes buffer) changes)
@@ -137,6 +197,26 @@
     (setf (buffer-git-gutter-changes buffer) nil)
     (clear-git-gutter-overlays buffer)))
 
+;;; Change Detection
+
+(defun git-gutter-on-change (start end old-len)
+  "Called after buffer modification. Schedules debounced update."
+  (declare (ignore end old-len))
+  (let* ((buffer (point-buffer start))
+         (existing-timer (buffer-git-gutter-timer buffer)))
+    (when (buffer-filename buffer)
+      ;; Cancel existing timer (debounce)
+      (when existing-timer
+        (stop-timer existing-timer))
+      ;; Schedule new update
+      (setf (buffer-git-gutter-timer buffer)
+            (start-timer
+             (make-idle-timer
+              (lambda () (update-git-gutter-for-buffer buffer))
+              :name "git-gutter-update")
+             *git-gutter-update-delay*
+             :repeat nil)))))
+
 ;;; Mode Definition
 
 (defun git-gutter-after-save (buffer)
@@ -148,12 +228,17 @@
   "Called when git-gutter-mode is enabled."
   (update-all-buffers)
   (add-hook (variable-value 'after-save-hook :global t)
-            'git-gutter-after-save))
+            'git-gutter-after-save)
+  (add-hook (variable-value 'after-change-functions :global t)
+            'git-gutter-on-change))
 
 (defun disable-hook ()
   "Called when git-gutter-mode is disabled."
   (remove-hook (variable-value 'after-save-hook :global t)
                'git-gutter-after-save)
+  (remove-hook (variable-value 'after-change-functions :global t)
+               'git-gutter-on-change)
+  (cancel-all-git-gutter-timers)
   (clear-all-buffers))
 
 (define-minor-mode git-gutter-mode

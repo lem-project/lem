@@ -130,3 +130,21 @@ index abc123..def456 100644
     (ok (eq (gethash 5 changes) :modified) "Line 5 should be modified (delete+add)")
     (ok (eq (gethash 6 changes) :added) "Line 6 should be added")
     (ok (eq (gethash 7 changes) :added) "Line 7 should be added")))
+
+;;; Test git diff --no-index output format (for unsaved buffers)
+
+(deftest test-parse-git-diff-no-index-format
+  "Test parsing git diff --no-index output (used for unsaved buffer comparison)"
+  (let* ((diff-output "diff --git a/tmp/orig.txt b/tmp/new.txt
+index a92d664b..7c7d6265 100644
+--- a/tmp/orig.txt
++++ b/tmp/new.txt
+@@ -2 +2 @@ line 1
+-line 2
++modified line 2
+@@ -3,0 +4 @@ line 3
++added line 4")
+         (changes (parser:parse-git-diff diff-output)))
+    (ok (eq (gethash 2 changes) :modified) "Line 2 should be modified")
+    (ok (eq (gethash 4 changes) :added) "Line 4 should be added")
+    (ok (= (hash-table-count changes) 2) "Should have exactly 2 changes")))

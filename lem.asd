@@ -294,7 +294,8 @@
                "lem-mcp-server"
                #+sbcl
                "lem-living-canvas"
-               "lem-tree-sitter"))
+               "lem-tree-sitter"
+               "lem-git-gutter"))
 
 (defsystem "lem"
   :version "2.3.0"

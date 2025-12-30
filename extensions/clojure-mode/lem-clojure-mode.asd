@@ -1,11 +1,6 @@
 (defsystem "lem-clojure-mode"
   :depends-on ("lem/core"
                "lem-lsp-mode"
-               "lem/listener-mode"
-               "lem/button"
-               "lem/loading-spinner"
-               "lem/detective"
-               "lem/context-menu"
                "usocket"
                "babel"
                "bordeaux-threads")

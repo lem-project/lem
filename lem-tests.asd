@@ -12,6 +12,7 @@
                "lem-yaml-mode"
                "lem-wat-mode"
                "lem-nix-mode"
+               "lem-clojure-mode"
                "cl-ansi-text"
                "trivial-package-local-nicknames"
                "rove"
@@ -66,6 +67,7 @@
                (:file "scala-mode")
                (:file "wat-mode")
                (:file "nix-mode")
+               (:file "clojure-mode")
                (:file "completion")
                (:file "command-line-arguments")
                (:file "window")

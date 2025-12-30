@@ -37,7 +37,9 @@
 
 (defmethod bencode-encode ((value symbol))
   "Encode a symbol as a string (using its name)."
-  (bencode-encode (string-downcase (symbol-name value))))
+  (if (null value)
+      "le"  ; nil is an empty list
+      (bencode-encode (string-downcase (symbol-name value)))))
 
 (defmethod bencode-encode ((value list))
   "Encode a list: l<contents>e"

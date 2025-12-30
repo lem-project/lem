@@ -18,6 +18,7 @@
            :clojure-macroexpand-1
            :clojure-macroexpand-all
            :clojure-describe-symbol
+           :clojure-describe-symbol-at-point
            :clojure-set-namespace))
 
 (in-package :lem-clojure-mode/commands)

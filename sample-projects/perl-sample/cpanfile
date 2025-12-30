@@ -1,0 +1,14 @@
+# Runtime dependencies
+requires 'perl', '5.016';
+
+# Test dependencies
+on 'test' => sub {
+    requires 'Test::More', '0.98';
+    requires 'Test::Exception', '0';
+};
+
+# Development dependencies
+on 'develop' => sub {
+    requires 'Perl::Critic', '0';
+    requires 'Perl::Tidy', '0';
+};

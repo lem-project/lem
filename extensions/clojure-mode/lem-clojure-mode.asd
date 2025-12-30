@@ -4,6 +4,8 @@
                "lem/listener-mode"
                "lem/button"
                "lem/loading-spinner"
+               "lem/detective"
+               "lem/context-menu"
                "usocket"
                "babel"
                "bordeaux-threads")
@@ -16,4 +18,6 @@
                (:file "commands")
                (:file "inspector")
                (:file "test-runner")
-               (:file "stacktrace")))
+               (:file "stacktrace")
+               (:file "detective")
+               (:file "tools")))

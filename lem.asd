@@ -259,6 +259,7 @@
                "lem-nim-mode"
                #-clasp
                "lem-scheme-mode"
+               "lem-clojure-mode"
 
                "lem-patch-mode"
                "lem-toml-mode"

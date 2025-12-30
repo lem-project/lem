@@ -13,7 +13,9 @@
   (:export :clojure-run-test-at-point
            :clojure-run-tests
            :clojure-run-all-tests
-           :clojure-rerun-last-test))
+           :clojure-rerun-last-test
+           ;; Parsing utilities (for testing)
+           :parse-test-result))
 
 (in-package :lem-clojure-mode/test-runner)
 

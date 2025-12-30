@@ -22,7 +22,15 @@
            :nrepl-close-session
            :nrepl-describe
            :nrepl-completions
-           :check-nrepl-connection))
+           :check-nrepl-connection
+           ;; Message utilities
+           :make-nrepl-message
+           :generate-message-id
+           ;; Response utilities
+           :nrepl-response-value
+           :nrepl-response-out
+           :nrepl-response-err
+           :nrepl-response-exception))
 
 (in-package :lem-clojure-mode/nrepl-client)
 

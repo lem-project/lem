@@ -10,7 +10,15 @@
   (:export :clojure-stacktrace-mode
            :*clojure-stacktrace-mode-keymap*
            :clojure-show-last-exception
-           :clojure-stacktrace-jump-to-source))
+           :clojure-stacktrace-jump-to-source
+           ;; Parsing utilities (for testing)
+           :parse-stacktrace
+           :make-stack-frame
+           :stack-frame-class
+           :stack-frame-method
+           :stack-frame-file
+           :stack-frame-line
+           :stack-frame-clojure-p))
 
 (in-package :lem-clojure-mode/stacktrace)
 

@@ -11,7 +11,9 @@
   (:export :clojure-inspector-mode
            :*clojure-inspector-mode-keymap*
            :clojure-inspect
-           :clojure-inspect-last-sexp))
+           :clojure-inspect-last-sexp
+           ;; Parsing utilities (for testing)
+           :parse-inspect-result))
 
 (in-package :lem-clojure-mode/inspector)
 

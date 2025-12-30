@@ -259,6 +259,7 @@
                "lem-scheme-mode"
 
                "lem-patch-mode"
+               "lem-toml-mode"
                "lem-yaml-mode"
                "lem-review-mode"
                "lem-asciidoc-mode"

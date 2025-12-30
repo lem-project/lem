@@ -254,6 +254,7 @@
                "lem-json-mode"
                "lem-rust-mode"
                "lem-zig-mode"
+               "lem-kotlin-mode"
                "lem-paredit-mode"
                "lem-nim-mode"
                #-clasp

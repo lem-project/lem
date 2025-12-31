@@ -368,11 +368,14 @@
         (unless (or (pps-state-string-p state)
                     (pps-state-comment-p state))
           ;; Found ns form, extract namespace name
-          (when (looking-at p "([^\\s\\)]+)")
-            (return (ppcre:regex-replace-all
-                     "[\\(\\)]"
-                     (match-string 0)
-                     ""))))))))
+          (multiple-value-bind (match groups)
+              (looking-at p "([^\\s\\)]+)")
+            (declare (ignore groups))
+            (when match
+              (return (ppcre:regex-replace-all
+                       "[\\(\\)]"
+                       match
+                       "")))))))))
 
 (defun clojure-current-namespace ()
   "Get the current namespace for the buffer."

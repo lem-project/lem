@@ -15,4 +15,15 @@
                (:file "test-runner")
                (:file "stacktrace")
                (:file "detective")
-               (:file "tools")))
+               (:file "tools"))
+  :in-order-to ((test-op (test-op "lem-clojure-mode/tests"))))
+
+(defsystem "lem-clojure-mode/tests"
+  :depends-on ("lem/core"
+               "lem-clojure-mode"
+               "rove")
+  :components
+  ((:module "tests"
+    :components
+    ((:file "main"))))
+  :perform (test-op (op c) (symbol-call :rove '#:run c)))

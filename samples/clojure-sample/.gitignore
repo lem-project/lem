@@ -1,0 +1,15 @@
+# Clojure
+.cpcache/
+.nrepl-port
+target/
+
+# Nix
+result
+result-*
+
+# direnv
+.direnv/
+
+# Editor
+.lsp/
+.clj-kondo/

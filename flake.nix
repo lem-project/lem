@@ -190,6 +190,8 @@
             typescript = pkgs.tree-sitter-grammars.tree-sitter-typescript;
             go = pkgs.tree-sitter-grammars.tree-sitter-go;
             perl = pkgs.tree-sitter-grammars.tree-sitter-perl;
+            # Clojure support
+            clojure = pkgs.tree-sitter-grammars.tree-sitter-clojure;
           };
 
           # --- Webview Specific Dependencies ---
@@ -335,7 +337,7 @@
               mkdir -p $out/bin
               install lem $out/bin
               wrapProgram $out/bin/lem \
-                --prefix LD_LIBRARY_PATH : "$LD_LIBRARY_PATH:${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}:${tree-sitter-grammars.yaml}:${tree-sitter-grammars.nix}:${tree-sitter-grammars.python}:${tree-sitter-grammars.javascript}:${tree-sitter-grammars.typescript}:${tree-sitter-grammars.go}:${tree-sitter-grammars.perl}" \
+                --prefix LD_LIBRARY_PATH : "$LD_LIBRARY_PATH:${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}:${tree-sitter-grammars.yaml}:${tree-sitter-grammars.nix}:${tree-sitter-grammars.python}:${tree-sitter-grammars.javascript}:${tree-sitter-grammars.typescript}:${tree-sitter-grammars.go}:${tree-sitter-grammars.perl}:${tree-sitter-grammars.clojure}" \
                 --prefix DYLD_LIBRARY_PATH : "$DYLD_LIBRARY_PATH"
               runHook postInstall
             '';
@@ -366,7 +368,7 @@
               mkdir -p $out/bin
               install lem $out/bin
               wrapProgram $out/bin/lem \
-                --prefix LD_LIBRARY_PATH : "$LD_LIBRARY_PATH:${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}:${tree-sitter-grammars.yaml}:${tree-sitter-grammars.nix}:${tree-sitter-grammars.python}:${tree-sitter-grammars.javascript}:${tree-sitter-grammars.typescript}:${tree-sitter-grammars.go}:${tree-sitter-grammars.perl}" \
+                --prefix LD_LIBRARY_PATH : "$LD_LIBRARY_PATH:${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}:${tree-sitter-grammars.yaml}:${tree-sitter-grammars.nix}:${tree-sitter-grammars.python}:${tree-sitter-grammars.javascript}:${tree-sitter-grammars.typescript}:${tree-sitter-grammars.go}:${tree-sitter-grammars.perl}:${tree-sitter-grammars.clojure}" \
                 --prefix DYLD_LIBRARY_PATH : "$DYLD_LIBRARY_PATH"
               runHook postInstall
             '';
@@ -424,12 +426,12 @@
                     --set FONTCONFIG_FILE "${pkgs.makeFontsConf { fontDirectories = [ pkgs.dejavu_fonts ]; }}" \
                     --prefix XDG_DATA_DIRS : "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}" \
                     --prefix XDG_DATA_DIRS : "${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}" \
-                    --prefix LD_LIBRARY_PATH : "${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}:${tree-sitter-grammars.yaml}:${tree-sitter-grammars.nix}:${tree-sitter-grammars.python}:${tree-sitter-grammars.javascript}:${tree-sitter-grammars.typescript}:${tree-sitter-grammars.go}:${tree-sitter-grammars.perl}"
+                    --prefix LD_LIBRARY_PATH : "${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}:${tree-sitter-grammars.yaml}:${tree-sitter-grammars.nix}:${tree-sitter-grammars.python}:${tree-sitter-grammars.javascript}:${tree-sitter-grammars.typescript}:${tree-sitter-grammars.go}:${tree-sitter-grammars.perl}:${tree-sitter-grammars.clojure}"
                 ''
               else
                 ''
                   wrapProgram $out/bin/lem \
-                    --prefix LD_LIBRARY_PATH : "${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}:${tree-sitter-grammars.yaml}:${tree-sitter-grammars.nix}:${tree-sitter-grammars.python}:${tree-sitter-grammars.javascript}:${tree-sitter-grammars.typescript}:${tree-sitter-grammars.go}:${tree-sitter-grammars.perl}"
+                    --prefix LD_LIBRARY_PATH : "${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}:${tree-sitter-grammars.yaml}:${tree-sitter-grammars.nix}:${tree-sitter-grammars.python}:${tree-sitter-grammars.javascript}:${tree-sitter-grammars.typescript}:${tree-sitter-grammars.go}:${tree-sitter-grammars.perl}:${tree-sitter-grammars.clojure}"
                 '';
           });
         in
@@ -492,9 +494,16 @@
               pkgs.tree-sitter-grammars.tree-sitter-typescript
               pkgs.tree-sitter-grammars.tree-sitter-go
               pkgs.tree-sitter-grammars.tree-sitter-perl
+              pkgs.tree-sitter-grammars.tree-sitter-clojure
 
               # Perl Language Server
               pkgs.perl538Packages.PLS  # provides 'pls' command (used by lem-perl-mode)
+
+              # Clojure development
+              clojure
+              clojure-lsp
+              leiningen
+              babashka
 
               # Code formatting
               nixfmt-rfc-style
@@ -525,6 +534,7 @@
               pkgs.tree-sitter-grammars.tree-sitter-typescript
               pkgs.tree-sitter-grammars.tree-sitter-go
               pkgs.tree-sitter-grammars.tree-sitter-perl
+              pkgs.tree-sitter-grammars.tree-sitter-clojure
             ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
               pkgs.webkitgtk_4_1
               pkgs.gtk3
@@ -538,11 +548,18 @@
               echo "Lem development environment"
               echo "  SBCL: $(sbcl --version)"
               echo "  qlot: $(qlot --version 2>/dev/null || echo 'available')"
+              echo "  clojure-lsp: $(clojure-lsp --version 2>/dev/null | head -1 || echo 'available')"
               echo ""
               echo "Quick start:"
               echo "  qlot install    # Install dependencies"
               echo "  make ncurses    # Build terminal version"
               echo "  make sdl2       # Build GUI version"
+              echo ""
+              echo "Clojure tools:"
+              echo "  clojure-lsp     # Clojure Language Server"
+              echo "  clojure / clj   # Clojure CLI"
+              echo "  lein            # Leiningen build tool"
+              echo "  bb              # Babashka scripting"
             '';
           };
         };

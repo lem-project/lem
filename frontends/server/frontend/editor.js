@@ -238,10 +238,11 @@ class BaseSurface {
     }
   }
 
-  move(x, y) {
+  move(x, y, pixelX, pixelY) {
     const [x0, y0] = this.editor.getDisplayRectangle();
-    const left = Math.floor(x0 + x * this.editor.option.fontWidth);
-    const top = Math.floor(y0 + y * this.editor.option.fontHeight);
+    // Use pixel coordinates if provided, otherwise calculate from character coordinates
+    const left = (pixelX != null) ? Math.floor(x0 + pixelX) : Math.floor(x0 + x * this.editor.option.fontWidth);
+    const top = (pixelY != null) ? Math.floor(y0 + pixelY) : Math.floor(y0 + y * this.editor.option.fontHeight);
     if (this.wrapper) {
       this.wrapper.style.left = left - borderOffsetX + 'px';
       this.wrapper.style.top = top - borderOffsetY + 'px';
@@ -253,15 +254,18 @@ class BaseSurface {
     }
   }
 
-  _resize(width, height) {
+  _resize(width, height, pixelWidth, pixelHeight) {
     const ratio = window.devicePixelRatio || 1;
-    this.mainDOM.width = width * this.editor.option.fontWidth * ratio;
-    this.mainDOM.height = height * this.editor.option.fontHeight * ratio;
-    this.mainDOM.style.width = width * this.editor.option.fontWidth + 'px';
-    this.mainDOM.style.height = height * this.editor.option.fontHeight + 'px';
+    // Use pixel dimensions if provided, otherwise calculate from character dimensions
+    const actualWidth = (pixelWidth != null) ? pixelWidth : width * this.editor.option.fontWidth;
+    const actualHeight = (pixelHeight != null) ? pixelHeight : height * this.editor.option.fontHeight;
+    this.mainDOM.width = actualWidth * ratio;
+    this.mainDOM.height = actualHeight * ratio;
+    this.mainDOM.style.width = actualWidth + 'px';
+    this.mainDOM.style.height = actualHeight + 'px';
     if (this.wrapper) {
-      this.wrapper.style.width = width * this.editor.option.fontWidth + borderOffsetX * 2 + 'px';
-      this.wrapper.style.height = height * this.editor.option.fontHeight + borderOffsetY * 2 + 'px';
+      this.wrapper.style.width = actualWidth + borderOffsetX * 2 + 'px';
+      this.wrapper.style.height = actualHeight + borderOffsetY * 2 + 'px';
     }
   }
 
@@ -302,8 +306,8 @@ class CanvasSurface extends BaseSurface {
     return canvas;
   }
 
-  resize(width, height) {
-    this._resize(width, height);
+  resize(width, height, pixelWidth, pixelHeight) {
+    this._resize(width, height, pixelWidth, pixelHeight);
     const ratio = window.devicePixelRatio || 1;
     const ctx = this.mainDOM.getContext('2d');
     ctx.scale(ratio, ratio);
@@ -431,8 +435,8 @@ class HTMLSurface extends BaseSurface {
     this.resize(width, height);
   }
 
-  resize(width, height) {
-    this._resize(width, height);
+  resize(width, height, pixelWidth, pixelHeight) {
+    this._resize(width, height, pixelWidth, pixelHeight);
   }
 
   update(content) {
@@ -544,6 +548,10 @@ class View {
     y,
     width,
     height,
+    pixelX,
+    pixelY,
+    pixelWidth,
+    pixelHeight,
     useModeline,
     kind,
     type,
@@ -559,6 +567,10 @@ class View {
     this.y = y;
     this.width = width;
     this.height = height;
+    this.pixelX = pixelX;
+    this.pixelY = pixelY;
+    this.pixelWidth = pixelWidth;
+    this.pixelHeight = pixelHeight;
     this.useModeline = useModeline;
     this.kind = kind;
     this.type = type;
@@ -607,6 +619,11 @@ class View {
     }
 
     this.modelineSurface = useModeline ? this.makeModelineSurface() : null;
+
+    // For floating windows with pixel coordinates, reposition using pixel coordinates
+    if (kind === 'floating' && (pixelX != null || pixelY != null)) {
+      this.move(x, y, pixelX, pixelY);
+    }
   }
 
   delete() {
@@ -622,13 +639,19 @@ class View {
     }
   }
 
-  move(x, y) {
+  move(x, y, pixelX, pixelY) {
     this.x = x;
     this.y = y;
+    this.pixelX = pixelX;
+    this.pixelY = pixelY;
 
-    this.mainSurface.move(x, y);
+    this.mainSurface.move(x, y, pixelX, pixelY);
     if (this.modelineSurface) {
-      this.modelineSurface.move(x, y + this.height);
+      // Calculate modeline pixel position if pixel coordinates are provided
+      const modelinePixelY = (pixelY != null && this.pixelHeight != null)
+        ? pixelY + this.pixelHeight
+        : null;
+      this.modelineSurface.move(x, y + this.height, pixelX, modelinePixelY);
     }
     if (this.leftSideBar) {
       this.leftSideBar.move(x, y);
@@ -638,14 +661,22 @@ class View {
     }
   }
 
-  resize(width, height) {
+  resize(width, height, pixelWidth, pixelHeight) {
     this.width = width;
     this.height = height;
-    this.mainSurface.resize(width, height);
+    this.pixelWidth = pixelWidth;
+    this.pixelHeight = pixelHeight;
+    this.mainSurface.resize(width, height, pixelWidth, pixelHeight);
     if (this.modelineSurface) {
+      // Calculate modeline pixel position if pixel coordinates are provided
+      const modelinePixelY = (this.pixelY != null && pixelHeight != null)
+        ? this.pixelY + pixelHeight
+        : null;
       this.modelineSurface.move(
         this.x,
         this.y + this.height,
+        this.pixelX,
+        modelinePixelY,
       );
       this.modelineSurface.resize(width, 1);
     }
@@ -1184,7 +1215,7 @@ export class Editor {
     element.style.backgroundColor = color;
   }
 
-  makeView({ id, x, y, width, height, use_modeline, kind, type, content, border, border_shape }) {
+  makeView({ id, x, y, width, height, pixelX, pixelY, pixelWidth, pixelHeight, use_modeline, kind, type, content, border, border_shape }) {
     const view = new View({
       option: this.option,
       id: id,
@@ -1192,6 +1223,10 @@ export class Editor {
       y: y,
       width: width,
       height: height,
+      pixelX: pixelX,
+      pixelY: pixelY,
+      pixelWidth: pixelWidth,
+      pixelHeight: pixelHeight,
       useModeline: use_modeline,
       kind: kind,
       type: type,
@@ -1209,14 +1244,22 @@ export class Editor {
     this.viewMap.delete(id);
   }
 
-  resize({ viewInfo: { id }, width, height }) {
+  resize({ viewInfo: { id }, width, height, pixelWidth, pixelHeight }) {
     const view = this.findViewById(id);
-    view.resize(width, height);
+    if (view) {
+      view.resize(width, height, pixelWidth, pixelHeight);
+    } else {
+      console.warn(`resize: view not found for id ${id}`);
+    }
   }
 
-  move({ viewInfo: { id }, x, y }) {
+  move({ viewInfo: { id }, x, y, pixelX, pixelY }) {
     const view = this.findViewById(id);
-    view.move(x, y);
+    if (view) {
+      view.move(x, y, pixelX, pixelY);
+    } else {
+      console.warn(`move: view not found for id ${id}`);
+    }
   }
 
   redrawViewAfter({ viewInfo: { id }, isActive }) {

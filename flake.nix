@@ -474,6 +474,9 @@
               gnumake
               pkg-config
 
+              # Node.js for frontend development
+              nodejs_22
+
               # Native libraries for frontends
               ncurses
               SDL2

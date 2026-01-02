@@ -21,6 +21,7 @@
                "alexandria"
                "trivial-gray-streams"
                "trivial-types"
+               "trivial-backtrace"
                "cl-ppcre"
                "micros"
                "inquisitor"
@@ -307,8 +308,9 @@
   :defsystem-depends-on ("deploy")
   :build-operation #+os-macosx "osx-app-deploy-op" #-os-macosx "deploy-op"
   :build-pathname "lem"
-  :entry-point "lem-webview:main"
-  :depends-on ("lem-webview"
+  :entry-point "lem-core:the-one-main"
+  :depends-on ("lem-core"
+               "lem-webview"
                "lem-server"
                #+(and os-unix (not os-macosx)) ; workaround: because (adf:make :lem) fails
                "lem-ncurses")

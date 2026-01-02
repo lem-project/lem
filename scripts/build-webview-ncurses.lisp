@@ -4,5 +4,5 @@
 (lem:init-at-build-time)
 
 (sb-ext:save-lisp-and-die "lem"
-                          :toplevel #'lem-webview:main
+                          :toplevel #'lem:main
                           :executable t)

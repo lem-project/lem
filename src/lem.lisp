@@ -96,21 +96,13 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
 ;; NOTE: so that it can be processed during compilation.
 (defvar *version* (get-version-string))
 
+(ql:quickload 'trivial-backtrace)
 (defun launch (args)
   (check-type args command-line-arguments)
   ;; for sbcl, set the default file encoding to utf-8
   ;; (on windows, the default is determined by code page (e.g. :cp932))
   #+sbcl
   (setf sb-impl::*default-external-format* :utf-8)
-
-  (when (command-line-arguments-help args)
-    (show-help)
-    (return-from launch))
-
-  (when (command-line-arguments-version args)
-    (uiop:println *version*)
-    (return-from launch))
-
   (cond
     ((command-line-arguments-log-filename args)
      (apply #'log:config
@@ -123,20 +115,24 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
     (t
      (log:config :sane :daily (merge-pathnames "debug.log" (lem-home)) :info)))
 
+  (when (command-line-arguments-help args)
+    (show-help)
+    (return-from launch))
+
+  (when (command-line-arguments-version args)
+    (uiop:println *version*)
+    (return-from launch))
+
   (log:info "Starting Lem")
 
   (cond (*in-the-editor*
          (apply-args args))
         (t
-         (let* ((implementation-keyword (or (command-line-arguments-interface args)
-                                            (if (interactive-stream-p *standard-input*)
-                                                :ncurses
-                                                :sdl2)))
-                (implementation (get-default-implementation
-                                 :implementation
-                                 implementation-keyword)))
+         (let ((implementation (get-default-implementation
+                                :implementation (command-line-arguments-interface args))))
            (unless implementation
              (error "implementation ~A not found" implementation-keyword))
+           
            (invoke-frontend
             (lambda (&optional initialize finalize)
               (run-editor-thread initialize args finalize))

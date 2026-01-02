@@ -108,7 +108,8 @@
    :window-bottom-margin 0
    :html-support t
    :underline-color-support t
-   :no-force-needed t))
+   :no-force-needed t
+   :support-pixel-positioning t))
 
 (defun get-all-views ()
   (if (null (lem:current-frame))
@@ -322,6 +323,54 @@
              (hash "viewInfo" view
                    "x" x
                    "y" y))))
+
+(defmethod lem-if:make-view-with-pixels ((jsonrpc jsonrpc) window x y width height
+                                         pixel-x pixel-y pixel-width pixel-height
+                                         use-modeline)
+  (let ((view (make-view :window window
+                         :x x
+                         :y y
+                         :width width
+                         :height height
+                         :pixel-x pixel-x
+                         :pixel-y pixel-y
+                         :pixel-width pixel-width
+                         :pixel-height pixel-height
+                         :use-modeline use-modeline
+                         :kind (cond ((or (lem:floating-window-p window)
+                                          (lem:attached-window-p window))
+                                      "floating")
+                                     ((lem:header-window-p window)
+                                      "header")
+                                     (t
+                                      "tile"))
+                         :border (lem:window-border window)
+                         :border-shape (and (lem:floating-window-p window)
+                                            (lem:floating-window-border-shape window)))))
+    (notify* jsonrpc "make-view" view)
+    view))
+
+(defmethod lem-if:set-view-pos-pixels ((jsonrpc jsonrpc) view x y pixel-x pixel-y)
+  (with-error-handler ()
+    (move-view view x y pixel-x pixel-y)
+    (notify* jsonrpc
+             "move-view"
+             (hash "viewInfo" view
+                   "x" x
+                   "y" y
+                   "pixelX" pixel-x
+                   "pixelY" pixel-y))))
+
+(defmethod lem-if:set-view-size-pixels ((jsonrpc jsonrpc) view width height pixel-width pixel-height)
+  (with-error-handler ()
+    (resize-view view width height pixel-width pixel-height)
+    (notify* jsonrpc
+             "resize-view"
+             (hash "viewInfo" view
+                   "width" width
+                   "height" height
+                   "pixelWidth" pixel-width
+                   "pixelHeight" pixel-height))))
 
 (defmethod lem-if:redraw-view-before ((jsonrpc jsonrpc) view)
   )

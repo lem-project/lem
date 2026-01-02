@@ -71,3 +71,142 @@
         (ok (lem:attached-window-p (lem:current-window)))
         (ok (eq (lem-core::buffer-attached-buffer buffer)
                 (lem:window-buffer (lem:current-window))))))))
+
+;;; Floating Window Pixel Coordinates Tests
+
+(deftest floating-window/make-with-pixel-coordinates
+  (lem:with-current-buffers ()
+    (with-fake-interface ()
+      (let* ((buffer (lem:make-buffer "test-floating" :temporary t))
+             (window (lem:make-floating-window :buffer buffer
+                                               :x 5 :y 3
+                                               :width 20 :height 10
+                                               :pixel-x 100 :pixel-y 60
+                                               :pixel-width 400 :pixel-height 200)))
+        ;; Check character coordinates
+        (ok (= 5 (lem:window-x window)))
+        (ok (= 3 (lem:window-y window)))
+        (ok (= 20 (lem:window-width window)))
+        (ok (= 10 (lem:window-height window)))
+        ;; Check pixel coordinates
+        (ok (= 100 (lem:floating-window-pixel-x window)))
+        (ok (= 60 (lem:floating-window-pixel-y window)))
+        (ok (= 400 (lem:floating-window-pixel-width window)))
+        (ok (= 200 (lem:floating-window-pixel-height window)))
+        ;; Cleanup
+        (lem:delete-window window)))))
+
+(deftest floating-window/make-without-pixel-coordinates
+  (lem:with-current-buffers ()
+    (with-fake-interface ()
+      (let* ((buffer (lem:make-buffer "test-floating" :temporary t))
+             (window (lem:make-floating-window :buffer buffer
+                                               :x 5 :y 3
+                                               :width 20 :height 10)))
+        ;; Check character coordinates
+        (ok (= 5 (lem:window-x window)))
+        (ok (= 3 (lem:window-y window)))
+        ;; Pixel coordinates should be nil
+        (ok (null (lem:floating-window-pixel-x window)))
+        (ok (null (lem:floating-window-pixel-y window)))
+        (ok (null (lem:floating-window-pixel-width window)))
+        (ok (null (lem:floating-window-pixel-height window)))
+        ;; Cleanup
+        (lem:delete-window window)))))
+
+(deftest floating-window/set-pixel-position
+  (lem:with-current-buffers ()
+    (with-fake-interface ()
+      (let* ((buffer (lem:make-buffer "test-floating" :temporary t))
+             (window (lem:make-floating-window :buffer buffer
+                                               :x 5 :y 3
+                                               :width 20 :height 10)))
+        ;; Initially nil
+        (ok (null (lem:floating-window-pixel-x window)))
+        (ok (null (lem:floating-window-pixel-y window)))
+        ;; Set pixel position
+        (lem:floating-window-set-pixel-position window 150 80)
+        ;; Check updated values
+        (ok (= 150 (lem:floating-window-pixel-x window)))
+        (ok (= 80 (lem:floating-window-pixel-y window)))
+        ;; Character coordinates should be unchanged
+        (ok (= 5 (lem:window-x window)))
+        (ok (= 3 (lem:window-y window)))
+        ;; Cleanup
+        (lem:delete-window window)))))
+
+(deftest floating-window/set-pixel-size
+  (lem:with-current-buffers ()
+    (with-fake-interface ()
+      (let* ((buffer (lem:make-buffer "test-floating" :temporary t))
+             (window (lem:make-floating-window :buffer buffer
+                                               :x 5 :y 3
+                                               :width 20 :height 10)))
+        ;; Initially nil
+        (ok (null (lem:floating-window-pixel-width window)))
+        (ok (null (lem:floating-window-pixel-height window)))
+        ;; Set pixel size
+        (lem:floating-window-set-pixel-size window 500 300)
+        ;; Check updated values
+        (ok (= 500 (lem:floating-window-pixel-width window)))
+        (ok (= 300 (lem:floating-window-pixel-height window)))
+        ;; Character dimensions should be unchanged
+        (ok (= 20 (lem:window-width window)))
+        (ok (= 10 (lem:window-height window)))
+        ;; Cleanup
+        (lem:delete-window window)))))
+
+(deftest floating-window/pixel-bounds-with-explicit-pixels
+  (lem:with-current-buffers ()
+    (with-fake-interface ()
+      (let* ((buffer (lem:make-buffer "test-floating" :temporary t))
+             (window (lem:make-floating-window :buffer buffer
+                                               :x 5 :y 3
+                                               :width 20 :height 10
+                                               :pixel-x 100 :pixel-y 60
+                                               :pixel-width 400 :pixel-height 200)))
+        (multiple-value-bind (px py pw ph)
+            (lem:floating-window-pixel-bounds window)
+          ;; Should return explicit pixel values
+          (ok (= 100 px))
+          (ok (= 60 py))
+          (ok (= 400 pw))
+          (ok (= 200 ph)))
+        ;; Cleanup
+        (lem:delete-window window)))))
+
+(deftest floating-window/pixel-bounds-calculated-from-chars
+  (lem:with-current-buffers ()
+    (with-fake-interface ()
+      (let* ((buffer (lem:make-buffer "test-floating" :temporary t))
+             (window (lem:make-floating-window :buffer buffer
+                                               :x 5 :y 3
+                                               :width 20 :height 10)))
+        (multiple-value-bind (px py pw ph)
+            (lem:floating-window-pixel-bounds window)
+          ;; fake-interface returns 1 for char-width and char-height
+          ;; So pixel values should equal character values * 1
+          (ok (= 5 px))   ; 5 * 1
+          (ok (= 3 py))   ; 3 * 1
+          (ok (= 20 pw))  ; 20 * 1
+          (ok (= 10 ph))) ; 10 * 1
+        ;; Cleanup
+        (lem:delete-window window)))))
+
+(deftest floating-window/pixel-bounds-partial
+  (lem:with-current-buffers ()
+    (with-fake-interface ()
+      (let* ((buffer (lem:make-buffer "test-floating" :temporary t))
+             (window (lem:make-floating-window :buffer buffer
+                                               :x 5 :y 3
+                                               :width 20 :height 10
+                                               :pixel-x 100)))
+        (multiple-value-bind (px py pw ph)
+            (lem:floating-window-pixel-bounds window)
+          ;; pixel-x is explicit, others calculated
+          (ok (= 100 px))  ; explicit
+          (ok (= 3 py))    ; calculated: 3 * 1
+          (ok (= 20 pw))   ; calculated: 20 * 1
+          (ok (= 10 ph)))  ; calculated: 10 * 1
+        ;; Cleanup
+        (lem:delete-window window)))))

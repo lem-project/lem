@@ -96,7 +96,6 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
 ;; NOTE: so that it can be processed during compilation.
 (defvar *version* (get-version-string))
 
-(ql:quickload 'trivial-backtrace)
 (defun launch (args)
   (check-type args command-line-arguments)
   ;; for sbcl, set the default file encoding to utf-8

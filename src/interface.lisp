@@ -39,7 +39,12 @@ When rendering the DOM and a window in a one-to-one manner, no redraw is require
     :initform nil
     :initarg :underline-color-support
     :reader underline-color-support-p
-    :documentation "If a color different from the foreground color can be assigned to the underline, then it is T (in Terminal, it becomes nil).")))
+    :documentation "If a color different from the foreground color can be assigned to the underline, then it is T (in Terminal, it becomes nil).")
+   (support-pixel-positioning
+    :initform nil
+    :initarg :support-pixel-positioning
+    :reader support-pixel-positioning-p
+    :documentation "When true, the frontend supports pixel-based floating window positioning.")))
 
 (defun get-default-implementation (&key (implementation :ncurses))
   (let* ((classes (c2mop:class-direct-subclasses (find-class 'implementation)))
@@ -83,6 +88,25 @@ When rendering the DOM and a window in a one-to-one manner, no redraw is require
 (defgeneric lem-if:clear (implementation view))
 (defgeneric lem-if:set-view-size (implementation view width height))
 (defgeneric lem-if:set-view-pos (implementation view x y))
+(defgeneric lem-if:make-view-with-pixels (implementation window x y width height
+                                          pixel-x pixel-y pixel-width pixel-height
+                                          use-modeline)
+  (:documentation "Create a view with both character and pixel coordinates.
+X, Y, WIDTH, HEIGHT are in character units.
+PIXEL-X, PIXEL-Y, PIXEL-WIDTH, PIXEL-HEIGHT are in pixels (may be nil for auto-calculate).")
+  (:method (implementation window x y width height pixel-x pixel-y pixel-width pixel-height use-modeline)
+    (declare (ignore pixel-x pixel-y pixel-width pixel-height))
+    (lem-if:make-view implementation window x y width height use-modeline)))
+(defgeneric lem-if:set-view-pos-pixels (implementation view x y pixel-x pixel-y)
+  (:documentation "Set view position with both character and pixel coordinates.")
+  (:method (implementation view x y pixel-x pixel-y)
+    (declare (ignore pixel-x pixel-y))
+    (lem-if:set-view-pos implementation view x y)))
+(defgeneric lem-if:set-view-size-pixels (implementation view width height pixel-width pixel-height)
+  (:documentation "Set view size with both character and pixel coordinates.")
+  (:method (implementation view width height pixel-width pixel-height)
+    (declare (ignore pixel-width pixel-height))
+    (lem-if:set-view-size implementation view width height)))
 (defgeneric lem-if:redraw-view-before (implementation view)
   (:method (implementation view)))
 (defgeneric lem-if:redraw-view-after (implementation view)

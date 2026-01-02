@@ -336,6 +336,13 @@
    :floating-window-border-shape
    :floating-window-focusable-p
    :floating-window-p
+   :floating-window-pixel-x
+   :floating-window-pixel-y
+   :floating-window-pixel-width
+   :floating-window-pixel-height
+   :floating-window-set-pixel-position
+   :floating-window-set-pixel-size
+   :floating-window-pixel-bounds
    :attached-window-p
    :attach-buffer
    :update-on-display-resized
@@ -626,6 +633,7 @@
    :implementation
    :redraw-after-modifying-floating-window
    :support-floating-window
+   :support-pixel-positioning-p
    :html-support-p
    :underline-color-support-p
    :no-force-needed-p
@@ -738,6 +746,9 @@
    :clear
    :set-view-size
    :set-view-pos
+   :make-view-with-pixels
+   :set-view-pos-pixels
+   :set-view-size-pixels
    :redraw-view-before
    :redraw-view-after
    :will-update-display

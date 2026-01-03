@@ -46,18 +46,33 @@ When rendering the DOM and a window in a one-to-one manner, no redraw is require
     :reader support-pixel-positioning-p
     :documentation "When true, the frontend supports pixel-based floating window positioning.")))
 
-(defun get-default-implementation (&key (implementation :ncurses))
-  (let* ((classes (c2mop:class-direct-subclasses (find-class 'implementation)))
-         (class (case (length classes)
-                  (0
-                   (error "Implementation does not exist.~
+(defun get-default-implementation (&key implementation)
+  (let ((classes (c2mop:class-direct-subclasses (find-class 'implementation)))
+        implementation-fallback
+        class)
+    (when (>= 0 (length classes))
+      (error "Implementation does not exist.~
                              (probably because you didn't load the lem-ncurses system)"))
-                  (otherwise
-                   (dolist (class classes)
-                     (when (string= implementation (class-name class))
-                       (return class)))))))
-    (when class
-      (make-instance class))))
+
+    ;; set interfaces as fallbacks if a non-existant interface is selected
+    (setf implementation-fallback
+          (mapcar (lambda (impl)
+                    (find impl classes :test 'string= :key 'class-name))
+                  ;; always try to find specified implementation first
+                  (list implementation :webview :ncurses :sdl2)))
+
+    ;; pick the first implementation that is available
+    (setf class (funcall #'some #'identity implementation-fallback))
+
+    (if (string= (class-name class) implementation)
+         (log:info "Using interface: ~A" implementation)
+         (log:warn "User specified non-existant interface ~A; Using ~A instead.
+Available interfaces: ~A"
+                   implementation class classes))
+    
+    (if class
+      (make-instance class)
+      (error "No interfaces found (is lem compiled with an interface?)"))))
 
 (defvar lem-if:*background-color-of-drawing-window* nil)
 

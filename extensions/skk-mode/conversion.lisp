@@ -11,6 +11,7 @@
                 :skk-candidates
                 :skk-candidate-index
                 :get-skk-state
+                :clear-skk-state
                 :reset-skk-state)
   (:import-from :lem-skk-mode/romaji
                 :romaji-to-hiragana
@@ -52,24 +53,51 @@ Returns :handled if the input was consumed, NIL otherwise."
 (defun process-kana-char (state char mode)
   "Process a character in hiragana/katakana mode."
   (cond
-    ;; Uppercase letter starts henkan mode
+    ;; Uppercase letter starts henkan mode (not already in henkan)
     ((and (alpha-char-p char)
           (upper-case-p char)
           (not (skk-henkan-mode-p state)))
      (start-henkan-mode state char)
      :handled)
-    ;; Uppercase in henkan mode might be okurigana start
+    ;; Uppercase while showing candidates - commit current and start new henkan
     ((and (alpha-char-p char)
           (upper-case-p char)
-          (skk-henkan-mode-p state)
-          (not (skk-candidates state)))
+          (skk-candidates state))
+     ;; Commit current candidate
+     (cleanup-henkan-point state)
+     (clear-skk-state state)
+     ;; Start new henkan mode
+     (start-henkan-mode state char)
+     :handled)
+    ;; Lowercase while showing candidates - commit current and continue as normal input
+    ((and (alpha-char-p char)
+          (not (upper-case-p char))
+          (skk-candidates state))
+     ;; Commit current candidate
+     (cleanup-henkan-point state)
+     (clear-skk-state state)
+     ;; Process as normal input (not in henkan mode now)
+     (add-to-preedit state char mode)
+     :handled)
+    ;; Uppercase in henkan mode (no candidates) - okurigana start
+    ((and (alpha-char-p char)
+          (upper-case-p char)
+          (skk-henkan-mode-p state))
      (handle-okurigana state char mode)
      :handled)
     ;; Normal alphabetic input - add to preedit
     ((alpha-char-p char)
      (add-to-preedit state char mode)
      :handled)
-    ;; Non-alphabetic - flush preedit and pass through
+    ;; Non-alphabetic in henkan mode or with candidates - commit and pass through
+    ((or (skk-henkan-mode-p state) (skk-candidates state))
+     (if (skk-candidates state)
+         (progn
+           (cleanup-henkan-point state)
+           (clear-skk-state state))
+         (commit-reading state mode))
+     nil)
+    ;; Non-alphabetic in normal mode - flush preedit and pass through
     (t
      (flush-preedit state mode)
      nil)))
@@ -188,13 +216,15 @@ Converts trailing 'n' to 'ん' on flush."
     ;; If we have candidates displayed, commit current one
     ((skk-candidates state)
      (cleanup-henkan-point state)
-     (reset-skk-state))
+     (clear-skk-state state))
     ;; If in henkan mode but no candidates, commit reading
     ((skk-henkan-mode-p state)
      (commit-reading state (skk-input-mode state)))
-    ;; Otherwise, flush preedit
+    ;; Otherwise, flush preedit and reset
     (t
-     (flush-preedit state (skk-input-mode state)))))
+     (flush-preedit state (skk-input-mode state))
+     ;; Clear any remaining unconverted input on explicit commit
+     (setf (skk-preedit state) ""))))
 
 (defun commit-reading (state mode)
   "Commit the henkan-key reading as kana."
@@ -207,7 +237,7 @@ Converts trailing 'n' to 'ん' on flush."
                          (hiragana-to-katakana reading)
                          reading))
       (cleanup-henkan-point state))
-    (reset-skk-state)))
+    (clear-skk-state state)))
 
 (defun abort-henkan (state)
   "Abort the current conversion, restoring original state."
@@ -215,7 +245,7 @@ Converts trailing 'n' to 'ん' on flush."
     (when start
       (delete-between-points start (current-point))
       (cleanup-henkan-point state)))
-  (reset-skk-state))
+  (clear-skk-state state))
 
 (defun cleanup-henkan-point (state)
   "Clean up the henkan start point marker."

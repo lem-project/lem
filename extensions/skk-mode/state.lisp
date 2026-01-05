@@ -10,6 +10,7 @@
            :skk-candidates
            :skk-candidate-index
            :get-skk-state
+           :clear-skk-state
            :reset-skk-state
            :with-skk-state))
 (in-package :lem-skk-mode/state)
@@ -67,19 +68,22 @@
       (setf (buffer-value buffer 'skk-state)
             (make-instance 'skk-state))))
 
+(defun clear-skk-state (state)
+  "Clear SKK state fields to initial values."
+  (setf (skk-preedit state) ""
+        (skk-henkan-mode-p state) nil
+        (skk-henkan-key state) ""
+        (skk-okurigana state) nil
+        (skk-candidates state) nil
+        (skk-candidate-index state) 0)
+  (when (skk-henkan-start state)
+    (delete-point (skk-henkan-start state))
+    (setf (skk-henkan-start state) nil))
+  state)
+
 (defun reset-skk-state (&optional (buffer (current-buffer)))
   "Reset SKK state to initial values for BUFFER."
-  (let ((state (get-skk-state buffer)))
-    (setf (skk-preedit state) ""
-          (skk-henkan-mode-p state) nil
-          (skk-henkan-key state) ""
-          (skk-okurigana state) nil
-          (skk-candidates state) nil
-          (skk-candidate-index state) 0)
-    (when (skk-henkan-start state)
-      (delete-point (skk-henkan-start state))
-      (setf (skk-henkan-start state) nil))
-    state))
+  (clear-skk-state (get-skk-state buffer)))
 
 (defmacro with-skk-state ((state-var &optional (buffer '(current-buffer))) &body body)
   "Execute BODY with STATE-VAR bound to SKK state of BUFFER."

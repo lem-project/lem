@@ -14,7 +14,7 @@
 
 (defsystem "lem-skk-mode/tests"
   :description "Tests for lem-skk-mode"
-  :depends-on ("lem-skk-mode" "rove")
+  :depends-on ("lem-skk-mode" "lem-fake-interface" "rove")
   :components ((:module "tests"
                 :components ((:file "main"))))
   :perform (test-op (op c) (symbol-call :rove '#:run c)))

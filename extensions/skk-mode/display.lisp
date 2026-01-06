@@ -6,6 +6,8 @@
                 :skk-preedit
                 :skk-henkan-mode-p
                 :skk-henkan-key
+                :skk-okurigana-consonant
+                :skk-okurigana-kana
                 :skk-candidates
                 :skk-candidate-index
                 :get-skk-state)
@@ -50,20 +52,30 @@
         "")))
 
 (defun build-preedit-display (state)
-  "Build the preedit display string."
+  "Build the preedit display string.
+Shows okurigana with * marker, e.g., '▽か*く' for 書く."
   (let ((henkan-mode-p (skk-henkan-mode-p state))
         (henkan-key (skk-henkan-key state))
         (preedit (skk-preedit state))
-        (candidates (skk-candidates state)))
+        (candidates (skk-candidates state))
+        (okurigana-consonant (skk-okurigana-consonant state))
+        (okurigana-kana (skk-okurigana-kana state)))
     (cond
-      ;; Showing candidates
+      ;; Showing candidates - include okurigana if present
       (candidates
-       (let ((index (skk-candidate-index state))
-             (total (length candidates)))
+       (let* ((index (skk-candidate-index state))
+              (total (length candidates))
+              (candidate (nth index candidates))
+              (display-text (if (plusp (length okurigana-kana))
+                                (concatenate 'string candidate okurigana-kana)
+                                candidate)))
          (format nil "▼~A [~D/~D]"
-                 (nth index candidates)
+                 display-text
                  (1+ index)
                  total)))
+      ;; In okurigana mode - show with * marker
+      ((and henkan-mode-p okurigana-consonant)
+       (format nil "▽~A*~A~A" henkan-key okurigana-kana preedit))
       ;; In henkan mode (before conversion) - only show if there's content
       ((and henkan-mode-p
             (or (plusp (length henkan-key))

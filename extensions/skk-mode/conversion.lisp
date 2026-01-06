@@ -7,7 +7,8 @@
                 :skk-henkan-mode-p
                 :skk-henkan-start
                 :skk-henkan-key
-                :skk-okurigana
+                :skk-okurigana-consonant
+                :skk-okurigana-kana
                 :skk-candidates
                 :skk-candidate-index
                 :get-skk-state
@@ -79,11 +80,18 @@ Returns :handled if the input was consumed, NIL otherwise."
      ;; Process as normal input (not in henkan mode now)
      (add-to-preedit state char mode)
      :handled)
-    ;; Uppercase in henkan mode (no candidates) - okurigana start
+    ;; Uppercase in henkan mode (no candidates, not in okurigana) - okurigana start
     ((and (alpha-char-p char)
           (upper-case-p char)
-          (skk-henkan-mode-p state))
+          (skk-henkan-mode-p state)
+          (not (skk-okurigana-consonant state)))
      (handle-okurigana state char mode)
+     :handled)
+    ;; Uppercase in okurigana mode - continue okurigana input
+    ((and (alpha-char-p char)
+          (upper-case-p char)
+          (skk-okurigana-consonant state))
+     (add-to-preedit state char mode)
      :handled)
     ;; Normal alphabetic input - add to preedit
     ((alpha-char-p char)
@@ -112,33 +120,40 @@ Returns :handled if the input was consumed, NIL otherwise."
         (skk-candidate-index state) 0))
 
 (defun handle-okurigana (state char mode)
-  "Handle uppercase char as okurigana start in henkan mode."
-  ;; First, convert current preedit to henkan-key
-  (let ((preedit (skk-preedit state)))
-    (when (plusp (length preedit))
-      (multiple-value-bind (kana remaining)
-          (convert-romaji preedit mode)
-        (setf (skk-henkan-key state)
-              (concatenate 'string (skk-henkan-key state) kana)
-              (skk-preedit state) remaining))))
-  ;; Set okurigana start
-  (setf (skk-okurigana state) (char-downcase char)
-        (skk-preedit state) (string (char-downcase char))))
+  "Handle uppercase char as okurigana start in henkan mode.
+For example, when typing 'KaKu' for 書く:
+- After 'Ka', henkan-key = 'か'
+- 'K' triggers this function, setting okurigana-consonant = 'k'"
+  (declare (ignore mode))
+  ;; First, flush any remaining preedit to henkan-key
+  (flush-preedit state (skk-input-mode state))
+  ;; Set okurigana consonant and start accumulating
+  (let ((consonant (string (char-downcase char))))
+    (setf (skk-okurigana-consonant state) consonant
+          (skk-preedit state) consonant)))
 
 (defun add-to-preedit (state char mode)
-  "Add a character to preedit and convert if possible."
+  "Add a character to preedit and convert if possible.
+When in okurigana mode (okurigana-consonant is set), accumulates
+converted kana to okurigana-kana instead of henkan-key."
   (let ((new-preedit (concatenate 'string
                                   (skk-preedit state)
                                   (string (char-downcase char)))))
     (multiple-value-bind (kana remaining)
         (convert-romaji new-preedit mode)
       (when (plusp (length kana))
-        (if (skk-henkan-mode-p state)
-            ;; In henkan mode, accumulate in henkan-key
-            (setf (skk-henkan-key state)
-                  (concatenate 'string (skk-henkan-key state) kana))
-            ;; Otherwise, insert directly
-            (insert-string (current-point) kana)))
+        (cond
+          ;; In okurigana mode - accumulate to okurigana-kana
+          ((skk-okurigana-consonant state)
+           (setf (skk-okurigana-kana state)
+                 (concatenate 'string (skk-okurigana-kana state) kana)))
+          ;; In henkan mode - accumulate to henkan-key
+          ((skk-henkan-mode-p state)
+           (setf (skk-henkan-key state)
+                 (concatenate 'string (skk-henkan-key state) kana)))
+          ;; Otherwise, insert directly
+          (t
+           (insert-string (current-point) kana))))
       (setf (skk-preedit state) remaining))))
 
 (defun flush-preedit (state mode)
@@ -161,11 +176,17 @@ Converts trailing 'n' to 'ん' on flush."
         (setf (skk-preedit state) remaining)))))
 
 (defun start-henkan (state mode)
-  "Start the conversion process, looking up candidates."
-  ;; First flush preedit to henkan-key
-  (flush-preedit state mode)
+  "Start the conversion process, looking up candidates.
+For okurigana entries, builds lookup key as 'reading + consonant' (e.g., 'かk')."
+  ;; Flush preedit - goes to okurigana-kana if in okurigana mode, else henkan-key
+  (flush-preedit-for-henkan state mode)
   (let* ((reading (skk-henkan-key state))
-         (candidates (lookup-candidates reading)))
+         (okurigana-consonant (skk-okurigana-consonant state))
+         ;; Build lookup key: reading + okurigana consonant (if any)
+         (lookup-key (if okurigana-consonant
+                         (concatenate 'string reading okurigana-consonant)
+                         reading))
+         (candidates (lookup-candidates lookup-key)))
     (cond
       (candidates
        ;; Found candidates
@@ -176,21 +197,46 @@ Converts trailing 'n' to 'ん' on flush."
        ;; No candidates - just insert the reading as-is
        (commit-reading state mode)))))
 
+(defun flush-preedit-for-henkan (state mode)
+  "Flush preedit before henkan lookup.
+If in okurigana mode, flushes to okurigana-kana. Otherwise to henkan-key."
+  (let ((preedit (skk-preedit state)))
+    (when (plusp (length preedit))
+      (multiple-value-bind (kana remaining)
+          (convert-romaji preedit mode)
+        ;; Convert remaining "n" to "ん"
+        (when (equal remaining "n")
+          (setf kana (concatenate 'string kana
+                                  (if (eq mode :katakana) "ン" "ん"))
+                remaining ""))
+        (when (plusp (length kana))
+          (if (skk-okurigana-consonant state)
+              ;; Okurigana mode - accumulate to okurigana-kana
+              (setf (skk-okurigana-kana state)
+                    (concatenate 'string (skk-okurigana-kana state) kana))
+              ;; Normal mode - accumulate to henkan-key
+              (setf (skk-henkan-key state)
+                    (concatenate 'string (skk-henkan-key state) kana))))
+        (setf (skk-preedit state) remaining)))))
+
 (defun show-candidate (state index)
-  "Display the candidate at INDEX."
+  "Display the candidate at INDEX.
+Appends okurigana-kana to the candidate if present."
   (let ((candidates (skk-candidates state))
         (start (skk-henkan-start state)))
     (when (and candidates start (<= 0 index (1- (length candidates))))
       ;; Delete from henkan-start to current point
       (delete-between-points start (current-point))
-      ;; Insert the candidate
-      (let ((candidate (nth index candidates)))
-        (insert-string start candidate)
-        ;; If there's okurigana, add it
-        (when (skk-okurigana state)
-          ;; The okurigana should be converted and added
-          ;; For now, just add the preedit remainder
-          )))))
+      ;; Insert the candidate with okurigana if present
+      (let* ((candidate (nth index candidates))
+             (okurigana (skk-okurigana-kana state))
+             (text (if (plusp (length okurigana))
+                       (concatenate 'string candidate okurigana)
+                       candidate)))
+        (insert-string start text)
+        ;; Move cursor to end of inserted text
+        (move-point (current-point) start)
+        (character-offset (current-point) (length text))))))
 
 (defun next-candidate (state)
   "Show the next candidate."
@@ -227,15 +273,22 @@ Converts trailing 'n' to 'ん' on flush."
      (setf (skk-preedit state) ""))))
 
 (defun commit-reading (state mode)
-  "Commit the henkan-key reading as kana."
-  (let ((start (skk-henkan-start state))
-        (reading (skk-henkan-key state)))
+  "Commit the henkan-key reading as kana, including okurigana if present."
+  (let* ((start (skk-henkan-start state))
+         (reading (skk-henkan-key state))
+         (okurigana (skk-okurigana-kana state))
+         (full-reading (if (plusp (length okurigana))
+                           (concatenate 'string reading okurigana)
+                           reading))
+         (text (if (eq mode :katakana)
+                   (hiragana-to-katakana full-reading)
+                   full-reading)))
     (when start
       (delete-between-points start (current-point))
-      (insert-string start
-                     (if (eq mode :katakana)
-                         (hiragana-to-katakana reading)
-                         reading))
+      (insert-string start text)
+      ;; Move cursor to end of inserted text before cleanup
+      (move-point (current-point) start)
+      (character-offset (current-point) (length text))
       (cleanup-henkan-point state))
     (clear-skk-state state)))
 

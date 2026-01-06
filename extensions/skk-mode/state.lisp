@@ -6,7 +6,8 @@
            :skk-henkan-mode-p
            :skk-henkan-start
            :skk-henkan-key
-           :skk-okurigana
+           :skk-okurigana-consonant
+           :skk-okurigana-kana
            :skk-candidates
            :skk-candidate-index
            :get-skk-state
@@ -46,10 +47,16 @@
     :accessor skk-henkan-key
     :type string
     :documentation "Reading string for dictionary lookup")
-   (okurigana
+   (okurigana-consonant
     :initform nil
-    :accessor skk-okurigana
-    :documentation "Okurigana character if any")
+    :accessor skk-okurigana-consonant
+    :type (or null string)
+    :documentation "Okurigana consonant for dictionary lookup (e.g., \"k\" for 書く)")
+   (okurigana-kana
+    :initform ""
+    :accessor skk-okurigana-kana
+    :type string
+    :documentation "Okurigana kana part to append to candidate (e.g., \"く\")")
    (candidates
     :initform nil
     :accessor skk-candidates
@@ -73,7 +80,8 @@
   (setf (skk-preedit state) ""
         (skk-henkan-mode-p state) nil
         (skk-henkan-key state) ""
-        (skk-okurigana state) nil
+        (skk-okurigana-consonant state) nil
+        (skk-okurigana-kana state) ""
         (skk-candidates state) nil
         (skk-candidate-index state) 0)
   (when (skk-henkan-start state)

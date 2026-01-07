@@ -205,3 +205,88 @@
                      (ok (eq original-parent lem/legit::*parent-window*))))
               ;; Cleanup - always run
               (cleanup-legit-windows))))))))
+
+;;; Tests for parse-github-url
+
+(deftest parse-github-url/ssh-with-git-suffix
+  (testing "parses SSH URL with .git suffix"
+    (multiple-value-bind (owner repo)
+        (lem/legit::parse-github-url "git@github.com:lem-project/lem.git")
+      (ok (equal owner "lem-project"))
+      (ok (equal repo "lem")))))
+
+(deftest parse-github-url/ssh-without-git-suffix
+  (testing "parses SSH URL without .git suffix"
+    (multiple-value-bind (owner repo)
+        (lem/legit::parse-github-url "git@github.com:lem-project/lem")
+      (ok (equal owner "lem-project"))
+      (ok (equal repo "lem")))))
+
+(deftest parse-github-url/https-with-git-suffix
+  (testing "parses HTTPS URL with .git suffix"
+    (multiple-value-bind (owner repo)
+        (lem/legit::parse-github-url "https://github.com/lem-project/lem.git")
+      (ok (equal owner "lem-project"))
+      (ok (equal repo "lem")))))
+
+(deftest parse-github-url/https-without-git-suffix
+  (testing "parses HTTPS URL without .git suffix"
+    (multiple-value-bind (owner repo)
+        (lem/legit::parse-github-url "https://github.com/lem-project/lem")
+      (ok (equal owner "lem-project"))
+      (ok (equal repo "lem")))))
+
+(deftest parse-github-url/http-url
+  (testing "parses HTTP URL"
+    (multiple-value-bind (owner repo)
+        (lem/legit::parse-github-url "http://github.com/owner/repo")
+      (ok (equal owner "owner"))
+      (ok (equal repo "repo")))))
+
+(deftest parse-github-url/with-whitespace
+  (testing "trims whitespace from URL"
+    (multiple-value-bind (owner repo)
+        (lem/legit::parse-github-url "  git@github.com:owner/repo.git  ")
+      (ok (equal owner "owner"))
+      (ok (equal repo "repo")))))
+
+(deftest parse-github-url/non-github-url
+  (testing "returns nil for non-GitHub URL"
+    (ok (null (lem/legit::parse-github-url "git@gitlab.com:owner/repo.git")))
+    (ok (null (lem/legit::parse-github-url "https://bitbucket.org/owner/repo")))))
+
+(deftest parse-github-url/invalid-url
+  (testing "returns nil for invalid URL"
+    (ok (null (lem/legit::parse-github-url "not-a-url")))
+    (ok (null (lem/legit::parse-github-url "")))))
+
+;;; Tests for build-github-url
+
+(deftest build-github-url/basic
+  (testing "builds basic URL without line number"
+    (ok (equal (lem/legit::build-github-url "owner" "repo" "main" "src/file.lisp")
+               "https://github.com/owner/repo/blob/main/src/file.lisp"))))
+
+(deftest build-github-url/with-line-number
+  (testing "builds URL with single line number"
+    (ok (equal (lem/legit::build-github-url "owner" "repo" "main" "src/file.lisp"
+                                            :start-line 42)
+               "https://github.com/owner/repo/blob/main/src/file.lisp#L42"))))
+
+(deftest build-github-url/with-line-range
+  (testing "builds URL with line range"
+    (ok (equal (lem/legit::build-github-url "owner" "repo" "main" "src/file.lisp"
+                                            :start-line 10 :end-line 20)
+               "https://github.com/owner/repo/blob/main/src/file.lisp#L10-L20"))))
+
+(deftest build-github-url/same-start-end-line
+  (testing "builds URL with single line when start equals end"
+    (ok (equal (lem/legit::build-github-url "owner" "repo" "feature/test" "README.md"
+                                            :start-line 5 :end-line 5)
+               "https://github.com/owner/repo/blob/feature/test/README.md#L5"))))
+
+(deftest build-github-url/with-branch-containing-slash
+  (testing "builds URL with branch containing slash"
+    (ok (equal (lem/legit::build-github-url "owner" "repo" "feature/new-feature" "file.lisp"
+                                            :start-line 1)
+               "https://github.com/owner/repo/blob/feature/new-feature/file.lisp#L1"))))

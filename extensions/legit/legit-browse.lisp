@@ -1,12 +1,17 @@
-
-(in-package :lem/legit)
-
-#|
-Open current file location in GitHub.
+(uiop:define-package :lem/legit/browse
+  (:use :cl :lem)
+  (:import-from :lem/legit
+                :with-current-project)
+  (:export :legit-browse-remote
+           :*default-remote*
+           :parse-github-url
+           :build-github-url)
+  (:documentation "Open current file location in GitHub.
 
 This module provides functionality to open the current file at the current line
-(or region) in a web browser on GitHub.
-|#
+(or region) in a web browser on GitHub."))
+
+(in-package :lem/legit/browse)
 
 (defvar *default-remote* "origin"
   "Default remote name to use for browsing.")

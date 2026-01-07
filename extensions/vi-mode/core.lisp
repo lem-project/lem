@@ -51,7 +51,16 @@
 
 (defvar *last-repeat-keys* '())
 
-(defvar *default-cursor-color* "#ffb472")
+(defvar *default-cursor-color*  "#ffffff")
+
+(defun get-cursor-theme-color ()
+  (let ((attribute (ensure-attribute 'cursor)))
+    (color-to-hex-string (attribute-background-color attribute))))
+
+(defun vi-load-theme-hook () 
+ (setf *default-cursor-color*  (get-cursor-theme-color)))
+
+(add-hook lem-core:*after-load-theme-hook* 'vi-load-theme-hook)
 
 (defvar *enable-hook* '())
 (defvar *disable-hook* '())

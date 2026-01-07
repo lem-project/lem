@@ -21,13 +21,12 @@
 
 (in-package :lem-core/commands/project)
 
-(let ((keymap *global-prefix-keymap*))
-  (define-key keymap "p f" 'project-find-file)
-  (define-key keymap "p d" 'project-root-directory)
-  (define-key keymap "p K" 'project-kill-buffers)
-  (define-key keymap "p p" 'project-switch)
-  (define-key keymap "p s" 'project-save)
-  (define-key keymap "p u" 'project-unsave))
+(define-key *global-keymap* "C-x p f" 'project-find-file)
+(define-key *global-keymap* "C-x p d" 'project-root-directory)
+(define-key *global-keymap* "C-x p K" 'project-kill-buffers)
+(define-key *global-keymap* "C-x p p" 'project-switch)
+(define-key *global-keymap* "C-x p s" 'project-save)
+(define-key *global-keymap* "C-x p u" 'project-unsave)
 
 (defvar *root-directories*
   (list

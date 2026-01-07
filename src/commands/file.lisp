@@ -33,14 +33,13 @@
   (:lock t))
 (in-package :lem-core/commands/file)
 
-(let ((keymap *global-prefix-keymap*))
-  (define-key keymap "C-f" 'find-file)
-  (define-key keymap "C-r" 'read-file)
-  (define-key keymap "C-s" 'save-current-buffer)
-  (define-key keymap "C-w" 'write-file)
-  (define-key keymap "C-h" 'find-recent-file)
-  (define-key keymap "Tab" 'insert-file)
-  (define-key keymap "s" 'save-some-buffers))
+(define-key *global-keymap* "C-x C-f" 'find-file)
+(define-key *global-keymap* "C-x C-r" 'read-file)
+(define-key *global-keymap* "C-x C-s" 'save-current-buffer)
+(define-key *global-keymap* "C-x C-w" 'write-file)
+(define-key *global-keymap* "C-x C-h" 'find-recent-file)
+(define-key *global-keymap* "C-x Tab" 'insert-file)
+(define-key *global-keymap* "C-x s" 'save-some-buffers)
 
 ;; Programs to find files recursively:
 ;; We want symbols and not strings, for CLOS dispatch.

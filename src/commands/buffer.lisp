@@ -11,7 +11,7 @@
 
 (defvar *read-only-function* nil)
 
-(define-key *global-prefix-keymap* "C-q" 'toggle-read-only)
+(define-key *global-keymap* "C-x C-q" 'toggle-read-only)
 (define-key *global-keymap* "M-~" 'unmark-buffer)
 
 (define-command indent-current-buffer () ()

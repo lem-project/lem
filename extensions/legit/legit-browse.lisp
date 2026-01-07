@@ -15,19 +15,21 @@ This module provides functionality to open the current file at the current line
   "Parse a Git remote URL and return (values owner repo) for GitHub.
    Supports:
    - git@github.com:owner/repo.git
+   - git@github.com:owner/repo
    - https://github.com/owner/repo.git
    - https://github.com/owner/repo
    Returns NIL if the URL is not a GitHub URL."
   (let ((url (str:trim url)))
-    (or
-     ;; SSH format: git@github.com:owner/repo.git
-     (ppcre:register-groups-bind (owner repo)
-         ("^git@github\\.com:([^/]+)/([^/]+?)(?:\\.git)?$" url)
-       (values owner repo))
-     ;; HTTPS format: https://github.com/owner/repo.git
-     (ppcre:register-groups-bind (owner repo)
-         ("^https?://github\\.com/([^/]+)/([^/]+?)(?:\\.git)?$" url)
-       (values owner repo)))))
+    ;; SSH format: git@github.com:owner/repo or git@github.com:owner/repo.git
+    (ppcre:register-groups-bind (owner repo)
+        ("^git@github\\.com:([^/]+)/(.+?)(?:\\.git)?$" url)
+      (return-from parse-github-url (values owner repo)))
+    ;; HTTPS format: https://github.com/owner/repo or https://github.com/owner/repo.git
+    (ppcre:register-groups-bind (owner repo)
+        ("^https?://github\\.com/([^/]+)/(.+?)(?:\\.git)?$" url)
+      (return-from parse-github-url (values owner repo)))
+    ;; No match
+    nil))
 
 (defun build-github-url (owner repo branch path &key start-line end-line)
   "Build a GitHub blob URL with optional line number fragment.

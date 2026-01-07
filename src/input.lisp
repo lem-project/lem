@@ -1,5 +1,10 @@
 (in-package :lem-core)
 
+(define-editor-variable escape-as-meta-prefix nil
+  "When non-nil, treat Escape key as Meta prefix without timeout.
+Pressing Escape followed by another key produces Meta+key.
+Escape Escape produces a single Escape.")
+
 (defvar *input-hook* '())
 
 (defvar *key-recording-p* nil)
@@ -57,11 +62,45 @@
           (run-hooks *input-hook* event)))
     event))
 
+(defun escape-key-p (key)
+  "Return T if KEY is an unmodified Escape key."
+  (and (key-p key)
+       (match-key key :sym "Escape")))
+
+(defun add-meta-modifier (key)
+  "Return a new key with Meta modifier added."
+  (make-key :ctrl (key-ctrl key)
+            :meta t
+            :super (key-super key)
+            :hyper (key-hyper key)
+            :shift (key-shift key)
+            :sym (key-sym key)))
+
+(defun maybe-convert-escape-to-meta (event read-next-fn)
+  "If EVENT is Escape and escape-as-meta-prefix is enabled,
+read the next key and add Meta modifier.
+Escape Escape produces a single Escape."
+  (if (and (variable-value 'escape-as-meta-prefix :global)
+           (escape-key-p event))
+      (let ((next-key (funcall read-next-fn)))
+        (if (escape-key-p next-key)
+            ;; Escape Escape -> Escape
+            next-key
+            ;; Escape + key -> M-key
+            (add-meta-modifier next-key)))
+      event))
+
 (defun read-event ()
-  (read-event-with-recording-and-run-hooks :accept-key t :accept-mouse t))
+  (let ((event (read-event-with-recording-and-run-hooks :accept-key t :accept-mouse t)))
+    (maybe-convert-escape-to-meta
+     event
+     (lambda () (read-event-with-recording-and-run-hooks :accept-key t :accept-mouse nil)))))
 
 (defun read-key ()
-  (read-event-with-recording-and-run-hooks :accept-key t :accept-mouse nil))
+  (let ((event (read-event-with-recording-and-run-hooks :accept-key t :accept-mouse nil)))
+    (maybe-convert-escape-to-meta
+     event
+     (lambda () (read-event-with-recording-and-run-hooks :accept-key t :accept-mouse nil)))))
 
 (defun unread-key (key)
   (when *key-recording-p*

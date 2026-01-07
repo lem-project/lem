@@ -292,9 +292,6 @@ M       src/ext/porcelain.lisp
     (porcelain-error "lem/porcelain:stash-show not implement for vcs ~a" (vcs-name vcs)))
   (:documentation "Show this stash, as a diff. Return text."))
 
-;;;
-;;; Remote URL.
-;;;
 (defgeneric remote-url (vcs &key remote)
   (:documentation "Return the remote URL for the repository.
    remote: name of the remote (default: \"origin\").

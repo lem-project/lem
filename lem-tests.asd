@@ -63,6 +63,7 @@
                (:file "isearch")
                (:file "self-insert-command")
                (:file "interp")
+               (:file "input")
                (:file "file")
                (:file "scala-mode")
                (:file "wat-mode")

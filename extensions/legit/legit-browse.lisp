@@ -99,5 +99,3 @@ This module provides functionality to open the current file at the current line
   "Open the current file at the current line in GitHub.
    If a region is active, the line range will be selected in GitHub."
   (browse-file-at-github))
-
-(define-key *global-keymap* "C-c g b" 'legit-browse-remote)

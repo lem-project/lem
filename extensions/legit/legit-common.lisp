@@ -12,7 +12,9 @@
            :*peek-legit-keymap*
            :peek-legit-discard-file
            :peek-legit-previous
-           :peek-legit-next)
+           :peek-legit-next
+           :legit-browse-remote
+           :*default-remote*)
   (:documentation "Display version control data of the current project in an interactive two-panes window.
 
   This package in particular defines the right window of the legit interface and the user-level commands.

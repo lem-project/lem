@@ -30,6 +30,7 @@
    :stash-show
    :*diff-context-lines*
    :commits-log
+   :remote-url
    :*commits-log-page-size*
    :commit-count
    :*nb-latest-commits*
@@ -290,3 +291,14 @@ M       src/ext/porcelain.lisp
     (declare (ignorable position))
     (porcelain-error "lem/porcelain:stash-show not implement for vcs ~a" (vcs-name vcs)))
   (:documentation "Show this stash, as a diff. Return text."))
+
+;;;
+;;; Remote URL.
+;;;
+(defgeneric remote-url (vcs &key remote)
+  (:documentation "Return the remote URL for the repository.
+   remote: name of the remote (default: \"origin\").
+   Returns a string URL or nil if not found.")
+  (:method (vcs &key remote)
+    (declare (ignorable remote))
+    (porcelain-error "lem/porcelain:remote-url not implemented for vcs ~a" (vcs-name vcs))))

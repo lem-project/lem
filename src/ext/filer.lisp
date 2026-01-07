@@ -11,7 +11,7 @@
   (setf (variable-value 'line-wrap :buffer (current-buffer)) nil)
   (setf (buffer-read-only-p (current-buffer)) t))
 
-(define-key *global-prefix-keymap* "d" 'filer)
+(define-key *global-keymap* "C-x d" 'filer)
 (define-key *filer-mode-keymap* "Return" 'filer-select)
 (define-key *filer-mode-keymap* "D" 'filer-delete-file)
 

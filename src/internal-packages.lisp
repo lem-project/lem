@@ -475,7 +475,6 @@
    :keymap-undef-hook
    :make-keymap
    :*global-keymap*
-   :*global-prefix-keymap*
    :define-key
    :define-keys
    :undefine-key

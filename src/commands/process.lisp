@@ -6,8 +6,8 @@
   (:lock t))
 (in-package :lem-core/commands/process)
 
-(define-key *global-prefix-keymap* "#" 'filter-buffer)
-(define-key *global-prefix-keymap* "@" 'pipe-command)
+(define-key *global-keymap* "C-x #" 'filter-buffer)
+(define-key *global-keymap* "C-x @" 'pipe-command)
 
 (define-command filter-buffer (cmd) ((:string "Filter buffer: "))
   "Replaces the contents of the buffer with the result of executing the command entered."

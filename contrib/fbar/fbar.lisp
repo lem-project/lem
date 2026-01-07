@@ -37,7 +37,7 @@
 ;; open-close directories with <Return>
 ;; select files with <Return>
 
-(define-key *global-prefix-keymap* "f" 'fbar-on)
+(define-key *global-keymap* "C-x f" 'fbar-on)
 (define-key *fbar-mode-keymap* "j" 'next-line)
 (define-key *fbar-mode-keymap* "k" 'previous-line)
 (define-key *fbar-mode-keymap* "Down" 'next-line)

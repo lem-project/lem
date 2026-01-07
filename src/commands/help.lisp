@@ -10,7 +10,7 @@
   (:lock t))
 (in-package :lem-core/commands/help)
 
-(define-key *global-prefix-keymap* "?" 'describe-key)
+(define-key *global-keymap* "C-x ?" 'describe-key)
 
 (define-command describe-key () ()
   "Tell what is the command associated to a keybinding."

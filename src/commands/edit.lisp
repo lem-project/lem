@@ -56,7 +56,7 @@
 (define-key *global-keymap* "C-Shift-Backspace" 'kill-whole-line)
 (define-key *global-keymap* "C-y" 'yank)
 (define-key *global-keymap* "M-y" 'yank-pop)
-(define-key *global-prefix-keymap* "C-o" 'delete-blank-lines)
+(define-key *global-keymap* "C-x C-o" 'delete-blank-lines)
 (define-key *global-keymap* "M-Space" 'just-one-space)
 (define-key *global-keymap* "M-^" 'delete-indentation)
 (define-key *global-keymap* "C-t" 'transpose-characters)

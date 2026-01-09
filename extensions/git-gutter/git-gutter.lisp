@@ -1,6 +1,13 @@
 (defpackage :lem-git-gutter
   (:use :cl :lem)
-  (:local-nicknames (:diff-parser :lem-git-gutter/diff-parser))
+  (:local-nicknames (:diff-parser :lem-git-gutter/diff-parser)
+                    (:dir-mode :lem/directory-mode))
+  (:import-from :lem/directory-mode
+                :*file-entry-inserters*
+                :item-pathname
+                :item-directory
+                :update-buffer
+                :directory-mode)
   (:export :git-gutter-mode
            :git-gutter-set-ref
            :git-gutter-refresh
@@ -233,31 +240,20 @@
     (update-git-gutter-for-buffer buffer)))
 
 (defun add-directory-mode-inserter ()
-  "Add git status inserter to directory-mode if available."
-  (when (find-package :lem/directory-mode)
-    (let ((inserters-sym (find-symbol "*FILE-ENTRY-INSERTERS*" :lem/directory-mode)))
-      (when (and inserters-sym (boundp inserters-sym))
-        (unless (member #'insert-git-status (symbol-value inserters-sym))
-          (setf (symbol-value inserters-sym)
-                (cons #'insert-git-status (symbol-value inserters-sym))))))))
+  "Add git status inserter to directory-mode."
+  (unless (member #'insert-git-status *file-entry-inserters*)
+    (push #'insert-git-status *file-entry-inserters*)))
 
 (defun remove-directory-mode-inserter ()
-  "Remove git status inserter from directory-mode if available."
-  (when (find-package :lem/directory-mode)
-    (let ((inserters-sym (find-symbol "*FILE-ENTRY-INSERTERS*" :lem/directory-mode)))
-      (when (and inserters-sym (boundp inserters-sym))
-        (setf (symbol-value inserters-sym)
-              (remove #'insert-git-status (symbol-value inserters-sym)))))))
+  "Remove git status inserter from directory-mode."
+  (setf *file-entry-inserters*
+        (remove #'insert-git-status *file-entry-inserters*)))
 
 (defun update-all-directory-buffers ()
   "Update all directory-mode buffers to reflect git status."
-  (when (find-package :lem/directory-mode)
-    (let ((update-buffer-sym (find-symbol "UPDATE-BUFFER" :lem/directory-mode))
-          (directory-mode-sym (find-symbol "DIRECTORY-MODE" :lem/directory-mode)))
-      (when (and update-buffer-sym (fboundp update-buffer-sym) directory-mode-sym)
-        (dolist (buffer (buffer-list))
-          (when (eq (buffer-major-mode buffer) directory-mode-sym)
-            (funcall update-buffer-sym buffer)))))))
+  (dolist (buffer (buffer-list))
+    (when (eq (buffer-major-mode buffer) 'directory-mode)
+      (update-buffer buffer))))
 
 (defun enable-hook ()
   "Called when git-gutter-mode is enabled."
@@ -455,10 +451,8 @@
 
 (defun insert-git-status (point item)
   "Inserter function for directory-mode to show git status."
-  (let* ((item-pathname-fn (find-symbol "ITEM-PATHNAME" :lem/directory-mode))
-         (item-directory-fn (find-symbol "ITEM-DIRECTORY" :lem/directory-mode))
-         (pathname (when item-pathname-fn (funcall item-pathname-fn item)))
-         (directory (when item-directory-fn (funcall item-directory-fn item)))
+  (let* ((pathname (item-pathname item))
+         (directory (item-directory item))
          (status (when (and pathname directory)
                    (get-file-git-status pathname directory))))
     (multiple-value-bind (char attr)
@@ -477,8 +471,6 @@
     (when directory
       (remhash (namestring directory) *directory-git-status-cache*)
       ;; Force redisplay of directory buffer if in directory-mode
-      (when (find-package :lem/directory-mode)
-        (let ((update-buffer-sym (find-symbol "UPDATE-BUFFER" :lem/directory-mode)))
-          (when (and update-buffer-sym (fboundp update-buffer-sym))
-            (funcall update-buffer-sym (current-buffer)))))
+      (when (eq (buffer-major-mode (current-buffer)) 'directory-mode)
+        (update-buffer (current-buffer)))
       (message "Git status refreshed"))))

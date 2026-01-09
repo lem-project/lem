@@ -256,9 +256,15 @@
     (when (eq (buffer-major-mode buffer) 'lem/directory-mode:directory-mode)
       (update-buffer buffer))))
 
+(defun git-gutter-find-file (buffer)
+  "Hook function called when a file is opened."
+  (when (buffer-filename buffer)
+    (update-git-gutter-for-buffer buffer)))
+
 (defun enable-hook ()
   "Called when git-gutter-mode is enabled."
   (update-all-buffers)
+  (add-hook *find-file-hook* 'git-gutter-find-file)
   (add-hook (variable-value 'after-save-hook :global t)
             'git-gutter-after-save)
   (add-hook (variable-value 'after-change-functions :global t)
@@ -269,6 +275,7 @@
 
 (defun disable-hook ()
   "Called when git-gutter-mode is disabled."
+  (remove-hook *find-file-hook* 'git-gutter-find-file)
   (remove-hook (variable-value 'after-save-hook :global t)
                'git-gutter-after-save)
   (remove-hook (variable-value 'after-change-functions :global t)

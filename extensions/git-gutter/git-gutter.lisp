@@ -234,8 +234,8 @@
 
 (defun add-directory-mode-inserter ()
   "Add git status inserter to directory-mode if available."
-  (when (find-package :lem/directory-mode/internal)
-    (let ((inserters-sym (find-symbol "*FILE-ENTRY-INSERTERS*" :lem/directory-mode/internal)))
+  (when (find-package :lem/directory-mode)
+    (let ((inserters-sym (find-symbol "*FILE-ENTRY-INSERTERS*" :lem/directory-mode)))
       (when (and inserters-sym (boundp inserters-sym))
         (unless (member #'insert-git-status (symbol-value inserters-sym))
           (setf (symbol-value inserters-sym)
@@ -243,17 +243,17 @@
 
 (defun remove-directory-mode-inserter ()
   "Remove git status inserter from directory-mode if available."
-  (when (find-package :lem/directory-mode/internal)
-    (let ((inserters-sym (find-symbol "*FILE-ENTRY-INSERTERS*" :lem/directory-mode/internal)))
+  (when (find-package :lem/directory-mode)
+    (let ((inserters-sym (find-symbol "*FILE-ENTRY-INSERTERS*" :lem/directory-mode)))
       (when (and inserters-sym (boundp inserters-sym))
         (setf (symbol-value inserters-sym)
               (remove #'insert-git-status (symbol-value inserters-sym)))))))
 
 (defun update-all-directory-buffers ()
   "Update all directory-mode buffers to reflect git status."
-  (when (find-package :lem/directory-mode/internal)
-    (let ((update-buffer-sym (find-symbol "UPDATE-BUFFER" :lem/directory-mode/internal))
-          (directory-mode-sym (find-symbol "DIRECTORY-MODE" :lem/directory-mode/mode)))
+  (when (find-package :lem/directory-mode)
+    (let ((update-buffer-sym (find-symbol "UPDATE-BUFFER" :lem/directory-mode))
+          (directory-mode-sym (find-symbol "DIRECTORY-MODE" :lem/directory-mode)))
       (when (and update-buffer-sym (fboundp update-buffer-sym) directory-mode-sym)
         (dolist (buffer (buffer-list))
           (when (eq (buffer-major-mode buffer) directory-mode-sym)
@@ -455,8 +455,8 @@
 
 (defun insert-git-status (point item)
   "Inserter function for directory-mode to show git status."
-  (let* ((item-pathname-fn (find-symbol "ITEM-PATHNAME" :lem/directory-mode/internal))
-         (item-directory-fn (find-symbol "ITEM-DIRECTORY" :lem/directory-mode/internal))
+  (let* ((item-pathname-fn (find-symbol "ITEM-PATHNAME" :lem/directory-mode))
+         (item-directory-fn (find-symbol "ITEM-DIRECTORY" :lem/directory-mode))
          (pathname (when item-pathname-fn (funcall item-pathname-fn item)))
          (directory (when item-directory-fn (funcall item-directory-fn item)))
          (status (when (and pathname directory)
@@ -477,8 +477,8 @@
     (when directory
       (remhash (namestring directory) *directory-git-status-cache*)
       ;; Force redisplay of directory buffer if in directory-mode
-      (when (find-package :lem/directory-mode/internal)
-        (let ((update-buffer-sym (find-symbol "UPDATE-BUFFER" :lem/directory-mode/internal)))
+      (when (find-package :lem/directory-mode)
+        (let ((update-buffer-sym (find-symbol "UPDATE-BUFFER" :lem/directory-mode)))
           (when (and update-buffer-sym (fboundp update-buffer-sym))
             (funcall update-buffer-sym (current-buffer)))))
       (message "Git status refreshed"))))

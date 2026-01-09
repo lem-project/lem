@@ -476,16 +476,21 @@
     (otherwise (values " " nil))))
 
 (defun insert-git-status (point item)
-  "Inserter function for directory-mode to show git status."
+  "Inserter function for directory-mode to show git status.
+   Skips the '..' (parent directory) entry."
   (let* ((pathname (item-pathname item))
-         (directory (item-directory item))
-         (status (when (and pathname directory)
-                   (get-file-git-status pathname directory))))
-    (multiple-value-bind (char attr)
-        (status-to-display status)
-      (if attr
-          (insert-string point (format nil "~A " char) :attribute attr)
-          (insert-string point "  ")))))
+         (directory (item-directory item)))
+    ;; Skip ".." entry (when pathname is parent of directory)
+    (if (and pathname directory
+             (equal pathname (uiop:pathname-parent-directory-pathname directory)))
+        (insert-string point "  ")
+        (let ((status (when (and pathname directory)
+                        (get-file-git-status pathname directory))))
+          (multiple-value-bind (char attr)
+              (status-to-display status)
+            (if attr
+                (insert-string point (format nil "~A " char) :attribute attr)
+                (insert-string point "  ")))))))
 
 (defun clear-directory-status-cache ()
   "Clear the directory git status cache."

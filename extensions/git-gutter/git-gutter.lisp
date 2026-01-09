@@ -19,6 +19,7 @@
            :*directory-status-cache-ttl*
            ;; For testing
            :parse-git-status-porcelain
+           :parse-git-diff-name-status
            :status-to-display))
 (in-package :lem-git-gutter)
 
@@ -252,7 +253,7 @@
 (defun update-all-directory-buffers ()
   "Update all directory-mode buffers to reflect git status."
   (dolist (buffer (buffer-list))
-    (when (eq (buffer-major-mode buffer) 'directory-mode)
+    (when (eq (buffer-major-mode buffer) 'lem/directory-mode:directory-mode)
       (update-buffer buffer))))
 
 (defun enable-hook ()
@@ -380,10 +381,35 @@
               ((char= y #\D) (setf (gethash file status) :deleted)))))))
     status))
 
+(defun parse-git-diff-name-status (output)
+  "Parse git diff --name-status output into a hash-table.
+   Returns hash-table mapping relative-path -> status-keyword."
+  (let ((status (make-hash-table :test #'equal)))
+    (dolist (line (uiop:split-string output :separator '(#\Newline)))
+      (when (>= (length line) 2)
+        (let* ((status-char (char line 0))
+               (rest (string-trim '(#\Space #\Tab) (subseq line 1)))
+               (file rest))
+          ;; Handle renamed files: "R100\told\tnew" format
+          ;; After stripping status char, rest is "100\told\tnew"
+          (when (char= status-char #\R)
+            (let* ((parts (uiop:split-string rest :separator '(#\Tab)))
+                   (new-name (third parts)))
+              (when new-name
+                (setf file new-name))))
+          (when (plusp (length file))
+            (case status-char
+              (#\M (setf (gethash file status) :modified))
+              (#\A (setf (gethash file status) :added))
+              (#\D (setf (gethash file status) :deleted))
+              (#\R (setf (gethash file status) :added)))))))
+    status))
+
 (defun get-directory-git-status (directory)
-  "Get git status for all files in directory. Uses cache when available."
-  (let* ((dir-key (namestring directory))
-         (cached (gethash dir-key *directory-git-status-cache*))
+  "Get git status for all files in directory. Uses cache when available.
+   Compares against *git-gutter-ref* (default: HEAD)."
+  (let* ((cache-key (format nil "~A:~A" (namestring directory) *git-gutter-ref*))
+         (cached (gethash cache-key *directory-git-status-cache*))
          (now (get-internal-real-time))
          (ttl-ticks (* *directory-status-cache-ttl*
                        (/ internal-time-units-per-second 1000))))
@@ -393,9 +419,9 @@
         ;; Refresh cache
         (alexandria:when-let ((git-root (find-git-root directory)))
           (uiop:with-current-directory (git-root)
-            (let* ((output (run-git (list "status" "--porcelain=v1")))
-                   (status-table (parse-git-status-porcelain output)))
-              (setf (gethash dir-key *directory-git-status-cache*)
+            (let* ((output (run-git (list "diff" "--name-status" *git-gutter-ref*)))
+                   (status-table (parse-git-diff-name-status output)))
+              (setf (gethash cache-key *directory-git-status-cache*)
                     (cons now status-table))
               status-table))))))
 
@@ -471,6 +497,6 @@
     (when directory
       (remhash (namestring directory) *directory-git-status-cache*)
       ;; Force redisplay of directory buffer if in directory-mode
-      (when (eq (buffer-major-mode (current-buffer)) 'directory-mode)
+      (when (eq (buffer-major-mode (current-buffer)) 'lem/directory-mode:directory-mode)
         (update-buffer (current-buffer)))
       (message "Git status refreshed"))))

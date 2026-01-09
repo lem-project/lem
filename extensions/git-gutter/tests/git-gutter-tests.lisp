@@ -321,3 +321,52 @@ A  lib/new/file2.lisp")
     (ok (eq result-a :modified) "Parent dir 'a/' should show modified")
     (ok (eq result-ab :modified) "Parent dir 'a/b/' should show modified")
     (ok (eq result-abc :modified) "Parent dir 'a/b/c/' should show modified")))
+
+;;; Test parse-git-diff-name-status (for directory status with ref support)
+
+(deftest test-parse-git-diff-name-status-modified
+  "Test parsing modified files from git diff --name-status"
+  (let* ((output "M	src/file.lisp
+M	tests/test.lisp")
+         (status (gutter:parse-git-diff-name-status output)))
+    (ok (eq (gethash "src/file.lisp" status) :modified)
+        "src/file.lisp should be modified")
+    (ok (eq (gethash "tests/test.lisp" status) :modified)
+        "tests/test.lisp should be modified")))
+
+(deftest test-parse-git-diff-name-status-added
+  "Test parsing added files from git diff --name-status"
+  (let* ((output "A	new-file.lisp")
+         (status (gutter:parse-git-diff-name-status output)))
+    (ok (eq (gethash "new-file.lisp" status) :added)
+        "new-file.lisp should be added")))
+
+(deftest test-parse-git-diff-name-status-deleted
+  "Test parsing deleted files from git diff --name-status"
+  (let* ((output "D	removed.lisp")
+         (status (gutter:parse-git-diff-name-status output)))
+    (ok (eq (gethash "removed.lisp" status) :deleted)
+        "removed.lisp should be deleted")))
+
+(deftest test-parse-git-diff-name-status-renamed
+  "Test parsing renamed files from git diff --name-status"
+  (let* ((output "R100	old-name.lisp	new-name.lisp")
+         (status (gutter:parse-git-diff-name-status output)))
+    (ok (eq (gethash "new-name.lisp" status) :added)
+        "new-name.lisp (renamed) should be added")))
+
+(deftest test-parse-git-diff-name-status-mixed
+  "Test parsing mixed status output"
+  (let* ((output "M	modified.lisp
+A	added.lisp
+D	deleted.lisp")
+         (status (gutter:parse-git-diff-name-status output)))
+    (ok (= (hash-table-count status) 3) "Should have 3 entries")
+    (ok (eq (gethash "modified.lisp" status) :modified))
+    (ok (eq (gethash "added.lisp" status) :added))
+    (ok (eq (gethash "deleted.lisp" status) :deleted))))
+
+(deftest test-parse-git-diff-name-status-empty
+  "Test parsing empty output"
+  (let ((status (gutter:parse-git-diff-name-status "")))
+    (ok (= (hash-table-count status) 0) "Empty output should have no entries")))

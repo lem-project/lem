@@ -1,13 +1,26 @@
 (defpackage :lem-git-gutter
   (:use :cl :lem)
-  (:local-nicknames (:diff-parser :lem-git-gutter/diff-parser))
+  (:local-nicknames (:diff-parser :lem-git-gutter/diff-parser)
+                    (:dir-mode :lem/directory-mode))
+  (:import-from :lem/directory-mode
+                :*file-entry-inserters*
+                :item-pathname
+                :item-directory
+                :update-buffer
+                :directory-mode)
   (:export :git-gutter-mode
            :git-gutter-set-ref
            :git-gutter-refresh
            :git-gutter-toggle-line-highlight
+           :git-gutter-refresh-directory-status
            :*git-gutter-ref*
            :*git-gutter-highlight-line*
-           :*git-gutter-update-delay*))
+           :*git-gutter-update-delay*
+           :*directory-status-cache-ttl*
+           ;; For testing
+           :parse-git-status-porcelain
+           :parse-git-diff-name-status
+           :status-to-display))
 (in-package :lem-git-gutter)
 
 ;;; Configuration
@@ -20,6 +33,9 @@
 
 (defvar *git-gutter-update-delay* 300
   "Delay in milliseconds before updating gutter after edit.")
+
+(defvar *directory-status-cache-ttl* 5000
+  "Cache time-to-live in milliseconds for directory git status.")
 
 ;;; Attributes
 
@@ -224,22 +240,51 @@
   (when (buffer-filename buffer)
     (update-git-gutter-for-buffer buffer)))
 
+(defun add-directory-mode-inserter ()
+  "Add git status inserter to directory-mode."
+  (unless (member #'insert-git-status *file-entry-inserters*)
+    (push #'insert-git-status *file-entry-inserters*)))
+
+(defun remove-directory-mode-inserter ()
+  "Remove git status inserter from directory-mode."
+  (setf *file-entry-inserters*
+        (remove #'insert-git-status *file-entry-inserters*)))
+
+(defun update-all-directory-buffers ()
+  "Update all directory-mode buffers to reflect git status."
+  (dolist (buffer (buffer-list))
+    (when (eq (buffer-major-mode buffer) 'lem/directory-mode:directory-mode)
+      (update-buffer buffer))))
+
+(defun git-gutter-find-file (buffer)
+  "Hook function called when a file is opened."
+  (when (buffer-filename buffer)
+    (update-git-gutter-for-buffer buffer)))
+
 (defun enable-hook ()
   "Called when git-gutter-mode is enabled."
   (update-all-buffers)
+  (add-hook *find-file-hook* 'git-gutter-find-file)
   (add-hook (variable-value 'after-save-hook :global t)
             'git-gutter-after-save)
   (add-hook (variable-value 'after-change-functions :global t)
-            'git-gutter-on-change))
+            'git-gutter-on-change)
+  ;; Add directory-mode support
+  (add-directory-mode-inserter)
+  (update-all-directory-buffers))
 
 (defun disable-hook ()
   "Called when git-gutter-mode is disabled."
+  (remove-hook *find-file-hook* 'git-gutter-find-file)
   (remove-hook (variable-value 'after-save-hook :global t)
                'git-gutter-after-save)
   (remove-hook (variable-value 'after-change-functions :global t)
                'git-gutter-on-change)
   (cancel-all-git-gutter-timers)
-  (clear-all-buffers))
+  (clear-all-buffers)
+  ;; Remove directory-mode support and clear cache
+  (remove-directory-mode-inserter)
+  (clear-directory-status-cache))
 
 (define-minor-mode git-gutter-mode
     (:name "GitGutter"
@@ -295,3 +340,175 @@
   (setf *git-gutter-highlight-line* (not *git-gutter-highlight-line*))
   (update-all-buffers)
   (message "Git gutter line highlight: ~A" (if *git-gutter-highlight-line* "on" "off")))
+
+;;; Directory Mode Git Status Support
+
+(defvar *directory-git-status-cache* (make-hash-table :test #'equal)
+  "Cache for directory git status. Maps directory path to (timestamp . status-hash).")
+
+(define-attribute git-status-modified-attribute
+  (t :foreground "yellow"))
+
+(define-attribute git-status-added-attribute
+  (t :foreground "green"))
+
+(define-attribute git-status-deleted-attribute
+  (t :foreground "red"))
+
+(define-attribute git-status-untracked-attribute
+  (t :foreground "cyan"))
+
+(define-attribute git-status-staged-attribute
+  (t :foreground "green" :bold t))
+
+(defun parse-git-status-porcelain (output)
+  "Parse git status --porcelain=v1 output into a hash-table.
+   Returns hash-table mapping relative-path -> status-keyword."
+  (let ((status (make-hash-table :test #'equal)))
+    (dolist (line (uiop:split-string output :separator '(#\Newline)))
+      (when (>= (length line) 3)
+        (let ((x (char line 0))
+              (y (char line 1))
+              (file (string-trim " " (subseq line 3))))
+          (when (plusp (length file))
+            ;; Handle renamed files: "R  old -> new"
+            (when (find #\> file)
+              (setf file (string-trim " " (subseq file (1+ (position #\> file))))))
+            (cond
+              ;; Untracked
+              ((and (char= x #\?) (char= y #\?))
+               (setf (gethash file status) :untracked))
+              ;; Staged changes (index)
+              ((char= x #\M) (setf (gethash file status) :staged-modified))
+              ((char= x #\A) (setf (gethash file status) :staged-added))
+              ((char= x #\D) (setf (gethash file status) :staged-deleted))
+              ((char= x #\R) (setf (gethash file status) :staged-added))
+              ;; Unstaged changes (work tree)
+              ((char= y #\M) (setf (gethash file status) :modified))
+              ((char= y #\D) (setf (gethash file status) :deleted)))))))
+    status))
+
+(defun parse-git-diff-name-status (output)
+  "Parse git diff --name-status output into a hash-table.
+   Returns hash-table mapping relative-path -> status-keyword."
+  (let ((status (make-hash-table :test #'equal)))
+    (dolist (line (uiop:split-string output :separator '(#\Newline)))
+      (when (>= (length line) 2)
+        (let* ((status-char (char line 0))
+               (rest (string-trim '(#\Space #\Tab) (subseq line 1)))
+               (file rest))
+          ;; Handle renamed files: "R100\told\tnew" format
+          ;; After stripping status char, rest is "100\told\tnew"
+          (when (char= status-char #\R)
+            (let* ((parts (uiop:split-string rest :separator '(#\Tab)))
+                   (new-name (third parts)))
+              (when new-name
+                (setf file new-name))))
+          (when (plusp (length file))
+            (case status-char
+              (#\M (setf (gethash file status) :modified))
+              (#\A (setf (gethash file status) :added))
+              (#\D (setf (gethash file status) :deleted))
+              (#\R (setf (gethash file status) :added)))))))
+    status))
+
+(defun get-directory-git-status (directory)
+  "Get git status for all files in directory. Uses cache when available.
+   Compares against *git-gutter-ref* (default: HEAD)."
+  (let* ((cache-key (format nil "~A:~A" (namestring directory) *git-gutter-ref*))
+         (cached (gethash cache-key *directory-git-status-cache*))
+         (now (get-internal-real-time))
+         (ttl-ticks (* *directory-status-cache-ttl*
+                       (/ internal-time-units-per-second 1000))))
+    (if (and cached
+             (< (- now (car cached)) ttl-ticks))
+        (cdr cached)
+        ;; Refresh cache
+        (alexandria:when-let ((git-root (find-git-root directory)))
+          (uiop:with-current-directory (git-root)
+            (let* ((output (run-git (list "diff" "--name-status" *git-gutter-ref*)))
+                   (status-table (parse-git-diff-name-status output)))
+              (setf (gethash cache-key *directory-git-status-cache*)
+                    (cons now status-table))
+              status-table))))))
+
+(defun find-status-in-directory (dir-prefix status-table)
+  "Find if any file under dir-prefix has a git status.
+   Returns the most significant status found (:modified > :added > :deleted > :untracked)."
+  (let ((found-status nil))
+    (maphash (lambda (path status)
+               (when (and (> (length path) (length dir-prefix))
+                          (string= dir-prefix (subseq path 0 (length dir-prefix))))
+                 ;; Found a file under this directory
+                 (case status
+                   ((:modified :staged-modified)
+                    (setf found-status :modified))
+                   ((:added :staged-added)
+                    (unless (eq found-status :modified)
+                      (setf found-status :added)))
+                   ((:deleted :staged-deleted)
+                    (unless (member found-status '(:modified :added))
+                      (setf found-status :deleted)))
+                   (:untracked
+                    (unless found-status
+                      (setf found-status :untracked))))))
+             status-table)
+    found-status))
+
+(defun get-file-git-status (pathname directory)
+  "Get git status symbol for a specific file or directory.
+   For directories, checks if any file underneath has changes."
+  (alexandria:when-let ((status-table (get-directory-git-status directory)))
+    (alexandria:when-let ((git-root (find-git-root directory)))
+      (let ((relative-path (namestring (enough-namestring pathname git-root))))
+        (if (uiop:directory-pathname-p pathname)
+            ;; For directories, check if any files underneath have changes
+            (let ((dir-prefix (if (alexandria:ends-with #\/ relative-path)
+                                  relative-path
+                                  (concatenate 'string relative-path "/"))))
+              (find-status-in-directory dir-prefix status-table))
+            ;; For files, direct lookup
+            (gethash relative-path status-table))))))
+
+(defun status-to-display (status)
+  "Convert status keyword to display character and attribute."
+  (case status
+    (:modified (values "M" 'git-status-modified-attribute))
+    (:staged-modified (values "M" 'git-status-staged-attribute))
+    (:added (values "A" 'git-status-added-attribute))
+    (:staged-added (values "A" 'git-status-staged-attribute))
+    (:deleted (values "D" 'git-status-deleted-attribute))
+    (:staged-deleted (values "D" 'git-status-staged-attribute))
+    (:untracked (values "?" 'git-status-untracked-attribute))
+    (otherwise (values " " nil))))
+
+(defun insert-git-status (point item)
+  "Inserter function for directory-mode to show git status.
+   Skips the '..' (parent directory) entry."
+  (let* ((pathname (item-pathname item))
+         (directory (item-directory item)))
+    ;; Skip ".." entry (when pathname is parent of directory)
+    (if (and pathname directory
+             (equal pathname (uiop:pathname-parent-directory-pathname directory)))
+        (insert-string point "  ")
+        (let ((status (when (and pathname directory)
+                        (get-file-git-status pathname directory))))
+          (multiple-value-bind (char attr)
+              (status-to-display status)
+            (if attr
+                (insert-string point (format nil "~A " char) :attribute attr)
+                (insert-string point "  ")))))))
+
+(defun clear-directory-status-cache ()
+  "Clear the directory git status cache."
+  (clrhash *directory-git-status-cache*))
+
+(define-command git-gutter-refresh-directory-status () ()
+  "Refresh git status cache for current directory buffer."
+  (let ((directory (buffer-directory (current-buffer))))
+    (when directory
+      (remhash (namestring directory) *directory-git-status-cache*)
+      ;; Force redisplay of directory buffer if in directory-mode
+      (when (eq (buffer-major-mode (current-buffer)) 'lem/directory-mode:directory-mode)
+        (update-buffer (current-buffer)))
+      (message "Git status refreshed"))))

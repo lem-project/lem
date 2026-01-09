@@ -14,7 +14,7 @@
   :in-order-to ((test-op (test-op "lem-git-gutter/tests"))))
 
 (defsystem "lem-git-gutter/tests"
-  :depends-on ("lem-git-gutter/diff-parser" "rove")
+  :depends-on ("lem-git-gutter" "rove")
   :components ((:module "tests"
                 :components ((:file "git-gutter-tests"))))
   :perform (test-op (op c) (symbol-call :rove '#:run c)))

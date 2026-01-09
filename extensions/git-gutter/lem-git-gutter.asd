@@ -8,7 +8,6 @@
   :author "Lem Project"
   :license "MIT"
   :depends-on ("lem/core"
-               "lem/directory-mode"
                "lem-git-gutter/diff-parser")
   :serial t
   :components ((:file "git-gutter"))

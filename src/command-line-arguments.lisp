@@ -90,10 +90,12 @@ Options:
       (loop :for filename :in (command-line-arguments-filenames args)
             :do (uiop:symbol-call :lem :find-file (merge-pathnames filename (uiop:getcwd)))))
 
+  
   (let (form-str form)
     (setf form-str (command-line-arguments-eval-form-str args))
-    (setf form (read-from-string form-str nil))
+    (when form-str 
+      (setf form (read-from-string form-str nil))
     
-    (if form
-        (eval form)
-        (editor-error "WARNING: -e/--eval supplied, but no form was provided!"))))
+      (if form
+          (eval form)
+          (editor-error "WARNING: -e/--eval supplied, but no form was provided!")))))

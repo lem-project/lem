@@ -34,6 +34,8 @@ Options:
   (error 'command-line-arguments-error :format-control fmt :format-arguments args))
 
 (defun parse-args (args)
+  "returns a `command-line-arguments` that represents the arguments passed in from `args`.
+`args` should be a list of strings (from `uiop:command-line-arguments`)."
   (let ((help nil)
         (debug nil)
         (version nil)
@@ -94,4 +96,4 @@ Options:
     
     (if form
         (eval form)
-        (message "WARNING: -e/--eval supplied, but no form was provided!"))))
+        (editor-error "WARNING: -e/--eval supplied, but no form was provided!"))))

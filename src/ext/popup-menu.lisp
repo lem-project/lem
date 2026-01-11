@@ -35,9 +35,9 @@
   (make-line-overlay point focus-attribute))
 
 (defun update-focus-overlay (popup-menu point)
-+  "Refresh the focus highlight so it tracks POINT in POPUP-MENU.
-+Deletes any previous overlay, clears stray overlays, and creates a new
-+focus overlay unless POINT is on the header line."
+  "Refresh the focus highlight so it tracks POINT in POPUP-MENU.
+Deletes any previous overlay, clears stray overlays, and creates a new
+focus overlay unless POINT is on the header line."
   (alexandria:when-let ((focus-overlay (popup-menu-focus-overlay popup-menu)))
     (delete-overlay focus-overlay))
   (clear-overlays (popup-menu-buffer popup-menu))
@@ -49,6 +49,8 @@
   (:method (print-spec point)))
 
 (defgeneric apply-print-spec (print-spec point item)
+  (:documentation "Applies the function `print-spec` to an `item` at `point`.  Typically this
+will get the string representation of `item` and insert it at `point` (the default method implemented below)")
   (:method ((print-spec function) point item)
     (let ((string (funcall print-spec item)))
       (insert-string point string))))

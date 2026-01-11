@@ -1,6 +1,7 @@
 (defpackage :lem-git-gutter/tests
   (:use :cl :rove)
-  (:local-nicknames (:parser :lem-git-gutter/diff-parser)))
+  (:local-nicknames (:parser :lem-git-gutter/diff-parser)
+                    (:gutter :lem-git-gutter)))
 (in-package :lem-git-gutter/tests)
 
 ;;; Test parse-hunk-header
@@ -148,3 +149,224 @@ index a92d664b..7c7d6265 100644
     (ok (eq (gethash 2 changes) :modified) "Line 2 should be modified")
     (ok (eq (gethash 4 changes) :added) "Line 4 should be added")
     (ok (= (hash-table-count changes) 2) "Should have exactly 2 changes")))
+
+;;; Test parse-git-status-porcelain (directory status)
+
+(deftest test-parse-git-status-porcelain-untracked
+  "Test parsing untracked files"
+  (let* ((output "?? newfile.txt
+?? another/path.lisp")
+         (status (gutter:parse-git-status-porcelain output)))
+    (ok (eq (gethash "newfile.txt" status) :untracked)
+        "newfile.txt should be untracked")
+    (ok (eq (gethash "another/path.lisp" status) :untracked)
+        "another/path.lisp should be untracked")))
+
+(deftest test-parse-git-status-porcelain-modified
+  "Test parsing modified files (unstaged)"
+  (let* ((output " M src/file.lisp
+ M tests/test.lisp")
+         (status (gutter:parse-git-status-porcelain output)))
+    (ok (eq (gethash "src/file.lisp" status) :modified)
+        "src/file.lisp should be modified")
+    (ok (eq (gethash "tests/test.lisp" status) :modified)
+        "tests/test.lisp should be modified")))
+
+(deftest test-parse-git-status-porcelain-staged
+  "Test parsing staged files"
+  (let* ((output "M  staged-mod.lisp
+A  new-staged.lisp
+D  deleted-staged.lisp")
+         (status (gutter:parse-git-status-porcelain output)))
+    (ok (eq (gethash "staged-mod.lisp" status) :staged-modified)
+        "staged-mod.lisp should be staged-modified")
+    (ok (eq (gethash "new-staged.lisp" status) :staged-added)
+        "new-staged.lisp should be staged-added")
+    (ok (eq (gethash "deleted-staged.lisp" status) :staged-deleted)
+        "deleted-staged.lisp should be staged-deleted")))
+
+(deftest test-parse-git-status-porcelain-deleted
+  "Test parsing deleted files (unstaged)"
+  (let* ((output " D removed.lisp")
+         (status (gutter:parse-git-status-porcelain output)))
+    (ok (eq (gethash "removed.lisp" status) :deleted)
+        "removed.lisp should be deleted")))
+
+(deftest test-parse-git-status-porcelain-renamed
+  "Test parsing renamed files"
+  (let* ((output "R  old-name.lisp -> new-name.lisp")
+         (status (gutter:parse-git-status-porcelain output)))
+    (ok (eq (gethash "new-name.lisp" status) :staged-added)
+        "new-name.lisp (renamed) should be staged-added")))
+
+(deftest test-parse-git-status-porcelain-mixed
+  "Test parsing mixed status output"
+  (let* ((output "?? untracked.txt
+ M modified.lisp
+M  staged.lisp
+A  added.lisp
+ D deleted.lisp")
+         (status (gutter:parse-git-status-porcelain output)))
+    (ok (= (hash-table-count status) 5) "Should have 5 entries")
+    (ok (eq (gethash "untracked.txt" status) :untracked))
+    (ok (eq (gethash "modified.lisp" status) :modified))
+    (ok (eq (gethash "staged.lisp" status) :staged-modified))
+    (ok (eq (gethash "added.lisp" status) :staged-added))
+    (ok (eq (gethash "deleted.lisp" status) :deleted))))
+
+(deftest test-parse-git-status-porcelain-empty
+  "Test parsing empty output"
+  (let ((status (gutter:parse-git-status-porcelain "")))
+    (ok (= (hash-table-count status) 0) "Empty output should have no entries")))
+
+;;; Test status-to-display
+
+(deftest test-status-to-display-modified
+  "Test display conversion for modified status"
+  (multiple-value-bind (char attr)
+      (gutter:status-to-display :modified)
+    (ok (string= char "M") "Modified should display as M")
+    (ok (eq attr 'gutter::git-status-modified-attribute))))
+
+(deftest test-status-to-display-staged-modified
+  "Test display conversion for staged-modified status"
+  (multiple-value-bind (char attr)
+      (gutter:status-to-display :staged-modified)
+    (ok (string= char "M") "Staged-modified should display as M")
+    (ok (eq attr 'gutter::git-status-staged-attribute))))
+
+(deftest test-status-to-display-added
+  "Test display conversion for added status"
+  (multiple-value-bind (char attr)
+      (gutter:status-to-display :added)
+    (ok (string= char "A") "Added should display as A")
+    (ok (eq attr 'gutter::git-status-added-attribute))))
+
+(deftest test-status-to-display-staged-added
+  "Test display conversion for staged-added status"
+  (multiple-value-bind (char attr)
+      (gutter:status-to-display :staged-added)
+    (ok (string= char "A") "Staged-added should display as A")
+    (ok (eq attr 'gutter::git-status-staged-attribute))))
+
+(deftest test-status-to-display-deleted
+  "Test display conversion for deleted status"
+  (multiple-value-bind (char attr)
+      (gutter:status-to-display :deleted)
+    (ok (string= char "D") "Deleted should display as D")
+    (ok (eq attr 'gutter::git-status-deleted-attribute))))
+
+(deftest test-status-to-display-untracked
+  "Test display conversion for untracked status"
+  (multiple-value-bind (char attr)
+      (gutter:status-to-display :untracked)
+    (ok (string= char "?") "Untracked should display as ?")
+    (ok (eq attr 'gutter::git-status-untracked-attribute))))
+
+(deftest test-status-to-display-nil
+  "Test display conversion for nil/no status"
+  (multiple-value-bind (char attr)
+      (gutter:status-to-display nil)
+    (ok (string= char " ") "No status should display as space")
+    (ok (null attr) "No status should have nil attribute")))
+
+;;; Test find-status-in-directory (directory status aggregation)
+
+(deftest test-find-status-in-directory-modified
+  "Test finding modified status in subdirectory"
+  (let* ((output " M src/foo/bar.lisp
+ M src/foo/baz.lisp")
+         (status (gutter:parse-git-status-porcelain output))
+         (result (lem-git-gutter::find-status-in-directory "src/foo/" status)))
+    (ok (eq result :modified) "Directory with modified files should show :modified")))
+
+(deftest test-find-status-in-directory-mixed
+  "Test priority when directory has mixed statuses"
+  (let* ((output "?? src/sub/untracked.txt
+A  src/sub/added.lisp
+ M src/sub/modified.lisp")
+         (status (gutter:parse-git-status-porcelain output))
+         (result (lem-git-gutter::find-status-in-directory "src/sub/" status)))
+    (ok (eq result :modified) "Modified should take priority over added and untracked")))
+
+(deftest test-find-status-in-directory-added-only
+  "Test directory with only added files"
+  (let* ((output "A  lib/new/file1.lisp
+A  lib/new/file2.lisp")
+         (status (gutter:parse-git-status-porcelain output))
+         (result (lem-git-gutter::find-status-in-directory "lib/new/" status)))
+    (ok (eq result :added) "Directory with only added files should show :added")))
+
+(deftest test-find-status-in-directory-untracked-only
+  "Test directory with only untracked files"
+  (let* ((output "?? docs/draft/readme.md")
+         (status (gutter:parse-git-status-porcelain output))
+         (result (lem-git-gutter::find-status-in-directory "docs/draft/" status)))
+    (ok (eq result :untracked) "Directory with only untracked files should show :untracked")))
+
+(deftest test-find-status-in-directory-no-match
+  "Test directory with no matching files"
+  (let* ((output " M other/file.lisp")
+         (status (gutter:parse-git-status-porcelain output))
+         (result (lem-git-gutter::find-status-in-directory "src/" status)))
+    (ok (null result) "Directory with no matching files should return nil")))
+
+(deftest test-find-status-in-directory-nested
+  "Test nested directory detection"
+  (let* ((output " M a/b/c/deep.lisp")
+         (status (gutter:parse-git-status-porcelain output))
+         (result-a (lem-git-gutter::find-status-in-directory "a/" status))
+         (result-ab (lem-git-gutter::find-status-in-directory "a/b/" status))
+         (result-abc (lem-git-gutter::find-status-in-directory "a/b/c/" status)))
+    (ok (eq result-a :modified) "Parent dir 'a/' should show modified")
+    (ok (eq result-ab :modified) "Parent dir 'a/b/' should show modified")
+    (ok (eq result-abc :modified) "Parent dir 'a/b/c/' should show modified")))
+
+;;; Test parse-git-diff-name-status (for directory status with ref support)
+
+(deftest test-parse-git-diff-name-status-modified
+  "Test parsing modified files from git diff --name-status"
+  (let* ((output "M	src/file.lisp
+M	tests/test.lisp")
+         (status (gutter:parse-git-diff-name-status output)))
+    (ok (eq (gethash "src/file.lisp" status) :modified)
+        "src/file.lisp should be modified")
+    (ok (eq (gethash "tests/test.lisp" status) :modified)
+        "tests/test.lisp should be modified")))
+
+(deftest test-parse-git-diff-name-status-added
+  "Test parsing added files from git diff --name-status"
+  (let* ((output "A	new-file.lisp")
+         (status (gutter:parse-git-diff-name-status output)))
+    (ok (eq (gethash "new-file.lisp" status) :added)
+        "new-file.lisp should be added")))
+
+(deftest test-parse-git-diff-name-status-deleted
+  "Test parsing deleted files from git diff --name-status"
+  (let* ((output "D	removed.lisp")
+         (status (gutter:parse-git-diff-name-status output)))
+    (ok (eq (gethash "removed.lisp" status) :deleted)
+        "removed.lisp should be deleted")))
+
+(deftest test-parse-git-diff-name-status-renamed
+  "Test parsing renamed files from git diff --name-status"
+  (let* ((output "R100	old-name.lisp	new-name.lisp")
+         (status (gutter:parse-git-diff-name-status output)))
+    (ok (eq (gethash "new-name.lisp" status) :added)
+        "new-name.lisp (renamed) should be added")))
+
+(deftest test-parse-git-diff-name-status-mixed
+  "Test parsing mixed status output"
+  (let* ((output "M	modified.lisp
+A	added.lisp
+D	deleted.lisp")
+         (status (gutter:parse-git-diff-name-status output)))
+    (ok (= (hash-table-count status) 3) "Should have 3 entries")
+    (ok (eq (gethash "modified.lisp" status) :modified))
+    (ok (eq (gethash "added.lisp" status) :added))
+    (ok (eq (gethash "deleted.lisp" status) :deleted))))
+
+(deftest test-parse-git-diff-name-status-empty
+  "Test parsing empty output"
+  (let ((status (gutter:parse-git-diff-name-status "")))
+    (ok (= (hash-table-count status) 0) "Empty output should have no entries")))

@@ -10,6 +10,8 @@
                              (:file "peek-legit")
                              (:file "legit")
                              (:file "legit-rebase")
-                             (:file "legit-commit")))
+                             (:file "legit-commit")
+                             (:file "legit-utils")
+                             (:file "legit-browse")))
                (:module "scripts"
                 :components ((:static-file "dumbrebaseeditor.sh")))))

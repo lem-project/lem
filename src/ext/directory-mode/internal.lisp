@@ -15,6 +15,9 @@
                 :directory-mode)
   (:export :sort-method
            :*default-sort-method*
+           :*file-entry-inserters*
+           :item-pathname
+           :item-directory
            :update-buffer
            :directory-buffer
            :open-selected-file

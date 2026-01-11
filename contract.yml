@@ -14,6 +14,7 @@ validation:
     max_total_changed_lines: 400
     max_delete_ratio: 0.5
     max_files_changed: 10
+    severity: warning
 
   ai:
     system_prompt: |

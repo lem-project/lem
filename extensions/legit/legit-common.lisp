@@ -1,4 +1,3 @@
-
 (defpackage :lem/legit
   (:use :cl
         :lem)

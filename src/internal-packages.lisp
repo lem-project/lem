@@ -521,6 +521,7 @@
   ;; input.lisp
   (:export
    :*input-hook*
+   :meta-prefix-keys
    :last-read-key-sequence
    :start-record-key
    :stop-record-key

@@ -300,7 +300,8 @@
                #+sbcl
                "lem-living-canvas"
                "lem-tree-sitter"
-               "lem-git-gutter"))
+               "lem-git-gutter"
+               "lem-skk-mode"))
 
 (defsystem "lem"
   :version "2.3.0"

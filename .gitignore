@@ -41,3 +41,4 @@ build/*
 TODO
 artifacts/
 logs/
+.serena/

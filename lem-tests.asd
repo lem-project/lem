@@ -43,7 +43,8 @@
                (:module "mcp-server"
                 :components ((:file "utils")
                              (:file "integration-tests")
-                             (:file "edge-case-tests")))
+                             (:file "edge-case-tests")
+                             (:file "display-input-tests")))
                (:module "lisp-syntax"
                 :components ((:file "indent-test")
                              (:file "defstruct-to-defclass")))

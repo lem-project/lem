@@ -19,5 +19,7 @@
                 :serial t
                 :components ((:file "buffer")
                              (:file "editing")
-                             (:file "command")))
+                             (:file "command")
+                             (:file "display")
+                             (:file "input")))
                (:file "commands")))

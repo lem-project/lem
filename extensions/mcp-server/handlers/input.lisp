@@ -1,6 +1,11 @@
 (in-package :lem-mcp-server)
 
 ;;; Key Input Tools
+;;;
+;;; Note on internal symbol usage:
+;;; - lem-core::parse-keyspec: Parses Emacs-style key notation strings into
+;;;   key objects. This is essential for accepting user key input but is not
+;;;   exported from lem-core. Consider exporting for public use.
 
 ;;; Helper functions
 

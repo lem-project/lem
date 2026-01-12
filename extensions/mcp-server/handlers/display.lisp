@@ -1,6 +1,17 @@
 (in-package :lem-mcp-server)
 
 ;;; Display/Screen Operation Tools
+;;;
+;;; Note on internal symbol usage:
+;;; This module requires access to internal lem-core symbols for complete
+;;; screen state capture. These are not exported because they are low-level
+;;; implementation details, but are necessary for AI agent integration:
+;;; - lem-core::get-string-and-attributes-at-point: Get line content with
+;;;   syntax highlighting attributes (needed for accurate visual representation)
+;;; - lem-core::buffer-overlays: Access buffer overlay list
+;;; - lem-core::overlay-temporary-p: Check overlay lifetime
+;;; - lem-core::cursor-overlay, line-overlay, line-endings-overlay: Overlay types
+;;; Consider exporting these or creating a public API for editor introspection.
 
 ;;; Helper functions
 

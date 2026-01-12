@@ -225,18 +225,22 @@ Appends okurigana-kana to the candidate if present."
   (let ((candidates (skk-candidates state))
         (start (skk-henkan-start state)))
     (when (and candidates start (<= 0 index (1- (length candidates))))
-      ;; Delete from henkan-start to current point
-      (delete-between-points start (current-point))
-      ;; Insert the candidate with okurigana if present
       (let* ((candidate (nth index candidates))
              (okurigana (skk-okurigana-kana state))
              (text (if (plusp (length okurigana))
                        (concatenate 'string candidate okurigana)
-                       candidate)))
-        (insert-string start text)
-        ;; Move cursor to end of inserted text
-        (move-point (current-point) start)
-        (character-offset (current-point) (length text))))))
+                       candidate))
+             ;; Save the start position as an integer before any operations
+             (start-pos (lem:position-at-point start)))
+        ;; Delete from henkan-start to current point
+        (delete-between-points start (current-point))
+        ;; Move current-point back to the saved start position for insertion
+        (lem:move-to-position (current-point) start-pos)
+        ;; Insert new candidate
+        (insert-string (current-point) text)
+        ;; IMPORTANT: Restore henkan-start to its original position AFTER insertion
+        ;; This ensures it's ready for the next candidate change
+        (lem:move-to-position start start-pos)))))
 
 (defun next-candidate (state)
   "Show the next candidate."

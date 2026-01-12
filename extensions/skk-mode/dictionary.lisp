@@ -8,12 +8,13 @@
 (in-package :lem-skk-mode/dictionary)
 
 (defvar *skk-dictionary-paths*
-  '("/usr/share/skk/SKK-JISYO.L"
+  '("~/.skk/SKK-JISYO.L"
+    "/usr/share/skk/SKK-JISYO.L"
     "/usr/share/skk/SKK-JISYO.M"
     "/usr/local/share/skk/SKK-JISYO.L"
-    "/usr/local/share/skk/SKK-JISYO.M"
-    "~/.skk/SKK-JISYO.L")
-  "List of paths to search for SKK dictionary files.")
+    "/usr/local/share/skk/SKK-JISYO.M")
+  "List of paths to search for SKK dictionary files.
+User dictionary (~/.skk/SKK-JISYO.L) is searched first.")
 
 (defvar *skk-user-dictionary-path*
   "~/.skk/user-jisyo"
@@ -103,13 +104,19 @@ SKK-JISYO format: reading /candidate1/candidate2;annotation/.../"
         (clrhash *skk-dictionary*)
         (setf *skk-dictionary* (make-hash-table :test 'equal)))
     ;; Load main dictionary
-    (let ((dict-path (find-dictionary-file)))
+    (let ((dict-path (find-dictionary-file))
+          (loaded nil))
       (when dict-path
-        (load-dictionary-file dict-path *skk-dictionary*)))
-    ;; Load user dictionary (higher priority - loaded after main)
-    (let ((user-path (expand-path *skk-user-dictionary-path*)))
-      (load-dictionary-file user-path *skk-dictionary*))
-    (setf *dictionary-loaded-p* t)))
+        (setf loaded (load-dictionary-file dict-path *skk-dictionary*)))
+      ;; Load user dictionary (higher priority - loaded after main)
+      (let ((user-path (expand-path *skk-user-dictionary-path*)))
+        (when (load-dictionary-file user-path *skk-dictionary*)
+          (setf loaded t)))
+      ;; Only mark as loaded if at least one dictionary was found
+      (setf *dictionary-loaded-p* loaded)
+      (unless loaded
+        (warn "SKK: No dictionary found. Searched paths: ~{~A~^, ~}"
+              *skk-dictionary-paths*)))))
 
 (defun lookup-candidates (reading)
   "Look up conversion candidates for READING.

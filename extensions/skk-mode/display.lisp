@@ -6,6 +6,7 @@
                 :skk-preedit
                 :skk-henkan-mode-p
                 :skk-henkan-key
+                :skk-henkan-start
                 :skk-okurigana-consonant
                 :skk-okurigana-kana
                 :skk-candidates
@@ -35,6 +36,27 @@
 
 (defvar *default-cursor-color* nil
   "Saved default cursor color to restore when SKK is disabled.")
+
+;;; Preedit display configuration
+(defparameter *skk-preedit-display-style* :floating-window
+  "Style for SKK preedit display.
+:floating-window - Display at cursor position using floating-window (default)
+:echo-area - Display in echo area (legacy behavior)")
+
+(defparameter *skk-preedit-background-color* nil
+  "Background color for floating-window preedit display.
+NIL means use transparent/default buffer background.")
+
+(defparameter *skk-preedit-offset-y* 0
+  "Vertical offset for preedit window from cursor position.
+Negative values move the window up, positive values move it down.")
+
+;;; Preedit window state
+(defvar *skk-preedit-window* nil
+  "Current SKK preedit floating window, or NIL.")
+
+(defvar *skk-preedit-buffer* nil
+  "Buffer used for SKK preedit display.")
 
 (defun mode-indicator (mode)
   "Return mode indicator string for MODE."
@@ -87,17 +109,74 @@ Shows okurigana with * marker, e.g., '▽か*く' for 書く."
       (t
        nil))))
 
+;;; Preedit floating window management
+
+(defun ensure-preedit-buffer ()
+  "Get or create the preedit display buffer."
+  (or *skk-preedit-buffer*
+      (let ((buffer (make-buffer "*SKK Preedit*" :temporary t :enable-undo-p nil)))
+        (setf (variable-value 'line-wrap :buffer buffer) nil)
+        (setf *skk-preedit-buffer* buffer))))
+
+(defun delete-preedit-window ()
+  "Delete the current preedit floating window if it exists."
+  (delete-popup-message *skk-preedit-window*)
+  (setf *skk-preedit-window* nil))
+
+(defun create-preedit-window (text)
+  "Create a new floating window displaying TEXT at the henkan-start position."
+  (let* ((state (get-skk-state))
+         (henkan-start (skk-henkan-start state))
+         (buffer (ensure-preedit-buffer))
+         ;; Calculate offset-x to position at henkan-start instead of cursor
+         (offset-x (if henkan-start
+                       (- (point-column henkan-start) (point-column (current-point)))
+                       0)))
+    ;; Update buffer content
+    (erase-buffer buffer)
+    (insert-string (buffer-point buffer) text)
+    (buffer-start (buffer-point buffer))
+    ;; Create floating window using public API
+    (display-popup-message buffer
+                           :timeout nil
+                           :style (list :gravity :follow-cursor
+                                        :use-border nil
+                                        :offset-x offset-x
+                                        :offset-y *skk-preedit-offset-y*
+                                        :background-color *skk-preedit-background-color*
+                                        :cursor-invisible t))))
+
+(defun update-preedit-window (text)
+  "Update the preedit window with new TEXT, creating if needed."
+  (delete-preedit-window)
+  (when (and text (plusp (length text)))
+    (setf *skk-preedit-window* (create-preedit-window text))))
+
 (defun update-skk-display ()
-  "Update SKK display in echo area."
+  "Update SKK display based on current display style."
   (let* ((state (get-skk-state))
          (display (build-preedit-display state)))
-    (if display
-        (message "~A" display)
-        (message nil))))
+    (case *skk-preedit-display-style*
+      (:floating-window
+       (update-preedit-window display))
+      (:echo-area
+       (if display
+           (message "~A" display)
+           (message nil)))
+      (t
+       ;; Default to floating-window
+       (update-preedit-window display)))))
 
 (defun clear-skk-display ()
-  "Clear SKK display from echo area."
-  (message nil))
+  "Clear SKK display."
+  (case *skk-preedit-display-style*
+    (:floating-window
+     (delete-preedit-window))
+    (:echo-area
+     (message nil))
+    (t
+     (delete-preedit-window)
+     (message nil))))
 
 (defun show-skk-info ()
   "Show detailed SKK state information (for debugging)."

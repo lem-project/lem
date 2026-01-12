@@ -41,7 +41,63 @@
                 :message
                 :redraw-display
                 :switch-to-buffer
-                :pop-to-buffer)
+                :pop-to-buffer
+                ;; Window-related
+                :window-list
+                :window-x
+                :window-y
+                :window-width
+                :window-height
+                :window-buffer
+                :window-view-point
+                :window-use-modeline-p
+                :floating-window-p
+                :frame-floating-windows
+                :frame-header-windows
+                :current-frame
+                :current-window
+                :display-width
+                :display-height
+                ;; Cursor
+                :window-cursor-x
+                :window-cursor-y
+                ;; Line content
+                :line-string
+                :end-buffer-p
+                ;; Selection/Region
+                :buffer-mark
+                :mark-active-p
+                ;; Mode
+                :mode-name
+                :buffer-major-mode
+                :buffer-minor-modes
+                ;; Prompt window
+                :active-prompt-window
+                :frame-prompt-window
+                ;; Overlays (exported only)
+                :overlay-start
+                :overlay-end
+                :overlay-attribute
+                :overlay-buffer
+                ;; Attributes
+                :attribute-foreground
+                :attribute-background
+                :attribute-bold
+                :attribute-underline
+                :attribute-reverse
+                ;; Header windows
+                :header-window-p
+                ;; Key input
+                :execute-key-sequence
+                :key-ctrl
+                :key-meta
+                :key-super
+                :key-hyper
+                :key-shift
+                :key-sym
+                ;; Errors
+                :editor-error
+                :editor-abort)
   (:export :*mcp-server-default-port*
            :*mcp-server-default-hostname*
            :current-mcp-server

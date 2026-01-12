@@ -12,12 +12,16 @@
                 :skk-input-mode
                 :skk-preedit
                 :skk-henkan-mode-p
+                :skk-henkan-start
                 :skk-henkan-key
                 :skk-okurigana-consonant
                 :skk-okurigana-kana
                 :skk-candidates
                 :skk-candidate-index
                 :clear-skk-state)
+  (:import-from :lem-skk-mode/conversion
+                :next-candidate
+                :prev-candidate)
   (:import-from :lem-fake-interface
                 :with-fake-interface))
 (in-package :lem-skk-mode/tests/main)
@@ -1172,4 +1176,189 @@ Uppercase starts henkan, Space would trigger conversion (simulated as henkan bou
               "Display text should be '出来る'"))
 
         ;; Cleanup
+        (kill-buffer buf)))))
+
+;;; ============================================================
+;;; Candidate Cycling Tests
+;;; ============================================================
+;;; These tests verify the fix for the candidate cycling bug where
+;;; candidates were accumulating instead of being replaced.
+;;; Bug: Space/x would show "漢字幹事" instead of replacing "漢字" with "幹事"
+
+(deftest test-candidate-cycling-replacement
+  (testing "Candidate cycling replaces instead of accumulates"
+    (with-fake-interface ()
+      (let ((buf (make-buffer "*skk-candidate-test*" :temporary t)))
+        (switch-to-buffer buf)
+        (erase-buffer buf)
+
+        ;; Set up SKK state with candidates
+        (let ((state (make-instance 'skk-state)))
+          (setf (buffer-value buf 'lem-skk-mode/state::skk-state) state)
+
+          ;; Set henkan start point
+          (setf (skk-henkan-start state)
+                (copy-point (buffer-point buf) :left-inserting))
+          (setf (skk-henkan-mode-p state) t)
+          (setf (skk-henkan-key state) "かんじ")
+          (setf (skk-candidates state) '("漢字" "幹事" "監事"))
+          (setf (skk-candidate-index state) 0)
+
+          ;; Show first candidate
+          (lem-skk-mode/conversion::show-candidate state 0)
+          (ok (equal (buffer-text buf) "漢字")
+              "First candidate should be '漢字'")
+
+          ;; Show second candidate - should REPLACE, not accumulate
+          (lem-skk-mode/conversion::show-candidate state 1)
+          (ok (equal (buffer-text buf) "幹事")
+              "Second candidate should replace to '幹事' (not '漢字幹事')")
+
+          ;; Show third candidate - should REPLACE again
+          (lem-skk-mode/conversion::show-candidate state 2)
+          (ok (equal (buffer-text buf) "監事")
+              "Third candidate should replace to '監事'")
+
+          ;; Go back to first - should still replace
+          (lem-skk-mode/conversion::show-candidate state 0)
+          (ok (equal (buffer-text buf) "漢字")
+              "Going back to first candidate should replace to '漢字'")
+
+          ;; Cleanup point
+          (when (skk-henkan-start state)
+            (delete-point (skk-henkan-start state))))
+
+        (kill-buffer buf)))))
+
+(deftest test-candidate-cycling-with-okurigana
+  (testing "Candidate cycling with okurigana replaces correctly"
+    (with-fake-interface ()
+      (let ((buf (make-buffer "*skk-okurigana-test*" :temporary t)))
+        (switch-to-buffer buf)
+        (erase-buffer buf)
+
+        (let ((state (make-instance 'skk-state)))
+          (setf (buffer-value buf 'lem-skk-mode/state::skk-state) state)
+
+          ;; Set up okurigana conversion: かk -> 書く, 描く
+          (setf (skk-henkan-start state)
+                (copy-point (buffer-point buf) :left-inserting))
+          (setf (skk-henkan-mode-p state) t)
+          (setf (skk-henkan-key state) "か")
+          (setf (skk-okurigana-consonant state) "k")
+          (setf (skk-okurigana-kana state) "く")
+          (setf (skk-candidates state) '("書" "描" "掻"))
+          (setf (skk-candidate-index state) 0)
+
+          ;; Show first candidate with okurigana
+          (lem-skk-mode/conversion::show-candidate state 0)
+          (ok (equal (buffer-text buf) "書く")
+              "First candidate with okurigana: '書く'")
+
+          ;; Second candidate - should replace entire text
+          (lem-skk-mode/conversion::show-candidate state 1)
+          (ok (equal (buffer-text buf) "描く")
+              "Second candidate should replace to '描く' (not '書く描く')")
+
+          ;; Third candidate
+          (lem-skk-mode/conversion::show-candidate state 2)
+          (ok (equal (buffer-text buf) "掻く")
+              "Third candidate should replace to '掻く'")
+
+          (when (skk-henkan-start state)
+            (delete-point (skk-henkan-start state))))
+
+        (kill-buffer buf)))))
+
+(deftest test-next-prev-candidate-functions
+  (testing "next-candidate and prev-candidate cycle correctly"
+    (with-fake-interface ()
+      (let ((buf (make-buffer "*skk-next-prev-test*" :temporary t)))
+        (switch-to-buffer buf)
+        (erase-buffer buf)
+
+        (let ((state (make-instance 'skk-state)))
+          (setf (buffer-value buf 'lem-skk-mode/state::skk-state) state)
+
+          ;; Set up state
+          (setf (skk-henkan-start state)
+                (copy-point (buffer-point buf) :left-inserting))
+          (setf (skk-henkan-mode-p state) t)
+          (setf (skk-henkan-key state) "かんじ")
+          (setf (skk-candidates state) '("漢字" "幹事" "監事"))
+          (setf (skk-candidate-index state) 0)
+
+          ;; Show initial candidate
+          (lem-skk-mode/conversion::show-candidate state 0)
+          (ok (equal (buffer-text buf) "漢字") "Initial: 漢字")
+
+          ;; next-candidate
+          (next-candidate state)
+          (ok (equal (buffer-text buf) "幹事") "After next: 幹事")
+          (ok (= (skk-candidate-index state) 1) "Index should be 1")
+
+          ;; next-candidate again
+          (next-candidate state)
+          (ok (equal (buffer-text buf) "監事") "After next: 監事")
+          (ok (= (skk-candidate-index state) 2) "Index should be 2")
+
+          ;; next-candidate wraps around
+          (next-candidate state)
+          (ok (equal (buffer-text buf) "漢字") "After wrap: 漢字")
+          (ok (= (skk-candidate-index state) 0) "Index should wrap to 0")
+
+          ;; prev-candidate
+          (prev-candidate state)
+          (ok (equal (buffer-text buf) "監事") "After prev: 監事")
+          (ok (= (skk-candidate-index state) 2) "Index should wrap to 2")
+
+          ;; prev-candidate again
+          (prev-candidate state)
+          (ok (equal (buffer-text buf) "幹事") "After prev: 幹事")
+          (ok (= (skk-candidate-index state) 1) "Index should be 1")
+
+          (when (skk-henkan-start state)
+            (delete-point (skk-henkan-start state))))
+
+        (kill-buffer buf)))))
+
+(deftest test-candidate-cycling-with-existing-text
+  (testing "Candidate cycling works when buffer has existing text"
+    (with-fake-interface ()
+      (let ((buf (make-buffer "*skk-existing-text-test*" :temporary t)))
+        (switch-to-buffer buf)
+        (erase-buffer buf)
+
+        ;; Insert some existing text first
+        (insert-string (buffer-point buf) "これは")
+
+        (let ((state (make-instance 'skk-state)))
+          (setf (buffer-value buf 'lem-skk-mode/state::skk-state) state)
+
+          ;; Set henkan start point at current position (after "これは")
+          (setf (skk-henkan-start state)
+                (copy-point (buffer-point buf) :left-inserting))
+          (setf (skk-henkan-mode-p state) t)
+          (setf (skk-henkan-key state) "ほん")
+          (setf (skk-candidates state) '("本" "翻" "奔"))
+          (setf (skk-candidate-index state) 0)
+
+          ;; Show first candidate
+          (lem-skk-mode/conversion::show-candidate state 0)
+          (ok (equal (buffer-text buf) "これは本")
+              "Buffer should have existing text + first candidate")
+
+          ;; Cycle to second - only candidate part should be replaced
+          (lem-skk-mode/conversion::show-candidate state 1)
+          (ok (equal (buffer-text buf) "これは翻")
+              "Only candidate should be replaced, existing text preserved")
+
+          ;; Cycle to third
+          (lem-skk-mode/conversion::show-candidate state 2)
+          (ok (equal (buffer-text buf) "これは奔")
+              "Candidate replacement should work correctly")
+
+          (when (skk-henkan-start state)
+            (delete-point (skk-henkan-start state))))
+
         (kill-buffer buf)))))

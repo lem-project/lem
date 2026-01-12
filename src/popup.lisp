@@ -38,12 +38,14 @@
                                 print-spec
                                 style
                                 max-display-items)
-  "Creates a popup-menu at the cursor position and displays it.  Used for things such as completions.
-`items` :: is a list of anything, but print-spec must be able to turn it into a string.
-`action-callback` :: function taking an item (from `items`) as a parameter.  It is run once an item is selected.
-`print-spec` :: A function taking an `item` as a paremeter and returns it's string representation.
-`style` :: TODO
-`max-display-items` :: integer limiting the number of items that can be displayed at once."
+  "Creates a popup-menu at the cursor position and displays it.  Used for things
+ such as completions.
+
+  - `items`: is a list of anything, but print-spec must be able to turn it into a string.
+  - `action-callback`: function taking an item (from `items`) as a parameter.  It is run once an item is selected.
+  - `print-spec`: A function taking an `item` as a paremeter and returns it's string representation.
+  - `style`: No Documentation
+  - `max-display-items`: integer limiting the number of items that can be displayed at once."
   (declare (ignore action-callback print-spec style max-display-items))
   (apply #'lem-if:display-popup-menu (implementation)
          items

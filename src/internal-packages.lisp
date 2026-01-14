@@ -470,10 +470,13 @@
   (:export
    :*keymaps*
    :keymap
+   :keymap*
+   :*root-keymap*
    :keymap-name
    :keymap-parent
    :keymap-undef-hook
    :make-keymap
+   :make-prefix
    :*global-keymap*
    :define-key
    :define-keys
@@ -489,7 +492,9 @@
    :with-special-keymap
    :traverse-keymap
    :compute-keymaps
-   :collect-command-keybindings)
+   :collect-command-keybindings
+   :keymap-add-child
+   :keymap-add-prefix)
   ;; reexport common/timer
   (:export
    :timer

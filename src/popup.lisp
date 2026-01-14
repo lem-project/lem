@@ -38,14 +38,37 @@
                                 print-spec
                                 style
                                 max-display-items)
-  "Creates a popup-menu at the cursor position and displays it.  Used for things
- such as completions.
+  "Create a popup-menu and display it.
 
-  - `items`: is a list of anything, but print-spec must be able to turn it into a string.
+  By default, create it at the cursor position, but obey the :gravity of STYLE.
+
+  Used for things such as completions.
+
+  - `items`: a list of anything, but PRINT-SPEC must be able to turn it into a string.
   - `action-callback`: function taking an item (from `items`) as a parameter.  It is run once an item is selected.
-  - `print-spec`: A function taking an `item` as a paremeter and returns it's string representation.
-  - `style`: No Documentation
-  - `max-display-items`: integer limiting the number of items that can be displayed at once."
+  - `print-spec`: a function taking an `item` as a paremeter and returning its string representation.
+  - style: a STYLE struct or a plist of args that is applied to MAKE-STYLE. Defaults to *STYLE*: uses borders and has no offset on the Y axis.
+
+      Example: '(:use-border t :offset-y 0)
+
+      Other properties include: :gravity (default: :cursor), :background-color, :offset-x, :cursor-invisible, :shape.
+
+      Other gravity possibilities are (see `ensure-gravity`):
+
+        :center
+        :top-display
+        :bottom-display
+        :top
+        :topright
+        :cursor
+        :follow-cursor
+        :mouse-cursor
+        :vertically-adjacent-window
+        :vertically-adjacent-window-dynamic
+        :horizontally-adjacent-window
+        :horizontally-above-window
+
+  - `max-display-items`: an integer limiting the number of items that can be displayed at once."
   (declare (ignore action-callback print-spec style max-display-items))
   (apply #'lem-if:display-popup-menu (implementation)
          items

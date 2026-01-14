@@ -134,7 +134,9 @@ PIXEL-X, PIXEL-Y, PIXEL-WIDTH, PIXEL-HEIGHT are in pixels (may be nil for auto-c
                                        &key action-callback
                                             print-spec
                                             style
-                                            max-display-items))
+                                         max-display-items)
+  (:documentation "Create a popup-menu and display it. See `display-popup-menu`."))
+
 (defgeneric lem-if:popup-menu-update
     (implementation popup-menu items &key print-spec max-display-items keep-focus))
 (defgeneric lem-if:popup-menu-quit (implementation popup-menu))

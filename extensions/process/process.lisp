@@ -25,7 +25,7 @@
     :reader process-output-callback-type)))
 
 (defun run-process (command &key name output-callback output-callback-type directory)
-  "Starts runs an external program as a separate thread.
+  "Runs an external program as a separate thread.
 - `command`: can simply be a string naming the command to run.  If you need to
   pass arguments to the command, then `command` must be a list of strings.  Each string will be its own
   arg.  These args are not parsed by a shell, so you cannot combine tokens, such as a flag and its value.

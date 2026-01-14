@@ -468,13 +468,12 @@
    :paste-using-mode)
   ;; keymap.lisp
   (:export
-   :*keymaps*
    :keymap
    :keymap*
    :*root-keymap*
    :keymap-name
-   :keymap-parent
    :keymap-undef-hook
+   :keymap-activate
    :make-keymap
    :make-prefix
    :*global-keymap*

@@ -76,16 +76,18 @@
        (set-last-mouse-event event)
        (find-mouse-command event))
       (key
-       (let* ((cmd (lookup-keybind event))
+       (let* ((result (lookup-keybind event))
               (kseq (list event)))
          (loop
-           (cond ((prefix-command-p cmd)
+           (cond ((prefix-command-p result)
+                  (when (typep result 'keymap)
+                    (keymap-activate result))
                   (let ((event (read-key)))
                     (setf kseq (nconc kseq (list event)))
-                    (setf cmd (lookup-keybind kseq))))
+                    (setf result (lookup-keybind kseq))))
                  (t
                   (set-last-read-key-sequence kseq)
-                  (return cmd)))))))))
+                  (return result)))))))))
 
 (defun read-key-sequence ()
   (read-command)

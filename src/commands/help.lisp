@@ -38,7 +38,6 @@
                                            column-width
                                            (keyseq-to-string kseq)
                                            (symbol-name command)))))
-              (setf keymap (keymap-parent keymap))
               (terpri s))))
 
 (define-command describe-bindings () ()

@@ -41,6 +41,7 @@
 
 (define-major-mode typescript-mode lem/language-mode:language-mode
     (:name "TypeScript"
+     :description "Major mode for editing TypeScript (.ts) files with tree-sitter based syntax highlighting."
      :keymap *typescript-mode-keymap*
      :syntax-table *typescript-syntax-table*
      :mode-hook *typescript-mode-hook*
@@ -57,6 +58,7 @@
 
 (define-major-mode tsx-mode lem/language-mode:language-mode
     (:name "TSX"
+     :description "Major mode for editing TSX (.tsx) files with tree-sitter based syntax highlighting and JSX support."
      :keymap *tsx-mode-keymap*
      :syntax-table *tsx-syntax-table*
      :mode-hook *tsx-mode-hook*

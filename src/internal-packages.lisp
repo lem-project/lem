@@ -469,13 +469,22 @@
   ;; keymap.lisp
   (:export
    :keymap
+   :prefix
    :keymap*
    :*root-keymap*
+   :prefix-active-p
    :keymap-name
+   :keymap-children
+   :keymap-properties
+   :parse-keyspec
+   :prefix-properties
    :keymap-undef-hook
    :keymap-activate
    :make-keymap
    :make-prefix
+   :prefix-description
+   :prefix-key
+   :prefix-suffix
    :*global-keymap*
    :define-key
    :define-keys

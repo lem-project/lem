@@ -86,6 +86,7 @@
                     (setf kseq (nconc kseq (list event)))
                     (setf result (lookup-keybind kseq))))
                  (t
+                  (keymap-activate *root-keymap*)
                   (set-last-read-key-sequence kseq)
                   (return result)))))))))
 

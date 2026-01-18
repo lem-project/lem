@@ -108,6 +108,9 @@ completion interface if present."
                  (or (prefix-description suffix) "+prefix"))
                 (t (princ-to-string suffix)))))))
 
+(defgeneric prefix-render (prefix)
+  (:documentation "return a layout item that should be displayed for the prefix in the popup."))
+
 (defmethod prefix-render ((prefix prefix))
   (make-layout-item
    :key (princ-to-string (prefix-key prefix))

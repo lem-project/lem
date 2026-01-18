@@ -1,6 +1,7 @@
 (in-package :transient)
 
 (defmethod keymap-activate ((keymap keymap))
+  "called when a keymap is activated by the event scheduler."
   (log:info "keymap ~A activated" keymap)
   (show-transient keymap))
 
@@ -24,20 +25,23 @@ if DEFAULT-VALUE is provided and non-nil, it is used as the default for getf."
        (defmethod (setf ,getter-name) (val (,obj-sym ,class-name))
          (setf (getf (,properties-accessor ,obj-sym) ,keyword) val)))))
 
+;; these are properties that we want to be "dynamic", as in can be assigned a function that
+;; returns the value later instead of the value itself.
 (add-dynamic-property keymap keymap-properties show-p t)
 (add-dynamic-property prefix prefix-properties show-p t)
 
 (defgeneric prefix-render (prefix)
   (:documentation "render prefix into a layout item. returns nil to use default rendering."))
 
-;; should return :row or :column
 (defmethod keymap-display-style ((keymap keymap))
+  "should return :row or :column. used to construct the display"
   (getf (keymap-properties keymap) :display-style :row))
 
 (defmethod (setf keymap-display-style) (val (keymap keymap))
   (setf (getf (keymap-properties keymap) :display-style) val))
 
 (defclass choice (prefix)
+  "a prefix that may take on different values."
   ((choices
     :accessor prefix-choices)))
 
@@ -45,6 +49,7 @@ if DEFAULT-VALUE is provided and non-nil, it is used as the default for getf."
   `(defparameter ,name (parse-transient ',bindings)))
 
 (defun parse-transient (bindings)
+  "defines a transient menu. args yet to be documented."
   (let ((keymap (make-keymap)))
     (loop for tail = bindings then (cdr tail)
           while tail

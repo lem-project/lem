@@ -49,36 +49,29 @@ the underlying storage slot is renamed with a '*' suffix."
     :documentation "the key defined for the prefix. could be a function that returns a key.")
    (description
     :initarg :description
-    :accessor prefix-description)
+    :dynamic t
+    :initform nil)
    (suffix
     :initarg :suffix
-    :accessor prefix-suffix
+    :dynamic t
     :documentation "the suffix defined for the prefix, could be another prefix or a keymap or a function that returns one.")
-   (show-p
-    :initarg :show-p
-    :accessor prefix-show-p
-    :documentation "whether to show the children menu."
-    :initform nil)
-   (hidden-p
-    :initarg :hidden-p
-    :accessor prefix-hidden-p
-    :documentation "whether to hide/show a prefix in its parent menu."
-    :initform nil)
    (active-p
     :initarg :active-p
-    :accessor prefix-active-p
+    :dynamic t
     :documentation "whether a prefix is active."
     :initform t)
-   (metadata
-    :initarg :metadata
-    :accessor prefix-metadata
+   (properties
+    :initarg :properties
+    :accessor prefix-properties
+    :initform nil
     :documentation "extra metadata that a prefix may hold.")))
 
-(defun make-prefix (&key key suffix)
+(defun make-prefix (&key key suffix description)
   (let ((prefix (make-instance
                  'prefix
                  :key key
-                 :suffix suffix)))
+                 :suffix suffix
+                 :description description)))
     prefix))
 
 (defclass-dynamic keymap ()
@@ -87,17 +80,35 @@ the underlying storage slot is renamed with a '*' suffix."
     :initarg :children
     :dynamic t
     :initform nil
-    :documentation "the children of the keymap. could be a function that returns a list of children.")))
+    :documentation "the children of the keymap. could be a function that returns a list of children.")
+   (properties
+    :initarg :properties
+    :accessor keymap-properties
+    :initform nil
+    :documentation "additional metadata that a keymap holds.")
+   (description
+    :initarg :description
+    :dynamic t
+    :initform nil)
+   (active-p
+    :initarg :active-p
+    :dynamic t
+    :documentation "whether a prefix is active."
+    :initform t)))
 
-(defmethod keymap-add-prefix ((keymap keymap) (prefix prefix))
+(defmethod keymap-add-prefix ((keymap keymap) (prefix prefix) &optional after)
   (unless (listp (keymap-children* keymap))
     (error "trying to add key to a non-static keymap."))
-  (push prefix (keymap-children* keymap)))
+  (if after
+      (setf (keymap-children* keymap) (append (keymap-children* keymap) (list prefix)))
+      (push prefix (keymap-children* keymap))))
 
-(defmethod keymap-add-child ((keymap keymap) (keymap2 keymap))
+(defmethod keymap-add-child ((keymap keymap) (keymap2 keymap) &optional after)
   (unless (listp (keymap-children* keymap))
     (error "trying to add nested keymap to a non-static keymap."))
-  (push keymap2 (keymap-children* keymap)))
+  (if after
+      (setf (keymap-children* keymap) (append (keymap-children* keymap) (list keymap2)))
+      (push keymap2 (keymap-children* keymap))))
 
 (defgeneric prefix-p (keymap)
   (:documentation "check whether this is a prefix of another prefix.
@@ -185,7 +196,7 @@ Example: (define-key *global-keymap* \"C-'\" 'list-modes)"
   `(progn ,@(mapcar
              (lambda (binding)
                `(define-key ,keymap
-                  ,(first binding)
+                    ,(first binding)
                   ,(second binding)))
              bindings)))
 
@@ -305,11 +316,13 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
 (defun find-matching-prefixes (binding key)
   "find prefixes in children that match KEY."
   (cond ((typep binding 'prefix)
-         (when (equal (prefix-key binding) key)
+         (when (and (prefix-active-p binding)
+                    (equal (prefix-key binding) key))
            (list binding)))
         ((typep binding 'keymap)
-         (loop for item in (keymap-children binding)
-               append (find-matching-prefixes item key)))))
+         (when (keymap-active-p binding)
+           (loop for item in (keymap-children binding)
+                 append (find-matching-prefixes item key))))))
 
 (defun find-in-function-table (binding key)
   "search function-table of keymaps in hierarchy for KEY."
@@ -336,7 +349,7 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
   (declare (ignore binding))
   (loop for km in (all-keymaps)
         when (and (typep km 'keymap*) (keymap-undef-hook km))
-        return (keymap-undef-hook km)))
+          return (keymap-undef-hook km)))
 
 (defmethod find-suffix ((keymap keymap) keyseq)
   "search KEYMAP tree for exact binding matching KEYSEQ."
@@ -358,15 +371,15 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
                   (key (list key))
                   (list key))))
     (or ;; search children prefixes
-        (find-suffix keymap keyseq)
-        ;; search function-table in hierarchy
-        (find-in-function-table keymap (car keyseq))
-        ;; check function-table for cmd symbol
-        (gethash cmd (keymap-function-table keymap))
-        ;; find undef-hook in hierarchy (e.g. self-insert)
-        (find-undef-hook-in-hierarchy keymap)
-        ;; return cmd as fallback
-        cmd)))
+     (find-suffix keymap keyseq)
+     ;; search function-table in hierarchy
+     (find-in-function-table keymap (car keyseq))
+     ;; check function-table for cmd symbol
+     (gethash cmd (keymap-function-table keymap))
+     ;; find undef-hook in hierarchy (e.g. self-insert)
+     (find-undef-hook-in-hierarchy keymap)
+     ;; return cmd as fallback
+     cmd)))
 
 (defun insertion-key-p (key)
   (let* ((key (typecase key

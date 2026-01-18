@@ -2,9 +2,9 @@
 
 (defvar *transient-popup-window* nil)
 
-(defvar *transient-popup-max-lines* 20)
-
-(defvar *transient-popup-max-width* 80)
+(defvar *transient-popup-max-lines*
+  15
+  "max height of the transient buffer (measured in lines).")
 
 (defparameter *transient-window-margin* 4
   "margin in columns from the edge of the screen.")
@@ -98,6 +98,7 @@ completion interface if present."
   (key-width 0))
 
 (defun get-description (prefix)
+  "returns a description for an entry that could be a prefix or a keymap."
   (let ((desc (prefix-description prefix)))
     (if desc
         (princ-to-string desc)
@@ -299,6 +300,7 @@ key-width is used for even key spacing in items."
              (insert-segment-line point line))))
 
 (defmethod show-transient ((keymap keymap))
+  "show the transient popup. creates a window if it hasnt been created yet."
   (let* ((existing-window (and (not (deleted-window-p *transient-popup-window*))
                                *transient-popup-window*))
          (buffer (if existing-window

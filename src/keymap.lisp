@@ -128,6 +128,10 @@ a prefix is a prefix of another if its a keymap or if its suffix is a prefix."))
   (:method ((keymap t))
     nil))
 
+(defgeneric prefix-invoke (prefix)
+  (:documentation "a hook for when a prefix is reached.")
+  (:method ((prefix t)) nil))
+
 (deftype key-sequence ()
   '(trivial-types:proper-list key))
 
@@ -352,34 +356,39 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
           return (keymap-undef-hook km)))
 
 (defmethod find-suffix ((keymap keymap) keyseq)
-  "search KEYMAP tree for exact binding matching KEYSEQ."
-  (labels ((search-tree (binding keys)
+  "search KEYMAP tree for exact binding matching KEYSEQ. returns (suffix . prefix)"
+  (labels ((search-tree (binding keys parent-prefix)
              (if (null keys)
                  (if (typep binding 'prefix)
-                     (prefix-suffix binding)
-                     binding)
+                     (cons (prefix-suffix binding) binding)
+                     (when binding
+                       (cons binding parent-prefix)))
                  ;; try all matches and return first successful result
                  (loop for match in (find-matching-prefixes binding (car keys))
-                       for result = (search-tree (prefix-suffix match) (cdr keys))
+                       for result = (search-tree (prefix-suffix match) (cdr keys) match)
                        when result return result))))
-    (search-tree keymap keyseq)))
+    (search-tree keymap keyseq nil)))
 
 ;; this is currently here for backwards compatibility
 ;; im not yet sure whether 'cmd' or function-table lookup is necessary (i think so but im not sure how to get rid of it.)
 (defmethod keymap-find-keybind ((keymap keymap) key cmd)
+  "finds key sequence in keymap, returns (suffix . prefix)."
   (let ((keyseq (etypecase key
                   (key (list key))
                   (list key))))
     (or ;; search children prefixes
      (find-suffix keymap keyseq)
-     ;; search function-table in hierarchy
-     (find-in-function-table keymap (car keyseq))
-     ;; check function-table for cmd symbol
-     (gethash cmd (keymap-function-table keymap))
-     ;; find undef-hook in hierarchy (e.g. self-insert)
-     (find-undef-hook-in-hierarchy keymap)
-     ;; return cmd as fallback
-     cmd)))
+     (cons
+      (or
+       ;; search function-table in hierarchy
+       (find-in-function-table keymap (car keyseq))
+       ;; check function-table for cmd symbol
+       (gethash cmd (keymap-function-table keymap))
+       ;; find undef-hook in hierarchy (e.g. self-insert)
+       (find-undef-hook-in-hierarchy keymap)
+       ;; return cmd as fallback
+       cmd)
+      nil))))
 
 (defun insertion-key-p (key)
   (let* ((key (typecase key

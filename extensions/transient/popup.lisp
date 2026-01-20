@@ -1,15 +1,18 @@
 (in-package :transient)
 
-(defvar *transient-popup-window* nil)
+(defvar *transient-popup-window*
+  nil)
 
 (defvar *transient-popup-max-lines*
   15
   "max height of the transient buffer (measured in lines).")
 
-(defparameter *transient-window-margin* 4
+(defparameter *transient-window-margin*
+  4
   "margin in columns from the edge of the screen.")
 
-(defparameter *transient-column-separator* " | "
+(defparameter *transient-column-separator*
+  " | "
   "string used to separate columns in row layout.")
 
 (define-attribute transient-key-attribute
@@ -33,6 +36,11 @@
   (t
    :foreground (attribute-foreground (ensure-attribute 'syntax-comment-attribute))
    :background (attribute-background (ensure-attribute 'syntax-comment-attribute))))
+
+(define-attribute transient-value-attribute
+  (t
+   :foreground (attribute-foreground (ensure-attribute 'syntax-constant-attribute))
+   :bold t))
 
 ;; custom floating window class that repositions on each redraw
 (defclass transient-popup-window (floating-window)
@@ -119,13 +127,13 @@ completion interface if present."
 
 (defmethod prefix-render ((prefix choice))
   (let* ((desc (get-description prefix))
-         (choices (prefix-choices prefix))
-         (choices-str (format nil "~{~A~^/~}" choices)))
+         (value (prefix-value prefix))
+         (value-str (princ-to-string value)))
     (let ((description-segments
             (list (cons desc nil)
                   (cons " " nil)
                   (cons "[" 'transient-bracket-attribute)
-                  (cons choices-str nil)
+                  (cons value-str 'transient-value-attribute)
                   (cons "]" 'transient-bracket-attribute))))
       (make-layout-item
        :key (princ-to-string (prefix-key prefix))
@@ -314,7 +322,7 @@ key-width is used for even key spacing in items."
         (render-layout-to-buffer layout (buffer-point buffer))
         (insert-string (buffer-point buffer) "(no bindings)"))
     (buffer-start (buffer-point buffer))
-    (log:info "buffer text:~%~A" (buffer-text buffer))
+    ;; (log:info "buffer text:~%~A" (buffer-text buffer))
     (let* ((width (min (lem/popup-window::compute-buffer-width buffer)
                        (- (display-width) (* 2 *transient-window-margin*))))
            (height (min (lem/popup-window::compute-buffer-height buffer)

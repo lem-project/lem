@@ -34,6 +34,7 @@
              (:key "l"
               :type :choice
               :choices ("lisp" "python" "js")
+              :value "python"
               :description "mode"))
             (:keymap
              :description "editor"

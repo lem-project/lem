@@ -77,18 +77,36 @@
        (find-mouse-command event))
       (key
        (let* ((result (lookup-keybind event))
+              (prefix)
+              (suffix)
               (kseq (list event)))
          (loop
-           (cond ((prefix-command-p result)
-                  (when (typep result 'keymap)
-                    (keymap-activate result))
+           (setf suffix (car result))
+           (setf prefix (cdr result))
+           (cond ((prefix-command-p suffix)
+                  (when prefix
+                    (prefix-invoke prefix))
+                  (when (typep suffix 'keymap)
+                    (keymap-activate suffix))
                   (let ((event (read-key)))
                     (setf kseq (nconc kseq (list event)))
-                    (setf result (lookup-keybind kseq))))
+                    (setf result (lookup-keybind kseq))
+                    (setf suffix (car result))
+                    (setf prefix (cdr result))))
                  (t
-                  (keymap-activate *root-keymap*)
-                  (set-last-read-key-sequence kseq)
-                  (return result)))))))))
+                  (when prefix
+                    (prefix-invoke prefix))
+                  (if (eq suffix :drop)
+                      (progn
+                        (set-last-read-key-sequence (butlast kseq))
+                        (setf result (lookup-keybind (butlast kseq)))
+                        (setf suffix (car result))
+                        (setf prefix (cdr result))
+                        (setf kseq (butlast kseq)))
+                      (progn
+                        (set-last-read-key-sequence kseq)
+                        (keymap-activate *root-keymap*)
+                        (return suffix)))))))))))
 
 (defun read-key-sequence ()
   (read-command)
@@ -104,8 +122,9 @@
     (do-command-loop (:interactive nil)
       (when (null *unread-keys*)
         (return))
-      (let ((*this-command-keys* nil))
-        (call-command (read-command) nil)))))
+      (let* ((*this-command-keys* nil)
+             (cmd (read-command)))
+        (call-command cmd nil)))))
 
 (defun sit-for (seconds &optional (update-window-p t) (force-update-p nil))
   (when update-window-p (redraw-display :force force-update-p))

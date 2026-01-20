@@ -502,7 +502,8 @@
    :compute-keymaps
    :collect-command-keybindings
    :keymap-add-child
-   :keymap-add-prefix)
+   :keymap-add-prefix
+   :prefix-invoke)
   ;; reexport common/timer
   (:export
    :timer

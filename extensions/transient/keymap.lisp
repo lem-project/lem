@@ -2,7 +2,6 @@
 
 (defmethod keymap-activate ((keymap keymap))
   "called when a keymap is activated by the event scheduler."
-  (log:info "keymap ~A activated" keymap)
   (show-transient keymap))
 
 (defmacro add-dynamic-property (class-name properties-accessor property-name &optional default-value)
@@ -41,9 +40,32 @@ if DEFAULT-VALUE is provided and non-nil, it is used as the default for getf."
   (setf (getf (keymap-properties keymap) :display-style) val))
 
 (defclass choice (prefix)
-  "a prefix that may take on different values."
   ((choices
-    :accessor prefix-choices)))
+    :accessor prefix-choices)
+   (value))
+  (:documentation "a prefix that may take on different values."))
+
+(defmethod prefix-value ((choice choice))
+  (if (slot-boundp choice 'value)
+      (slot-value choice 'value)
+      (car (prefix-choices choice))))
+
+(defmethod prefix-suffix ((choice choice))
+  :drop)
+
+(defmethod (setf prefix-value) (new-value (choice choice))
+  (setf (slot-value choice 'value) new-value))
+
+(defmethod prefix-invoke ((choice choice))
+  (let* ((choices (prefix-choices choice))
+         (current-value (prefix-value choice))
+         (position (position current-value choices :test 'equal)))
+    (let ((new-value (if position
+                         ;; mod is to wrap around to 0. :D
+                         (elt choices (mod (1+ position) (length choices)))
+                         (first choices))))
+      (log:info "switching to value ~A~%" new-value)
+      (setf (prefix-value choice) new-value))))
 
 (defmacro define-transient (name &body bindings)
   `(defparameter ,name (parse-transient ',bindings)))

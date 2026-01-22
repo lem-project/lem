@@ -165,7 +165,7 @@
 
 (defun filer-buffer ()
   "Return the Filer buffer if it exists, or nil."
-  (alexandria:when-let ((window (lem-core::frame-leftside-window (current-frame))))
+  (alexandria:when-let ((window (frame-leftside-window (current-frame))))
     (let ((buffer (window-buffer window)))
       (when (eq 'filer-mode (buffer-major-mode buffer))
         buffer))))

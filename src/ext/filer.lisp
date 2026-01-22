@@ -1,5 +1,15 @@
 (defpackage :lem/filer
-  (:use :cl :lem))
+  (:use :cl :lem)
+  (:export :subdirectory-p
+           :expand-to-directory
+           :expand-directory-item
+           :find-child-directory-item
+           :create-directory-item
+           :directory-item
+           :directory-item-open-p
+           :directory-item-children
+           :file-item
+           :item-pathname))
 (in-package :lem/filer)
 
 (define-attribute triangle-attribute

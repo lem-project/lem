@@ -1,9 +1,22 @@
 (defpackage :lem/filer
-  (:use :cl :lem))
+  (:use :cl :lem)
+  (:export :subdirectory-p
+           :expand-to-directory
+           :expand-directory-item
+           :find-child-directory-item
+           :create-directory-item
+           :directory-item
+           :directory-item-open-p
+           :directory-item-children
+           :file-item
+           :item-pathname))
 (in-package :lem/filer)
 
 (define-attribute triangle-attribute
   (t :bold t :foreground :base0D))
+
+(define-attribute current-file-attribute
+  (t :bold t :background :base01))
 
 (define-major-mode filer-mode ()
     (:name "Filer"
@@ -155,10 +168,111 @@
 (defun filer-active-p ()
   (and (lem-core::frame-leftside-window (current-frame))
        (eq 'filer-mode
-           (buffer-major-mode 
+           (buffer-major-mode
             (window-buffer
              (lem-core::frame-leftside-window
               (current-frame)))))))
+
+(defun filer-buffer ()
+  "Return the Filer buffer if it exists, or nil."
+  (alexandria:when-let ((window (frame-leftside-window (current-frame))))
+    (let ((buffer (window-buffer window)))
+      (when (eq 'filer-mode (buffer-major-mode buffer))
+        buffer))))
+
+(defun filer-current-directory ()
+  "Return the root directory of the current Filer, or nil if Filer is not active."
+  (when (filer-active-p)
+    (alexandria:when-let ((buffer (filer-buffer)))
+      (alexandria:when-let ((root (root-item buffer)))
+        (item-pathname root)))))
+
+(defun subdirectory-p (child parent)
+  "Return T if CHILD is a subdirectory of PARENT."
+  (let ((child-str (namestring child))
+        (parent-str (namestring parent)))
+    (and (> (length child-str) (length parent-str))
+         (string= parent-str child-str :end2 (length parent-str)))))
+
+(defun find-child-directory-item (parent-item target-dir)
+  "Find a child directory-item in PARENT-ITEM that is on the path to TARGET-DIR."
+  (loop :for child :in (directory-item-children parent-item)
+        :when (and (typep child 'directory-item)
+                   (let ((child-path (item-pathname child)))
+                     (or (uiop:pathname-equal child-path target-dir)
+                         (subdirectory-p target-dir child-path))))
+          :return child))
+
+(defun expand-directory-item (item)
+  "Expand a directory-item if not already expanded."
+  (unless (directory-item-open-p item)
+    (setf (directory-item-open-p item) t)
+    (setf (directory-item-children item)
+          (create-directory-children (item-pathname item)))))
+
+(defun expand-to-directory (root-item target-dir)
+  "Expand the tree from ROOT-ITEM to TARGET-DIR.
+Returns T if expansion was performed, NIL otherwise."
+  (let ((root-path (item-pathname root-item)))
+    (when (or (uiop:pathname-equal root-path target-dir)
+              (subdirectory-p target-dir root-path))
+      (expand-directory-item root-item)
+      (loop :for current-item := root-item
+              :then next-item
+            :for next-item := (find-child-directory-item current-item target-dir)
+            :while next-item
+            :do (expand-directory-item next-item)
+            :finally (return t)))))
+
+(defun current-file-overlay (buffer)
+  "Get the current file highlight overlay for BUFFER."
+  (buffer-value buffer 'current-file-overlay))
+
+(defun (setf current-file-overlay) (overlay buffer)
+  "Set the current file highlight overlay for BUFFER."
+  (setf (buffer-value buffer 'current-file-overlay) overlay))
+
+(defun clear-current-file-highlight (filer-buf)
+  "Clear the current file highlight in FILER-BUF."
+  (alexandria:when-let ((overlay (current-file-overlay filer-buf)))
+    (delete-overlay overlay)
+    (setf (current-file-overlay filer-buf) nil)))
+
+(defun highlight-file-in-filer (filer-buf file-path)
+  "Highlight FILE-PATH in FILER-BUF and move point to it."
+  (clear-current-file-highlight filer-buf)
+  (with-point ((point (buffer-point filer-buf)))
+    (buffer-start point)
+    (loop :while (not (end-buffer-p point))
+          :do (back-to-indentation point)
+              (alexandria:when-let ((item (text-property-at point :item)))
+                (when (and (typep item 'file-item)
+                           (uiop:pathname-equal (item-pathname item) file-path))
+                  (with-point ((start point)
+                               (end point))
+                    (line-start start)
+                    (line-end end)
+                    (let ((overlay (make-overlay start end 'current-file-attribute)))
+                      (setf (current-file-overlay filer-buf) overlay)))
+                  (return)))
+              (unless (line-offset point 1)
+                (return)))))
+
+(defun sync-filer-to-buffer-directory (buffer)
+  "Sync the Filer to BUFFER's directory if Filer is active.
+Expands the tree to show the buffer's directory and highlights the current file."
+  (when (and (filer-active-p)
+             (not (eq 'filer-mode (buffer-major-mode buffer)))
+             (not (not-switchable-buffer-p buffer)))
+    (alexandria:when-let ((buffer-dir (ignore-errors (probe-file (buffer-directory buffer)))))
+      (alexandria:when-let ((filer-buf (filer-buffer)))
+        (alexandria:when-let ((root (root-item filer-buf)))
+          (when (expand-to-directory root buffer-dir)
+            (render filer-buf root))
+          (alexandria:when-let ((file-path (buffer-filename buffer)))
+            (highlight-file-in-filer filer-buf file-path)))))))
+
+(add-hook *switch-to-buffer-hook* 'sync-filer-to-buffer-directory)
 
 (defun deactive-filer ()
   (when (eq (current-window) (lem-core::frame-leftside-window (current-frame)))

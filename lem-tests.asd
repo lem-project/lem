@@ -73,6 +73,7 @@
                (:file "completion")
                (:file "command-line-arguments")
                (:file "window")
-               (:file "legit"))
+               (:file "legit")
+               (:file "filer"))
   :perform (test-op (o c)
                     (symbol-call :rove :run c)))

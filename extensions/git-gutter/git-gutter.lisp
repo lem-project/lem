@@ -271,7 +271,10 @@
             'git-gutter-on-change)
   ;; Add directory-mode support
   (add-directory-mode-inserter)
-  (update-all-directory-buffers))
+  (update-all-directory-buffers)
+  ;; Add filer support
+  (add-filer-inserter)
+  (update-filer-buffer))
 
 (defun disable-hook ()
   "Called when git-gutter-mode is disabled."
@@ -284,6 +287,9 @@
   (clear-all-buffers)
   ;; Remove directory-mode support and clear cache
   (remove-directory-mode-inserter)
+  ;; Remove filer support
+  (remove-filer-inserter)
+  (update-filer-buffer)
   (clear-directory-status-cache))
 
 (define-minor-mode git-gutter-mode
@@ -503,12 +509,56 @@
   "Clear the directory git status cache."
   (clrhash *directory-git-status-cache*))
 
+;;; Filer Git Status Support
+
+(defun insert-filer-git-status (point item root-directory)
+  "Inserter function for filer to show git status."
+  (let* ((pathname (lem/filer:item-pathname item))
+         (status (when (and pathname root-directory)
+                   (get-file-git-status pathname root-directory))))
+    (multiple-value-bind (char attr)
+        (status-to-display status)
+      (if attr
+          (insert-string point (format nil "~A " char) :attribute attr)
+          (insert-string point "  ")))))
+
+(defun add-filer-inserter ()
+  "Add git status inserter to filer."
+  (when (find-package :lem/filer)
+    (let ((inserters (find-symbol "*FILER-ITEM-INSERTERS*" :lem/filer)))
+      (when (and inserters (boundp inserters))
+        (unless (member #'insert-filer-git-status (symbol-value inserters))
+          (push #'insert-filer-git-status (symbol-value inserters)))))))
+
+(defun remove-filer-inserter ()
+  "Remove git status inserter from filer."
+  (when (find-package :lem/filer)
+    (let ((inserters (find-symbol "*FILER-ITEM-INSERTERS*" :lem/filer)))
+      (when (and inserters (boundp inserters))
+        (setf (symbol-value inserters)
+              (remove #'insert-filer-git-status (symbol-value inserters)))))))
+
+(defun update-filer-buffer ()
+  "Update filer buffer to reflect git status changes."
+  (when (find-package :lem/filer)
+    (let ((filer-buffer-fn (find-symbol "FILER-BUFFER" :lem/filer))
+          (root-item-fn (find-symbol "ROOT-ITEM" :lem/filer))
+          (render-fn (find-symbol "RENDER" :lem/filer)))
+      (when (and filer-buffer-fn (fboundp filer-buffer-fn)
+                 root-item-fn (fboundp root-item-fn)
+                 render-fn (fboundp render-fn))
+        (alexandria:when-let ((buffer (funcall filer-buffer-fn)))
+          (alexandria:when-let ((root (funcall root-item-fn buffer)))
+            (funcall render-fn buffer root)))))))
+
 (define-command git-gutter-refresh-directory-status () ()
-  "Refresh git status cache for current directory buffer."
+  "Refresh git status cache for current directory buffer and filer."
   (let ((directory (buffer-directory (current-buffer))))
     (when directory
       (remhash (namestring directory) *directory-git-status-cache*)
       ;; Force redisplay of directory buffer if in directory-mode
       (when (eq (buffer-major-mode (current-buffer)) 'lem/directory-mode:directory-mode)
         (update-buffer (current-buffer)))
+      ;; Also update filer buffer
+      (update-filer-buffer)
       (message "Git status refreshed"))))

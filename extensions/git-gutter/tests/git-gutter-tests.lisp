@@ -370,3 +370,39 @@ D	deleted.lisp")
   "Test parsing empty output"
   (let ((status (gutter:parse-git-diff-name-status "")))
     (ok (= (hash-table-count status) 0) "Empty output should have no entries")))
+
+;;; Test filer integration functions
+
+(deftest test-filer-inserter-functions-exist
+  "Test that filer integration functions exist"
+  (ok (fboundp 'lem-git-gutter::insert-filer-git-status)
+      "insert-filer-git-status should be defined")
+  (ok (fboundp 'lem-git-gutter::add-filer-inserter)
+      "add-filer-inserter should be defined")
+  (ok (fboundp 'lem-git-gutter::remove-filer-inserter)
+      "remove-filer-inserter should be defined")
+  (ok (fboundp 'lem-git-gutter::update-filer-buffer)
+      "update-filer-buffer should be defined"))
+
+(deftest test-filer-inserter-registration
+  "Test that filer inserter can be added and removed"
+  (when (find-package :lem/filer)
+    (let* ((inserters-sym (find-symbol "*FILER-ITEM-INSERTERS*" :lem/filer))
+           (original-value (when (and inserters-sym (boundp inserters-sym))
+                             (symbol-value inserters-sym))))
+      (when (and inserters-sym (boundp inserters-sym))
+        (unwind-protect
+            (progn
+              ;; Clear and test add
+              (setf (symbol-value inserters-sym) '())
+              (lem-git-gutter::add-filer-inserter)
+              (ok (member #'lem-git-gutter::insert-filer-git-status
+                          (symbol-value inserters-sym))
+                  "insert-filer-git-status should be in *filer-item-inserters*")
+              ;; Test remove
+              (lem-git-gutter::remove-filer-inserter)
+              (ok (not (member #'lem-git-gutter::insert-filer-git-status
+                               (symbol-value inserters-sym)))
+                  "insert-filer-git-status should be removed from *filer-item-inserters*"))
+          ;; Restore original value
+          (setf (symbol-value inserters-sym) original-value))))))

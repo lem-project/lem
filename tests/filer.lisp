@@ -80,6 +80,27 @@
     (let ((root (create-directory-item #P"/tmp/")))
       (ng (expand-to-directory root #P"/var/")))))
 
+;;; Test *filer-item-inserters*
+(deftest filer-item-inserters-test
+  (testing "*filer-item-inserters* exists and is initially empty"
+    (ok (boundp 'lem/filer:*filer-item-inserters*))
+    (ok (listp lem/filer:*filer-item-inserters*)))
+
+  (testing "inserters can be added and removed"
+    (let ((original-value lem/filer:*filer-item-inserters*))
+      (unwind-protect
+          (let ((test-inserter (lambda (point item root-directory)
+                                 (declare (ignore point item root-directory)))))
+            ;; Add inserter
+            (push test-inserter lem/filer:*filer-item-inserters*)
+            (ok (member test-inserter lem/filer:*filer-item-inserters*))
+            ;; Remove inserter
+            (setf lem/filer:*filer-item-inserters*
+                  (remove test-inserter lem/filer:*filer-item-inserters*))
+            (ok (not (member test-inserter lem/filer:*filer-item-inserters*))))
+        ;; Restore original value
+        (setf lem/filer:*filer-item-inserters* original-value)))))
+
 ;;; Note: Tests for filer-active-p, filer-buffer, filer-current-directory,
 ;;; and highlight-file-in-filer are not included here because they require
 ;;; a full editor environment with *implementation* bound.

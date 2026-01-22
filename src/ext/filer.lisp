@@ -9,8 +9,16 @@
            :directory-item-open-p
            :directory-item-children
            :file-item
-           :item-pathname))
+           :item-pathname
+           :*filer-item-inserters*
+           :root-item
+           :render
+           :filer-buffer))
 (in-package :lem/filer)
+
+(defparameter *filer-item-inserters* '()
+  "List of functions to call before inserting filer items.
+Each function takes (point item root-directory) arguments.")
 
 (define-attribute triangle-attribute
   (t :bold t :foreground :base0D))
@@ -103,6 +111,11 @@
 (defun insert-item (point item)
   (with-point ((start point))
     (back-to-indentation start)
+    ;; Call registered inserters for pluggable extensions (e.g., git status)
+    (let ((root-directory (alexandria:when-let ((root (root-item (point-buffer point))))
+                            (item-pathname root))))
+      (dolist (inserter *filer-item-inserters*)
+        (funcall inserter point item root-directory)))
     (lem/directory-mode/internal::insert-icon point (item-pathname item))
     (insert-string point
                    (item-content item)

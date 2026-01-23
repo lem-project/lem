@@ -24,10 +24,43 @@ if DEFAULT-VALUE is provided and non-nil, it is used as the default for getf."
        (defmethod (setf ,getter-name) (val (,obj-sym ,class-name))
          (setf (getf (,properties-accessor ,obj-sym) ,keyword) val)))))
 
+(defmacro add-static-property (class-name properties-accessor property-name &optional default-value)
+  "define <CLASS-NAME>-<PROPERTY-NAME> getter and setter methods.
+
+the getter retrieves from PROPERTIES-ACCESSOR using :PROPERTY-NAME as key.
+the setter stores directly."
+  (let* ((keyword (intern (symbol-name property-name) :keyword))
+         (getter-name (intern (format nil "~A-~A" class-name property-name)))
+         (obj-sym (gensym "OBJ")))
+    `(progn
+       (defmethod ,getter-name ((,obj-sym ,class-name))
+         ,(if default-value
+              `(getf (,properties-accessor ,obj-sym) ,keyword ,default-value)
+              `(getf (,properties-accessor ,obj-sym) ,keyword)))
+       (defmethod (setf ,getter-name) (val (,obj-sym ,class-name))
+         (setf (getf (,properties-accessor ,obj-sym) ,keyword) val)))))
+
 ;; these are properties that we want to be "dynamic", as in can be assigned a function that
 ;; returns the value later instead of the value itself.
 (add-dynamic-property keymap keymap-properties show-p t)
 (add-dynamic-property prefix prefix-properties show-p t)
+;; static properties dont take a function that returns a value, just a value.
+(add-static-property prefix prefix-properties id)
+
+(defun find-prefix-by-id (keymap id)
+  (labels ((f (node)
+             (cond ((typep node 'keymap)
+                    (dolist (child (keymap-children node))
+                      (let ((res (f child)))
+                        (when res (return-from f res)))))
+                   ((typep node 'prefix)
+                    (if (eql (prefix-id node) id)
+                        node
+                        (let ((suffix (prefix-suffix node)))
+                          (when (or (typep suffix 'keymap)
+                                    (typep suffix 'prefix))
+                            (f suffix))))))))
+    (f keymap)))
 
 (defgeneric prefix-render (prefix)
   (:documentation "render prefix into a layout item. returns nil to use default rendering."))
@@ -99,14 +132,14 @@ if DEFAULT-VALUE is provided and non-nil, it is used as the default for getf."
                     (setf (prefix-suffix prefix) nil)
                     (loop for (key value) on (cddr binding) by 'cddr
                           ;; key-method is used for (setf prefix-<key-method> <value>)
-                          for key-method = (intern (format nil "PREFIX-~A" (string key)))
+                          for key-method = (intern (format nil "PREFIX-~A" (string key)) :transient)
                           do (let ((setf-expr `(setf (,key-method prefix) value))
                                    (final-value)
                                    (should-set t))
                                (cond
                                  ;; if the suffix is a keymap we need to parse recursively
                                  ((and (listp value) (eq (car value) :keymap))
-                                  (setf final-value (parse-transient value)))
+                                  (setf final-value (parse-transient (cdr value))))
                                  ((eq key :type)
                                   (setf should-set nil))
                                  (t

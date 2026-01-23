@@ -33,6 +33,7 @@
              :description "languages"
              (:key "l"
               :type :choice
+              :id :mode
               :choices ("lisp" "python" "js")
               :value "python"
               :description "mode"))
@@ -46,6 +47,11 @@
   (:key "d"
    :type :choice
    :choices ("on" "off")
-   :description "debug toggle"))
+   :description "debug toggle")
+  (:key "R" :suffix demo-run :description "run with mode"))
+
+(define-command demo-run () ()
+  (let ((mode-prefix (find-prefix-by-id *demo-keymap* :mode)))
+    (message "mode thing value: ~A" (prefix-value mode-prefix))))
 
 (define-key *global-keymap* "C-c t" *demo-keymap*)

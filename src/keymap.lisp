@@ -94,7 +94,11 @@ the underlying storage slot is renamed with a '*' suffix."
     :initarg :active-p
     :dynamic t
     :documentation "whether a prefix is active."
-    :initform t)))
+    :initform t)
+   (name
+    :initarg :name
+    :accessor keymap-name
+    :initform nil)))
 
 (defmethod keymap-add-prefix ((keymap keymap) (prefix prefix) &optional after)
   (unless (listp (keymap-children* keymap))
@@ -148,11 +152,7 @@ a prefix is a prefix of another if its a keymap or if its suffix is a prefix."))
    (function-table
     :initarg :function-table
     :accessor keymap-function-table
-    :initform (make-hash-table :test 'eq))
-   (name
-    :initarg :name
-    :accessor keymap-name
-    :initform nil)))
+    :initform (make-hash-table :test 'eq))))
 
 ;; *root-keymap* contains all keymaps as (possibly nested, possibly "dynamic") children
 (defvar *root-keymap* (make-instance 'keymap*))
@@ -445,7 +445,8 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
   (all-keymaps))
 (defparameter *other-keymaps-root*
   (make-instance 'keymap*
-                 :children #'other-keymaps))
+                 :children #'other-keymaps
+                 :name '*other-keymaps-root*))
 
 (defun lookup-keybind (key)
   (unless (find *other-keymaps-root* (keymap-children *root-keymap*))

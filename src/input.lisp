@@ -96,17 +96,28 @@
                  (t
                   (when prefix
                     (prefix-invoke prefix))
-                  (if (eq suffix :drop)
-                      (progn
-                        (set-last-read-key-sequence (butlast kseq))
-                        (setf result (lookup-keybind (butlast kseq)))
-                        (setf suffix (car result))
-                        (setf prefix (cdr result))
-                        (setf kseq (butlast kseq)))
-                      (progn
-                        (set-last-read-key-sequence kseq)
-                        (keymap-activate *root-keymap*)
-                        (return suffix)))))))))))
+                  (cond
+                    ((eq suffix :drop)
+                     (setf kseq (butlast kseq))
+                     (set-last-read-key-sequence kseq)
+                     (setf result (lookup-keybind kseq))
+                     (setf suffix (car result))
+                     (setf prefix (cdr result)))
+                    ((eq suffix :back)
+                     (setf kseq (subseq kseq 0 (max 0 (- (length kseq) 2))))
+                     (set-last-read-key-sequence kseq)
+                     (setf result (lookup-keybind kseq))
+                     (setf suffix (car result))
+                     (setf prefix (cdr result)))
+                    ((eq suffix :cancel)
+                     (setf kseq nil)
+                     (set-last-read-key-sequence nil)
+                     (keymap-activate *root-keymap*)
+                     (return nil))
+                    (t
+                     (set-last-read-key-sequence kseq)
+                     (keymap-activate *root-keymap*)
+                     (return suffix)))))))))))
 
 (defun read-key-sequence ()
   (read-command)

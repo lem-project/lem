@@ -364,31 +364,45 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
                      (when binding
                        (cons binding parent-prefix)))
                  ;; try all matches and return first successful result
-                 (loop for match in (find-matching-prefixes binding (car keys))
-                       for result = (search-tree (prefix-suffix match) (cdr keys) match)
-                       when result return result))))
+                 (let ((matches (find-matching-prefixes binding (car keys))))
+                   (or (loop for match in matches
+                             for result = (search-tree (prefix-suffix match) (cdr keys) match)
+                             when result return result)
+                       ;; if we have matches but none were exact/successful, we are still in a prefix
+                       (when (and matches (null (cdr keys)))
+                         (let ((match (car matches)))
+                           (cons (prefix-suffix match) match))))))))
     (search-tree keymap keyseq nil)))
+
+(defun normalize-binding (found &optional parent-prefix)
+  (typecase found
+    (prefix (cons (prefix-suffix found) found))
+    (keymap (cons found parent-prefix))
+    (t (cons found parent-prefix))))
 
 ;; this is currently here for backwards compatibility
 ;; im not yet sure whether 'cmd' or function-table lookup is necessary (i think so but im not sure how to get rid of it.)
 (defmethod keymap-find-keybind ((keymap keymap) key cmd)
   "finds key sequence in keymap, returns (suffix . prefix)."
-  (let ((keyseq (etypecase key
-                  (key (list key))
-                  (list key))))
-    (or ;; search children prefixes
-     (find-suffix keymap keyseq)
-     (cons
-      (or
-       ;; search function-table in hierarchy
-       (find-in-function-table keymap (car keyseq))
-       ;; check function-table for cmd symbol
-       (gethash cmd (keymap-function-table keymap))
-       ;; find undef-hook in hierarchy (e.g. self-insert)
-       (find-undef-hook-in-hierarchy keymap)
-       ;; return cmd as fallback
-       cmd)
-      nil))))
+  (let* ((keyseq (etypecase key
+                   (key (list key))
+                   (list key)))
+         (suffix-result (find-suffix keymap keyseq))
+         (suffix (car suffix-result)))
+    (cond (suffix
+           (normalize-binding (car suffix-result) (cdr suffix-result)))
+          (t
+           (let ((result
+                   (or
+                    ;; search function-table in hierarchy
+                    (find-in-function-table keymap (car keyseq))
+                    ;; check function-table for cmd symbol
+                    (gethash (if (consp cmd) (car cmd) cmd) (keymap-function-table keymap))
+                    ;; find undef-hook in hierarchy (e.g. self-insert)
+                    (find-undef-hook-in-hierarchy keymap))))
+             (if result
+                 (normalize-binding result)
+                 cmd))))))
 
 (defun insertion-key-p (key)
   (let* ((key (typecase key
@@ -406,24 +420,22 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
   (:method ((mode global-mode)) nil))
 
 (defun all-keymaps ()
-  ;; build list in reverse priority order, then nreverse at end
-  ;; lower priority first, higher priority last (before nreverse)
-  (let* ((keymaps nil))
-    ;; first add global/minor modes (lowest priority)
-    (dolist (mode (all-active-modes (current-buffer)))
-      (when (mode-keymap mode)
-        (push (mode-keymap mode) keymaps)))
-    ;; add major-mode keymap
+  (let ((keymaps))
+    ;; this one collects active modes. local shadows global.
+    (dolist (mode (reverse (all-active-modes (current-buffer))))
+      (alexandria:when-let ((keymap (mode-keymap mode)))
+        (push keymap keymaps)))
+    ;; major mode keymaps at point (context-specific).
     (alexandria:when-let* ((mode (major-mode-at-point (current-point)))
                            (keymap (mode-keymap mode)))
       (push keymap keymaps))
-    ;; add state keymaps from compute-keymaps (highest priority)
-    (dolist (km (compute-keymaps (current-global-mode)))
+    ;; state keymaps (e.g. vi modes)
+    (dolist (km (reverse (compute-keymaps (current-global-mode))))
       (push km keymaps))
-    ;; special keymap has highest priority
+    ;; special keymap (highest priority)
     (when *special-keymap*
       (push *special-keymap* keymaps))
-    (delete-duplicates keymaps)))
+    (delete-duplicates keymaps :from-end t)))
 
 ;; this is for some "other" keymaps that i need to inject into the root-keymap (atleast this way for now).
 ;; we could make *root-keymap* itself have dynamic children and inject those into it but i dont want that,
@@ -472,7 +484,7 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
 
 (defun abort-key-p (key)
   (and (key-p key)
-       (eq *abort-key* (lookup-keybind key))))
+       (eq *abort-key* (car (lookup-keybind key)))))
 
 (defmacro with-special-keymap ((keymap) &body body)
   `(let ((*special-keymap* (or ,keymap *special-keymap*)))

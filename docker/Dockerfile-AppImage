@@ -1,6 +1,15 @@
 FROM ubuntu:22.04 AS build
 
-RUN apt-get update && apt-get install -y curl bzip2 git libzstd-dev file libncurses-dev build-essential libtree-sitter-dev
+RUN apt-get update && apt-get install -y curl bzip2 git libzstd-dev file libncurses-dev build-essential
+
+# Build tree-sitter 0.27+ from source (Ubuntu 22.04 only has 0.20.x)
+WORKDIR /tmp
+RUN curl -L -o tree-sitter.tar.gz https://github.com/tree-sitter/tree-sitter/archive/refs/tags/v0.27.2.tar.gz && \
+    tar xzf tree-sitter.tar.gz && \
+    cd tree-sitter-0.27.2 && \
+    make -j$(nproc) && \
+    make install && \
+    ldconfig
 
 # development
 #RUN apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev

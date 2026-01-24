@@ -1,6 +1,6 @@
 FROM ubuntu:22.04 AS build
 
-RUN apt-get update && apt-get install -y curl bzip2 git libzstd-dev file libncurses-dev build-essential
+RUN apt-get update && apt-get install -y curl bzip2 git libzstd-dev file libncurses-dev build-essential libtree-sitter-dev
 
 # development
 #RUN apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev

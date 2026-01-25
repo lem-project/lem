@@ -1,4 +1,4 @@
-(in-package :transient)
+(in-package :lem/transient)
 
 (defvar *transient-popup-window*
   nil)

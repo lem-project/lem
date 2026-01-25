@@ -1,4 +1,4 @@
-(in-package :transient)
+(in-package :lem/transient)
 
 (define-transient *demo-keymap*
   :display-style :row

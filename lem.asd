@@ -297,7 +297,7 @@
                "lem-claude-code"
                "lem-bookmark"
                "lem-mcp-server"
-               "transient"
+               "lem-transient"
                #+sbcl
                "lem-living-canvas"
                "lem-tree-sitter"

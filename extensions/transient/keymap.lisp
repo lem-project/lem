@@ -1,4 +1,4 @@
-(in-package :transient)
+(in-package :lem/transient)
 
 (defmethod keymap-activate ((keymap keymap))
   "called when a keymap is activated by the event scheduler."
@@ -132,7 +132,7 @@ the setter stores directly."
                     (setf (prefix-suffix prefix) nil)
                     (loop for (key value) on (cddr binding) by 'cddr
                           ;; key-method is used for (setf prefix-<key-method> <value>)
-                          for key-method = (intern (format nil "PREFIX-~A" (string key)) :transient)
+                          for key-method = (intern (format nil "PREFIX-~A" (string key)) :lem/transient)
                           do (let ((setf-expr `(setf (,key-method prefix) value))
                                    (final-value)
                                    (should-set t))

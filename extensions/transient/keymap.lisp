@@ -11,7 +11,7 @@ the getter retrieves from PROPERTIES-ACCESSOR using :PROPERTY-NAME as key.
 if the value is a function, it funcalls it. the setter stores directly.
 if DEFAULT-VALUE is provided and non-nil, it is used as the default for getf."
   (let* ((keyword (intern (symbol-name property-name) :keyword))
-         (getter-name (intern (format nil "~A-~A" class-name property-name)))
+         (getter-name (intern (format nil "~A-~A" class-name property-name) :lem/transient))
          (obj-sym (gensym "OBJ")))
     `(progn
        (defmethod ,getter-name ((,obj-sym ,class-name))
@@ -30,7 +30,7 @@ if DEFAULT-VALUE is provided and non-nil, it is used as the default for getf."
 the getter retrieves from PROPERTIES-ACCESSOR using :PROPERTY-NAME as key.
 the setter stores directly."
   (let* ((keyword (intern (symbol-name property-name) :keyword))
-         (getter-name (intern (format nil "~A-~A" class-name property-name)))
+         (getter-name (intern (format nil "~A-~A" class-name property-name) :lem/transient))
          (obj-sym (gensym "OBJ")))
     `(progn
        (defmethod ,getter-name ((,obj-sym ,class-name))
@@ -124,7 +124,7 @@ the setter stores directly."
                  ((eq (car binding) :key)
                   (let* ((key (second binding))
                          ;; prefix-class depends on the first cell in the :suffix value (if its a list at all)
-                         (prefix-type (intern (symbol-name (getf binding :type 'prefix))))
+                         (prefix-type (intern (symbol-name (getf binding :type 'prefix)) :lem/transient))
                          (prefix (make-instance prefix-type)))
                     (setf (prefix-key prefix) (car (parse-keyspec key)))
                     ;; sometimes the suffix will not be set (e.g. prefix-type is :choice). we

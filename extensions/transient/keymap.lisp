@@ -72,7 +72,10 @@ the setter stores directly."
 (defmethod (setf keymap-display-style) (val (keymap keymap))
   (setf (getf (keymap-properties keymap) :display-style) val))
 
-(defclass choice (prefix)
+(defclass infix (prefix)
+  ())
+
+(defclass choice (infix)
   ((choices
     :accessor prefix-choices)
    (value))
@@ -83,22 +86,27 @@ the setter stores directly."
       (slot-value choice 'value)
       (car (prefix-choices choice))))
 
-(defmethod prefix-suffix ((choice choice))
+;; infixes dont modify the keymap menu, we drop the key and dont append it to the recorded keyseq
+(defmethod prefix-behavior ((prefix infix))
   :drop)
 
 (defmethod (setf prefix-value) (new-value (choice choice))
   (setf (slot-value choice 'value) new-value))
 
-(defmethod prefix-invoke ((choice choice))
-  (let* ((choices (prefix-choices choice))
-         (current-value (prefix-value choice))
-         (position (position current-value choices :test 'equal)))
-    (let ((new-value (if position
-                         ;; mod is to wrap around to 0. :D
-                         (elt choices (mod (1+ position) (length choices)))
-                         (first choices))))
-      (log:info "switching to value ~A~%" new-value)
-      (setf (prefix-value choice) new-value))))
+(defmethod prefix-suffix ((choice choice))
+  (labels ((suffix ()
+             ;; (with-last-read-key-sequence
+             ;;     (log:info (prompt-for-string "enter test value: ")))
+             (let* ((choices (prefix-choices choice))
+                    (current-value (prefix-value choice))
+                    (position (position current-value choices :test 'equal)))
+               (let ((new-value (if position
+                                    ;; mod is to wrap around to 0. :D
+                                    (elt choices (mod (1+ position) (length choices)))
+                                    (first choices))))
+                 (log:info "switching to value ~A~%" new-value)
+                 (setf (prefix-value choice) new-value)))))
+    #'suffix))
 
 (defmacro define-transient (name &body bindings)
   `(defparameter ,name (parse-transient ',bindings)))

@@ -29,6 +29,14 @@ Examples:
   (defun set-last-read-key-sequence (key-sequence)
     (setf last-read-key-sequence key-sequence)))
 
+(defmacro with-last-read-key-sequence (&body body)
+  "execute BODY with `last-read-key-sequence' temporarily set to NIL, preserving its original value."
+  (alexandria:with-gensyms (old-value)
+    `(let ((,old-value (last-read-key-sequence)))
+       (set-last-read-key-sequence nil)
+       (unwind-protect (progn ,@body)
+         (set-last-read-key-sequence ,old-value)))))
+
 (let ((key-recording-status-name " Def"))
   (defun start-record-key ()
     (modeline-add-status-list key-recording-status-name)
@@ -146,16 +154,48 @@ Pressing the same prefix key twice produces that key."
        (set-last-mouse-event event)
        (find-mouse-command event))
       (key
-       (let* ((cmd (lookup-keybind event))
-              (kseq (list event)))
-         (loop
-           (cond ((prefix-command-p cmd)
-                  (let ((event (read-key)))
-                    (setf kseq (nconc kseq (list event)))
-                    (setf cmd (lookup-keybind kseq))))
-                 (t
-                  (set-last-read-key-sequence kseq)
-                  (return cmd)))))))))
+       (let ((result)
+             (prefix)
+             (suffix)
+             (behavior)
+             (kseq (list event)))
+         (labels ((reset ()
+                    (setf result (lookup-keybind kseq))
+                    (setf suffix (car result))
+                    (setf prefix (cdr result))
+                    (when prefix
+                      (setf behavior (prefix-behavior prefix)))))
+           (loop
+             (reset)
+             (when prefix
+               (prefix-invoke prefix))
+             (when (functionp suffix)
+               (funcall suffix))
+             (cond ((prefix-command-p suffix)
+                    (when (typep suffix 'keymap)
+                      (keymap-activate suffix))
+                    (let ((event (read-key)))
+                      (setf kseq (nconc kseq (list event)))
+                      (reset)))
+                   (t
+                    (cond
+                      ((eq behavior :drop)
+                       (setf kseq (butlast kseq))
+                       (set-last-read-key-sequence kseq)
+                       (reset))
+                      ((eq behavior :back)
+                       (setf kseq (subseq kseq 0 (max 0 (- (length kseq) 2))))
+                       (set-last-read-key-sequence kseq)
+                       (reset))
+                      ((eq behavior :cancel)
+                       (setf kseq nil)
+                       (set-last-read-key-sequence nil)
+                       (keymap-activate *root-keymap*)
+                       (return nil))
+                      (t
+                       (set-last-read-key-sequence kseq)
+                       (keymap-activate *root-keymap*)
+                       (return suffix))))))))))))
 
 (defun read-key-sequence ()
   (read-command)
@@ -171,8 +211,9 @@ Pressing the same prefix key twice produces that key."
     (do-command-loop (:interactive nil)
       (when (null *unread-keys*)
         (return))
-      (let ((*this-command-keys* nil))
-        (call-command (read-command) nil)))))
+      (let* ((*this-command-keys* nil)
+             (cmd (read-command)))
+        (call-command cmd nil)))))
 
 (defun sit-for (seconds &optional (update-window-p t) (force-update-p nil))
   (when update-window-p (redraw-display :force force-update-p))

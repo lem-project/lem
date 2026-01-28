@@ -149,7 +149,7 @@
        ,@(when mode-hook
            `((defvar ,mode-hook '())))
        ,@(when keymap
-           `((defvar ,keymap (make-keymap :name ',keymap
+           `((defvar ,keymap (make-keymap :description ',keymap
                                           :parent ,(when parent-mode
                                                      `(mode-keymap ',parent-mode))))))
        (define-command (,major-mode (:class ,command-class-name)) () ()
@@ -205,7 +205,7 @@
   (let ((command-class-name (make-mode-command-class-name minor-mode)))
     `(progn
        ,@(when keymapp
-           `((defvar ,keymap (make-keymap :name ',keymap))))
+           `((defvar ,keymap (make-keymap :description ',keymap))))
        (define-command (,minor-mode (:class ,command-class-name)) (&optional (arg nil arg-p)) (:universal)
          (cond ((not arg-p)
                 (toggle-minor-mode ',minor-mode))
@@ -251,9 +251,9 @@
     (let ((command-class-name (make-mode-command-class-name mode)))
       `(progn
          ,@(when keymap
-             `((defvar ,keymap
-                 (make-keymap :name ',keymap
-                              :parent (alexandria:when-let ((,parent-mode
+              `((defvar ,keymap
+                  (make-keymap :description ',keymap
+                               :parent (alexandria:when-let ((,parent-mode
                                                              ,(when parent
                                                                 `(get-mode-object ',parent))))
                                         (mode-keymap ,parent-mode))))))

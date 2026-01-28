@@ -112,7 +112,7 @@ completion interface if present."
         (princ-to-string desc)
         (let ((suffix (prefix-suffix prefix)))
           (cond ((typep suffix 'keymap)
-                 (princ-to-string (or (keymap-name suffix) "+prefix")))
+                 (princ-to-string (or (keymap-description suffix) "+prefix")))
                 ((typep suffix 'prefix)
                  (or (prefix-description suffix) "+prefix"))
                 (t (princ-to-string suffix)))))))
@@ -173,7 +173,7 @@ nested keymaps are arranged based on display-style (:row or :column)."
     (setf keymap-layouts (nreverse keymap-layouts))
     (let ((parts)
           (content-items))
-      (let ((title (or (keymap-name keymap) "[unnamed keymap]")))
+      (let ((title (or (keymap-description keymap) "[unnamed keymap]")))
         (push (make-layout-title :text title) parts))
       ;; collect prefix column and keymap layouts as content items
       (when prefix-items

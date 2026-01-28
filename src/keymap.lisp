@@ -136,6 +136,15 @@ a prefix is a prefix of another if its a keymap or if its suffix is a prefix."))
   (:documentation "a hook for when a prefix is reached.")
   (:method ((prefix t)) nil))
 
+(defgeneric prefix-behavior (prefix)
+  (:documentation "should return one of `:drop', `:back', `:cancel', or NIL to decide the effect of the suffix on the key sequence.
+
+:cancel to drop the current key sequence entirely without invoking a command
+:drop to avoid adding the current key to the key sequence, which makes the prefix act as an \"infix\" key
+:back to avoid adding the current key and to pop the last recorded key which has the effect of \"going back\" to parent menu in the transient popup.
+NIL to append it to the key sequence normally.")
+  (:method ((prefix t)) nil))
+
 (deftype key-sequence ()
   '(trivial-types:proper-list key))
 

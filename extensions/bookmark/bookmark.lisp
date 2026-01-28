@@ -58,7 +58,7 @@ Use (DESCRIBE (FIND-PACKAGE \"LEM-BOOKMARK\")) to find all available commands.")
 If the file is a relative path, it is relative to LEM-HOME.")
 
 (defvar *keymap*
-  (make-keymap :name "Bookmark keymap")
+  (make-keymap :description "Bookmark keymap")
   "Keymap for bookmark related commands.")
 
 (defvar *bookmark-table* (make-hash-table :test #'equal))

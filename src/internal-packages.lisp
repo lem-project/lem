@@ -474,8 +474,8 @@
    :*root-keymap*
    :prefix-active-p
    :prefix-behavior
-   :keymap-name
    :keymap-children
+   :keymap-description
    :keymap-properties
    :parse-keyspec
    :prefix-properties

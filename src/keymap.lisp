@@ -94,11 +94,7 @@ the underlying storage slot is renamed with a '*' suffix."
     :initarg :active-p
     :dynamic t
     :documentation "whether a prefix is active."
-    :initform t)
-   (name
-    :initarg :name
-    :accessor keymap-name
-    :initform nil)))
+    :initform t)))
 
 (defmethod keymap-add-prefix ((keymap keymap) (prefix prefix) &optional after)
   (unless (listp (keymap-children* keymap))
@@ -170,14 +166,14 @@ NIL to append it to the key sequence normally.")
 
 (defmethod print-object ((object keymap) stream)
   (print-unreadable-object (object stream :identity t :type t)
-    (when (keymap-name object)
-      (princ (keymap-name object) stream))))
+    (when (keymap-description object)
+      (princ (keymap-description object) stream))))
 
-(defun make-keymap (&key undef-hook parent name)
-  (let ((keymap (make-instance
-                 'keymap*
-                 :undef-hook undef-hook
-                 :name name)))
+;; TODO: we arent using parent properly here
+(defun make-keymap (&key undef-hook parent description)
+  (let ((keymap (make-instance 'keymap*
+                               :undef-hook undef-hook
+                               :description description)))
     keymap))
 
 (defun prefix-command-p (command)
@@ -455,7 +451,7 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
 (defparameter *other-keymaps-root*
   (make-instance 'keymap*
                  :children #'other-keymaps
-                 :name '*other-keymaps-root*))
+                 :description '*other-keymaps-root*))
 
 (defun lookup-keybind (key)
   (unless (find *other-keymaps-root* (keymap-children *root-keymap*))

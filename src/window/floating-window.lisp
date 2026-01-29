@@ -95,6 +95,9 @@ If pixel coordinates are nil, frontends may calculate from character units."
                  :background-color background-color
                  :border (if use-border 1 0)))
 
+(defmethod window-use-modeline-p ((window floating-window))
+  (slot-value window 'use-modeline-p))
+
 (defmethod %delete-window ((window floating-window))
   (when (eq window (current-window))
     (editor-error "Can not delete this window"))

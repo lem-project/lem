@@ -13,7 +13,7 @@
              (:key "p" :suffix demo-pdf :description "pdf")
              (:key "h" :suffix demo-html :description "html")
              (:key "m" :suffix demo-md :description "markdown")
-             (:key "b" :suffix :back :description "back"))
+             (:key "b" :behavior :back :description "back"))
     :description "export format"))
   (:keymap
    :display-style :column
@@ -21,7 +21,7 @@
    (:key "c" :suffix demo-copy)
    (:key "v" :suffix demo-paste)
    (:key "u" :suffix demo-undo)
-   (:key "q" :suffix :cancel :description "quit"))
+   (:key "q" :behavior :cancel :description "quit"))
   (:key "f"
    :suffix (:keymap
             (:key "g" :suffix demo-grep :description "grep")
@@ -50,7 +50,9 @@
    :type :choice
    :choices ("on" "off")
    :description "debug toggle")
-  (:key "R" :suffix demo-run :description "run with mode"))
+  (:key "R" :suffix demo-run :description "run with mode")
+  (:key "T" :type toggle :value t :suffix demo-toggle :description "demo toggle")
+  )
 
 (define-command demo-run () ()
   (let ((mode-prefix (find-prefix-by-id *demo-keymap* :mode)))

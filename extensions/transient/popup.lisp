@@ -125,7 +125,7 @@ completion interface if present."
    :key (princ-to-string (prefix-key prefix))
    :description (get-description prefix)))
 
-(defmethod prefix-render ((prefix choice))
+(defun prefix-render-with-value (prefix)
   (let* ((desc (get-description prefix))
          (value (prefix-value prefix))
          (value-str (princ-to-string value)))
@@ -138,6 +138,12 @@ completion interface if present."
       (make-layout-item
        :key (princ-to-string (prefix-key prefix))
        :description description-segments))))
+
+(defmethod prefix-render ((prefix choice))
+  (prefix-render-with-value prefix))
+
+(defmethod prefix-render ((prefix toggle))
+  (prefix-render-with-value prefix))
 
 (defmethod prefix-render :around ((prefix prefix))
   (let ((item (call-next-method)))

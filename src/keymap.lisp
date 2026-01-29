@@ -60,6 +60,15 @@ the underlying storage slot is renamed with a '*' suffix."
     :dynamic t
     :documentation "whether a prefix is active."
     :initform t)
+   (behavior
+    :initarg :behavior
+    :initform nil
+    :documentation "should be one of `:drop', `:back', `:cancel', or NIL to decide the effect of the suffix on the key sequence.
+
+:cancel to drop the current key sequence entirely without invoking a command.
+:drop to avoid adding the current key to the key sequence, which makes the prefix act as an \"infix\" key.
+:back to avoid adding the current key and to pop the last recorded key which has the effect of \"going back\" to parent menu in the transient popup.
+NIL to append it to the key sequence normally.")
    (properties
     :initarg :properties
     :accessor prefix-properties
@@ -122,6 +131,12 @@ a prefix is a prefix of another if its a keymap or if its suffix is a prefix."))
   (or (typep (prefix-suffix p) 'prefix)
       (typep (prefix-suffix p) 'keymap)))
 
+(defmethod (setf prefix-behavior) (new-value (prefix prefix))
+  (setf (slot-value prefix 'behavior) new-value))
+
+(defmethod prefix-behavior ((prefix prefix))
+  (slot-value prefix 'behavior))
+
 (defgeneric keymap-activate (keymap)
   (:documentation "a hook for when a keymap is entered by some prefix.")
   ;; default keymap-activate does nothing
@@ -130,15 +145,6 @@ a prefix is a prefix of another if its a keymap or if its suffix is a prefix."))
 
 (defgeneric prefix-invoke (prefix)
   (:documentation "a hook for when a prefix is reached.")
-  (:method ((prefix t)) nil))
-
-(defgeneric prefix-behavior (prefix)
-  (:documentation "should return one of `:drop', `:back', `:cancel', or NIL to decide the effect of the suffix on the key sequence.
-
-:cancel to drop the current key sequence entirely without invoking a command
-:drop to avoid adding the current key to the key sequence, which makes the prefix act as an \"infix\" key
-:back to avoid adding the current key and to pop the last recorded key which has the effect of \"going back\" to parent menu in the transient popup.
-NIL to append it to the key sequence normally.")
   (:method ((prefix t)) nil))
 
 (deftype key-sequence ()

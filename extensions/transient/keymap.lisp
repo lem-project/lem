@@ -81,31 +81,58 @@ the setter stores directly."
    (value))
   (:documentation "a prefix that may take on different values."))
 
-(defmethod prefix-value ((choice choice))
-  (if (slot-boundp choice 'value)
-      (slot-value choice 'value)
-      (car (prefix-choices choice))))
+(defclass toggle (infix)
+  ((value :initform nil))
+  (:documentation "a boolean infix."))
+
+(defmethod prefix-value ((prefix prefix))
+  (slot-value prefix 'value))
+
+(defmethod prefix-value ((prefix choice))
+  (if (slot-boundp prefix 'value)
+      (slot-value prefix 'value)
+      (car (prefix-choices prefix))))
+
+(defmethod (setf prefix-value) (new-value (prefix prefix))
+  (setf (slot-value prefix 'value) new-value))
 
 ;; infixes dont modify the keymap menu, we drop the key and dont append it to the recorded keyseq
 (defmethod prefix-behavior ((prefix infix))
   :drop)
 
-(defmethod (setf prefix-value) (new-value (choice choice))
-  (setf (slot-value choice 'value) new-value))
+;; this one applies the next value from the choices list without a prompt
+;; (defmethod prefix-suffix ((choice choice))
+;;   (labels ((suffix ()
+;;              (let* ((choices (prefix-choices choice))
+;;                     (current-value (prefix-value choice))
+;;                     (position (position current-value choices :test 'equal)))
+;;                (let ((new-value (if position
+;;                                     ;; mod is to wrap around to 0. :D
+;;                                     (elt choices (mod (1+ position) (length choices)))
+;;                                     (first choices))))
+;;                  (log:info "switching to value ~A~%" new-value)
+;;                  (setf (prefix-value choice) new-value)))))
+;;     #'suffix))
 
 (defmethod prefix-suffix ((choice choice))
   (labels ((suffix ()
-             ;; (with-last-read-key-sequence
-             ;;     (log:info (prompt-for-string "enter test value: ")))
              (let* ((choices (prefix-choices choice))
                     (current-value (prefix-value choice))
-                    (position (position current-value choices :test 'equal)))
-               (let ((new-value (if position
-                                    ;; mod is to wrap around to 0. :D
-                                    (elt choices (mod (1+ position) (length choices)))
-                                    (first choices))))
+                    (new-value))
+               (with-last-read-key-sequence
+                   (setf new-value
+                         (prompt-for-string "new value: "
+                                            :initial-value current-value
+                                            :completion-function (lambda (x)
+                                                                   choices))))
+               (when new-value
                  (log:info "switching to value ~A~%" new-value)
                  (setf (prefix-value choice) new-value)))))
+    #'suffix))
+
+(defmethod prefix-suffix ((prefix toggle))
+  (labels ((suffix ()
+             (setf (prefix-value prefix) (not (prefix-value prefix)))))
     #'suffix))
 
 (defmacro define-transient (name &body bindings)

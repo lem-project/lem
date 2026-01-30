@@ -179,8 +179,9 @@ nested keymaps are arranged based on display-style (:row or :column)."
     (setf keymap-layouts (nreverse keymap-layouts))
     (let ((parts)
           (content-items))
-      (let ((title (or (keymap-description keymap) "[unnamed keymap]")))
-        (push (make-layout-title :text title) parts))
+      (let ((title (keymap-description keymap)))
+        (when title
+          (push (make-layout-title :text title) parts)))
       ;; collect prefix column and keymap layouts as content items
       (when prefix-items
         (let ((max-key-width (reduce 'max

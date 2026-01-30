@@ -62,9 +62,6 @@ the setter stores directly."
                             (f suffix))))))))
     (f keymap)))
 
-(defgeneric prefix-render (prefix)
-  (:documentation "render prefix into a layout item. returns nil to use default rendering."))
-
 (defmethod keymap-display-style ((keymap keymap))
   "should return :row or :column. used to construct the display"
   (getf (keymap-properties keymap) :display-style :row))

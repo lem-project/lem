@@ -468,12 +468,24 @@
    :paste-using-mode)
   ;; keymap.lisp
   (:export
-   :*keymaps*
    :keymap
-   :keymap-name
-   :keymap-parent
+   :prefix
+   :keymap*
+   :*root-keymap*
+   :prefix-active-p
+   :prefix-behavior
+   :keymap-children
+   :keymap-description
+   :keymap-properties
+   :parse-keyspec
+   :prefix-properties
    :keymap-undef-hook
+   :keymap-activate
    :make-keymap
+   :make-prefix
+   :prefix-description
+   :prefix-key
+   :prefix-suffix
    :*global-keymap*
    :define-key
    :define-keys
@@ -489,7 +501,10 @@
    :with-special-keymap
    :traverse-keymap
    :compute-keymaps
-   :collect-command-keybindings)
+   :collect-command-keybindings
+   :keymap-add-child
+   :keymap-add-prefix
+   :prefix-invoke)
   ;; reexport common/timer
   (:export
    :timer
@@ -523,6 +538,7 @@
    :*input-hook*
    :meta-prefix-keys
    :last-read-key-sequence
+   :with-last-read-key-sequence
    :start-record-key
    :stop-record-key
    :key-recording-p

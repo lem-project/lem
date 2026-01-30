@@ -238,7 +238,7 @@
 (defvar *inline-completion-request* nil)
 (defvar *completion-canceled* nil)
 
-(defvar *copilot-completion-keymap* (make-keymap :name "Copilot Completion"))
+(defvar *copilot-completion-keymap* (make-keymap :description "Copilot Completion"))
 
 (define-key *copilot-completion-keymap* "Tab" 'copilot-accept-suggestion)
 (define-key *copilot-completion-keymap* 'copilot-next-suggestion 'copilot-next-suggestion)

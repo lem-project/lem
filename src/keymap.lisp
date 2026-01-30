@@ -337,7 +337,10 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
         ((typep binding 'keymap)
          (when (keymap-active-p binding)
            (loop for item in (keymap-children binding)
-                 append (find-matching-prefixes item key))))))
+                 append (find-matching-prefixes item key) into matches
+                 when (and (typep item 'keymap*) (keymap-undef-hook item))
+                   do (return matches)
+                 finally (return matches))))))
 
 (defun find-in-function-table (binding key)
   "search function-table of keymaps in hierarchy for KEY."
@@ -352,7 +355,9 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
            ;; if found, return it; otherwise search children
            (or result
                (loop for child in (keymap-children binding)
-                     thereis (find-in-function-table child key)))))
+                     thereis (or (find-in-function-table child key)
+                                 (and (typep child 'keymap*)
+                                      (keymap-undef-hook child)))))))
         ((typep binding 'keymap)
          (loop for child in (keymap-children binding)
                thereis (find-in-function-table child key)))

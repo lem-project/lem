@@ -287,15 +287,16 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
              bindings)))
 
 (defun undefine-key-internal (keymap keys)
-  (loop :with table := (keymap-table keymap)
-        :for rest :on (uiop:ensure-list keys)
-        :for k := (car rest)
-        :do (cond ((null (cdr rest))
-                   (remhash k table))
-                  (t
-                   (let ((next (gethash k table)))
-                     (when (prefix-command-p next)
-                       (setf table next)))))))
+  (labels ((search-tree (binding keys-to-find)
+             (when keys-to-find
+               (let ((matches (find-matching-prefixes binding (car keys-to-find))))
+                 (loop for match in matches
+                       for suffix = (prefix-suffix match)
+                       do (if (cdr keys-to-find)
+                              (search-tree suffix (cdr keys-to-find))
+                              (setf (keymap-children binding)
+                                    (delete match (keymap-children binding)))))))))
+    (search-tree keymap keys)))
 
 (defun parse-keyspec (string)
   (labels ((fail ()

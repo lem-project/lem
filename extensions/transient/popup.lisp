@@ -210,8 +210,10 @@ nested keymaps are arranged based on display-style (:row or :column)."
   (cond
     ((null layout) nil)
     ((layout-title-p layout)
-     (list (list (cons (format nil "-- ~A --" (layout-title-text layout))
-                       'transient-title-attribute))))
+     (let ((text (princ-to-string (layout-title-text layout))))
+       (list (list (cons "[" 'transient-bracket-attribute)
+                   (cons text 'transient-title-attribute)
+                   (cons "]" 'transient-bracket-attribute)))))
     ((layout-separator-p layout)
      (list (list (cons "----------------" 'transient-separator-attribute))))
     ((layout-item-p layout)

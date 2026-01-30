@@ -45,6 +45,7 @@ the setter stores directly."
 (add-dynamic-property keymap keymap-properties show-p t)
 (add-dynamic-property prefix prefix-properties show-p t)
 ;; static properties dont take a function that returns a value, just a value.
+(add-static-property keymap keymap-properties display-style :row)
 (add-static-property prefix prefix-properties id)
 
 (defun find-prefix-by-id (keymap id)
@@ -61,13 +62,6 @@ the setter stores directly."
                                     (typep suffix 'prefix))
                             (f suffix))))))))
     (f keymap)))
-
-(defmethod keymap-display-style ((keymap keymap))
-  "should return :row or :column. used to construct the display"
-  (getf (keymap-properties keymap) :display-style :row))
-
-(defmethod (setf keymap-display-style) (val (keymap keymap))
-  (setf (getf (keymap-properties keymap) :display-style) val))
 
 (defclass infix (prefix)
   ())
@@ -142,16 +136,19 @@ the setter stores directly."
           while tail
           do (let ((binding (car tail)))
                (cond
-                 ;; inline property
-                 ((keywordp binding)
-                  (let ((val (second tail)))
-                    (setf (getf (keymap-properties keymap) binding) val))
-                  ;; advance another cell because we're already consumed it (second tail)
-                  (setf tail (cdr tail)))
-                 ;; direct child keymap (:keymap ...)
-                 ((eq (car binding) :keymap)
-                  (let ((sub-map (parse-transient (cdr binding))))
-                    (keymap-add-child keymap sub-map t)))
+                  ;; inline property
+                  ((keywordp binding)
+                   (let ((val (second tail)))
+                     (let ((key-method (intern (format nil "KEYMAP-~A" (string binding)) :lem/transient)))
+                       (if (fboundp key-method)
+                           (funcall (fdefinition (list 'setf key-method)) val keymap)
+                           (setf (getf (keymap-properties keymap) binding) val))))
+                   ;; advance another cell because we're already consumed it (second tail)
+                   (setf tail (cdr tail)))
+                  ;; direct child keymap (:keymap ...)
+                  ((eq (car binding) :keymap)
+                   (let ((sub-map (parse-transient (cdr binding))))
+                     (keymap-add-child keymap sub-map t)))
                  ;; key binding (:key ...)
                  ((eq (car binding) :key)
                   (let* ((key (second binding))

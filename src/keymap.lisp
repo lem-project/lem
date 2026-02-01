@@ -404,9 +404,8 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
   (let* ((keyseq (etypecase key
                    (key (list key))
                    (list key)))
-         (suffix-result (find-suffix keymap keyseq))
-         (suffix (car suffix-result)))
-    (cond (suffix
+         (suffix-result (find-suffix keymap keyseq)))
+    (cond (suffix-result
            (normalize-binding (car suffix-result) (cdr suffix-result)))
           (t
            (let ((result

@@ -47,6 +47,8 @@ the setter stores directly."
 ;; static properties dont take a function that returns a value, just a value.
 (add-static-property keymap keymap-properties display-style :row)
 (add-static-property prefix prefix-properties id)
+;; TODO: it would be better to store the parsed key sequence instead of the stringified one and work with that.
+(add-static-property prefix prefix-properties display-key)
 
 (defun find-prefix-by-id (keymap id)
   (labels ((f (node)
@@ -152,10 +154,39 @@ the setter stores directly."
                  ;; key binding (:key ...)
                  ((eq (car binding) :key)
                   (let* ((key (second binding))
-                         ;; prefix-class depends on the first cell in the :suffix value (if its a list at all)
                          (prefix-type (intern (symbol-name (getf binding :type 'prefix)) :lem/transient))
-                         (prefix (make-instance prefix-type)))
-                    (setf (prefix-key prefix) (car (parse-keyspec key)))
+                         (prefix (make-instance prefix-type))
+                         (last-keymap keymap))
+                    (let ((parsed-key (parse-keyspec key)))
+                      ;; store the full key string for multi-key bindings
+                      (when (cdr parsed-key)
+                        (setf (prefix-display-key prefix) key))
+                      ;; we need to create intermediate prefixes if the key is longer than one
+                      (loop for cell on parsed-key
+                            for i from 0
+                            for lastp = (null (cdr cell))
+                            for current-key = (car cell)
+                            for current-prefix = (if lastp
+                                                     prefix
+                                                     ;; reuse existing intermediate prefix with same key, or create new one
+                                                     (let ((existing (find current-key (keymap-children last-keymap)
+                                                                          :test (lambda (k child)
+                                                                                  (and (typep child 'prefix)
+                                                                                       (prefix-intermediate-p child)
+                                                                                       (equal k (prefix-key child)))))))
+                                                       (if existing
+                                                           (progn
+                                                             (setf last-keymap (prefix-suffix existing))
+                                                             existing)
+                                                           (let* ((new-prefix (make-instance 'prefix))
+                                                                  (new-keymap (make-instance 'keymap*)))
+                                                             (keymap-add-prefix last-keymap new-prefix t)
+                                                             (setf (prefix-suffix new-prefix) new-keymap)
+                                                             (setf (prefix-intermediate-p new-prefix) t)
+                                                             (setf last-keymap new-keymap)
+                                                             new-prefix))))
+                            do (setf (prefix-key current-prefix) current-key))
+                    (keymap-add-prefix last-keymap prefix t)
                     ;; sometimes the suffix will not be set (e.g. prefix-type is :choice). we
                     ;; initialize it to nil to avoid unbound errors.
                     (setf (prefix-suffix prefix) nil)
@@ -176,6 +207,5 @@ the setter stores directly."
                                (when should-set
                                  (funcall (fdefinition (list 'setf key-method))
                                           final-value
-                                          prefix))))
-                    (keymap-add-prefix keymap prefix t))))))
+                                          prefix))))))))))
     keymap))

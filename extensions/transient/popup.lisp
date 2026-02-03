@@ -15,6 +15,10 @@
   " | "
   "string used to separate columns in row layout.")
 
+(define-attribute transient-matched-key-attribute
+  (t
+   :foreground (attribute-foreground (ensure-attribute 'syntax-string-attribute))))
+
 (define-attribute transient-key-attribute
   (t
    :foreground (attribute-foreground (ensure-attribute 'syntax-function-name-attribute))))
@@ -117,35 +121,97 @@ completion interface if present."
                  (or (prefix-description suffix) "+prefix"))
                 (t (princ-to-string suffix)))))))
 
-(defgeneric prefix-render (prefix)
-  (:documentation "return a layout item that should be displayed for the prefix in the popup."))
+(defun prefix-effective-display-key (prefix)
+  "return the display key for PREFIX, falling back to one returned by prefix-key."
+  (or (prefix-display-key prefix)
+      (princ-to-string (prefix-key prefix))))
 
-(defmethod prefix-render ((prefix prefix))
-  (make-layout-item
-   :key (princ-to-string (prefix-key prefix))
-   :description (get-description prefix)))
+(defun keymap-contains-via-intermediates-p (keymap target)
+  "return T if TARGET is reachable from KEYMAP through a sequence of intermediate prefixes."
+  (dolist (child (keymap-children keymap))
+    (when (and (typep child 'prefix) (prefix-intermediate-p child))
+      (let ((suffix (prefix-suffix child)))
+        (when (and (typep suffix 'keymap)
+                   (or (eq suffix target)
+                       (keymap-contains-via-intermediates-p suffix target)))
+          (return t))))))
 
-(defun prefix-render-with-value (prefix)
-  (let* ((desc (get-description prefix))
-         (value (prefix-value prefix))
-         (value-str (princ-to-string value)))
-    (let ((description-segments
-            (list (cons desc nil)
-                  (cons " " nil)
-                  (cons "[" 'transient-bracket-attribute)
-                  (cons value-str 'transient-value-attribute)
-                  (cons "]" 'transient-bracket-attribute))))
-      (make-layout-item
-       :key (princ-to-string (prefix-key prefix))
-       :description description-segments))))
+;; TODO: this is hacky
+(defun make-key-with-highlight (key-str matched-depth)
+  "return KEY-STR as highlighted segments if MATCHED-DEPTH > 0.
 
-(defmethod prefix-render ((prefix choice))
-  (prefix-render-with-value prefix))
+MATCHED-DEPTH is the number of key parts (space-separated) to highlight."
+  (if (and matched-depth (> matched-depth 0))
+      (let ((pos 0)
+            (parts-found 0))
+        ;; walk through key-str counting space-separated parts
+        (loop :for i :from 0 :below (length key-str)
+              :while (< parts-found matched-depth)
+              :do (if (char= (char key-str i) #\Space)
+                      (incf parts-found)
+                      (setf pos (1+ i))))
+        (if (> pos 0)
+            (let ((matched (subseq key-str 0 pos))
+                  (unmatched (subseq key-str pos)))
+              (list (cons matched 'transient-matched-key-attribute)
+                    (cons unmatched 'transient-key-attribute)))
+            key-str))
+      key-str))
 
-(defmethod prefix-render ((prefix toggle))
-  (prefix-render-with-value prefix))
+(defun make-value-description (prefix)
+  "build description segments for a prefix that displays its value, e.g. 'desc [value]'."
+  (let ((desc (get-description prefix))
+        (value-str (princ-to-string (prefix-value prefix))))
+    (list (cons desc nil)
+          (cons " " nil)
+          (cons "[" 'transient-bracket-attribute)
+          (cons value-str 'transient-value-attribute)
+          (cons "]" 'transient-bracket-attribute))))
 
-(defmethod prefix-render :around ((prefix prefix))
+(defgeneric prefix-render (prefix &optional matched-depth)
+  (:documentation "return a layout item that should be displayed for the prefix in the popup.
+
+MATCHED-DEPTH is the number of key parts (space-separated) to highlight."))
+
+(defmethod prefix-render ((prefix prefix) &optional matched-depth)
+  (let ((key-str (prefix-effective-display-key prefix)))
+    (make-layout-item
+     :key (make-key-with-highlight key-str matched-depth)
+     :description (get-description prefix))))
+
+(defun prefix-render-with-value (prefix matched-depth)
+  (let ((key-str (prefix-effective-display-key prefix)))
+    (make-layout-item
+     :key (make-key-with-highlight key-str matched-depth)
+     :description (make-value-description prefix))))
+
+(defmethod prefix-render ((prefix choice) &optional matched-depth)
+  (prefix-render-with-value prefix matched-depth))
+
+(defmethod prefix-render ((prefix toggle) &optional matched-depth)
+  (prefix-render-with-value prefix matched-depth))
+
+(defun find-intermediate-root (active-keymap)
+  "find the effective root keymap for ACTIVE-KEYMAP by searching from *root-keymap* tree.
+
+returns the nearest ancestor keymap that reaches ACTIVE-KEYMAP through intermediate prefixes,
+or ACTIVE-KEYMAP itself if no such ancestor exists."
+  (labels ((find-root (keymap)
+             ;; check if this keymap reaches active-keymap via intermediates
+             (when (keymap-contains-via-intermediates-p keymap active-keymap)
+               (return-from find-intermediate-root keymap))
+             ;; recurse into child keymaps
+             (dolist (child (keymap-children keymap))
+               (cond ((typep child 'keymap)
+                      (find-root child))
+                     ((typep child 'prefix)
+                      (let ((suffix (prefix-suffix child)))
+                        (when (typep suffix 'keymap)
+                          (find-root suffix))))))))
+    (find-root *root-keymap*)
+    active-keymap))
+
+(defmethod prefix-render :around ((prefix prefix) &optional matched-depth)
   (let ((item (call-next-method)))
     (when item
       (unless (prefix-active-p prefix)
@@ -153,27 +219,46 @@ completion interface if present."
         (setf (layout-item-description-attribute item) 'transient-inactive-attribute)))
     item))
 
-(defun generate-layout (keymap)
+(defun generate-layout (keymap &optional active-keymap)
   "generate layout from keymap structure.
 
-prefixes always display vertically as items.
-nested keymaps are arranged based on display-style (:row or :column)."
+prefixes always display vertically in their own column.
+nested keymaps are arranged based on display-style (:row or :column).
+prefixes marked as :intermediate-p are flattened and shown with concatenated keys."
   (unless (keymap-show-p keymap)
     (return-from generate-layout nil))
   (let ((prefix-items)
         (keymap-layouts))
-    ;; process children, separating prefixes from keymaps
-    (dolist (child (keymap-children keymap))
-      (cond
-        ;; nested keymap: recurse and collect
-        ((typep child 'keymap)
-         (alexandria:when-let ((child-layout (generate-layout child)))
-           (push child-layout keymap-layouts)))
-        ;; prefix: create item if show-p
-        ((typep child 'prefix)
-         (when (prefix-show-p child)
-           (let ((item (prefix-render child)))
-             (push item prefix-items))))))
+    (labels ((collect-items (node &optional (matched-depth 0))
+               (cond
+                 ;; nested keymap: recurse and collect
+                 ((typep node 'keymap)
+                  (alexandria:when-let ((child-layout (generate-layout node active-keymap)))
+                    (push child-layout keymap-layouts)))
+                 ;; prefix: create item if show-p
+                 ((typep node 'prefix)
+                  (when (prefix-show-p node)
+                    (if (prefix-intermediate-p node)
+                        (let* ((suffix (prefix-suffix node))
+                               (new-depth (if (and active-keymap
+                                                   (typep suffix 'keymap)
+                                                   (or (eq suffix active-keymap)
+                                                       (keymap-contains-via-intermediates-p
+                                                        suffix active-keymap)))
+                                              (1+ matched-depth)
+                                              matched-depth)))
+                          (if (typep suffix 'keymap)
+                              (dolist (child (keymap-children suffix))
+                                (collect-items child new-depth))
+                              (push (prefix-render node new-depth) prefix-items)))
+                        (push (prefix-render
+                               node
+                               (when (prefix-display-key node)
+                                 matched-depth))
+                              prefix-items)))))))
+      ;; process children, separating prefixes from keymaps
+      (dolist (child (keymap-children keymap))
+        (collect-items child)))
     ;; build result: title first, then content (prefixes + keymaps arranged by display-style)
     (setf prefix-items (nreverse prefix-items))
     (setf keymap-layouts (nreverse keymap-layouts))
@@ -187,7 +272,10 @@ nested keymaps are arranged based on display-style (:row or :column)."
         (let ((max-key-width (reduce 'max
                                      prefix-items
                                      :key (lambda (item)
-                                            (length (layout-item-key item)))
+                                            (let ((key (layout-item-key item)))
+                                              (if (listp key)
+                                                  (segment-line-width key)
+                                                  (length key))))
                                      :initial-value 0)))
           (push (make-layout-column :items prefix-items :key-width max-key-width)
                 content-items)))
@@ -218,13 +306,18 @@ nested keymaps are arranged based on display-style (:row or :column)."
      (list (list (cons "----------------" 'transient-separator-attribute))))
     ((layout-item-p layout)
      (let* ((key (layout-item-key layout))
-            (padding (max 0 (- key-width (length key))))
+            (key-is-segments (listp key))
+            (padding (if key-is-segments
+                         (max 0 (- key-width (segment-line-width key)))
+                         (max 0 (- key-width (length key)))))
             (desc (layout-item-description layout))
             (inactive (eq (layout-item-key-attribute layout) 'transient-inactive-attribute))
             (base-segments
-              (list (cons key (layout-item-key-attribute layout))
-                    (cons (make-string padding :initial-element #\space) nil)
-                    (cons " " nil))))
+              (append (if key-is-segments
+                          key
+                          (list (cons key (layout-item-key-attribute layout))))
+                      (list (cons (make-string padding :initial-element #\space) nil)
+                            (cons " " nil)))))
        ;; if desc is a list of segments, append them. otherwise treat as string.
        (list (append base-segments
                      (if (listp desc)
@@ -323,7 +416,8 @@ key-width is used for even key spacing in items."
          (buffer (if existing-window
                      (window-buffer existing-window)
                      (make-buffer "*transient*" :temporary t :enable-undo-p nil)))
-         (layout (generate-layout keymap)))
+         (root (find-intermediate-root keymap))
+         (layout (generate-layout root keymap)))
     (erase-buffer buffer)
     ;; we dont want lines to be cut off for now (no wrapping), until we have scrollbars or something
     (setf (variable-value 'line-wrap :buffer buffer) nil)

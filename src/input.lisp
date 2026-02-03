@@ -77,6 +77,19 @@
   (pop *this-command-keys*)
   (push key *unread-keys*))
 
+(defun count-intermediate-keys (keymap kseq)
+  "count how many keys in KSEQ traversed through intermediate prefixes."
+  (let ((count 0))
+    (labels ((walk (binding keys)
+               (when keys
+                 (let ((matches (find-matching-prefixes binding (car keys))))
+                   (dolist (match matches)
+                     (when (prefix-intermediate-p match)
+                       (incf count))
+                     (walk (prefix-suffix match) (cdr keys)))))))
+      (walk keymap kseq))
+    count))
+
 (defun read-command ()
   (let ((event (read-event)))
     (etypecase event
@@ -109,12 +122,27 @@
                       (reset)))
                    (t
                     (cond
+                      ;; note: menu in these comments might mean keymaps, i used menu because
+                      ;; this is mostly intended for transient keymaps (i.e. key menus).
+                      ;; :drop removes the current key from kseq without changing "menus".
+                      ;; used for "infix" keys (toggles, choices) that act in-place.
+                      ;; also pops any intermediate prefix keys so the recorded
+                      ;; sequence reflects only the menu-level key that was pressed.
                       ((eq behavior :drop)
                        (setf kseq (butlast kseq))
+                       (dotimes (_ (count-intermediate-keys *root-keymap* kseq))
+                         (setf kseq (butlast kseq)))
                        (set-last-read-key-sequence kseq)
                        (reset))
+                      ;; :back removes the current key and the key that entered
+                      ;; the current menu, navigating up one menu level.
+                      ;; also pops any intermediate prefix keys in between.
                       ((eq behavior :back)
-                       (setf kseq (subseq kseq 0 (max 0 (- (length kseq) 2))))
+                       (setf kseq (butlast kseq))
+                       (dotimes (_ (count-intermediate-keys *root-keymap* kseq))
+                         (setf kseq (butlast kseq)))
+                       ;; pop the key that entered the current "menu"
+                       (setf kseq (butlast kseq))
                        (set-last-read-key-sequence kseq)
                        (reset))
                       ((eq behavior :cancel)

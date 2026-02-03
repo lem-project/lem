@@ -60,6 +60,11 @@ the underlying storage slot is renamed with a '*' suffix."
     :dynamic t
     :documentation "whether a prefix is active."
     :initform t)
+   ;; intermediate-p means a prefix is just a "continuation" of another and servers as an intermediate key
+   (intermediate-p
+    :initarg :intermediate-p
+    :documentation "whether a prefix is an intermediary to another, this effects the :drop and :back behavior."
+    :initform nil)
    (behavior
     :initarg :behavior
     :initform nil
@@ -136,6 +141,12 @@ a prefix is a prefix of another if its a keymap or if its suffix is a prefix."))
 
 (defmethod prefix-behavior ((prefix prefix))
   (slot-value prefix 'behavior))
+
+(defmethod (setf prefix-intermediate-p) (new-value (prefix prefix))
+  (setf (slot-value prefix 'intermediate-p) new-value))
+
+(defmethod prefix-intermediate-p ((prefix prefix))
+  (slot-value prefix 'intermediate-p))
 
 (defgeneric keymap-activate (keymap)
   (:documentation "a hook for when a keymap is entered by some prefix.")

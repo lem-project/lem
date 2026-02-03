@@ -473,6 +473,7 @@
    :keymap*
    :*root-keymap*
    :prefix-active-p
+   :prefix-intermediate-p
    :prefix-behavior
    :keymap-children
    :keymap-description

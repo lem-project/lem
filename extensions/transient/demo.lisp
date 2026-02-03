@@ -52,7 +52,8 @@
    :description "debug toggle")
   (:key "R" :suffix demo-run :description "run with mode")
   (:key "T" :type toggle :value t :suffix demo-toggle :description "demo toggle")
-  )
+  (:key "e e" :type toggle :value t :suffix demo-toggle :description "another demo toggle")
+  (:key "e a" :type toggle :value t :suffix demo-toggle :description "and another demo toggle"))
 
 (define-command demo-run () ()
   (let ((mode-prefix (find-prefix-by-id *demo-keymap* :mode)))

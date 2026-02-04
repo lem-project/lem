@@ -46,10 +46,10 @@
               :choices ("vim" "emacs")
               :description "keys")))
    :description "langs demo")
-  (:key "d"
+  (:key "a"
    :type :choice
-   :choices ("on" "off")
-   :description "debug toggle")
+   :choices ("value1" "value2" "value3")
+   :description "multi-value infix")
   (:key "R" :suffix demo-run :description "run with mode")
   (:key "T" :type toggle :value t :suffix demo-toggle :description "demo toggle")
   (:key "e e" :type toggle :value t :suffix demo-toggle :description "another demo toggle")

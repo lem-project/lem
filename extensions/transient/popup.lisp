@@ -15,6 +15,10 @@
   " | "
   "string used to separate columns in row layout.")
 
+(defvar *transient-always-show*
+  nil
+  "whether to always show the transient buffer. by default only keymaps that have show-p set are shown.")
+
 (define-attribute transient-matched-key-attribute
   (t
    :foreground (attribute-foreground (ensure-attribute 'syntax-string-attribute))))
@@ -449,3 +453,11 @@ key-width is used for even key spacing in items."
                                  :use-modeline-p nil
                                  :border 1))))))
   (redraw-display))
+
+(defun hide-transient ()
+  "hide (delete) the transient popup window."
+  (when (and *transient-popup-window*
+             (not (deleted-window-p *transient-popup-window*)))
+    (delete-window *transient-popup-window*)
+    (setf *transient-popup-window* nil)
+    (redraw-display)))

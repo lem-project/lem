@@ -2,7 +2,9 @@
 
 (defmethod keymap-activate ((keymap keymap))
   "called when a keymap is activated by the event scheduler."
-  (show-transient keymap))
+  (if (or (keymap-show-p keymap) *transient-always-show*)
+      (show-transient keymap)
+      (hide-transient)))
 
 (defmacro add-dynamic-property (class-name properties-accessor property-name &optional default-value)
   "define <CLASS-NAME>-<PROPERTY-NAME> getter and setter methods.
@@ -42,7 +44,7 @@ the setter stores directly."
 
 ;; these are properties that we want to be "dynamic", as in can be assigned a function that
 ;; returns the value later instead of the value itself.
-(add-dynamic-property keymap keymap-properties show-p t)
+(add-dynamic-property keymap keymap-properties show-p nil)
 (add-dynamic-property prefix prefix-properties show-p t)
 ;; static properties dont take a function that returns a value, just a value.
 (add-static-property keymap keymap-properties display-style :row)
@@ -134,6 +136,7 @@ the setter stores directly."
 (defun parse-transient (bindings)
   "defines a transient menu. args yet to be documented."
   (let ((keymap (make-keymap)))
+    (setf (keymap-show-p keymap) t)
     (loop for tail = bindings then (cdr tail)
           while tail
           do (let ((binding (car tail)))
@@ -179,10 +182,11 @@ the setter stores directly."
                                                              (setf last-keymap (prefix-suffix existing))
                                                              existing)
                                                            (let* ((new-prefix (make-instance 'prefix))
-                                                                  (new-keymap (make-instance 'keymap*)))
+                                                                  (new-keymap (make-keymap)))
                                                              (keymap-add-prefix last-keymap new-prefix t)
                                                              (setf (prefix-suffix new-prefix) new-keymap)
                                                              (setf (prefix-intermediate-p new-prefix) t)
+                                                             (setf (keymap-show-p new-keymap) t)
                                                              (setf last-keymap new-keymap)
                                                              new-prefix))))
                             do (setf (prefix-key current-prefix) current-key))

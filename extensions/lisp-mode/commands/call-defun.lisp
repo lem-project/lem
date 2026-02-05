@@ -73,6 +73,3 @@
                                     :evaluate nil
                                     :focus t)
            (scan-lists (current-point) -1 -1)))))))
-              
-(define-command test () ()
-  (message "~A" (parse-toplevel-form (current-point))))

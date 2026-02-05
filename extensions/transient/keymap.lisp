@@ -68,7 +68,10 @@ the setter stores directly."
     (f keymap)))
 
 (defclass infix (prefix)
-  ())
+  ((variable
+    :accessor infix-variable
+    :initarg :variable
+    :initform nil)))
 
 (defclass choice (infix)
   ((choices
@@ -81,15 +84,24 @@ the setter stores directly."
   (:documentation "a boolean infix."))
 
 (defmethod prefix-value ((prefix prefix))
-  (slot-value prefix 'value))
+  (let ((var (infix-variable prefix)))
+    (if var
+        (symbol-value var)
+        (slot-value prefix 'value))))
 
 (defmethod prefix-value ((prefix choice))
-  (if (slot-boundp prefix 'value)
-      (slot-value prefix 'value)
-      (car (prefix-choices prefix))))
+  (let ((var (infix-variable prefix)))
+    (if var
+        (symbol-value var)
+        (if (slot-boundp prefix 'value)
+            (slot-value prefix 'value)
+            (car (prefix-choices prefix))))))
 
 (defmethod (setf prefix-value) (new-value (prefix prefix))
-  (setf (slot-value prefix 'value) new-value))
+  (let ((var (infix-variable prefix)))
+    (if var
+        (setf (symbol-value var) new-value)
+        (setf (slot-value prefix 'value) new-value))))
 
 ;; infixes dont modify the keymap menu, we drop the key and dont append it to the recorded keyseq
 (defmethod prefix-behavior ((prefix infix))
@@ -189,6 +201,15 @@ the setter stores directly."
                                    ;; if the suffix is a keymap we need to parse recursively
                                    ((and (listp value) (eq (car value) :keymap))
                                     (setf final-value (parse-transient (cdr value))))
+                                   ;; variable syncing: set the variable slot on the infix
+                                   ;; we need a special case for it since its "infix-variable" and
+                                   ;; not "prefix-variable" since its a slot in the infix class.
+                                   ;; there's probably a nicer way to go about things but this is
+                                   ;; just for 'parse-transient' which is designed as a
+                                   ;; convenience anyway.
+                                   ((eq key :variable)
+                                    (setf (infix-variable prefix) value)
+                                    (setf should-set nil))
                                    ((eq key :type)
                                     (setf should-set nil))
                                    (t

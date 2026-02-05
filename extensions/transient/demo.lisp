@@ -1,5 +1,8 @@
 (in-package :lem/transient)
 
+(defvar *demo-language* "lisp"
+  "a demo variable that stays in sync with an infix.")
+
 (define-transient *demo-keymap*
   :display-style :row
   (:keymap
@@ -50,6 +53,12 @@
    :type :choice
    :choices ("value1" "value2" "value3")
    :description "multi-value infix")
+  (:key "s"
+   :type :choice
+   :id :synced-infix
+   :choices ("lisp" "python" "js")
+   :variable *demo-language*
+   :description "variable-synced infix")
   (:key "R" :suffix demo-run :description "run with mode")
   (:key "T" :type toggle :value t :suffix demo-toggle :description "demo toggle")
   (:key "e e" :type toggle :value t :suffix demo-toggle :description "another demo toggle")
@@ -57,6 +66,7 @@
 
 (define-command demo-run () ()
   (let ((mode-prefix (find-prefix-by-id *demo-keymap* :mode)))
-    (message "mode thing value: ~A" (prefix-value mode-prefix))))
+    (message "mode thing value: ~A" (prefix-value mode-prefix))
+    (message "synced var value: ~A" *demo-language*)))
 
 (define-key *global-keymap* "C-c t" *demo-keymap*)

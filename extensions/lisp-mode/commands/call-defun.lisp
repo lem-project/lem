@@ -43,26 +43,26 @@
         (parse-toplevel-form point)
       (when name
         (ecase kind
-          (:defun
-              (send-string-to-listener (format nil "(~A )" name)
-                                       :evaluate nil
-                                       :focus t)
-              (scan-lists (current-point) -1 -1))
-          (:defun-setf
-              (send-string-to-listener (format nil "(setf (~A ) )" name)
-                                       :evaluate nil
-                                       :focus t)
-            (scan-lists (current-point) -1 -1))
-          (:defstruct
-              (send-string-to-listener (format nil "(make-~A)" name)
-                                       :evaluate nil
-                                       :focus t)
-            (scan-lists (current-point) -1 -1))
-          (:defclass
-                (send-string-to-listener (format nil "(make-instance '~A)" name)
-                                         :evaluate nil
-                                         :focus t)
-              (scan-lists (current-point) -1 -1)))))))
+          ((:defun)
+           (send-string-to-listener (format nil "(~A )" name)
+                                    :evaluate nil
+                                    :focus t)
+           (scan-lists (current-point) -1 -1))
+          ((:defun-setf)
+           (send-string-to-listener (format nil "(setf (~A ) )" name)
+                                    :evaluate nil
+                                    :focus t)
+           (scan-lists (current-point) -1 -1))
+          ((:defstruct)
+           (send-string-to-listener (format nil "(make-~A)" name)
+                                    :evaluate nil
+                                    :focus t)
+           (scan-lists (current-point) -1 -1))
+          ((:defclass)
+           (send-string-to-listener (format nil "(make-instance '~A)" name)
+                                    :evaluate nil
+                                    :focus t)
+           (scan-lists (current-point) -1 -1)))))))
               
 (define-command test () ()
   (message "~A" (parse-toplevel-form (current-point))))

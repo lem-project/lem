@@ -771,7 +771,8 @@
                  (end point))
       (scan-lists end 1 0)
       (send-string-to-listener (points-to-string start end)
-                               (buffer-package (current-buffer))))))
+                               :package-name (buffer-package (current-buffer))
+                               :evaluate t))))
 
 (defun form-string-at-point ()
   (with-point ((point (current-point)))

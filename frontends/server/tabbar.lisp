@@ -258,6 +258,7 @@ for (const button of buttons) {
 
 (add-hook *switch-to-buffer-hook* 'update)
 (add-hook *switch-to-window-hook* 'update)
+(add-hook (variable-value 'kill-buffer-hook :global t) 'update)
 
 (defmethod window-redraw ((window tabbar-window) force)
   (declare (ignore force))

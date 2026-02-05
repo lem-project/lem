@@ -41,7 +41,6 @@ the underlying storage slot is renamed with a '*' suffix."
                :collect `(defmethod (setf ,accessor) (new-value (object ,name))
                            (setf (,internal-accessor object) new-value))))))
 
-;; a non-suffix prefix cannot be a keymap, thats why keymap doesnt inherit from prefix. this makes sense because a "prefix keymap" is a keymap that shares a common prefix, but the root map for example may contain keybindings with no prefixes.
 (defclass-dynamic prefix ()
   ((key
     :initarg :key

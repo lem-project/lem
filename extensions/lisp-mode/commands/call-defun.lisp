@@ -19,7 +19,7 @@
         (format nil "~(~A::~A~)" package-name symbol-name))))
 
 (defun parse-toplevel-form (point)
-  (let ((package-name (buffer-package (point-buffer point))))
+  (let ((package-name (buffer-package (point-buffer point) "COMMON-LISP-USER")))
     (lisp-beginning-of-defun point 1)
     (scan-lists point 1 -1)
     (skip-whitespace-forward point)

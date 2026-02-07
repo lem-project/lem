@@ -107,7 +107,12 @@ NIL to append it to the key sequence normally.")
     :initarg :active-p
     :dynamic t
     :documentation "whether a prefix is active."
-    :initform t)))
+    :initform t)
+   (extend
+    :initarg :extend
+    :accessor keymap-extend
+    :initform nil
+    :documentation "the keymap that this keymap extends.")))
 
 (defmethod keymap-add-prefix ((keymap keymap) (prefix prefix) &optional after)
   (unless (listp (keymap-children* keymap))
@@ -185,11 +190,12 @@ a prefix is a prefix of another if its a keymap or if its suffix is a prefix."))
     (when (keymap-description object)
       (princ (keymap-description object) stream))))
 
-;; TODO: we arent using parent properly here
-(defun make-keymap (&key undef-hook parent description)
+(defun make-keymap (&key undef-hook children description extend)
   (let ((keymap (make-instance 'keymap*
                                :undef-hook undef-hook
-                               :description description)))
+                               :children children
+                               :description description
+                               :extend extend)))
     keymap))
 
 (defun prefix-command-p (command)
@@ -351,7 +357,10 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
                  append (find-matching-prefixes item key) into matches
                  when (and (typep item 'keymap*) (keymap-undef-hook item))
                    do (return matches)
-                 finally (return matches))))))
+                 finally (return (or matches
+                                     (let ((extend (keymap-extend binding)))
+                                       (when extend
+                                         (find-matching-prefixes extend key))))))))))
 
 (defun find-in-function-table (binding key)
   "search function-table of keymaps in hierarchy for KEY."
@@ -368,10 +377,16 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
                (loop for child in (keymap-children binding)
                      thereis (or (find-in-function-table child key)
                                  (and (typep child 'keymap*)
-                                      (keymap-undef-hook child)))))))
+                                      (keymap-undef-hook child))))
+               (let ((extend (keymap-extend binding)))
+                 (when extend
+                   (find-in-function-table extend key))))))
         ((typep binding 'keymap)
          (loop for child in (keymap-children binding)
-               thereis (find-in-function-table child key)))
+               thereis (find-in-function-table child key))
+         (let ((extend (keymap-extend binding)))
+           (when extend
+             (find-in-function-table extend key))))
         ((typep binding 'prefix)
          (find-in-function-table (prefix-suffix binding) key))))
 
@@ -398,7 +413,11 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
                        ;; if we have matches but none were exact/successful, we are still in a prefix
                        (when (and matches (null (cdr keys)))
                          (let ((match (car matches)))
-                           (cons (prefix-suffix match) match))))))))
+                           (cons (prefix-suffix match) match)))
+                       (when (typep binding 'keymap)
+                         (let ((extend (keymap-extend binding)))
+                           (when extend
+                             (search-tree extend keys parent-prefix)))))))))
     (search-tree keymap keyseq nil)))
 
 (defun normalize-binding (found &optional parent-prefix)

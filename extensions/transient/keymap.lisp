@@ -2,9 +2,24 @@
 
 (defmethod keymap-activate ((keymap keymap))
   "called when a keymap is activated by the event scheduler."
-  (if (or (keymap-show-p keymap) *transient-always-show*)
-      (show-transient keymap)
-      (hide-transient)))
+  (let ((active-modes (all-active-modes (current-buffer))))
+    (cond ((loop for mode in active-modes
+                 for mode-keymap = (mode-transient-keymap mode)
+                 when mode-keymap
+                   do (show-transient
+                       (if (keymap-contains-p mode-keymap keymap)
+                           keymap
+                           mode-keymap))
+                      (return t)))
+          ((or (keymap-show-p keymap) *transient-always-show*)
+           (show-transient keymap))
+          (t
+           (hide-transient)))))
+
+(defgeneric mode-transient-keymap (mode)
+  (:documentation "returns the keymap to be passed to show-transient.")
+  (:method ((mode mode))
+    nil))
 
 (defmacro add-dynamic-property (class-name properties-accessor property-name &optional default-value)
   "define <CLASS-NAME>-<PROPERTY-NAME> getter and setter methods.
@@ -65,6 +80,20 @@ the setter stores directly."
                           (when (or (typep suffix 'keymap)
                                     (typep suffix 'prefix))
                             (f suffix))))))))
+    (f keymap)))
+
+(defun keymap-contains-p (keymap target)
+  "return T if KEYMAP contains TARGET as a direct or indirect child."
+  (labels ((f (node)
+             (cond ((eq node target) t)
+                   ((typep node 'keymap)
+                    (dolist (child (keymap-children node))
+                      (when (f child) (return t))))
+                   ((typep node 'prefix)
+                    (let ((suffix (prefix-suffix node)))
+                      (when (or (typep suffix 'keymap)
+                                (typep suffix 'prefix))
+                        (f suffix)))))))
     (f keymap)))
 
 (defclass infix (prefix)

@@ -229,8 +229,6 @@ or ACTIVE-KEYMAP itself if no such ancestor exists."
 prefixes always display vertically in their own column.
 nested keymaps are arranged based on display-style (:row or :column).
 prefixes marked as :intermediate-p are flattened and shown with concatenated keys."
-  (unless (keymap-show-p keymap)
-    (return-from generate-layout nil))
   (let ((prefix-items)
         (keymap-layouts))
     (labels ((collect-items (node &optional (matched-depth 0))
@@ -261,8 +259,11 @@ prefixes marked as :intermediate-p are flattened and shown with concatenated key
                                  matched-depth))
                               prefix-items)))))))
       ;; process children, separating prefixes from keymaps
-      (dolist (child (keymap-children keymap))
-        (collect-items child)))
+      (let ((current keymap))
+        (loop while current
+              do (dolist (child (keymap-children current))
+                   (collect-items child))
+                 (setf current (keymap-extend current)))))
     ;; build result: title first, then content (prefixes + keymaps arranged by display-style)
     (setf prefix-items (nreverse prefix-items))
     (setf keymap-layouts (nreverse keymap-layouts))

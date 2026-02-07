@@ -150,7 +150,7 @@
            `((defvar ,mode-hook '())))
        ,@(when keymap
            `((defvar ,keymap (make-keymap :description ',keymap
-                                          :extend ,(when parent-mode
+                                          :base ,(when parent-mode
                                                      `(mode-keymap ',parent-mode))))))
        (define-command (,major-mode (:class ,command-class-name)) () ()
          (clear-editor-local-variables (current-buffer))
@@ -253,7 +253,7 @@
          ,@(when keymap
              `((defvar ,keymap
                  (make-keymap :description ',keymap
-                              :extend (alexandria:when-let ((,parent-mode
+                              :base (alexandria:when-let ((,parent-mode
                                                              ,(when parent
                                                                 `(get-mode-object ',parent))))
                                         (mode-keymap ,parent-mode))))))

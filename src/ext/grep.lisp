@@ -183,7 +183,7 @@
     (format s "~%")))
 
 (defvar *peek-grep-mode-keymap* (make-keymap :description '*peek-grep-mode-keymap*
-                                             :extend lem/peek-source:*peek-source-keymap*))
+                                             :base lem/peek-source:*peek-source-keymap*))
 (define-minor-mode peek-grep-mode
     (:name "Peek"
      :keymap *peek-grep-mode-keymap*))

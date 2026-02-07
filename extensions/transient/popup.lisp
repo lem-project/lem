@@ -263,7 +263,7 @@ prefixes marked as :intermediate-p are flattened and shown with concatenated key
         (loop while current
               do (dolist (child (keymap-children current))
                    (collect-items child))
-                 (setf current (keymap-extend current)))))
+                 (setf current (keymap-base current)))))
     ;; build result: title first, then content (prefixes + keymaps arranged by display-style)
     (setf prefix-items (nreverse prefix-items))
     (setf keymap-layouts (nreverse keymap-layouts))

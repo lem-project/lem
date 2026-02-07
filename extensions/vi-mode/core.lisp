@@ -269,9 +269,9 @@
 (defclass vi-keymap (keymap*)
   ())
 
-(defun make-vi-keymap (&rest args &key undef-hook extend description)
-  (declare (ignore undef-hook extend description))
-  (apply 'make-instance 'vi-keymap (alexandria:remove-from-plist args :extend)))
+(defun make-vi-keymap (&rest args &key undef-hook base description)
+  (declare (ignore undef-hook base description))
+  (apply 'make-instance 'vi-keymap (alexandria:remove-from-plist args :base)))
 
 (defmacro define-keymap (name &key undef-hook)
   (declare (ignore parent))

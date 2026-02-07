@@ -480,7 +480,7 @@
    :keymap-children
    :keymap-description
    :keymap-properties
-   :keymap-extend
+   :keymap-base
    :parse-keyspec
    :prefix-properties
    :keymap-undef-hook

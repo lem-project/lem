@@ -17,7 +17,7 @@
 
 (defvar *dashboard-buffer-name* "*dashboard*")
 (defvar *dashboard-enable* t)
-(defvar *dashboard-mode-keymap* (make-keymap :description '*dashboard-mode-keymap* :parent *global-keymap*))
+(defvar *dashboard-mode-keymap* (make-keymap :description '*dashboard-mode-keymap*))
 (defvar *dashboard-layout* nil
   "List of dashboard-item instances; will be drawn in order.")
 

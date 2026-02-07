@@ -441,6 +441,7 @@
   (:export
    :ensure-mode-object
    :major-mode
+   :mode
    :mode-name
    :mode-description
    :mode-keymap
@@ -450,6 +451,7 @@
    :mode-active-p
    :major-modes
    :minor-modes
+   :all-active-modes
    :find-mode
    :toggle-minor-mode
    :define-major-mode
@@ -479,6 +481,7 @@
    :keymap-children
    :keymap-description
    :keymap-properties
+   :keymap-extend
    :parse-keyspec
    :prefix-properties
    :keymap-undef-hook

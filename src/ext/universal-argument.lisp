@@ -30,7 +30,7 @@
 (defvar *argument* (make-arg-state))
 
 (defvar *universal-argument-keymap*
-  (make-keymap :name '*universal-argument-keymap*
+  (make-keymap :description '*universal-argument-keymap*
                :undef-hook 'universal-argument-default))
 
 (define-editor-variable universal-argument-function

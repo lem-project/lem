@@ -1,0 +1,4 @@
+* Smart Parens Mode
+
+** Future Features
+- When selecting text and adding a opening character, close the pair character at after the text selected 

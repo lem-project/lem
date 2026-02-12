@@ -3,6 +3,7 @@
   (:export
    :define-transient
    :mode-transient-keymap
-   :keymap-contains-p))
+   :prefix-value
+   :prefix-render))
 
 (in-package :lem/transient)

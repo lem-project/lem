@@ -1,4 +1,4 @@
-#!/usr/bin/env bash -ex
+#!/usr/bin/env bash -eux
 # scripts/macos-deploy.bash
 
 set -o pipefail
@@ -6,6 +6,10 @@ set -o pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 parent_dir="$(dirname "$script_dir")"
 cd "$parent_dir"
+
+# ===== 0) Cleanup =====
+APP="bin/lem.app"
+rm -rf "$APP"
 
 # ===== 1) ビルド =====
 qlot install
@@ -15,7 +19,6 @@ qlot exec sbcl --eval '(ql:quickload :lem)' --eval '(asdf:make :lem)'
 cp resources/lem.png bin/lem.app/Contents/Resources/ || true
 
 # ===== 2) OpenSSL を同梱し、参照先を @loader_path 化 =====
-APP="bin/lem.app"
 EXE="$APP/Contents/MacOS/lem"
 LIBDIR="$APP/Contents/MacOS"
 

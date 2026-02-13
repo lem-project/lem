@@ -398,7 +398,7 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
           return (keymap-undef-hook km)))
 
 (defmethod find-suffix ((keymap keymap) keyseq)
-  "search KEYMAP tree for exact binding matching KEYSEQ. returns (suffix . prefix)"
+  "search KEYMAP tree for exact binding matching KEYSEQ. returns (suffix . prefix)."
   (labels ((search-tree (binding keys parent-prefix)
              (if (null keys)
                  (if (typep binding 'prefix)
@@ -426,9 +426,18 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
     (keymap (cons found parent-prefix))
     (t (cons found parent-prefix))))
 
+(defmethod keymap-find ((keymap keymap) key)
+  "finds key sequence in keymap, returns (suffix . prefix)."
+  (let* ((keyseq (etypecase key
+                   (key (list key))
+                   (list key)))
+         (suffix-result (find-suffix keymap keyseq)))
+    (when suffix-result
+      (normalize-binding (car suffix-result) (cdr suffix-result)))))
+
 ;; this is currently here for backwards compatibility
 ;; im not yet sure whether 'cmd' or function-table lookup is necessary (i think so but im not sure how to get rid of it.)
-(defmethod keymap-find-keybind ((keymap keymap) key cmd)
+(defmethod keymap-find ((keymap keymap*) key)
   "finds key sequence in keymap, returns (suffix . prefix)."
   (let* ((keyseq (etypecase key
                    (key (list key))
@@ -441,13 +450,10 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
                    (or
                     ;; search function-table in hierarchy
                     (find-in-function-table keymap (car keyseq))
-                    ;; check function-table for cmd symbol
-                    (gethash (if (consp cmd) (car cmd) cmd) (keymap-function-table keymap))
                     ;; find undef-hook in hierarchy (e.g. self-insert)
                     (find-undef-hook-in-hierarchy keymap))))
-             (if result
-                 (normalize-binding result)
-                 cmd))))))
+             (when result
+               (normalize-binding result)))))))
 
 (defun insertion-key-p (key)
   (let* ((key (typecase key
@@ -496,10 +502,10 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
 (defun lookup-keybind (key)
   (unless (find *other-keymaps-root* (keymap-children *root-keymap*))
     (keymap-add-child *root-keymap* *other-keymaps-root*))
-  (keymap-find-keybind *root-keymap* key nil))
+  (keymap-find *root-keymap* key))
 
 (defun find-keybind (key)
-  (let ((result (keymap-find-keybind *root-keymap* key nil)))
+  (let ((result (keymap-find *root-keymap* key)))
     (when result
       result)))
 

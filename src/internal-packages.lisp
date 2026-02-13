@@ -499,7 +499,7 @@
    :find-keybind
    :insertion-key-p
    :lookup-keybind
-   :keymap-find-keybind
+   :keymap-find
    :*abort-key*
    :abort-key-p
    :with-special-keymap

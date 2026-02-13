@@ -19,12 +19,12 @@
 (defun leader-key ()
   (make-key :sym "Leader"))
 
-(defmethod keymap-find-keybind ((keymap vi-keymap) (key lem-core::key) cmd)
+(defmethod keymap-find ((keymap vi-keymap) (key lem-core::key))
   (if (mapleader-key-p key)
-      (call-next-method keymap (leader-key) cmd)
+      (call-next-method keymap (leader-key))
       (call-next-method)))
 
-(defmethod keymap-find-keybind ((keymap vi-keymap) (key cons) cmd)
+(defmethod keymap-find ((keymap vi-keymap) (key cons))
   (if (mapleader-key-p (first key))
-      (call-next-method keymap (cons (leader-key) (rest key)) cmd)
+      (call-next-method keymap (cons (leader-key) (rest key)))
       (call-next-method)))

@@ -164,7 +164,7 @@
 
 (defun extract-count-keys (keys)
   (loop for key in keys
-        for cmd = (lem-core::keymap-find-keybind *motion-keymap* key nil)
+        for cmd = (lem-core::keymap-find *motion-keymap* key)
         unless (member cmd '(lem/universal-argument:universal-argument-0
                              lem/universal-argument:universal-argument-1
                              lem/universal-argument:universal-argument-2

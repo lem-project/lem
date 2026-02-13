@@ -67,9 +67,9 @@ otool -L "$LIBDIR/libssl.3.dylib" | sed 's/^/  /'
 echo "== otool -L libcrypto.3.dylib =="
 otool -L "$LIBDIR/libcrypto.3.dylib" | sed 's/^/  /'
 
-if otool -L "$LIBDIR/libssl.3.dylib"    | grep -q '/opt/homebrew' \
-|| otool -L "$LIBDIR/libcrypto.3.dylib" | grep -q '/opt/homebrew'; then
-  echo "error: absolute Homebrew paths remain in libssl/libcrypto. Fixing failed." >&2
+if otool -L "$LIBDIR/libssl.3.dylib"    | grep -q '/opt' \
+|| otool -L "$LIBDIR/libcrypto.3.dylib" | grep -q '/opt'; then
+  echo "error: absolute paths remain in libssl/libcrypto. Fixing failed." >&2
   exit 1
 fi
 

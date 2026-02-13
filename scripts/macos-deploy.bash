@@ -24,13 +24,12 @@ if [[ ! -x "$EXE" ]]; then
   exit 1
 fi
 
-if ! command -v brew >/dev/null 2>&1; then
-  echo "error: Homebrew not found. Install brew before packaging." >&2
+if ! command -v pkg-config >/dev/null 2>&1; then
+  echo "error: pkg-config not found. Install pkg-config before packaging." >&2
   exit 1
 fi
 
-OPENSSL_PREFIX="$(brew --prefix openssl@3)"
-OPENSSL_LIB="$OPENSSL_PREFIX/lib"
+OPENSSL_LIB="$(pkg-config --variable=libdir openssl)"
 
 # Cellar の実体（バージョン付きディレクトリ）を解決
 LIBCRYPTO_REAL="$(realpath "$OPENSSL_LIB/libcrypto.3.dylib")"

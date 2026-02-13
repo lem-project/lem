@@ -1,62 +1,17 @@
 (in-package :lem-core)
 
-(defmacro defclass-dynamic (name direct-superclasses direct-slots &rest options)
-  "defines a class with support for 'dynamic' slots.
-
-slots with the :dynamic t option will have accessors that automatically handle values which are functions.
-if a dynamic slot contains a function, the accessor will call it and return the result. otherwise,
-it returns the value directly.
-the underlying storage slot is renamed with a '*' suffix."
-  (let ((dynamic-slots
-          (loop :for slot :in direct-slots
-                :when (getf (cdr slot) :dynamic)
-                  :collect slot)))
-    (setf direct-slots
-          (loop :for slot :in direct-slots
-                :collect (if (getf (cdr slot) :dynamic)
-                             (let* ((slot-name (first slot))
-                                    (accessor-name
-                                      (intern (format nil "~A-~A" name slot-name)))
-                                    (internal-accessor-name
-                                      (intern (format nil "~A*" accessor-name)))
-                                    (new-slot (copy-list slot)))
-                               (remf (cdr new-slot) :dynamic)
-                               (setf (getf (cdr new-slot) :accessor)
-                                     internal-accessor-name)
-                               new-slot)
-                             slot)))
-    `(progn
-       (defclass ,name ,direct-superclasses
-         ,direct-slots
-         ,@options)
-       ,@(loop :for slot :in dynamic-slots
-               :for slot-name := (first slot)
-               :for accessor := (intern (format nil "~A-~A" name slot-name))
-               :for internal-accessor := (intern (format nil "~A*" accessor))
-               :collect `(defmethod ,accessor ((object ,name))
-                           (let ((value (,internal-accessor object)))
-                             (if (functionp value)
-                                 (funcall value)
-                                 value)))
-               :collect `(defmethod (setf ,accessor) (new-value (object ,name))
-                           (setf (,internal-accessor object) new-value))))))
-
-(defclass-dynamic prefix ()
+(defclass prefix ()
   ((key
     :initarg :key
-    :dynamic t
     :documentation "the key defined for the prefix. could be a function that returns a key.")
    (description
     :initarg :description
-    :dynamic t
     :initform nil)
    (suffix
     :initarg :suffix
-    :dynamic t
     :documentation "the suffix defined for the prefix, could be another prefix or a keymap or a function that returns one.")
    (active-p
     :initarg :active-p
-    :dynamic t
     :documentation "whether a prefix is active."
     :initform t)
    ;; intermediate-p means a prefix is just a "continuation" of another and servers as an intermediate key
@@ -79,6 +34,38 @@ NIL to append it to the key sequence normally.")
     :initform nil
     :documentation "extra metadata that a prefix may hold.")))
 
+(defgeneric prefix-key (prefix)
+  (:method ((prefix prefix))
+   (slot-value prefix 'key)))
+
+(defgeneric (setf prefix-key) (new-value prefix)
+  (:method (new-value (prefix prefix))
+    (setf (slot-value prefix 'key) new-value)))
+
+(defgeneric prefix-suffix (prefix)
+  (:method ((prefix prefix))
+    (slot-value prefix 'suffix)))
+
+(defgeneric (setf prefix-suffix) (new-value prefix)
+  (:method (new-value (prefix prefix))
+    (setf (slot-value prefix 'suffix) new-value)))
+
+(defgeneric prefix-description (prefix)
+  (:method ((prefix prefix))
+    (slot-value prefix 'description)))
+
+(defgeneric (setf prefix-description) (new-value prefix)
+  (:method (new-value (prefix prefix))
+    (setf (slot-value prefix 'description) new-value)))
+
+(defgeneric prefix-active-p (prefix)
+  (:method ((prefix prefix))
+    (slot-value prefix 'active-p)))
+
+(defgeneric (setf prefix-active-p) (new-value prefix)
+  (:method (new-value (prefix prefix))
+    (setf (slot-value prefix 'active-p) new-value)))
+
 (defun make-prefix (&key key suffix description)
   (let ((prefix (make-instance
                  'prefix
@@ -87,11 +74,10 @@ NIL to append it to the key sequence normally.")
                  :description description)))
     prefix))
 
-(defclass-dynamic keymap ()
+(defclass keymap ()
   ;; children could contain keymaps or prefixes.
   ((children
     :initarg :children
-    :dynamic t
     :initform nil
     :documentation "the children of the keymap. could be a function that returns a list of children.")
    (properties
@@ -101,11 +87,9 @@ NIL to append it to the key sequence normally.")
     :documentation "additional metadata that a keymap holds.")
    (description
     :initarg :description
-    :dynamic t
     :initform nil)
    (active-p
     :initarg :active-p
-    :dynamic t
     :documentation "whether a prefix is active."
     :initform t)
    (base
@@ -114,19 +98,44 @@ NIL to append it to the key sequence normally.")
     :initform nil
     :documentation "the keymap that this keymap extends.")))
 
-(defmethod keymap-add-prefix ((keymap keymap) (prefix prefix) &optional after)
-  (unless (listp (keymap-children* keymap))
-    (error "trying to add key to a non-static keymap."))
+(defgeneric keymap-children (keymap)
+  (:method ((keymap keymap))
+    (slot-value keymap 'children)))
+
+(defgeneric (setf keymap-children) (new-value keymap)
+  (:method (new-value (keymap keymap))
+    (setf (slot-value keymap 'children) new-value)))
+
+(defgeneric keymap-children (keymap)
+  (:method ((keymap keymap))
+    (slot-value keymap 'children)))
+
+(defgeneric keymap-description (keymap)
+  (:method ((keymap keymap))
+    (slot-value keymap 'description)))
+
+(defgeneric (setf keymap-description) (new-value keymap)
+  (:method (new-value (keymap keymap))
+    (setf (slot-value keymap 'description) new-value)))
+
+(defgeneric keymap-active-p (keymap)
+  (:method ((keymap keymap))
+    (slot-value keymap 'active-p)))
+
+(defgeneric (setf keymap-active-p) (new-value keymap)
+  (:method (new-value (keymap keymap))
+    (setf (slot-value keymap 'active-p) new-value)))
+
+(defmethod keymap-add-item ((keymap keymap) item &optional after)
   (if after
-      (setf (keymap-children* keymap) (append (keymap-children* keymap) (list prefix)))
-      (push prefix (keymap-children* keymap))))
+      (setf (keymap-children keymap) (append (slot-value keymap 'children) (list item)))
+      (push item (slot-value keymap 'children))))
+
+(defmethod keymap-add-prefix ((keymap keymap) (prefix prefix) &optional after)
+  (keymap-add-item keymap prefix after))
 
 (defmethod keymap-add-child ((keymap keymap) (keymap2 keymap) &optional after)
-  (unless (listp (keymap-children* keymap))
-    (error "trying to add nested keymap to a non-static keymap."))
-  (if after
-      (setf (keymap-children* keymap) (append (keymap-children* keymap) (list keymap2)))
-      (push keymap2 (keymap-children* keymap))))
+  (keymap-add-item keymap keymap2 after))
 
 (defgeneric prefix-p (keymap)
   (:documentation "check whether this is a prefix of another prefix.
@@ -180,8 +189,8 @@ a prefix is a prefix of another if its a keymap or if its suffix is a prefix."))
     :accessor keymap-function-table
     :initform (make-hash-table :test 'eq))))
 
-;; *root-keymap* contains all keymaps as (possibly nested, possibly "dynamic") children
-(defvar *root-keymap* (make-instance 'keymap*))
+;; *root-keymap* contains the full keymap hierarchy
+(defvar *root-keymap* (make-instance 'keymap))
 
 (defvar *special-keymap* nil)
 
@@ -269,10 +278,10 @@ Example: (define-key *global-keymap* \"C-'\" 'list-modes)"
                     (setf next-keymap suffix)
                     ;; suffix is a command, need to create intermediate keymap. but why would we get here?
                     (progn
-                      (setf next-keymap (make-instance 'keymap*))
+                      (setf next-keymap (make-instance 'keymap))
                       (setf (prefix-suffix next-prefix) next-keymap))))
               (progn
-                (setf next-keymap (make-instance 'keymap*))
+                (setf next-keymap (make-instance 'keymap))
                 (setf next-prefix
                       (make-prefix :suffix next-keymap
                                    :key k))
@@ -355,6 +364,8 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
          (when (keymap-active-p binding)
            (loop for item in (keymap-children binding)
                  append (find-matching-prefixes item key) into matches
+                 ;; if we reach a keymap with an undef-hook we exit prematurely to cause that
+                 ;; keymap to be activated
                  when (and (typep item 'keymap*) (keymap-undef-hook item))
                    do (return matches)
                  finally (return (or matches
@@ -386,16 +397,7 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
                thereis (find-in-function-table child key))
          (let ((base (keymap-base binding)))
            (when base
-             (find-in-function-table base key))))
-        ((typep binding 'prefix)
-         (find-in-function-table (prefix-suffix binding) key))))
-
-(defun find-undef-hook-in-hierarchy (binding)
-  "find the first undef-hook from active keymaps."
-  (declare (ignore binding))
-  (loop for km in (all-keymaps)
-        when (and (typep km 'keymap*) (keymap-undef-hook km))
-          return (keymap-undef-hook km)))
+             (find-in-function-table base key))))))
 
 (defmethod find-suffix ((keymap keymap) keyseq)
   "search KEYMAP tree for exact binding matching KEYSEQ. returns (suffix . prefix)."
@@ -446,12 +448,8 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
     (cond (suffix-result
            (normalize-binding (car suffix-result) (cdr suffix-result)))
           (t
-           (let ((result
-                   (or
-                    ;; search function-table in hierarchy
-                    (find-in-function-table keymap (car keyseq))
-                    ;; find undef-hook in hierarchy (e.g. self-insert)
-                    (find-undef-hook-in-hierarchy keymap))))
+           ;; search function-table in hierarchy
+           (let ((result (find-in-function-table keymap (car keyseq))))
              (when result
                (normalize-binding result)))))))
 
@@ -470,7 +468,7 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
 (defgeneric compute-keymaps (global-mode)
   (:method ((mode global-mode)) nil))
 
-(defun all-keymaps ()
+(defun other-keymaps ()
   (let ((keymaps))
     ;; this one collects active modes. local shadows global.
     (dolist (mode (reverse (all-active-modes (current-buffer))))
@@ -488,21 +486,26 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
       (push *special-keymap* keymaps))
     (delete-duplicates keymaps :from-end t)))
 
-;; this is for some "other" keymaps that i need to inject into the root-keymap (atleast this way for now).
-;; we could make *root-keymap* itself have dynamic children and inject those into it but i dont want that,
-;; so we create a second-level keymap as the root for all 'other-keymaps' and inject that keymap
-;; into *root-keymap*
-(defun other-keymaps ()
-  (all-keymaps))
 (defparameter *other-keymaps-root*
-  (make-instance 'keymap*
-                 :children #'other-keymaps
-                 :description '*other-keymaps-root*))
+  (make-instance 'keymap :description '*other-keymaps-root*))
+
+;; this is for some "other" keymaps that i need to inject into the root-keymap (atleast this way for now).
+(defmethod keymap-children ((keymap (eql *other-keymaps-root*)))
+  (other-keymaps))
+
+(defmethod keymap-children ((keymap (eql *root-keymap*)))
+  (cons *other-keymaps-root*
+        (slot-value keymap 'children)))
+
+(defun find-undef-hook ()
+  (loop for km in (other-keymaps)
+        when (and (typep km 'keymap*) (keymap-undef-hook km))
+          return (keymap-undef-hook km)))
 
 (defun lookup-keybind (key)
-  (unless (find *other-keymaps-root* (keymap-children *root-keymap*))
-    (keymap-add-child *root-keymap* *other-keymaps-root*))
-  (keymap-find *root-keymap* key))
+  (or (keymap-find *root-keymap* key)
+      ;; find undef-hook in hierarchy (e.g. self-insert)
+      (normalize-binding (find-undef-hook))))
 
 (defun find-keybind (key)
   (let ((result (keymap-find *root-keymap* key)))

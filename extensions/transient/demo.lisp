@@ -1,6 +1,7 @@
 (in-package :lem/transient)
 
-(defvar *demo-language* "lisp"
+(defvar *demo-language*
+  "lisp"
   "a demo variable that stays in sync with an infix.")
 
 (define-transient *demo-keymap*
@@ -39,7 +40,7 @@
              (:key "l"
               :type :choice
               :id :mode
-              :choices ("lisp" "python" "js")
+              :choices-func (list "lisp" "python" "js")
               :value "python"
               :description "mode"))
             (:keymap

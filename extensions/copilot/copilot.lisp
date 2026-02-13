@@ -246,7 +246,7 @@
 
 (defun find-copilot-completion-command (key)
   (lookup-keybind key
-                  :keymaps (append (lem-core::all-keymaps)
+                  :keymaps (append (lem-core::other-keymaps)
                                    (list *copilot-completion-keymap*))))
 
 (defun search-preffix (str1 str2)

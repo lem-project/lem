@@ -76,11 +76,11 @@ fi
 
 # ===== 5) 配布用 ZIP =====
 README_PATH="bin/README.md"
-echo "The following command must be executed for lem.app to start.
+echo 'The following command must be executed for lem.app to start.
 ```
 xattr -dr com.apple.quarantine lem.app/
 ```
-" > "$README_PATH"
+' > "$README_PATH"
 
 rm -f lem-macos.zip
 (

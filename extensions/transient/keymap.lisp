@@ -21,27 +21,7 @@
   (:method ((mode mode))
     nil))
 
-(defmacro add-dynamic-property (class-name properties-accessor property-name &optional default-value)
-  "define <CLASS-NAME>-<PROPERTY-NAME> getter and setter methods.
-
-the getter retrieves from PROPERTIES-ACCESSOR using :PROPERTY-NAME as key.
-if the value is a function, it funcalls it. the setter stores directly.
-if DEFAULT-VALUE is provided and non-nil, it is used as the default for getf."
-  (let* ((keyword (intern (symbol-name property-name) :keyword))
-         (getter-name (intern (format nil "~A-~A" class-name property-name) :lem/transient))
-         (obj-sym (gensym "OBJ")))
-    `(progn
-       (defmethod ,getter-name ((,obj-sym ,class-name))
-         (let ((prop ,(if default-value
-                          `(getf (,properties-accessor ,obj-sym) ,keyword ,default-value)
-                          `(getf (,properties-accessor ,obj-sym) ,keyword))))
-           (if (functionp prop)
-               (funcall prop)
-               prop)))
-       (defmethod (setf ,getter-name) (val (,obj-sym ,class-name))
-         (setf (getf (,properties-accessor ,obj-sym) ,keyword) val)))))
-
-(defmacro add-static-property (class-name properties-accessor property-name &optional default-value)
+(defmacro add-property (class-name properties-accessor property-name &optional default-value)
   "define <CLASS-NAME>-<PROPERTY-NAME> getter and setter methods.
 
 the getter retrieves from PROPERTIES-ACCESSOR using :PROPERTY-NAME as key.
@@ -57,15 +37,13 @@ the setter stores directly."
        (defmethod (setf ,getter-name) (val (,obj-sym ,class-name))
          (setf (getf (,properties-accessor ,obj-sym) ,keyword) val)))))
 
-;; these are properties that we want to be "dynamic", as in can be assigned a function that
-;; returns the value later instead of the value itself.
-(add-dynamic-property keymap keymap-properties show-p nil)
-(add-dynamic-property prefix prefix-properties show-p t)
-;; static properties dont take a function that returns a value, just a value.
-(add-static-property keymap keymap-properties display-style :row)
-(add-static-property prefix prefix-properties id)
+;; some stuff we need for working with "transient keymaps"
+(add-property keymap keymap-properties show-p nil)
+(add-property keymap keymap-properties display-style :row)
+(add-property prefix prefix-properties show-p t)
+(add-property prefix prefix-properties id)
 ;; TODO: it would be better to store the parsed key sequence instead of the stringified one and work with that.
-(add-static-property prefix prefix-properties display-key)
+(add-property prefix prefix-properties display-key)
 
 (defun find-prefix-by-id (keymap id)
   (labels ((f (node)
@@ -159,6 +137,27 @@ the setter stores directly."
 (defmacro define-transient (name &body bindings)
   `(defparameter ,name (parse-transient ',bindings)))
 
+(defun parse-transient-method (object key val method-name)
+  (let* ((key-string (string key))
+         (key-method (intern (format nil "~A-~A" method-name key-string) :lem/transient))
+         (length (length key-string)))
+    (cond ((and (> length 5)
+                (string-equal "-func" (subseq key-string (- length 5))))
+           (let* ((prefix-key-string (subseq key-string 0 (- length 5)))
+                  (key-method (intern (format nil "~A-~A" method-name prefix-key-string)
+                                      :lem/transient)))
+             (eval `(defmethod ,key-method ((object (eql ,object)))
+                      ,val))))
+          ((fboundp key-method)
+           (funcall (fdefinition (list 'setf key-method)) val object))
+          (t
+           (let ((property-method (intern (format nil "~A-PROPERTIES" method-name)
+                                          :lem/transient)))
+             (when (fboundp property-method)
+               (let ((props (funcall (fdefinition property-method) object)))
+                 (setf (getf props key) val)
+                 (funcall (fdefinition (list 'setf property-method)) props object))))))))
+
 (defun parse-transient (bindings)
   "defines a transient menu. args yet to be documented."
   (let ((keymap (make-keymap)))
@@ -170,12 +169,9 @@ the setter stores directly."
                  ;; inline property
                  ((keywordp binding)
                   (let ((val (second tail)))
-                    (let ((key-method (intern (format nil "KEYMAP-~A" (string binding)) :lem/transient)))
-                      (if (fboundp key-method)
-                          (funcall (fdefinition (list 'setf key-method)) val keymap)
-                          (setf (getf (keymap-properties keymap) binding) val))))
-                  ;; advance another cell because we're already consumed it (second tail)
-                  (setf tail (cdr tail)))
+                    (parse-transient-method keymap binding val "KEYMAP")
+                    ;; advance another cell because we're already consumed it (second tail)
+                    (setf tail (cdr tail))))
                  ;; direct child keymap (:keymap ...)
                  ((eq (car binding) :keymap)
                   (let ((sub-map (parse-transient (cdr binding))))
@@ -191,40 +187,43 @@ the setter stores directly."
                       (when (cdr parsed-key)
                         (setf (prefix-display-key prefix) key))
                       ;; we need to create intermediate prefixes if the key is longer than one
-                      (loop for cell on parsed-key
-                            for i from 0
-                            for lastp = (null (cdr cell))
-                            for current-key = (car cell)
-                            for current-prefix = (if lastp
-                                                     prefix
-                                                     ;; reuse existing intermediate prefix with same key, or create new one
-                                                     (let ((existing (find current-key (keymap-children last-keymap)
-                                                                           :test (lambda (k child)
-                                                                                   (and (typep child 'prefix)
-                                                                                        (prefix-intermediate-p child)
-                                                                                        (equal k (prefix-key child)))))))
-                                                       (if existing
-                                                           (progn
-                                                             (setf last-keymap (prefix-suffix existing))
-                                                             existing)
-                                                           (let* ((new-prefix (make-instance 'prefix))
-                                                                  (new-keymap (make-keymap)))
-                                                             (keymap-add-prefix last-keymap new-prefix t)
-                                                             (setf (prefix-suffix new-prefix) new-keymap)
-                                                             (setf (prefix-intermediate-p new-prefix) t)
-                                                             (setf (keymap-show-p new-keymap) t)
-                                                             (setf last-keymap new-keymap)
-                                                             new-prefix))))
-                            do (setf (prefix-key current-prefix) current-key))
+                      (loop
+                        for cell on parsed-key
+                        for i from 0
+                        for lastp = (null (cdr cell))
+                        for current-key = (car cell)
+                        do (let ((current-prefix
+                                   (if lastp
+                                       prefix
+                                       ;; reuse existing intermediate prefix with same key, or create new one
+                                       (let ((existing (find
+                                                        current-key
+                                                        (keymap-children last-keymap)
+                                                        :test (lambda (k child)
+                                                                (and (typep child 'prefix)
+                                                                     (prefix-intermediate-p child)
+                                                                     (equal
+                                                                      k
+                                                                      (prefix-key child)))))))
+                                         (if existing
+                                             (progn
+                                               (setf last-keymap (prefix-suffix existing))
+                                               existing)
+                                             (let* ((new-prefix (make-instance 'prefix))
+                                                    (new-keymap (make-keymap)))
+                                               (keymap-add-prefix last-keymap new-prefix t)
+                                               (setf (prefix-suffix new-prefix) new-keymap)
+                                               (setf (prefix-intermediate-p new-prefix) t)
+                                               (setf (keymap-show-p new-keymap) t)
+                                               (setf last-keymap new-keymap)
+                                               new-prefix))))))
+                             (setf (prefix-key current-prefix) current-key)))
                       (keymap-add-prefix last-keymap prefix t)
                       ;; sometimes the suffix will not be set (e.g. prefix-type is :choice). we
                       ;; initialize it to nil to avoid unbound errors.
                       (setf (prefix-suffix prefix) nil)
                       (loop for (key value) on (cddr binding) by 'cddr
-                            ;; key-method is used for (setf prefix-<key-method> <value>)
-                            for key-method = (intern (format nil "PREFIX-~A" (string key)) :lem/transient)
-                            do (let ((setf-expr `(setf (,key-method prefix) value))
-                                     (final-value)
+                            do (let ((final-value)
                                      (should-set t))
                                  (cond
                                    ;; if the suffix is a keymap we need to parse recursively
@@ -244,7 +243,8 @@ the setter stores directly."
                                    (t
                                     (setf final-value value)))
                                  (when should-set
-                                   (funcall (fdefinition (list 'setf key-method))
-                                            final-value
-                                            prefix))))))))))
+                                   (parse-transient-method prefix
+                                                           key
+                                                           final-value
+                                                           "PREFIX"))))))))))
     keymap))

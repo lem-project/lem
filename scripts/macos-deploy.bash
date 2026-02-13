@@ -7,6 +7,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 parent_dir="$(dirname "$script_dir")"
 cd "$parent_dir"
 
+# ===== 0) クリーンアップ =====
 # ===== 0) Cleanup =====
 APP="bin/lem.app"
 rm -rf "$APP"
@@ -67,6 +68,22 @@ install_name_tool -change @rpath/libcrypto.3.dylib @loader_path/libcrypto.3.dyli
 # 互換用シンボリックリンク（無印名で探すケースに備える）
 # Symbolic links for compatibility (In case it looks for the name without version suffix)
 ( cd "$LIBDIR" && { ln -sf libssl.3.dylib libssl.dylib; ln -sf libcrypto.3.dylib libcrypto.dylib; } )
+
+# 必要に応じて zlib を同梱
+# Bundle zlib if needed
+if otool -L "$LIBDIR/libssl.3.dylib" "$LIBDIR/libcrypto.3.dylib" | grep -q "libz"; then
+  ZLIB_DIR="$(pkg-config --variable=libdir zlib)"
+  install -m 0755 "$ZLIB_DIR/libz.1.dylib" "$LIBDIR/libz.1.dylib"
+
+  # libz 自身の ID を @loader_path に変更
+  # Change libz's own ID to @loader_path
+  install_name_tool -id @loader_path/libz.1.dylib "$LIBDIR/libz.1.dylib"
+
+  # libssl/libcrypto からの参照を置換
+  # Replace references from libssl/libcrypto
+  install_name_tool -change "$ZLIB_DIR/libz.1.dylib" @loader_path/libz.1.dylib "$LIBDIR/libssl.3.dylib" || true
+  install_name_tool -change "$ZLIB_DIR/libz.1.dylib" @loader_path/libz.1.dylib "$LIBDIR/libcrypto.3.dylib" || true
+fi
 
 # 実行ファイル(lem)は SBCL のダンプ構造のため install_name_tool は当てない
 # Do not apply install_name_tool to the executable (lem) because of the SBCL dump structure

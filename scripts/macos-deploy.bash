@@ -72,8 +72,8 @@ fi
 
 # deploy によって追加されたライブラリを削除
 # Remove libs added by deploy
-rm "$LIBDIR/libtree-sitter.*.dylib" || true
-rm "$LIBDIR/libzstd.*.dylib" || true
+rm "$LIBDIR"/libtree-sitter.*.dylib || true
+rm "$LIBDIR"/libzstd.*.dylib || true
 
 OPENSSL_LIB="$(pkg-config --variable=libdir openssl)"
 

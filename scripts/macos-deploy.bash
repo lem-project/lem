@@ -114,13 +114,33 @@ if otool -L "$LIBDIR/libssl.3.dylib" "$LIBDIR/libcrypto.3.dylib" | grep -q "libz
   install_name_tool -change "$ZLIB_DIR/libz.1.dylib" @loader_path/libz.1.dylib "$LIBDIR/libcrypto.3.dylib" || true
 fi
 
-# deployによって追加されたlibzstdのコピーを削除
-# Remove copy of libzstd added by deploy
+# deploy によって追加されたライブラリを削除
+# Remove libs added by deploy
 rm "$LIBDIR/libzstd.1.5.7.dylib" || true
+rm "$LIBDIR/libtree-sitter.0.25.dylib" || true
 
-# webview dylib自身のIDを@loader_pathに揃える
-# Align the webview dylib's own ID to @loader_path
+# tree-sitter を同梱
+# Bundle tree-sitter
+LIBTREE_SITTER_DIR="$(pkg-config --variable=libdir tree-sitter)"
+install -m 0755 "$LIBTREE_SITTER_DIR/libtree-sitter.0.dylib" "$LIBDIR/libtree-sitter.0.dylib"
+
+# vterm を同梱
+# Bundle vterm
+VTERM_DIR="$(pkg-config --variable=libdir vterm)"
+install -m 0755 "$VTERM_DIR/libvterm.0.dylib" "$LIBDIR/libvterm.0.dylib"
+
+# dylib の自認パス (ID) を @loader_path に変更
+# Change dylib IDs to @loader_path
+install_name_tool -id @loader_path/libtree-sitter.0.dylib "$LIBDIR/libtree-sitter.0.dylib"
+install_name_tool -id @loader_path/libts-wrapper.dylib "$LIBDIR/libts-wrapper.dylib"
+install_name_tool -id @loader_path/libvterm.0.dylib "$LIBDIR/libvterm.0.dylib"
 install_name_tool -id @loader_path/libwebview.0.12.dylib "$LIBDIR/libwebview.dylib"
+install_name_tool -id @loader_path/terminal.so "$LIBDIR/terminal.so"
+
+# dylib の参照先を @loader_path に変更
+# Change dylib references to @loader_path
+install_name_tool -change /opt/homebrew/opt/tree-sitter/lib/libtree-sitter.0.26.dylib @loader_path/libtree-sitter.0.dylib "$LIBDIR/libts-wrapper.dylib"
+install_name_tool -change /opt/homebrew/opt/libvterm/lib/libvterm.0.dylib @loader_path/libvterm.0.dylib "$LIBDIR/terminal.so"
 
 # 実行ファイル(lem)は SBCL のダンプ構造のため install_name_tool は当てない
 # Do not apply install_name_tool to the executable (lem) because of the SBCL dump structure

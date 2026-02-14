@@ -82,7 +82,8 @@ the setter stores directly."
 
 (defclass choice (infix)
   ((choices
-    :accessor prefix-choices)
+    :accessor prefix-choices
+    :initform nil)
    (value))
   (:documentation "a prefix that may take on different values."))
 

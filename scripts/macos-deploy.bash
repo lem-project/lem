@@ -1,7 +1,7 @@
-#!/usr/bin/env bash -eux
+#!/usr/bin/env bash
 # scripts/macos-deploy.bash
 
-set -o pipefail
+set -euxo pipefail
 
 BUILD_DIR=build
 BIN_DIR=bin
@@ -28,11 +28,11 @@ mkdir -p "$BIN_DIR"
 # SBCL depends on libzstd and the app executable (lem) inherits those shared deps
 # `install_name_tool` doesn't work on the app executable because of the SBCL dump structure so
 # we have to replace dylib references on a copy of the sbcl executable instead
-SBCL_BIN=$(realpath $(which sbcl))
+SBCL_BIN=$(realpath "$(which sbcl)")
 SBCL_HOME="$(dirname "$SBCL_BIN")/../lib/sbcl"
 # Homebrew uses a shell script so we have to find the real executable
 if [[ $(file "$SBCL_BIN") == *"shell script"* ]]; then
-    SBCL_ROOT="$(dirname $(dirname "$SBCL_BIN"))"
+    SBCL_ROOT="$(dirname "$(dirname "$SBCL_BIN")")"
     SBCL_BIN="$SBCL_ROOT/libexec/bin/sbcl"
     SBCL_HOME="$SBCL_ROOT/lib/sbcl"
 fi
@@ -75,7 +75,6 @@ OPENSSL_LIB="$(pkg-config --variable=libdir openssl)"
 # Cellar の実体（バージョン付きディレクトリ）を解決
 # Resolve the actual path in the Cellar (versioned directory)
 LIBCRYPTO_REAL="$(realpath "$OPENSSL_LIB/libcrypto.3.dylib")"
-LIBSSL_REAL="$(realpath "$OPENSSL_LIB/libssl.3.dylib")"
 
 # deploy が同名を置いている場合もあるので上書き
 # Overwrite because deploy may have placed a file with the same name
@@ -99,8 +98,8 @@ install_name_tool -change "$OPENSSL_LIB/libcrypto.3.dylib" @loader_path/libcrypt
 # 3) Also shift @rpath cases to @loader_path (idempotent)
 install_name_tool -change @rpath/libcrypto.3.dylib @loader_path/libcrypto.3.dylib "$LIBDIR/libssl.3.dylib" || true
 
-# 必要に応じて zlib を同梱 (MacPorts の OpenSSL は zlib に依存)
-# Bundle zlib if needed (MacPorts OpenSSL relies on zlib)
+# 必要に応じて zlib を同梱 (MacPorts の OpenSSL は zlib に依存するため)
+# Bundle zlib if needed (MacPorts OpenSSL depends on zlib)
 if otool -L "$LIBDIR/libssl.3.dylib" "$LIBDIR/libcrypto.3.dylib" | grep -q "libz"; then
   ZLIB_DIR="$(pkg-config --variable=libdir zlib)"
   install -m 0755 "$ZLIB_DIR/libz.1.dylib" "$LIBDIR/libz.1.dylib"
@@ -134,14 +133,11 @@ codesign --force --deep --sign - "$APP" || true
 
 # ===== 5) 検査（絶対パスが残っていないか） =====
 # ===== 5) Inspection (Check if any absolute paths remain) =====
-echo "== otool -L libssl.3.dylib =="
-otool -L "$LIBDIR/libssl.3.dylib" | sed 's/^/  /'
-echo "== otool -L libcrypto.3.dylib =="
-otool -L "$LIBDIR/libcrypto.3.dylib" | sed 's/^/  /'
+echo "== otool -L * =="
+otool -L "$LIBDIR"/* | sed 's/^/  /'
 
-if otool -L "$LIBDIR/libssl.3.dylib"    | grep -q '/opt' \
-|| otool -L "$LIBDIR/libcrypto.3.dylib" | grep -q '/opt'; then
-  echo "error: absolute paths remain in libssl/libcrypto. Fixing failed." >&2
+if otool -L "$LIBDIR"/* | grep -q '/opt'; then
+  echo "error: absolute paths remain in lem executable or bundled dylibs. Fixing failed." >&2
   exit 1
 fi
 

@@ -53,7 +53,7 @@
         (frame-multiplexer-off))))
 
 (defvar *keymap*
-  (make-keymap :name '*frame-multiplexer-keymap*)
+  (make-keymap :description '*frame-multiplexer-keymap*)
   "Keymap for commands related to the frame-multiplexer.")
 
 (define-key *keymap* "c" 'frame-multiplexer-create-with-new-buffer-list)

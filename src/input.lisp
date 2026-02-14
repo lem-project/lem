@@ -29,6 +29,14 @@ Examples:
   (defun set-last-read-key-sequence (key-sequence)
     (setf last-read-key-sequence key-sequence)))
 
+(defmacro with-last-read-key-sequence (&body body)
+  "execute BODY with `last-read-key-sequence' temporarily set to NIL, preserving its original value."
+  (alexandria:with-gensyms (old-value)
+    `(let ((,old-value (last-read-key-sequence)))
+       (set-last-read-key-sequence nil)
+       (unwind-protect (progn ,@body)
+         (set-last-read-key-sequence ,old-value)))))
+
 (let ((key-recording-status-name " Def"))
   (defun start-record-key ()
     (modeline-add-status-list key-recording-status-name)
@@ -139,6 +147,19 @@ Pressing the same prefix key twice produces that key."
   (pop *this-command-keys*)
   (push key *unread-keys*))
 
+(defun count-intermediate-keys (keymap kseq)
+  "count how many keys in KSEQ traversed through intermediate prefixes."
+  (let ((count 0))
+    (labels ((walk (binding keys)
+               (when keys
+                 (let ((matches (find-matching-prefixes binding (car keys))))
+                   (dolist (match matches)
+                     (when (prefix-intermediate-p match)
+                       (incf count))
+                     (walk (prefix-suffix match) (cdr keys)))))))
+      (walk keymap kseq))
+    count))
+
 (defun read-command ()
   (let ((event (read-event)))
     (etypecase event
@@ -146,16 +167,65 @@ Pressing the same prefix key twice produces that key."
        (set-last-mouse-event event)
        (find-mouse-command event))
       (key
-       (let* ((cmd (lookup-keybind event))
-              (kseq (list event)))
-         (loop
-           (cond ((prefix-command-p cmd)
-                  (let ((event (read-key)))
-                    (setf kseq (nconc kseq (list event)))
-                    (setf cmd (lookup-keybind kseq))))
-                 (t
-                  (set-last-read-key-sequence kseq)
-                  (return cmd)))))))))
+       (let ((result)
+             (prefix)
+             (suffix)
+             (behavior)
+             (kseq (list event)))
+         (labels ((reset ()
+                    (setf result (lookup-keybind kseq))
+                    (setf suffix (car result))
+                    (setf prefix (cdr result))
+                    (when prefix
+                      (setf behavior (prefix-behavior prefix)))))
+           (loop
+             (reset)
+             (when prefix
+               (prefix-invoke prefix))
+             ;; if suffix was a function we call it and set to NIL so that we dont return it
+             (when (functionp suffix)
+               (funcall suffix)
+               (setf suffix nil))
+             (cond ((prefix-command-p suffix)
+                    (when (typep suffix 'keymap)
+                      (keymap-activate suffix))
+                    (let ((event (read-key)))
+                      (setf kseq (nconc kseq (list event)))
+                      (reset)))
+                   (t
+                    (cond
+                      ;; note: menu in these comments might mean keymaps, i used menu because
+                      ;; this is mostly intended for transient keymaps (i.e. key menus).
+                      ;; :drop removes the current key from kseq without changing "menus".
+                      ;; used for "infix" keys (toggles, choices) that act in-place.
+                      ;; also pops any intermediate prefix keys so the recorded
+                      ;; sequence reflects only the menu-level key that was pressed.
+                      ((eq behavior :drop)
+                       (setf kseq (butlast kseq))
+                       (dotimes (_ (count-intermediate-keys *root-keymap* kseq))
+                         (setf kseq (butlast kseq)))
+                       (set-last-read-key-sequence kseq)
+                       (reset))
+                      ;; :back removes the current key and the key that entered
+                      ;; the current menu, navigating up one menu level.
+                      ;; also pops any intermediate prefix keys in between.
+                      ((eq behavior :back)
+                       (setf kseq (butlast kseq))
+                       (dotimes (_ (count-intermediate-keys *root-keymap* kseq))
+                         (setf kseq (butlast kseq)))
+                       ;; pop the key that entered the current "menu"
+                       (setf kseq (butlast kseq))
+                       (set-last-read-key-sequence kseq)
+                       (reset))
+                      ((eq behavior :cancel)
+                       (setf kseq nil)
+                       (set-last-read-key-sequence nil)
+                       (keymap-activate *root-keymap*)
+                       (return nil))
+                      (t
+                       (set-last-read-key-sequence kseq)
+                       (keymap-activate *root-keymap*)
+                       (return suffix))))))))))))
 
 (defun read-key-sequence ()
   (read-command)
@@ -171,8 +241,9 @@ Pressing the same prefix key twice produces that key."
     (do-command-loop (:interactive nil)
       (when (null *unread-keys*)
         (return))
-      (let ((*this-command-keys* nil))
-        (call-command (read-command) nil)))))
+      (let* ((*this-command-keys* nil)
+             (cmd (read-command)))
+        (call-command cmd nil)))))
 
 (defun sit-for (seconds &optional (update-window-p t) (force-update-p nil))
   (when update-window-p (redraw-display :force force-update-p))

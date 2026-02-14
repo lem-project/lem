@@ -98,7 +98,7 @@
   (declare (ignore label chunks detail start end focus-action))
   (apply #'make-instance 'completion-item initargs))
 
-(defvar *completion-mode-keymap* (make-keymap :name '*completion-mode-keymap*
+(defvar *completion-mode-keymap* (make-keymap :description '*completion-mode-keymap*
                                               :undef-hook 'completion-self-insert))
 (define-minor-mode completion-mode
     (:name "completion"

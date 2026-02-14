@@ -7,8 +7,6 @@
         :lem-vi-mode/commands
         :lem-vi-mode/ex
         :lem-vi-mode/visual)
-  (:import-from :lem-core
-                :keymap-table)
   (:import-from :lem/prompt-window
                 :prompt-previous-history
                 :prompt-next-history))
@@ -201,11 +199,19 @@
 (define-key *outer-text-objects-keymap* "p" 'vi-a-paragraph)
 (define-key *inner-text-objects-keymap* "p" 'vi-inner-paragraph)
 
-(setf (gethash (lem:make-key :sym "a") (keymap-table *operator-keymap*))
-      (keymap-table *outer-text-objects-keymap*))
-(setf (gethash (lem:make-key :sym "i") (keymap-table *operator-keymap*))
-      (keymap-table *inner-text-objects-keymap*))
-(setf (gethash (lem:make-key :sym "a") (keymap-table *visual-keymap*))
-      (keymap-table *outer-text-objects-keymap*))
-(setf (gethash (lem:make-key :sym "i") (keymap-table *visual-keymap*))
-      (keymap-table *inner-text-objects-keymap*))
+(lem-core:keymap-add-prefix
+ *operator-keymap*
+ (lem:make-prefix :key (lem:make-key :sym "a")
+                  :suffix *outer-text-objects-keymap*))
+(lem-core:keymap-add-prefix
+ *operator-keymap*
+ (lem:make-prefix :key (lem:make-key :sym "i")
+                  :suffix *inner-text-objects-keymap*))
+(lem-core:keymap-add-prefix
+ *visual-keymap*
+ (lem:make-prefix :key (lem:make-key :sym "a")
+                  :suffix *outer-text-objects-keymap*))
+(lem-core:keymap-add-prefix
+ *visual-keymap*
+ (lem:make-prefix :key (lem:make-key :sym "i")
+                  :suffix *inner-text-objects-keymap*))

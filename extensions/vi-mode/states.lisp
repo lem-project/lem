@@ -44,7 +44,8 @@
 (defvar *emacs-keymap* *global-keymap*)
 
 (define-keymap *motion-keymap*)
-(define-keymap *normal-keymap* :parent *motion-keymap*)
+(define-keymap *normal-keymap*)
+(keymap-add-child *normal-keymap* *motion-keymap*)
 (define-keymap *insert-keymap*)
 (define-keymap *operator-keymap*)
 (define-keymap *replace-char-state-keymap* :undef-hook 'return-last-read-char)

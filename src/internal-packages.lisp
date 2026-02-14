@@ -440,6 +440,7 @@
   (:export
    :ensure-mode-object
    :major-mode
+   :mode
    :mode-name
    :mode-description
    :mode-keymap
@@ -449,6 +450,7 @@
    :mode-active-p
    :major-modes
    :minor-modes
+   :all-active-modes
    :find-mode
    :toggle-minor-mode
    :define-major-mode
@@ -468,12 +470,26 @@
    :paste-using-mode)
   ;; keymap.lisp
   (:export
-   :*keymaps*
    :keymap
-   :keymap-name
-   :keymap-parent
+   :prefix
+   :keymap*
+   :*root-keymap*
+   :prefix-active-p
+   :prefix-intermediate-p
+   :prefix-behavior
+   :keymap-children
+   :keymap-description
+   :keymap-properties
+   :keymap-base
+   :parse-keyspec
+   :prefix-properties
    :keymap-undef-hook
+   :keymap-activate
    :make-keymap
+   :make-prefix
+   :prefix-description
+   :prefix-key
+   :prefix-suffix
    :*global-keymap*
    :define-key
    :define-keys
@@ -483,13 +499,16 @@
    :find-keybind
    :insertion-key-p
    :lookup-keybind
-   :keymap-find-keybind
+   :keymap-find
    :*abort-key*
    :abort-key-p
    :with-special-keymap
    :traverse-keymap
    :compute-keymaps
-   :collect-command-keybindings)
+   :collect-command-keybindings
+   :keymap-add-child
+   :keymap-add-prefix
+   :prefix-invoke)
   ;; reexport common/timer
   (:export
    :timer
@@ -523,6 +542,7 @@
    :*input-hook*
    :meta-prefix-keys
    :last-read-key-sequence
+   :with-last-read-key-sequence
    :start-record-key
    :stop-record-key
    :key-recording-p

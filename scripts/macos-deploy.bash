@@ -52,8 +52,6 @@ codesign --force --sign - --preserve-metadata=entitlements,requirements "$BUILD_
 qlot install
 PATH="$PWD/build:$PATH" qlot exec sbcl --eval '(ql:quickload :lem)' --eval '(asdf:make :lem)'
 
-install -m 0755 "$BUILD_DIR/libzstd.1.dylib" "$LIBDIR/libzstd.1.dylib"
-
 # アイコン（存在しなくても続行）
 # Icon (Continue even if it does not exist)
 install -m 0644 resources/lem.png "$APP/Contents/Resources/" || true
@@ -128,6 +126,10 @@ install -m 0755 "$LIBTREE_SITTER_DIR/libtree-sitter.0.dylib" "$LIBDIR/libtree-si
 # Bundle vterm
 VTERM_DIR="$(pkg-config --variable=libdir vterm)"
 install -m 0755 "$VTERM_DIR/libvterm.0.dylib" "$LIBDIR/libvterm.0.dylib"
+
+# zstd を同梱
+# Bundle zstd
+install -m 0755 "$BUILD_DIR/libzstd.1.dylib" "$LIBDIR/libzstd.1.dylib"
 
 # dylib の自認パス (ID) を @loader_path に変更
 # Change dylib IDs to @loader_path

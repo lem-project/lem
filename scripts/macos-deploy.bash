@@ -70,6 +70,11 @@ if ! command -v pkg-config >/dev/null 2>&1; then
   exit 1
 fi
 
+# deploy によって追加されたライブラリを削除
+# Remove libs added by deploy
+rm "$LIBDIR/libtree-sitter.*.dylib" || true
+rm "$LIBDIR/libzstd.*.dylib" || true
+
 OPENSSL_LIB="$(pkg-config --variable=libdir openssl)"
 
 # Cellar の実体（バージョン付きディレクトリ）を解決
@@ -113,11 +118,6 @@ if otool -L "$LIBDIR/libssl.3.dylib" "$LIBDIR/libcrypto.3.dylib" | grep -q "libz
   install_name_tool -change "$ZLIB_DIR/libz.1.dylib" @loader_path/libz.1.dylib "$LIBDIR/libssl.3.dylib" || true
   install_name_tool -change "$ZLIB_DIR/libz.1.dylib" @loader_path/libz.1.dylib "$LIBDIR/libcrypto.3.dylib" || true
 fi
-
-# deploy によって追加されたライブラリを削除
-# Remove libs added by deploy
-rm "$LIBDIR/libzstd.1.5.7.dylib" || true
-rm "$LIBDIR/libtree-sitter.0.25.dylib" || true
 
 # tree-sitter を同梱
 # Bundle tree-sitter

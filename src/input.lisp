@@ -112,8 +112,10 @@
              (reset)
              (when prefix
                (prefix-invoke prefix))
+             ;; if suffix was a function we call it and set to NIL so that we dont return it
              (when (functionp suffix)
-               (funcall suffix))
+               (funcall suffix)
+               (setf suffix nil))
              (cond ((prefix-command-p suffix)
                     (when (typep suffix 'keymap)
                       (keymap-activate suffix))

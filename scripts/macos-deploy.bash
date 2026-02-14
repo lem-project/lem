@@ -29,8 +29,15 @@ mkdir -p "$BIN_DIR"
 # `install_name_tool` doesn't work on the app executable because of the SBCL dump structure so
 # we have to replace dylib references on a copy of the sbcl executable instead
 SBCL_BIN=$(realpath $(which sbcl))
-export SBCL_HOME="$(dirname "$SBCL_BIN")/../lib/sbcl"
+SBCL_HOME="$(dirname "$SBCL_BIN")/../lib/sbcl"
+# Homebrew uses a shell script so we have to find the real executable
+if [[ $(file "$SBCL_BIN") == *"shell script"* ]]; then
+    SBCL_ROOT="$(dirname $(dirname "$SBCL_BIN"))"
+    SBCL_BIN="$SBCL_ROOT/libexec/bin/sbcl"
+    SBCL_HOME="$SBCL_ROOT/lib/sbcl"
+fi
 install -m 0755 "$SBCL_BIN" "$BUILD_DIR/sbcl"
+export SBCL_HOME
 
 LIBZSTD_DIR="$(pkg-config --variable=libdir libzstd)"
 install -m 0755 "$LIBZSTD_DIR/libzstd.1.dylib" "$BUILD_DIR/libzstd.1.dylib"

@@ -111,7 +111,7 @@ jobs:
       - name: Set up Common Lisp environment
         if: steps.diff.outputs.skip != 'true'
         run: |
-          brew install sbcl tree-sitter vterm pkg-config openssl@3
+          brew install sbcl tree-sitter libvterm pkg-config openssl@3
           curl -O https://beta.quicklisp.org/quicklisp.lisp
           sbcl --non-interactive --load quicklisp.lisp --eval "(quicklisp-quickstart:install)"
           curl -L https://qlot.tech/installer | sh

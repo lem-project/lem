@@ -150,13 +150,13 @@ the setter stores directly."
              (eval `(defmethod ,key-method ((object (eql ,object)))
                       ,val))))
           ((fboundp key-method)
-           (funcall (fdefinition (list 'setf key-method)) val object))
+           (funcall (fdefinition (list 'setf key-method)) (eval val) object))
           (t
            (let ((property-method (intern (format nil "~A-PROPERTIES" method-name)
                                           :lem/transient)))
              (when (fboundp property-method)
                (let ((props (funcall (fdefinition property-method) object)))
-                 (setf (getf props key) val)
+                 (setf (getf props key) (eval val))
                  (funcall (fdefinition (list 'setf property-method)) props object))))))))
 
 (defun parse-transient (bindings)
@@ -180,7 +180,10 @@ the setter stores directly."
                  ;; key binding (:key ...)
                  ((eq (car binding) :key)
                   (let* ((key (second binding))
-                         (prefix-type (intern (symbol-name (getf binding :type 'prefix)) :lem/transient))
+                         (prefix-type (intern (symbol-name (if (getf binding :type)
+                                                               (eval (getf binding :type))
+                                                               'prefix))
+                                              :lem/transient))
                          (prefix (make-instance prefix-type))
                          (last-keymap keymap))
                     (let ((parsed-key (parse-keyspec key)))
@@ -237,7 +240,7 @@ the setter stores directly."
                                    ;; just for 'parse-transient' which is designed as a
                                    ;; convenience anyway.
                                    ((eq key :variable)
-                                    (setf (infix-variable prefix) value)
+                                    (setf (infix-variable prefix) (eval value))
                                     (setf should-set nil))
                                    ((eq key :type)
                                     (setf should-set nil))

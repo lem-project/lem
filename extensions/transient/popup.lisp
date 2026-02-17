@@ -389,10 +389,11 @@ prefixes marked as :intermediate-p are flattened and shown with concatenated key
                     (push (cons *transient-column-separator* 'transient-separator-attribute)
                           line-segments))
                    (t
-                    (let* ((seg-line (if (< row-idx (length col-data))
-                                         (nth row-idx col-data)
-                                         nil))
-                           (line-width (if seg-line (segment-line-width seg-line) 0))
+                    (let* ((seg-line (when (< row-idx (length col-data))
+                                       (nth row-idx col-data)))
+                           (line-width (if seg-line
+                                           (segment-line-width seg-line)
+                                           0))
                            (padding (- col-width line-width)))
                       (when seg-line
                         (dolist (seg seg-line)

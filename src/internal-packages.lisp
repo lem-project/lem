@@ -206,6 +206,7 @@
    :frame-message-window
    :frame-leftside-window
    :frame-rightside-window
+   :frame-bottomside-window
    :notify-frame-redisplay-required
    :map-frame
    :get-frame
@@ -386,7 +387,10 @@
    :make-leftside-window
    :delete-leftside-window
    :make-rightside-window
-   :delete-rightside-window)
+   :delete-rightside-window
+   :make-bottomside-window
+   :delete-bottomside-window
+   :resize-bottomside-window)
   ;; popup.lisp
   (:export
    :*default-popup-message-timeout*

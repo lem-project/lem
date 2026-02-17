@@ -3,13 +3,13 @@
 (defvar *transient-popup-window*
   nil)
 
+(defvar *transient-shown-keymap*
+  nil
+  "the last keymap passed to show-transient. used to detect same-keymap redraws and preserve scroll position.")
+
 (defvar *transient-popup-max-lines*
   15
   "max height of the transient buffer (measured in lines).")
-
-(defparameter *transient-window-margin*
-  4
-  "margin in columns from the edge of the screen.")
 
 (defparameter *transient-column-separator*
   " | "
@@ -50,44 +50,10 @@
    :foreground (attribute-foreground (ensure-attribute 'syntax-constant-attribute))
    :bold t))
 
-;; custom floating window class that repositions on each redraw
-(defclass transient-popup-window (floating-window)
-  ((base-width :initarg :base-width :accessor transient-base-width)
-   (base-height :initarg :base-height :accessor transient-base-height)))
-
-(defun compute-bottom-offset ()
-  "compute the offset from the bottom of the display where the transient popup should appear.
-
-this accounts for the status line if present, the prompt window if active, and the bottom
-completion interface if present."
-  (let ((offset (if (window-use-modeline-p (current-window))
-                    1
-                    0)))
-    ;; add height of prompt window if it exists
-    (alexandria:when-let ((prompt-window (lem/prompt-window:current-prompt-window)))
-      (incf offset (window-height prompt-window))
-      ;; add height of completion window if it exists
-      (when lem/completion-mode::*completion-context*
-        (alexandria:when-let* ((context lem/completion-mode::*completion-context*)
-                               (popup-menu (lem/completion-mode::context-popup-menu context))
-                               (completion-window (lem/popup-menu::popup-menu-window popup-menu)))
-          (incf offset (window-height completion-window)))))
-    offset))
-
-(defun compute-transient-position (width height)
-  (let* ((bottom-offset (compute-bottom-offset))
-         ;; position above minibuffer area: y = display-height - height - bottom-offset - border
-         (y (max 0 (- (display-height) height bottom-offset 2)))
-         (x (max 0 (- (display-width) width *transient-window-margin*))))
-    (values x y)))
-
-(defmethod window-redraw ((window transient-popup-window) force)
-  "reposition the transient popup on each redraw to stay above the minibuffer/completion."
-  (let ((width (transient-base-width window))
-        (height (transient-base-height window)))
-    (multiple-value-bind (x y) (compute-transient-position width height)
-      (window-set-pos window x y)))
-  (call-next-method))
+(define-minor-mode transient-mode
+    (:name "transient-mode"
+     :global t
+     :keymap *transient-mode-keymap*))
 
 (defstruct layout-separator
   "a visual separator between items.")
@@ -404,62 +370,69 @@ prefixes marked as :intermediate-p are flattened and shown with concatenated key
         (push (nreverse line-segments) result)))
     (nreverse result)))
 
+(defun insert-segment-lines (point lines)
+  "insert a list of segment lines into buffer at POINT."
+  (loop :for line :in lines
+        :for first := t :then nil
+        :do (unless first
+              (insert-character point #\newline))
+            (insert-segment-line point line)))
+
 (defun render-layout-to-buffer (layout point &optional (key-width 0))
   "render layout to buffer at point.
 
 key-width is used for even key spacing in items."
-  (let ((lines (render-layout-to-segments layout key-width)))
-    (loop for line in lines
-          for first = t then nil
-          do (unless first
-               (insert-character point #\newline))
-             (insert-segment-line point line))))
+  (insert-segment-lines point (render-layout-to-segments layout key-width)))
+
+(defun make-overflow-line (total-lines max-lines)
+  "make a segment line showing how many lines are hidden below the visible area."
+  (let ((hidden (- total-lines max-lines -1)))
+    (list (cons (format nil "+~d more..." hidden)
+                'transient-separator-attribute))))
 
 (defmethod show-transient ((keymap keymap))
-  "show the transient popup. creates a window if it hasnt been created yet."
-  (let* ((existing-window (and (not (deleted-window-p *transient-popup-window*))
+  "show the transient buffer."
+  (let* ((existing-window (and *transient-popup-window*
+                               (not (deleted-window-p *transient-popup-window*))
                                *transient-popup-window*))
          (buffer (if existing-window
                      (window-buffer existing-window)
                      (make-buffer "*transient*" :temporary t :enable-undo-p nil)))
          (root (find-intermediate-root keymap))
          (layout (generate-layout root keymap)))
+    (setf *transient-shown-keymap* keymap)
     (erase-buffer buffer)
-    ;; we dont want lines to be cut off for now (no wrapping), until we have scrollbars or something
     (setf (variable-value 'line-wrap :buffer buffer) nil)
     (if layout
-        (render-layout-to-buffer layout (buffer-point buffer))
+        (let* ((segments (render-layout-to-segments layout))
+               (total-lines (length segments)))
+          (if (> total-lines *transient-popup-max-lines*)
+              ;; render full content with an overflow hint inserted at the boundary
+              (let ((overflow-line (make-overflow-line total-lines *transient-popup-max-lines*)))
+                (insert-segment-lines
+                 (buffer-point buffer)
+                 (append (subseq segments 0 (1- *transient-popup-max-lines*))
+                         (list overflow-line)
+                         (nthcdr (1- *transient-popup-max-lines*) segments))))
+              (insert-segment-lines (buffer-point buffer) segments)))
         (insert-string (buffer-point buffer) "(no bindings)"))
     (buffer-start (buffer-point buffer))
-    ;; (log:info "buffer text:~%~A" (buffer-text buffer))
-    (let* ((width (min (lem/popup-window::compute-buffer-width buffer)
-                       (- (display-width) (* 2 *transient-window-margin*))))
-           (height (min (lem/popup-window::compute-buffer-height buffer)
-                        *transient-popup-max-lines*)))
-      (multiple-value-bind (x y) (compute-transient-position width height)
-        (if existing-window
-            (progn
-              (setf (transient-base-width existing-window) width)
-              (setf (transient-base-height existing-window) height)
-              (window-set-pos existing-window x y)
-              (window-set-size existing-window width height))
-            (setf *transient-popup-window*
-                  (make-instance 'transient-popup-window
-                                 :buffer buffer
-                                 :x x
-                                 :y y
-                                 :width width
-                                 :height height
-                                 :base-width width
-                                 :base-height height
-                                 :use-modeline-p nil
-                                 :border 1))))))
+    (let ((height (min (lem/popup-window::compute-buffer-height buffer)
+                       *transient-popup-max-lines*)))
+      (if existing-window
+          (unless (= (window-height existing-window) height)
+            (resize-bottomside-window existing-window height))
+          (setf *transient-popup-window*
+                (make-bottomside-window buffer :height height)))))
+  (transient-mode t)
   (redraw-display))
 
 (defun hide-transient ()
-  "hide (delete) the transient popup window."
+  "hide (delete) the transient window."
   (when (and *transient-popup-window*
              (not (deleted-window-p *transient-popup-window*)))
-    (delete-window *transient-popup-window*)
+    (delete-bottomside-window)
     (setf *transient-popup-window* nil)
+    (setf *transient-shown-keymap* nil)
+    (transient-mode nil)
     (redraw-display)))

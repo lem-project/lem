@@ -28,7 +28,7 @@
   "string used to separate columns in row layout.")
 
 (defvar *transient-always-show*
-  t
+  nil
   "whether to always show the transient buffer. by default only keymaps that have show-p set are shown.")
 
 (define-attribute transient-matched-key-attribute

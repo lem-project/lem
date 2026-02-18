@@ -19,10 +19,6 @@
   5
   "number of columns to scroll horizontally per step.")
 
-(defvar *transient-content-dirty*
-  nil
-  "when T, show-transient re-renders even for the same keymap (e.g. after infix changes).")
-
 (defparameter *transient-column-separator*
   " | "
   "string used to separate columns in row layout.")
@@ -97,9 +93,6 @@
     (:name "transient-mode"
      :global t
      :keymap *transient-mode-keymap*))
-
-(defmethod prefix-invoke :after ((prefix infix))
-  (setf *transient-content-dirty* t))
 
 (defstruct layout-separator
   "a visual separator between items.")
@@ -428,8 +421,6 @@ prefixes marked as :intermediate-p are flattened and shown with concatenated key
   "shows the transient buffer with the contents rendered."
   (let ((same-keymap-p (eq keymap *transient-shown-keymap*)))
     ;; skip re-render when same keymap, window alive, and no content changes
-    (when (and same-keymap-p (transient-window-alive-p) (not *transient-content-dirty*))
-      (return-from show-transient))
     (let* ((existing-window (and *transient-popup-window*
                                  (not (deleted-window-p *transient-popup-window*))
                                  *transient-popup-window*))
@@ -441,7 +432,6 @@ prefixes marked as :intermediate-p are flattened and shown with concatenated key
                             (line-number-at-point (window-view-point existing-window))))
            (root (find-intermediate-root keymap))
            (layout (generate-layout root keymap)))
-      (setf *transient-content-dirty* nil)
       (setf *transient-shown-keymap* keymap)
       (erase-buffer buffer)
       (setf (variable-value 'line-wrap :buffer buffer) nil)
@@ -532,6 +522,5 @@ prefixes marked as :intermediate-p are flattened and shown with concatenated key
     (delete-bottomside-window)
     (setf *transient-popup-window* nil)
     (setf *transient-shown-keymap* nil)
-    (setf *transient-content-dirty* nil)
     (transient-mode nil)
     (redraw-display)))

@@ -127,9 +127,10 @@ NIL to append it to the key sequence normally.")
     (setf (slot-value keymap 'active-p) new-value)))
 
 (defmethod keymap-add-item ((keymap keymap) item &optional after)
-  (if after
-      (setf (keymap-children keymap) (append (slot-value keymap 'children) (list item)))
-      (push item (slot-value keymap 'children))))
+  (unless (find item (keymap-children keymap))
+    (if after
+        (setf (keymap-children keymap) (append (slot-value keymap 'children) (list item)))
+        (push item (slot-value keymap 'children)))))
 
 (defmethod keymap-add-prefix ((keymap keymap) (prefix prefix) &optional after)
   (keymap-add-item keymap prefix after))

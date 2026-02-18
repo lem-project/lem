@@ -150,9 +150,19 @@ Pressing the same prefix key twice produces that key."
 (defun count-intermediate-keys (keymap kseq)
   "count how many keys in KSEQ traversed through intermediate prefixes."
   (let ((count 0))
-    (labels ((walk (binding keys)
+    (labels ((find-prefix-matches (km key)
+               "find prefix children of KM matching KEY, recursing into child keymaps."
+               (when (and (typep km 'keymap) (keymap-active-p km))
+                 (loop for item in (keymap-children km)
+                       when (and (typep item 'prefix)
+                                 (prefix-active-p item)
+                                 (equal (prefix-key item) key))
+                         collect item
+                       when (typep item 'keymap)
+                         append (find-prefix-matches item key))))
+             (walk (binding keys)
                (when keys
-                 (let ((matches (find-matching-prefixes binding (car keys))))
+                 (let ((matches (find-prefix-matches binding (car keys))))
                    (dolist (match matches)
                      (when (prefix-intermediate-p match)
                        (incf count))
@@ -201,11 +211,19 @@ Pressing the same prefix key twice produces that key."
                       ;; also pops any intermediate prefix keys so the recorded
                       ;; sequence reflects only the menu-level key that was pressed.
                       ((eq behavior :drop)
+                       ;; command symbols are executed via call-command before dropping.
+                       (when suffix
+                         (call-command suffix nil))
                        (setf kseq (butlast kseq))
                        (dotimes (_ (count-intermediate-keys *root-keymap* kseq))
                          (setf kseq (butlast kseq)))
                        (set-last-read-key-sequence kseq)
-                       (reset))
+                       ;; TODO: this check here shouldnt be necessary but it currently is.
+                       (if (null kseq)
+                           (progn
+                             (keymap-activate *root-keymap*)
+                             (return nil))
+                           (reset)))
                       ;; :back removes the current key and the key that entered
                       ;; the current menu, navigating up one menu level.
                       ;; also pops any intermediate prefix keys in between.

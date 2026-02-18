@@ -11,12 +11,24 @@
   15
   "max height of the transient buffer (measured in lines).")
 
+(defvar *transient-vertical-scroll-amount*
+  1
+  "number of lines to scroll vertically per step.")
+
+(defvar *transient-horizontal-scroll-amount*
+  5
+  "number of columns to scroll horizontally per step.")
+
+(defvar *transient-content-dirty*
+  nil
+  "when T, show-transient re-renders even for the same keymap (e.g. after infix changes).")
+
 (defparameter *transient-column-separator*
   " | "
   "string used to separate columns in row layout.")
 
 (defvar *transient-always-show*
-  nil
+  t
   "whether to always show the transient buffer. by default only keymaps that have show-p set are shown.")
 
 (define-attribute transient-matched-key-attribute
@@ -50,10 +62,44 @@
    :foreground (attribute-foreground (ensure-attribute 'syntax-constant-attribute))
    :bold t))
 
+;; this keymap has a special behavior. we're overriding its 'keymap-find' below.
+(define-transient *transient-mode-keymap*
+  :display-style :row
+  (:key "M-Shift-Down"
+   :suffix 'transient-scroll-down
+   :behavior :drop
+   :description "scroll down")
+  (:key "M-Shift-Up"
+   :suffix 'transient-scroll-up
+   :behavior :drop
+   :description "scroll up")
+  (:key "M-Shift-Right"
+   :suffix 'transient-scroll-right
+   :behavior :drop
+   :description "scroll right")
+  (:key "M-Shift-Left"
+   :suffix 'transient-scroll-left
+   :behavior :drop
+   :description "scroll left"))
+
+(defmethod keymap-find ((keymap (eql *transient-mode-keymap*)) key)
+  (let* ((keyseq (etypecase key
+                   (lem-core::key (list key))
+                   (list key))))
+    ;; the keymap needs to work if any key we defined (e.g. M-S-Down) is the last one in our
+    ;; current keymap sequence, because we want these keys to be available in any transient
+    ;; keymap context
+    (loop for prefix in (keymap-children keymap)
+          when (equal (prefix-key prefix) (car (last keyseq)))
+            return (normalize-binding prefix (prefix-suffix prefix)))))
+
 (define-minor-mode transient-mode
     (:name "transient-mode"
      :global t
      :keymap *transient-mode-keymap*))
+
+(defmethod prefix-invoke :after ((prefix infix))
+  (setf *transient-content-dirty* t))
 
 (defstruct layout-separator
   "a visual separator between items.")
@@ -378,61 +424,114 @@ prefixes marked as :intermediate-p are flattened and shown with concatenated key
               (insert-character point #\newline))
             (insert-segment-line point line)))
 
-(defun render-layout-to-buffer (layout point &optional (key-width 0))
-  "render layout to buffer at point.
-
-key-width is used for even key spacing in items."
-  (insert-segment-lines point (render-layout-to-segments layout key-width)))
-
-(defun make-overflow-line (total-lines max-lines)
-  "make a segment line showing how many lines are hidden below the visible area."
-  (let ((hidden (- total-lines max-lines -1)))
-    (list (cons (format nil "+~d more..." hidden)
-                'transient-separator-attribute))))
-
 (defmethod show-transient ((keymap keymap))
-  "show the transient buffer."
-  (let* ((existing-window (and *transient-popup-window*
-                               (not (deleted-window-p *transient-popup-window*))
-                               *transient-popup-window*))
-         (buffer (if existing-window
-                     (window-buffer existing-window)
-                     (make-buffer "*transient*" :temporary t :enable-undo-p nil)))
-         (root (find-intermediate-root keymap))
-         (layout (generate-layout root keymap)))
-    (setf *transient-shown-keymap* keymap)
-    (erase-buffer buffer)
-    (setf (variable-value 'line-wrap :buffer buffer) nil)
-    (if layout
-        (let* ((segments (render-layout-to-segments layout))
-               (total-lines (length segments)))
-          (if (> total-lines *transient-popup-max-lines*)
-              ;; render full content with an overflow hint inserted at the boundary
-              (let ((overflow-line (make-overflow-line total-lines *transient-popup-max-lines*)))
-                (insert-segment-lines
-                 (buffer-point buffer)
-                 (append (subseq segments 0 (1- *transient-popup-max-lines*))
-                         (list overflow-line)
-                         (nthcdr (1- *transient-popup-max-lines*) segments))))
-              (insert-segment-lines (buffer-point buffer) segments)))
-        (insert-string (buffer-point buffer) "(no bindings)"))
-    (buffer-start (buffer-point buffer))
-    (let ((height (min (lem/popup-window::compute-buffer-height buffer)
-                       *transient-popup-max-lines*)))
-      (if existing-window
-          (unless (= (window-height existing-window) height)
-            (resize-bottomside-window existing-window height))
-          (setf *transient-popup-window*
-                (make-bottomside-window buffer :height height)))))
+  "shows the transient buffer with the contents rendered."
+  (let ((same-keymap-p (eq keymap *transient-shown-keymap*)))
+    ;; skip re-render when same keymap, window alive, and no content changes
+    (when (and same-keymap-p (transient-window-alive-p) (not *transient-content-dirty*))
+      (return-from show-transient))
+    (let* ((existing-window (and *transient-popup-window*
+                                 (not (deleted-window-p *transient-popup-window*))
+                                 *transient-popup-window*))
+           (buffer (if existing-window
+                       (window-buffer existing-window)
+                       (make-buffer "*transient*" :temporary t :enable-undo-p nil)))
+           ;; save vertical scroll position before erase (only for same-keymap re-renders)
+           (saved-vp-line (when (and existing-window same-keymap-p)
+                            (line-number-at-point (window-view-point existing-window))))
+           (root (find-intermediate-root keymap))
+           (layout (generate-layout root keymap)))
+      (setf *transient-content-dirty* nil)
+      (setf *transient-shown-keymap* keymap)
+      (erase-buffer buffer)
+      (setf (variable-value 'line-wrap :buffer buffer) nil)
+      (if layout
+          (insert-segment-lines (buffer-point buffer) (render-layout-to-segments layout))
+          (insert-string (buffer-point buffer) "(no bindings)"))
+      (buffer-start (buffer-point buffer))
+      (let ((height (min (lem/popup-window::compute-buffer-height buffer)
+                         *transient-popup-max-lines*)))
+        (if existing-window
+            (unless (= (window-height existing-window) height)
+              (resize-bottomside-window existing-window height))
+            (setf *transient-popup-window*
+                  (make-bottomside-window buffer :height height))))
+      ;; restore vertical scroll position for same-keymap re-renders
+      (when (and saved-vp-line (> saved-vp-line 1))
+        (move-to-line (window-view-point *transient-popup-window*) saved-vp-line))
+      ;; reset horizontal scroll when switching to a different keymap
+      (unless same-keymap-p
+        (setf (window-parameter *transient-popup-window* 'lem-core::horizontal-scroll-start) 0))))
+  (modeline-add-status-list 'transient-scroll-status)
   (transient-mode t)
   (redraw-display))
+
+(defun transient-window-alive-p ()
+  "return T if the transient popup window exists and is not deleted."
+  (and *transient-popup-window*
+       (not (deleted-window-p *transient-popup-window*))))
+
+(defun transient-scroll-status (window)
+  "modeline status function showing scroll position when the transient buffer overflows."
+  (when (transient-window-alive-p)
+    (let* ((tw *transient-popup-window*)
+           (nlines (buffer-nlines (window-buffer tw)))
+           (height (window-height tw)))
+      (when (>= nlines height)
+        (let ((pos (cond ((first-line-p (window-view-point tw))
+                          "top")
+                         ((null (line-offset (copy-point (window-view-point tw) :temporary)
+                                             height))
+                          "bot")
+                         (t (format
+                             nil
+                             "~d%"
+                             (floor (* 100
+                                       (float (/ (line-number-at-point (window-view-point tw))
+                                                 nlines)))))))))
+          (values (format nil " transient[~a]" pos)
+                  'transient-separator-attribute))))))
+
+(define-command transient-scroll-down () ()
+  "scroll the transient buffer down by `*transient-vertical-scroll-amount*' lines."
+  (when (transient-window-alive-p)
+    (window-scroll *transient-popup-window* *transient-vertical-scroll-amount*)
+    (redraw-display)))
+
+(define-command transient-scroll-up () ()
+  "scroll the transient buffer up by `*transient-vertical-scroll-amount*' lines."
+  (when (transient-window-alive-p)
+    (window-scroll *transient-popup-window* (- *transient-vertical-scroll-amount*))
+    (redraw-display)))
+
+(define-command transient-scroll-right () ()
+  "scroll the transient buffer to the right by `*transient-vertical-scroll-amount*' columns."
+  (when (transient-window-alive-p)
+    (let ((current (or (window-parameter *transient-popup-window*
+                                         'lem-core::horizontal-scroll-start)
+                       0)))
+      (setf (window-parameter *transient-popup-window* 'lem-core::horizontal-scroll-start)
+            (+ current *transient-horizontal-scroll-amount*)))
+    (redraw-display)))
+
+(define-command transient-scroll-left () ()
+  "scroll the transient buffer to the left by `*transient-vertical-scroll-amount*' columns."
+  (when (transient-window-alive-p)
+    (let ((current (or (window-parameter *transient-popup-window*
+                                         'lem-core::horizontal-scroll-start)
+                       0)))
+      (setf (window-parameter *transient-popup-window* 'lem-core::horizontal-scroll-start)
+            (max 0 (- current *transient-horizontal-scroll-amount*))))
+    (redraw-display)))
 
 (defun hide-transient ()
   "hide (delete) the transient window."
   (when (and *transient-popup-window*
              (not (deleted-window-p *transient-popup-window*)))
+    (modeline-remove-status-list 'transient-scroll-status)
     (delete-bottomside-window)
     (setf *transient-popup-window* nil)
     (setf *transient-shown-keymap* nil)
+    (setf *transient-content-dirty* nil)
     (transient-mode nil)
     (redraw-display)))

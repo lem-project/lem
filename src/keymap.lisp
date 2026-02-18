@@ -312,9 +312,16 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
              bindings)))
 
 (defun undefine-key-internal (keymap keys)
-  (labels ((search-tree (binding keys-to-find)
-             (when keys-to-find
-               (let ((matches (find-matching-prefixes binding (car keys-to-find))))
+  (labels ((find-prefix-matches (km key)
+             "find direct prefix children of KM matching KEY."
+             (loop for item in (keymap-children km)
+                   when (and (typep item 'prefix)
+                             (prefix-active-p item)
+                             (equal (prefix-key item) key))
+                     collect item))
+           (search-tree (binding keys-to-find)
+             (when (and keys-to-find (typep binding 'keymap))
+               (let ((matches (find-prefix-matches binding (car keys-to-find))))
                  (loop for match in matches
                        for suffix = (prefix-suffix match)
                        do (if (cdr keys-to-find)
@@ -354,24 +361,6 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
                                                      str))))))))
     (mapcar #'parse (uiop:split-string string :separator " "))))
 
-(defun find-matching-prefixes (binding key)
-  "find prefixes in children that match KEY."
-  (cond ((typep binding 'prefix)
-         (when (and (prefix-active-p binding)
-                    (equal (prefix-key binding) key))
-           (list binding)))
-        ((typep binding 'keymap)
-         (when (keymap-active-p binding)
-           (loop for item in (keymap-children binding)
-                 append (find-matching-prefixes item key) into matches
-                 ;; if we reach a keymap with an undef-hook we exit prematurely to cause that
-                 ;; keymap to be activated
-                 when (and (typep item 'keymap*) (keymap-undef-hook item))
-                   do (return matches)
-                 finally (return (or matches
-                                     (let ((base (keymap-base binding)))
-                                       (when base
-                                         (find-matching-prefixes base key))))))))))
 
 (defun find-in-function-table (binding key)
   "search function-table of keymaps in hierarchy for KEY."
@@ -399,59 +388,68 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
            (when base
              (find-in-function-table base key))))))
 
-(defmethod find-suffix ((keymap keymap) keyseq)
-  "search KEYMAP tree for exact binding matching KEYSEQ. returns (suffix . prefix)."
-  (labels ((search-tree (binding keys parent-prefix)
-             (if (null keys)
-                 (if (typep binding 'prefix)
-                     (cons (prefix-suffix binding) binding)
-                     (when binding
-                       (cons binding parent-prefix)))
-                 ;; try all matches and return first successful result
-                 (let ((matches (find-matching-prefixes binding (car keys))))
-                   (or (loop for match in matches
-                             for result = (search-tree (prefix-suffix match) (cdr keys) match)
-                             when result return result)
-                       ;; if we have matches but none were exact/successful, we are still in a prefix
-                       (when (and matches (null (cdr keys)))
-                         (let ((match (car matches)))
-                           (cons (prefix-suffix match) match)))
-                       (when (typep binding 'keymap)
-                         (let ((base (keymap-base binding)))
-                           (when base
-                             (search-tree base keys parent-prefix)))))))))
-    (search-tree keymap keyseq nil)))
-
 (defun normalize-binding (found &optional parent-prefix)
-  (typecase found
-    (prefix (cons (prefix-suffix found) found))
-    (keymap (cons found parent-prefix))
-    (t (cons found parent-prefix))))
+  (if (typep found 'prefix)
+      (cons (prefix-suffix found) found)
+      (cons found parent-prefix)))
 
 (defmethod keymap-find ((keymap keymap) key)
   "finds key sequence in keymap, returns (suffix . prefix)."
-  (let* ((keyseq (etypecase key
-                   (key (list key))
-                   (list key)))
-         (suffix-result (find-suffix keymap keyseq)))
-    (when suffix-result
-      (normalize-binding (car suffix-result) (cdr suffix-result)))))
+  (let ((keyseq (etypecase key
+                  (key (list key))
+                  (list key))))
+    (labels ((search-keymap (km keys)
+               (when (keymap-active-p km)
+                 (let ((prefix-matches)
+                       (found))
+                   (loop for item in (keymap-children km)
+                         do (cond
+                              ;; child keymap: dispatch through keymap-find
+                              ((typep item 'keymap)
+                               (when (keymap-active-p item)
+                                 (let ((r (keymap-find item keys)))
+                                   (when r
+                                     (setf found r)
+                                     (return)))))
+                              ;; child prefix: collect matches for current key
+                              ((typep item 'prefix)
+                               (when (and (prefix-active-p item)
+                                          (equal (prefix-key item) (car keys)))
+                                 (push item prefix-matches))))
+                         ;; when we find an undef-hook, stop searching further children
+                         when (and (typep item 'keymap*)
+                                   (keymap-undef-hook item))
+                           do (return))
+                   (or found
+                       ;; try collected prefix matches
+                       (loop for match in prefix-matches
+                             for suffix = (prefix-suffix match)
+                             for result = (cond
+                                            ;; last key: return the binding
+                                            ((null (cdr keys))
+                                             (normalize-binding suffix match))
+                                            ;; more keys, suffix is a keymap: recurse through keymap-find
+                                            ((typep suffix 'keymap)
+                                             (keymap-find suffix (cdr keys)))
+                                            (t nil))
+                             when result return result)
+                       ;; base keymap fallback
+                       (let ((base (keymap-base km)))
+                         (when base
+                           (search-keymap base keys))))))))
+      (search-keymap keymap keyseq))))
 
 ;; this is currently here for backwards compatibility
 ;; im not yet sure whether 'cmd' or function-table lookup is necessary (i think so but im not sure how to get rid of it.)
 (defmethod keymap-find ((keymap keymap*) key)
   "finds key sequence in keymap, returns (suffix . prefix)."
-  (let* ((keyseq (etypecase key
-                   (key (list key))
-                   (list key)))
-         (suffix-result (find-suffix keymap keyseq)))
-    (cond (suffix-result
-           (normalize-binding (car suffix-result) (cdr suffix-result)))
-          (t
-           ;; search function-table in hierarchy
-           (let ((result (find-in-function-table keymap (car keyseq))))
-             (when result
-               (normalize-binding result)))))))
+  (or (call-next-method)
+      (let ((keyseq (etypecase key
+                      (key (list key))
+                      (list key))))
+        (let ((result (find-in-function-table keymap (car keyseq))))
+          (when result
+            (normalize-binding result))))))
 
 (defun insertion-key-p (key)
   (let* ((key (typecase key

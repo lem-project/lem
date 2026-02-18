@@ -483,6 +483,7 @@
    :prefix-intermediate-p
    :prefix-behavior
    :keymap-children
+   :normalize-binding
    :keymap-description
    :keymap-properties
    :keymap-base

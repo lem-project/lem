@@ -46,18 +46,23 @@ the setter stores directly."
 (add-property prefix prefix-properties display-key)
 
 (defun find-prefix-by-id (keymap id)
-  (labels ((f (node)
+  (labels ((check-prefix (node)
+             (if (eql (prefix-id node) id)
+                 node
+                 (let ((suffix (prefix-suffix node)))
+                   (when (or (typep suffix 'keymap)
+                             (typep suffix 'prefix))
+                     (f suffix)))))
+           (f (node)
              (cond ((typep node 'keymap)
+                    (dolist (p (keymap-prefixes node))
+                      (let ((res (check-prefix p)))
+                        (when res (return-from f res))))
                     (dolist (child (keymap-children node))
                       (let ((res (f child)))
                         (when res (return-from f res)))))
                    ((typep node 'prefix)
-                    (if (eql (prefix-id node) id)
-                        node
-                        (let ((suffix (prefix-suffix node)))
-                          (when (or (typep suffix 'keymap)
-                                    (typep suffix 'prefix))
-                            (f suffix))))))))
+                    (check-prefix node)))))
     (f keymap)))
 
 (defun keymap-contains-p (keymap target)
@@ -65,8 +70,10 @@ the setter stores directly."
   (labels ((f (node)
              (cond ((eq node target) t)
                    ((typep node 'keymap)
+                    (dolist (p (keymap-prefixes node))
+                      (when (f p) (return-from f t)))
                     (dolist (child (keymap-children node))
-                      (when (f child) (return t))))
+                      (when (f child) (return-from f t))))
                    ((typep node 'prefix)
                     (let ((suffix (prefix-suffix node)))
                       (when (or (typep suffix 'keymap)
@@ -202,10 +209,9 @@ the setter stores directly."
                                        ;; reuse existing intermediate prefix with same key, or create new one
                                        (let ((existing (find
                                                         current-key
-                                                        (keymap-children last-keymap)
+                                                        (keymap-prefixes last-keymap)
                                                         :test (lambda (k child)
-                                                                (and (typep child 'prefix)
-                                                                     (prefix-intermediate-p child)
+                                                                (and (prefix-intermediate-p child)
                                                                      (equal
                                                                       k
                                                                       (prefix-key child)))))))

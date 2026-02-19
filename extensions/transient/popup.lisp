@@ -79,15 +79,15 @@
    :description "scroll left"))
 
 (defmethod keymap-find ((keymap (eql *transient-mode-keymap*)) key)
-  (let* ((keyseq (etypecase key
-                   (lem-core::key (list key))
-                   (list key))))
+  (let ((keyseq (etypecase key
+                  (lem-core::key (list key))
+                  (list key))))
     ;; the keymap needs to work if any key we defined (e.g. M-S-Down) is the last one in our
-    ;; current keymap sequence, because we want these keys to be available in any transient
+    ;; current key sequence, because we want these keys to be available in any transient
     ;; keymap context
-    (loop for prefix in (keymap-children keymap)
+    (loop for prefix in (keymap-prefixes keymap)
           when (equal (prefix-key prefix) (car (last keyseq)))
-            return (normalize-binding prefix (prefix-suffix prefix)))))
+            return prefix)))
 
 (define-minor-mode transient-mode
     (:name "transient-mode"
@@ -137,9 +137,9 @@
 
 (defun keymap-contains-via-intermediates-p (keymap target)
   "return T if TARGET is reachable from KEYMAP through a sequence of intermediate prefixes."
-  (dolist (child (keymap-children keymap))
-    (when (and (typep child 'prefix) (prefix-intermediate-p child))
-      (let ((suffix (prefix-suffix child)))
+  (dolist (p (keymap-prefixes keymap))
+    (when (prefix-intermediate-p p)
+      (let ((suffix (prefix-suffix p)))
         (when (and (typep suffix 'keymap)
                    (or (eq suffix target)
                        (keymap-contains-via-intermediates-p suffix target)))
@@ -209,14 +209,14 @@ or ACTIVE-KEYMAP itself if no such ancestor exists."
              ;; check if this keymap reaches active-keymap via intermediates
              (when (keymap-contains-via-intermediates-p keymap active-keymap)
                (return-from find-intermediate-root keymap))
+             ;; recurse into prefixes that have keymap suffixes
+             (dolist (p (keymap-prefixes keymap))
+               (let ((suffix (prefix-suffix p)))
+                 (when (typep suffix 'keymap)
+                   (find-root suffix))))
              ;; recurse into child keymaps
              (dolist (child (keymap-children keymap))
-               (cond ((typep child 'keymap)
-                      (find-root child))
-                     ((typep child 'prefix)
-                      (let ((suffix (prefix-suffix child)))
-                        (when (typep suffix 'keymap)
-                          (find-root suffix))))))))
+               (find-root child))))
     (find-root *root-keymap*)
     active-keymap))
 
@@ -236,38 +236,36 @@ nested keymaps are arranged based on display-style (:row or :column).
 prefixes marked as :intermediate-p are flattened and shown with concatenated keys."
   (let ((prefix-items)
         (keymap-layouts))
-    (labels ((collect-items (node &optional (matched-depth 0))
-               (cond
-                 ;; nested keymap: recurse and collect
-                 ((typep node 'keymap)
-                  (alexandria:when-let ((child-layout (generate-layout node active-keymap)))
-                    (push child-layout keymap-layouts)))
-                 ;; prefix: create item if show-p
-                 ((typep node 'prefix)
-                  (when (prefix-show-p node)
-                    (if (prefix-intermediate-p node)
-                        (let* ((suffix (prefix-suffix node))
-                               (new-depth (if (and active-keymap
-                                                   (typep suffix 'keymap)
-                                                   (or (eq suffix active-keymap)
-                                                       (keymap-contains-via-intermediates-p
-                                                        suffix active-keymap)))
-                                              (1+ matched-depth)
-                                              matched-depth)))
-                          (if (typep suffix 'keymap)
-                              (dolist (child (keymap-children suffix))
-                                (collect-items child new-depth))
-                              (push (prefix-render node new-depth) prefix-items)))
-                        (push (prefix-render
-                               node
-                               (when (prefix-display-key node)
-                                 matched-depth))
-                              prefix-items)))))))
-      ;; process children, separating prefixes from keymaps
+    (labels ((collect-prefix (node &optional (matched-depth 0))
+               (when (prefix-show-p node)
+                 (if (prefix-intermediate-p node)
+                     (let* ((suffix (prefix-suffix node))
+                            (new-depth (if (and active-keymap
+                                                (typep suffix 'keymap)
+                                                (or (eq suffix active-keymap)
+                                                    (keymap-contains-via-intermediates-p
+                                                     suffix active-keymap)))
+                                           (1+ matched-depth)
+                                           matched-depth)))
+                       (if (typep suffix 'keymap)
+                           (dolist (p (keymap-prefixes suffix))
+                             (collect-prefix p new-depth))
+                           (push (prefix-render node new-depth) prefix-items)))
+                     (push (prefix-render
+                            node
+                            (when (prefix-display-key node)
+                              matched-depth))
+                           prefix-items))))
+             (collect-keymap (node)
+               (alexandria:when-let ((child-layout (generate-layout node active-keymap)))
+                 (push child-layout keymap-layouts))))
+      ;; process prefixes and child keymaps separately
       (let ((current keymap))
         (loop while current
-              do (dolist (child (keymap-children current))
-                   (collect-items child))
+              do (dolist (p (keymap-prefixes current))
+                   (collect-prefix p))
+                 (dolist (child (keymap-children current))
+                   (collect-keymap child))
                  (setf current (keymap-base current)))))
     ;; build result: title first, then content (prefixes + keymaps arranged by display-style)
     (setf prefix-items (nreverse prefix-items))

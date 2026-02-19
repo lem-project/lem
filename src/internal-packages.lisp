@@ -482,8 +482,8 @@
    :prefix-active-p
    :prefix-intermediate-p
    :prefix-behavior
+   :keymap-prefixes
    :keymap-children
-   :normalize-binding
    :keymap-description
    :keymap-properties
    :keymap-base

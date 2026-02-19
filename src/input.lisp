@@ -153,13 +153,12 @@ Pressing the same prefix key twice produces that key."
     (labels ((find-prefix-matches (km key)
                "find prefix children of KM matching KEY, recursing into child keymaps."
                (when (and (typep km 'keymap) (keymap-active-p km))
-                 (loop for item in (keymap-children km)
-                       when (and (typep item 'prefix)
-                                 (prefix-active-p item)
-                                 (equal (prefix-key item) key))
-                         collect item
-                       when (typep item 'keymap)
-                         append (find-prefix-matches item key))))
+                 (append (loop for item in (keymap-prefixes km)
+                               when (and (prefix-active-p item)
+                                         (equal (prefix-key item) key))
+                                 collect item)
+                         (loop for child in (keymap-children km)
+                               append (find-prefix-matches child key)))))
              (walk (binding keys)
                (when keys
                  (let ((matches (find-prefix-matches binding (car keys))))
@@ -177,17 +176,14 @@ Pressing the same prefix key twice produces that key."
        (set-last-mouse-event event)
        (find-mouse-command event))
       (key
-       (let ((result)
-             (prefix)
+       (let ((prefix)
              (suffix)
              (behavior)
              (kseq (list event)))
          (labels ((reset ()
-                    (setf result (lookup-keybind kseq))
-                    (setf suffix (car result))
-                    (setf prefix (cdr result))
-                    (when prefix
-                      (setf behavior (prefix-behavior prefix)))))
+                    (setf prefix (lookup-keybind kseq))
+                    (setf suffix (when prefix (prefix-suffix prefix)))
+                    (setf behavior (when prefix (prefix-behavior prefix)))))
            (loop
              (reset)
              (when prefix

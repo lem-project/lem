@@ -2,6 +2,7 @@
   (:use :cl :lem)
   (:export
    :define-transient
+   :define-transient-key
    :mode-transient-keymap
    :prefix-value
    :prefix-render

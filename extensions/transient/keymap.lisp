@@ -129,10 +129,13 @@ the setter stores directly."
                     (new-value))
                (with-last-read-key-sequence
                    (setf new-value
-                         (prompt-for-string "new value: "
-                                            :initial-value current-value
-                                            :completion-function (lambda (x)
-                                                                   choices))))
+                         (handler-case
+                             (prompt-for-string "new value: "
+                                                :initial-value current-value
+                                                :completion-function (lambda (x)
+                                                                       choices))
+                           (editor-abort ()
+                             current-value))))
                (when new-value
                  (setf (prefix-value choice) new-value)))))
     #'suffix))

@@ -189,8 +189,7 @@ the setter stores directly."
                     (keymap-add-child keymap sub-map t)))
                  ;; key binding (:key ...)
                  ((eq (car binding) :key)
-                  (define-transient-key keymap (second binding)
-                    (cddr binding))))))
+                  (define-transient-key keymap (second binding) (cddr binding))))))
     keymap))
 
 (defun define-transient-key (keymap key &optional args)

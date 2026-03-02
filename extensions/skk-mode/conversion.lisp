@@ -84,7 +84,11 @@ Returns :handled if the input was consumed, NIL otherwise."
     ((and (alpha-char-p char)
           (upper-case-p char)
           (skk-henkan-mode-p state)
-          (not (skk-okurigana-consonant state)))
+          (not (skk-okurigana-consonant state))
+          ;; Okurigana start is valid only after a reading exists and
+          ;; no pending preedit remains (e.g. KiI -> き*i, but KI -> き).
+          (plusp (length (skk-henkan-key state)))
+          (zerop (length (skk-preedit state))))
      (handle-okurigana state char mode)
      :handled)
     ;; Uppercase in okurigana mode - continue okurigana input

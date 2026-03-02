@@ -1362,3 +1362,34 @@ Uppercase starts henkan, Space would trigger conversion (simulated as henkan bou
             (delete-point (skk-henkan-start state))))
 
         (kill-buffer buf)))))
+
+(deftest test-delete-cancels-initial-okurigana
+  (testing "KiI then delete keeps henkan-key and cancels okurigana-start"
+    (with-fake-interface ()
+      (let ((buf (make-buffer "*skk-delete-okurigana-test*" :temporary t)))
+        (switch-to-buffer buf)
+        (erase-buffer buf)
+        (let ((state (make-instance 'skk-state)))
+          (setf (buffer-value buf 'lem-skk-mode/state::skk-state) state)
+
+          ;; KiI -> henkan-key: "き", okurigana starts with consonant "i".
+          (lem-skk-mode/conversion::process-skk-char #\K)
+          (lem-skk-mode/conversion::process-skk-char #\i)
+          (lem-skk-mode/conversion::process-skk-char #\I)
+          (ok (equal (skk-henkan-key state) "き"))
+          (ok (equal (skk-okurigana-consonant state) "i"))
+          (ok (equal (skk-preedit state) "i"))
+
+          ;; DEL should cancel initial okurigana start and keep only henkan reading.
+          (lem-skk-mode::skk-delete-backward)
+          (ok (equal (skk-henkan-key state) "き")
+              "henkan-key should stay as 'き'")
+          (ok (null (skk-okurigana-consonant state))
+              "okurigana start should be canceled")
+          (ok (equal (skk-okurigana-kana state) "")
+              "okurigana-kana should be empty")
+          (ok (equal (skk-preedit state) "")
+              "preedit should be empty after delete")
+          (ok (equal (lem-skk-mode/display::build-preedit-display state) "▽き")
+              "display should be plain henkan key without okurigana marker"))
+        (kill-buffer buf)))))

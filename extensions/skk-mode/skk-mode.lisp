@@ -381,8 +381,27 @@ If in henkan mode without candidates, first try to convert, then commit."
     (cond
       ;; Has preedit - remove last char from preedit
       ((plusp (length (skk-preedit state)))
-       (setf (skk-preedit state)
-             (subseq (skk-preedit state) 0 (1- (length (skk-preedit state)))))
+       (let ((new-preedit
+               (subseq (skk-preedit state) 0 (1- (length (skk-preedit state))))))
+         (setf (skk-preedit state) new-preedit)
+         ;; If we were only holding the initial okurigana consonant (e.g. KiI),
+         ;; deleting it should leave normal henkan input instead of "き*".
+         (when (and (lem-skk-mode/state:skk-okurigana-consonant state)
+                    (zerop (length new-preedit))
+                    (zerop (length (lem-skk-mode/state:skk-okurigana-kana state))))
+           (setf (lem-skk-mode/state:skk-okurigana-consonant state) nil)))
+       (update-skk-display)
+       (update-skk-cursor))
+      ;; In okurigana mode with converted okurigana-kana
+      ((and (lem-skk-mode/state:skk-okurigana-consonant state)
+            (plusp (length (lem-skk-mode/state:skk-okurigana-kana state))))
+       (let ((okuri (lem-skk-mode/state:skk-okurigana-kana state)))
+         (setf (lem-skk-mode/state:skk-okurigana-kana state)
+               (subseq okuri 0 (1- (length okuri)))))
+       ;; If okurigana text is now empty and no preedit remains, cancel okurigana mode.
+       (when (and (zerop (length (lem-skk-mode/state:skk-okurigana-kana state)))
+                  (zerop (length (skk-preedit state))))
+         (setf (lem-skk-mode/state:skk-okurigana-consonant state) nil))
        (update-skk-display)
        (update-skk-cursor))
       ;; In henkan mode with henkan-key

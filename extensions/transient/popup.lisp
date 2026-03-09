@@ -90,9 +90,9 @@
             return prefix)))
 
 (define-minor-mode transient-mode
-    (:name "transient-mode"
-     :global t
-     :keymap *transient-mode-keymap*))
+  (:name "transient-mode"
+   :global t
+   :keymap *transient-mode-keymap*))
 
 (defstruct layout-separator
   "a visual separator between items.")
@@ -522,3 +522,10 @@ prefixes marked as :intermediate-p are flattened and shown with concatenated key
     (setf *transient-shown-keymap* nil)
     (transient-mode nil)
     (redraw-display)))
+
+(add-hook *post-command-hook* 'transient-post-command-update)
+(defun transient-post-command-update ()
+  ;; its not ideal that we are invoking keymap-activate again on the keymap but until we rewrite
+  ;; the event handler this is necessary to keep the popup updated depending on the context change
+  ;; that happens every time a command is executed.
+  (keymap-activate *transient-shown-keymap*))

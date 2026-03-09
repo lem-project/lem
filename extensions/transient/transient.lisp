@@ -2,6 +2,8 @@
   (:use :cl :lem)
   (:export
    :define-transient
+   :define-prefix
+   :parse-prefix
    :define-transient-key
    :mode-transient-keymap
    :prefix-value
@@ -11,6 +13,8 @@
    :make-key-with-highlight
    :transient-bracket-attribute
    :transient-value-attribute
+   :prefix-active-p
+   :prefix-suffix
    :transient-mode
    :*transient-mode-keymap*))
 

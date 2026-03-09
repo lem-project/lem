@@ -148,6 +148,9 @@ the setter stores directly."
 (defmacro define-transient (name &body bindings)
   `(defparameter ,name (parse-transient ',bindings)))
 
+(defmacro define-prefix (name &body args)
+  `(defparameter ,name (parse-prefix ',args)))
+
 (defun parse-transient-method (object key val method-name)
   (let* ((key-string (string key))
          (key-method (intern (format nil "~A-~A" method-name key-string) :lem/transient))
@@ -183,6 +186,12 @@ the setter stores directly."
                     (parse-transient-method keymap binding val "KEYMAP")
                     ;; advance another cell because we're already consumed it (second tail)
                     (setf tail (cdr tail))))
+                 ;; if its a symbol we evaluate it as a variable that might be a prefix
+                 ((and (symbolp binding) (typep (symbol-value binding) 'prefix))
+                  (keymap-add-prefix keymap (symbol-value binding)))
+                 ;; if its a symbol and evaluates to a keymap, we add it as a child
+                 ((and (symbolp binding) (typep (symbol-value binding) 'keymap))
+                  (keymap-add-child keymap (symbol-value binding)))
                  ;; direct child keymap (:keymap ...)
                  ((eq (car binding) :keymap)
                   (let ((sub-map (parse-transient (cdr binding))))
@@ -191,6 +200,45 @@ the setter stores directly."
                  ((eq (car binding) :key)
                   (define-transient-key keymap (second binding) (cddr binding))))))
     keymap))
+
+;; since in this function we dont have the context of the parent keymap, it doesnt support
+;; multi-key sequences (intermediate prefixes), unlike define-transient-key.
+;; TODO: DRY this with `define-transient-key'.
+(defun parse-prefix (args)
+  (let* ((prefix-type
+           (intern (symbol-name
+                    (if (getf args :type)
+                        (eval (getf args :type))
+                        'prefix))
+                   :lem/transient))
+         (key (getf args :key))
+         (prefix (make-instance prefix-type))
+         (parsed-key (parse-keyspec key)))
+    (setf (prefix-key prefix) (car parsed-key))
+    (setf (prefix-suffix prefix) nil)
+    (loop for (key value) on args by 'cddr
+          do (let ((final-value)
+                   (should-set t))
+               (cond
+                 ((and (listp value) (eq (car value) :keymap))
+                  (setf final-value (parse-transient (cdr value))))
+                 ((eq key :variable)
+                  (setf (infix-variable prefix) (eval value))
+                  (setf should-set nil))
+                 ((eq key :type)
+                  (setf should-set nil))
+                 ;; key has already been handled
+                 ((eq key :key)
+                  (setf should-set nil))
+                 (t
+                  (setf final-value value)))
+               (when should-set
+                 (parse-transient-method
+                  prefix
+                  key
+                  final-value
+                  "PREFIX"))))
+    prefix))
 
 (defun define-transient-key (keymap key &optional args)
   "add a key binding to an existing transient KEYMAP.
@@ -261,7 +309,8 @@ accepts the same keyword args as a (:key ...) entry in `define-transient'."
                    (t
                     (setf final-value value)))
                  (when should-set
-                   (parse-transient-method prefix
-                                           key
-                                           final-value
-                                           "PREFIX")))))))
+                   (parse-transient-method
+                    prefix
+                    key
+                    final-value
+                    "PREFIX")))))))

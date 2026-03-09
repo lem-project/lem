@@ -457,6 +457,8 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
                 (make-prefix :key (car keyseq) :suffix result)))))))
 
 (defun insertion-key-p (key)
+  (when (and (listp key) (cdr key))
+    (return-from insertion-key-p nil))
   (let* ((key (typecase key
                 (list (first key))
                 (otherwise key)))

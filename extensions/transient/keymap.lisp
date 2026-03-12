@@ -3,18 +3,21 @@
 (defmethod keymap-activate ((keymap keymap))
   "called when a keymap is activated by the event scheduler."
   (let ((active-modes (all-active-modes (current-buffer))))
-    (cond ((loop for mode in active-modes
-                 for mode-keymap = (mode-transient-keymap mode)
-                 when mode-keymap
-                   do (show-transient
-                       (if (keymap-contains-p mode-keymap keymap)
-                           keymap
-                           mode-keymap))
-                      (return t)))
-          ((or (keymap-show-p keymap) *transient-always-show*)
-           (show-transient keymap))
-          (t
-           (hide-transient)))))
+    (cond
+      ((keymap-show-p keymap)
+       (show-transient keymap))
+      ((loop for mode in active-modes
+             for mode-keymap = (mode-transient-keymap mode)
+             when mode-keymap
+               do (show-transient
+                   (if (keymap-contains-p mode-keymap keymap)
+                       keymap
+                       mode-keymap))
+                  (return t)))
+      (*transient-always-show*
+       (show-transient keymap))
+      (t
+       (hide-transient)))))
 
 (defgeneric mode-transient-keymap (mode)
   (:documentation "returns the keymap to be passed to show-transient.")

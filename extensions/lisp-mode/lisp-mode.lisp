@@ -856,26 +856,27 @@
 (defun completion-symbol-async (point then)
   (check-connection)
   (let ((string (symbol-string-at-point point)))
-    (when string
-      (remote-eval-from-string
-       (current-connection)
-       (lem-lisp-mode/completion:make-completions-form-string string (current-package))
-       :continuation (lambda (result)
-                       (alexandria:destructuring-ecase result
-                         ((:ok completions)
-                          (with-point ((start (current-point))
-                                       (end (current-point)))
-                            (skip-symbol-backward start)
-                            (skip-symbol-forward end)
-                            (funcall then
-                                     (lem-lisp-mode/completion:make-completion-items
-                                      completions
-                                      start
-                                      end))))
-                         ((:abort condition)
-                          (editor-error "abort ~A" condition))))
-       :thread (current-micros-thread)
-       :package (current-package)))))
+    (if string
+        (remote-eval-from-string
+         (current-connection)
+         (lem-lisp-mode/completion:make-completions-form-string string (current-package))
+         :continuation (lambda (result)
+                         (alexandria:destructuring-ecase result
+                           ((:ok completions)
+                            (with-point ((start (current-point))
+                                         (end (current-point)))
+                              (skip-symbol-backward start)
+                              (skip-symbol-forward end)
+                              (funcall then
+                                       (lem-lisp-mode/completion:make-completion-items
+                                        completions
+                                        start
+                                        end))))
+                           ((:abort condition)
+                            (editor-error "abort ~A" condition))))
+         :thread (current-micros-thread)
+         :package (current-package))
+        (funcall then '()))))
 
 (defun describe-symbol (symbol-name)
   (when symbol-name

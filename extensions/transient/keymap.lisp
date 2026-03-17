@@ -149,10 +149,10 @@ the setter stores directly."
     #'suffix))
 
 (defmacro define-transient (name &body bindings)
-  `(defparameter ,name (parse-transient ',bindings)))
+  `(defvar ,name (parse-transient ',bindings)))
 
 (defmacro define-prefix (name &body args)
-  `(defparameter ,name (parse-prefix ',args)))
+  `(defvar ,name (parse-prefix ',args)))
 
 (defun parse-transient-method (object key val method-name)
   (let* ((key-string (string key))

@@ -491,7 +491,7 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
       (push *special-keymap* keymaps))
     (delete-duplicates keymaps :from-end t)))
 
-(defparameter *other-keymaps-root*
+(defvar *other-keymaps-root*
   (make-instance 'keymap :description '*other-keymaps-root*))
 
 ;; this is for some "other" keymaps that i need to inject into the root-keymap (atleast this way for now).

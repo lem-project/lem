@@ -376,7 +376,6 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
                                                      str))))))))
     (mapcar #'parse (uiop:split-string string :separator " "))))
 
-
 (defun find-in-function-table (binding key)
   "search function-table of keymaps in hierarchy for KEY."
   (search-with-base
@@ -411,20 +410,32 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
                     when (and (prefix-active-p item)
                               (equal (prefix-key item) (car keyseq)))
                       collect item))
-            (found))
+            (prefix-found)
+            (undef-hook-keymap))
         ;; search nested keymaps
         (loop for child in (keymap-children keymap)
               when (keymap-active-p child)
                 do (let ((r (keymap-find child keyseq)))
                      (when r
-                       (setf found r)
+                       (setf prefix-found r)
                        (return)))
-                   ;; when we find an undef-hook, stop searching further to make find-undef-hook
-                   ;; find the keymap instead
-              when (and (typep child 'keymap*)
-                        (keymap-undef-hook child))
-                do (return))
-        (or found
+                   ;; record first undef-hook keymap but continue searching
+                   ;; so that function-table remapping can resolve against the base command
+                   (when (and (not undef-hook-keymap)
+                              (typep child 'keymap*)
+                              (keymap-undef-hook child))
+                     (setf undef-hook-keymap child)))
+        ;; if a higher-priority keymap had a undef-hook, apply function-table remapping
+        ;; or fall back to the undef-hook (priority: remap > undef-hook > base cmd).
+        (when (and undef-hook-keymap prefix-found)
+          (let* ((cmd (prefix-suffix prefix-found))
+                 (remapped (gethash cmd (keymap-function-table undef-hook-keymap))))
+            (if remapped
+                (setf prefix-found (make-prefix :key (prefix-key prefix-found) :suffix remapped))
+                (setf prefix-found (make-prefix :suffix (keymap-undef-hook undef-hook-keymap))))))
+        (or prefix-found
+            (when undef-hook-keymap
+              (make-prefix :suffix (keymap-undef-hook undef-hook-keymap)))
             ;; try collected prefix matches
             (loop for match in prefix-matches
                   for suffix = (prefix-suffix match)
@@ -502,15 +513,12 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
   (cons *other-keymaps-root*
         (slot-value keymap 'children)))
 
-(defun find-undef-hook ()
-  (loop for km in (other-keymaps)
-        when (and (typep km 'keymap*) (keymap-undef-hook km))
-          return (keymap-undef-hook km)))
-
 (defun lookup-keybind (key)
   (or (keymap-find *root-keymap* key)
       ;; find undef-hook in hierarchy (e.g. self-insert)
-      (let ((hook (find-undef-hook)))
+      (let ((hook (loop for km in (other-keymaps)
+                        when (and (typep km 'keymap*) (keymap-undef-hook km))
+                          return (keymap-undef-hook km))))
         (when hook
           (make-prefix :suffix hook)))))
 

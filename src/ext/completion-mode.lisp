@@ -8,7 +8,8 @@
            :run-completion
            :completion-end
            :completion-mode
-           :completion-refresh)
+           :completion-refresh
+           :*completion-select-hook*)
   #+sbcl
   (:lock t))
 (in-package :lem/completion-mode)
@@ -17,6 +18,7 @@
 
 (defvar *completion-context* nil)
 (defvar *completion-reverse* nil)
+(defvar *completion-select-hook* nil)
 
 (defclass completion-context ()
   ((spec
@@ -105,11 +107,11 @@
      :keymap *completion-mode-keymap*))
 
 (define-key *completion-mode-keymap* 'next-line 'completion-next-line)
-(define-key *completion-mode-keymap* "M-n"    'completion-next-line)
-(define-key *completion-mode-keymap* "Tab"    'completion-narrowing-down-or-next-line)
+(define-key *completion-mode-keymap* "M-n"    'completion-maybe-next)
+(define-key *completion-mode-keymap* "M-p"    'completion-maybe-previous)
+(define-key *completion-mode-keymap* "Tab"    'completion-complete-focused)
 (define-key *completion-mode-keymap* "Shift-Tab"    'completion-previous-line)
 (define-key *completion-mode-keymap* 'previous-line 'completion-previous-line)
-(define-key *completion-mode-keymap* "M-p"    'completion-previous-line)
 (define-key *completion-mode-keymap* 'move-to-end-of-buffer 'completion-end-of-buffer)
 (define-key *completion-mode-keymap* 'move-to-beginning-of-buffer 'completion-beginning-of-buffer)
 (define-key *completion-mode-keymap* "Return"    'completion-select)
@@ -216,6 +218,18 @@
   (popup-menu-up (context-popup-menu *completion-context*))
   (call-focus-action))
 
+(define-command completion-maybe-previous () ()
+  "navigate history if in prompt, otherwise navigate candidates."
+  (if (frame-floating-prompt-window (current-frame))
+      (call-command (find-command "prompt-previous-history") 1)
+      (completion-previous-line)))
+
+(define-command completion-maybe-next () ()
+  "navigate history if in prompt, otherwise navigate candidates."
+  (if (frame-floating-prompt-window (current-frame))
+      (call-command (find-command "prompt-next-history") 1)
+      (completion-next-line)))
+
 (define-command completion-end-of-buffer () ()
   (popup-menu-last (context-popup-menu *completion-context*))
   (call-focus-action))
@@ -225,7 +239,11 @@
   (call-focus-action))
 
 (define-command completion-select () ()
-  (popup-menu-select (context-popup-menu *completion-context*)))
+  (alexandria:when-let* ((menu (context-popup-menu *completion-context*))
+                         (item (lem/popup-menu:get-focus-item menu)))
+    (completion-insert (current-point) item)
+    (completion-end)
+    (run-hooks *completion-select-hook*)))
 
 (define-command completion-insert-space-and-cancel () ()
   (insert-character (current-point) #\space)
@@ -283,6 +301,13 @@
       (if *completion-reverse*
           (completion-previous-line)
           (completion-next-line))))
+
+(define-command completion-complete-focused () ()
+  "complete fully to the currently focused candidate"
+  (alexandria:when-let* ((menu (context-popup-menu *completion-context*))
+                         (item (lem/popup-menu:get-focus-item menu)))
+    (completion-insert (current-point) item)
+    (continue-completion *completion-context*)))
 
 (defun limitation-items (items)
   (let ((result (if (and *limit-number-of-items*

@@ -8,7 +8,7 @@
   "the last keymap passed to show-transient. used to detect same-keymap redraws and preserve scroll position.")
 
 (defvar *transient-popup-max-lines*
-  15
+  10
   "max height of the transient buffer (measured in lines).")
 
 (defvar *transient-vertical-scroll-amount*

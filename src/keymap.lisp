@@ -398,6 +398,23 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
             (loop for child in (keymap-children km)
                   thereis (find-in-function-table child key)))))))
 
+;; TODO: this search exists because the old sequential keymap code
+;; accumulated `cmd' across keymaps, so function-table remapping (e.g.
+;; self-insert -> undefined-key in vi *motion-keymap*) happened naturally.
+;; the new tree-based keymap-find doesn't accumulate, so we need this explicit
+;; search. ideally function-table remapping should be replaced with a mechanism
+;; that fits the new keymap design (e.g. prefix properties or keymap flags).
+(defun remap-command-in-keymap (keymap cmd)
+  "search KEYMAP and its children's function-tables for a remapping of CMD.
+used to check if a undef-hook command (e.g. self-insert) is remapped by a
+higher-priority keymap (e.g. vi normal mode remaps self-insert to undefined-key)."
+  (or (when (typep keymap 'keymap*)
+        (gethash cmd (keymap-function-table keymap)))
+      (dolist (child (keymap-children keymap))
+        (when (keymap-active-p child)
+          (let ((result (remap-command-in-keymap child cmd)))
+            (when result (return result)))))))
+
 (defmethod keymap-find ((keymap keymap) key)
   "finds key sequence in keymap, returns the matched prefix or nil."
   (let ((keyseq (etypecase key
@@ -435,7 +452,9 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
                 (setf prefix-found (make-prefix :suffix (keymap-undef-hook undef-hook-keymap))))))
         (or prefix-found
             (when undef-hook-keymap
-              (make-prefix :suffix (keymap-undef-hook undef-hook-keymap)))
+              (let* ((hook (keymap-undef-hook undef-hook-keymap))
+                     (remapped (remap-command-in-keymap keymap hook)))
+                (make-prefix :suffix (or remapped hook))))
             ;; try collected prefix matches
             (loop for match in prefix-matches
                   for suffix = (prefix-suffix match)

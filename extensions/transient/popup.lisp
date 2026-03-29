@@ -525,9 +525,6 @@ prefixes marked as :intermediate-p are flattened and shown with concatenated key
 
 (add-hook *post-command-hook* 'transient-post-command-update)
 (defun transient-post-command-update ()
-  ;; its not ideal that we are invoking keymap-activate again on the keymap but until we rewrite
-  ;; the event handler this is necessary to keep the popup updated depending on the context change
-  ;; that happens every time a command is executed.
   (let ((resolved (resolve-transient-keymap)))
     (if resolved
         (show-transient resolved)

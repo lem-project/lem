@@ -528,4 +528,7 @@ prefixes marked as :intermediate-p are flattened and shown with concatenated key
   ;; its not ideal that we are invoking keymap-activate again on the keymap but until we rewrite
   ;; the event handler this is necessary to keep the popup updated depending on the context change
   ;; that happens every time a command is executed.
-  (keymap-activate *transient-shown-keymap*))
+  (let ((resolved (resolve-transient-keymap)))
+    (if resolved
+        (show-transient resolved)
+        (hide-transient))))

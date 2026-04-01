@@ -62,7 +62,7 @@
                                                "frontend/dist/~A"
                                                (string-left-trim "/" path)))))
             ((alexandria:starts-with-subseq "/local/" path)
-             (let* ((file (pathname (subseq path (length "/local"))))
+             (let* ((file (uiop:parse-native-namestring (subseq path (length "/local"))))
                     (mime-type (hunchentoot:mime-type file)))
                `(200 (:content-type ,mime-type)
                      ,file)))

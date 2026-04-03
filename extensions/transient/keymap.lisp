@@ -155,6 +155,10 @@ the setter stores directly."
 (defmacro define-prefix (name &body args)
   `(defvar ,name (parse-prefix ',args)))
 
+(defmacro define-transient-key (name keymap key &body args)
+  `(defvar ,name
+     (assign-transient-key ,keymap ,key (list ,@args))))
+
 (defun parse-transient-method (object key val method-name)
   (let* ((key-string (string key))
          (key-method (intern (format nil "~A-~A" method-name key-string) :lem/transient))
@@ -202,12 +206,12 @@ the setter stores directly."
                     (keymap-add-child keymap sub-map t)))
                  ;; key binding (:key ...)
                  ((eq (car binding) :key)
-                  (define-transient-key keymap (second binding) (cddr binding))))))
+                  (assign-transient-key keymap (second binding) (cddr binding))))))
     keymap))
 
 ;; since in this function we dont have the context of the parent keymap, it doesnt support
-;; multi-key sequences (intermediate prefixes), unlike define-transient-key.
-;; TODO: DRY this with `define-transient-key'.
+;; multi-key sequences (intermediate prefixes), unlike assign-transient-key.
+;; TODO: DRY this with `assign-transient-key'.
 (defun parse-prefix (args)
   (let* ((prefix-type
            (intern (symbol-name
@@ -244,9 +248,11 @@ the setter stores directly."
                   "PREFIX"))))
     prefix))
 
-(defun define-transient-key (keymap key &optional args)
+(defun assign-transient-key (keymap key &optional args)
   "add a key binding to an existing transient KEYMAP.
 accepts the same keyword args as a (:key ...) entry in `define-transient'."
+  ;; redefine in place so repeated calls do not accumulate duplicate entries for the same key sequence.
+  (undefine-key keymap key)
   (let* ((prefix-type (intern (symbol-name (if (getf args :type)
                                                (eval (getf args :type))
                                                'prefix))
@@ -317,4 +323,5 @@ accepts the same keyword args as a (:key ...) entry in `define-transient'."
                     prefix
                     key
                     final-value
-                    "PREFIX")))))))
+                    "PREFIX")))))
+    prefix))

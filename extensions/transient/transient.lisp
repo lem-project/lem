@@ -4,6 +4,7 @@
    :define-transient
    :define-prefix
    :parse-prefix
+   :assign-transient-key
    :define-transient-key
    :mode-transient-keymap
    :prefix-value

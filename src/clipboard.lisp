@@ -37,7 +37,7 @@ Argument VALUE is a boolean, and it will be set to enable/disable the clipboard.
 
 (defun enable-clipboard-p ()
   "Return t if clipboard is enabled."
-  (if (boundp '*enable-clipboard-p)
+  (if (boundp '*enable-clipboard-p*)
       *enable-clipboard-p*
       (setf *enable-clipboard-p*
             (ignore-errors

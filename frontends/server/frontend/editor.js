@@ -350,7 +350,7 @@ class CanvasSurface extends BaseSurface {
           option,
         });
       } else {
-        let { foreground, background, bold, reverse, underline } = attribute;
+        let { foreground, background, bold, reverse, underline, cursor } = attribute;
         if (!foreground) {
           foreground = option.foreground;
         }
@@ -361,6 +361,11 @@ class CanvasSurface extends BaseSurface {
           const tmp = background;
           background = foreground;
           foreground = tmp;
+        }
+        if (cursor) {
+          // Only reset background; keep foreground to preserve syntax highlighting
+          // when the cursor overlay blinks off.
+          background = option.background;
         }
         const gx = x * option.fontWidth;
         const gy = y * option.fontHeight;
@@ -1058,6 +1063,13 @@ export class Editor {
     this.input = new Input(this);
     this.cursors = new Map();
 
+    this.cursorOverlay = document.createElement('div');
+    this.cursorOverlay.className = 'lem-cursor';
+    this.cursorOverlay.style.width = this.option.fontWidth + 'px';
+    this.cursorOverlay.style.height = this.option.fontHeight + 'px';
+    this.cursorOverlay.style.backgroundColor = '#ffffff';
+    this.cursorType = 'box';
+
     this.viewMap = new Map();
 
     this.jsonrpc = new JSONRPC(url, {
@@ -1093,6 +1105,7 @@ export class Editor {
       'get-font': this.getFont.bind(this),
       'get-display-size': this.getDisplaySize.bind(this),
       'load-css': this.loadCSS.bind(this),
+      'update-cursor-shape': this.updateCursorShape.bind(this),
     });
 
     this.login();
@@ -1104,11 +1117,15 @@ export class Editor {
   init() {
     window.addEventListener('resize', this.boundedHandleResize);
     document.getElementsByTagName('html')[0].style['background-color'] = '#333';
+    getLemEditorElement().appendChild(this.cursorOverlay);
   }
 
   finalize() {
     window.removeEventListener('resize', this.boundedHandleResize);
     this.input.finalize();
+    if (this.cursorOverlay.parentNode) {
+      this.cursorOverlay.parentNode.removeChild(this.cursorOverlay);
+    }
   }
 
   closeConnection() {
@@ -1295,11 +1312,63 @@ export class Editor {
   updateDisplay() {
   }
 
-  moveCursor({ viewInfo: { id }, x, y }) {
+  moveCursor({ viewInfo: { id }, x, y, color, cursorText, cursorForeground }) {
     const view = this.findViewById(id);
+    const [x0, y0] = this.getDisplayRectangle();
     const left = view.x * this.option.fontWidth + x * this.option.fontWidth;
     const top = view.y * this.option.fontHeight + y * this.option.fontHeight;
     this.input.move(left, top);
+
+    const cursorColor = color || this.option.foreground;
+    const cursorFg = cursorForeground || this.option.background;
+    const overlay = this.cursorOverlay;
+
+    // Apply cursor type styling
+    switch (this.cursorType) {
+      case 'bar':
+        overlay.style.left = (x0 + left) + 'px';
+        overlay.style.top = (y0 + top) + 'px';
+        overlay.style.width = '2px';
+        overlay.style.height = this.option.fontHeight + 'px';
+        overlay.style.backgroundColor = cursorColor;
+        overlay.textContent = '';
+        overlay.style.color = '';
+        overlay.style.font = '';
+        overlay.style.paddingTop = '';
+        break;
+      case 'underline':
+        overlay.style.left = (x0 + left) + 'px';
+        overlay.style.top = (y0 + top + this.option.fontHeight - 2) + 'px';
+        overlay.style.width = this.option.fontWidth + 'px';
+        overlay.style.height = '2px';
+        overlay.style.backgroundColor = cursorColor;
+        overlay.textContent = '';
+        overlay.style.color = '';
+        overlay.style.font = '';
+        overlay.style.paddingTop = '';
+        break;
+      case 'box':
+      default:
+        overlay.style.left = (x0 + left) + 'px';
+        overlay.style.top = (y0 + top) + 'px';
+        overlay.style.width = this.option.fontWidth + 'px';
+        overlay.style.height = this.option.fontHeight + 'px';
+        overlay.style.backgroundColor = cursorColor;
+        overlay.style.font = this.option.font;
+        overlay.style.paddingTop = textOffsetY + 'px';
+        overlay.textContent = cursorText || '';
+        overlay.style.color = cursorFg;
+        break;
+    }
+
+    // Reset blink animation on cursor move
+    overlay.style.animation = 'none';
+    overlay.offsetHeight; // force reflow
+    overlay.style.animation = '';
+  }
+
+  updateCursorShape({ cursorType }) {
+    this.cursorType = cursorType || 'box';
   }
 
   changeView({ viewInfo: { id }, type, content }) {

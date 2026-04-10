@@ -1,3 +1,8 @@
+* behavior
+setting ~*transient-always-show*~ to ~t~ makes it show everything but its not the default behavior. unless a specific mode enforces a transient keymap the default behavior is to not show anything.
+~shift+alt+up/down/right/left~ scroll the keybinding popup.
+this design is because it might make some sense to enable the transient popup for specific modes/popups but not others. but this variable i mentioned that makes it show everything everywhere.
+keymaps that dont define the transient properties explicitly inherit default display properties, which makes them show up as a simple grid.
 * design
 the code for the transient extension is only vaguely inspired by emacs' transient since i never really used it much and only skimmed briefly through the code of transient.el for initial inspiration. the implementation i ended up with is the one that made the most sense to me at the time.
 the design is relatively simple. it mainly makes use of 2 concepts, a keymap and a prefix.

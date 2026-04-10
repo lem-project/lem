@@ -437,7 +437,7 @@ prefixes marked as :intermediate-p are flattened and shown with concatenated key
           (insert-segment-lines (buffer-point buffer) (render-layout-to-segments layout))
           (insert-string (buffer-point buffer) "(no bindings)"))
       (buffer-start (buffer-point buffer))
-      (log:info "transient popup contents:~%~A~A" (buffer-text buffer))
+      ;; (log:info "transient popup contents:~%~A~%" (buffer-text buffer))
       (let ((height (min (lem/popup-window::compute-buffer-height buffer)
                          *transient-popup-max-lines*)))
         (if existing-window

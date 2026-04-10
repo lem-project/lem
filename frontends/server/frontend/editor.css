@@ -1,3 +1,19 @@
+@keyframes lem-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.lem-cursor {
+  position: absolute;
+  pointer-events: none;
+  z-index: 100;
+  animation: lem-cursor-blink 1s step-end infinite;
+  overflow: hidden;
+  white-space: pre;
+  line-height: 1;
+  box-sizing: border-box;
+}
+
 .lem-editor__floating-window--bordered {
   padding: 10px;
   border: none;

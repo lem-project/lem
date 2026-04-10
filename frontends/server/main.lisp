@@ -238,8 +238,9 @@
     (notify jsonrpc "update-background" color-name)))
 
 (defmethod lem-if:update-cursor-shape ((jsonrpc jsonrpc) cursor-type)
-  ;; TODO
-  )
+  (with-error-handler ()
+    (notify jsonrpc "update-cursor-shape"
+            (hash "cursorType" (string-downcase (string cursor-type))))))
 
 (defmethod lem-if:display-width ((jsonrpc jsonrpc))
   (with-error-handler ()
@@ -388,12 +389,31 @@
 
 (defmethod lem-if:update-display ((jsonrpc jsonrpc))
   (with-error-handler ()
-    (let ((view (lem:window-view (lem:current-window)))
-          (x (lem:last-print-cursor-x (lem:current-window)))
-          (y (lem:last-print-cursor-y (lem:current-window))))
+    (let* ((view (lem:window-view (lem:current-window)))
+           (x (lem:last-print-cursor-x (lem:current-window)))
+           (y (lem:last-print-cursor-y (lem:current-window)))
+           (cursor-attr (lem:ensure-attribute 'lem:cursor nil))
+           (impl (lem:implementation))
+           (cursor-color (ensure-rgb
+                          (or (when cursor-attr
+                                (lem:attribute-background cursor-attr))
+                              (lem-if:get-foreground-color impl))))
+           (cursor-char (lem:character-at
+                         (lem:buffer-point
+                          (lem:window-buffer (lem:current-window)))))
+           (cursor-text (if (and cursor-char (char/= cursor-char #\Newline))
+                            (string cursor-char)
+                            " "))
+           (cursor-fg (ensure-rgb
+                       (or (when cursor-attr
+                             (lem:attribute-foreground cursor-attr))
+                           (lem-if:get-background-color impl)))))
       (notify* jsonrpc
                "move-cursor"
-               (hash "viewInfo" view "x" x "y" y)))
+               (hash "viewInfo" view "x" x "y" y
+                     "color" cursor-color
+                     "cursorText" cursor-text
+                     "cursorForeground" cursor-fg)))
     (notify* jsonrpc "update-display" nil)
     (notify-all jsonrpc)))
 
@@ -527,7 +547,8 @@
         (yason:encode-object-element "background" (ensure-rgb (lem:attribute-background attribute)))
         (yason:encode-object-element "reverse" (bool (lem:attribute-reverse attribute)))
         (yason:encode-object-element "bold" (bool (lem:attribute-bold attribute)))
-        (yason:encode-object-element "underline" (lem:attribute-underline attribute))))))
+        (yason:encode-object-element "underline" (lem:attribute-underline attribute))
+        (yason:encode-object-element "cursor" (bool (lem-core:cursor-attribute-p attribute)))))))
 
 
 
@@ -610,10 +631,11 @@
 
 (defmethod draw-object (jsonrpc (object display:eol-cursor-object) x y view)
   (lem-core::set-last-print-cursor (view-window view) x y)
-  (put jsonrpc view x y " "
-       (lem:make-attribute
-        :background
-        (lem:color-to-hex-string (display:eol-cursor-object-color object)))))
+  (let ((attr (lem:make-attribute
+               :background
+               (lem:color-to-hex-string (display:eol-cursor-object-color object)))))
+    (lem-core:set-cursor-attribute attr)
+    (put jsonrpc view x y " " attr)))
 
 (defmethod draw-object (jsonrpc (object display:extend-to-eol-object) x y view)
   (let ((width (lem-if:view-width (lem-core:implementation) view)))

@@ -278,19 +278,19 @@ Example: (define-key *global-keymap* \"C-'\" 'list-modes)"
 
 (defmethod define-key-internal ((keymap keymap) keys symbol)
   (let* ((rest (uiop:ensure-list keys))
-         (k (car rest)))
+         (first-key (car rest)))
     (if (null (cdr rest))
         ;; if theres no more keys in the sequence we simply bind the last key.
-        (let ((prefix (prefix-for-key keymap k)))
+        (let ((prefix (prefix-for-key keymap first-key)))
           (if prefix
               (setf (prefix-suffix prefix) symbol)
               ;; if we didnt find a pre-existing prefix we insert one
-              (keymap-add-prefix keymap (make-prefix :key k :suffix symbol))))
+              (keymap-add-prefix keymap (make-prefix :key first-key :suffix symbol))))
         ;; here we're creating intermediate keymaps to bind the keys in the sequence
         ;; one by one. which is the way emacs does it, and the way lem used to it.
         ;; but it should be possible to completely bind the sequence to prefixes that
         ;; lead to one another.
-        (let* ((next-prefix (prefix-for-key keymap k))
+        (let* ((next-prefix (prefix-for-key keymap first-key))
                (next-keymap))
           ;; we expect the suffix of next-prefix to be a keymap, if next-prefix isnt yet
           ;; existent we create a prefixed keymap and work with it.
@@ -306,7 +306,7 @@ Example: (define-key *global-keymap* \"C-'\" 'list-modes)"
                 (setf next-keymap (make-instance 'keymap))
                 (setf next-prefix
                       (make-prefix :suffix next-keymap
-                                   :key k))
+                                   :key first-key))
                 (keymap-add-prefix keymap next-prefix)))
           (define-key-internal next-keymap (cdr rest) symbol)))))
 
@@ -383,11 +383,11 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
    (lambda (km)
      (cond ((typep km 'keymap*)
             (let ((result))
-              (maphash (lambda (k v)
-                         (when (and (null result) (equal k key))
-                           (setf result (if (prefix-command-p v)
-                                            v
-                                            (make-prefix :key k :suffix v)))))
+              (maphash (lambda (bound-key bound-cmd)
+                         (when (and (null result) (equal bound-key key))
+                           (setf result (if (prefix-command-p bound-cmd)
+                                            bound-cmd
+                                            (make-prefix :key bound-key :suffix bound-cmd)))))
                        (keymap-function-table km))
               (or result
                   (loop for child in (keymap-children km)
@@ -432,9 +432,9 @@ higher-priority keymap (e.g. vi normal mode remaps self-insert to undefined-key)
         ;; search nested keymaps
         (loop for child in (keymap-children keymap)
               when (keymap-active-p child)
-                do (let ((r (keymap-find child keyseq)))
-                     (when r
-                       (setf prefix-found r)
+                do (let ((child-result (keymap-find child keyseq)))
+                     (when child-result
+                       (setf prefix-found child-result)
                        (return)))
                    ;; record first undef-hook keymap but continue searching
                    ;; so that function-table remapping can resolve against the base command

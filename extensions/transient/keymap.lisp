@@ -162,12 +162,21 @@ the setter stores directly."
      (assign-transient-key ,keymap ,key (list ,@args))))
 
 (defun parse-transient-method (object key val method-name)
+  "assign a keymap/prefix property using KEY with value VAL to OBJECT.
+
+OBJECT can be a keymap or a prefix.
+METHOD-NAME is a string prefix (\"KEYMAP\" or \"PREFIX\") used to resolve the setter.
+resolution order is:
+1. if KEY ends in \"-func\", define a method on OBJECT via eql so that the accessor returns VAL at runtime.
+2. if a (setf METHOD-NAME-KEY) function exists, call it with (eval VAL).
+3. otherwise store KEY/VAL in the object's properties plist."
   (let* ((key-string (string key))
          (key-method (intern (format nil "~A-~A" method-name key-string) :lem/transient))
-         (length (length key-string)))
-    (cond ((and (> length 5)
-                (string-equal "-func" (subseq key-string (- length 5))))
-           (let* ((prefix-key-string (subseq key-string 0 (- length 5)))
+         (len (length key-string))
+         (func-str "-func"))
+    (cond ((and (> len (length func-str))
+                (string-equal func-str (subseq key-string (- len (length func-str)))))
+           (let* ((prefix-key-string (subseq key-string 0 (- len (length func-str))))
                   (key-method (intern (format nil "~A-~A" method-name prefix-key-string)
                                       :lem/transient)))
              (eval `(defmethod ,key-method ((object (eql ,object)))
@@ -175,15 +184,20 @@ the setter stores directly."
           ((fboundp key-method)
            (funcall (fdefinition (list 'setf key-method)) (eval val) object))
           (t
-           (let ((property-method (intern (format nil "~A-PROPERTIES" method-name)
-                                          :lem/transient)))
-             (when (fboundp property-method)
-               (let ((props (funcall (fdefinition property-method) object)))
-                 (setf (getf props key) (eval val))
-                 (funcall (fdefinition (list 'setf property-method)) props object))))))))
+           (when (slot-exists-p object 'properties)
+             (setf (getf (slot-value object 'properties) key) (eval val)))))))
 
 (defun parse-transient (bindings)
-  "defines a transient menu. args yet to be documented."
+  "parse BINDINGS and return a new keymap with \"transient\" functionality.
+
+BINDINGS is a list. an element can be:
+- keyword symbol - set a keymap-level property (e.g. :description \"my menu\").
+- symbol         - if the symbol's value is a prefix, add it as a prefix.
+                   if its a keymap, add it as a child keymap.
+- (:keymap ...)  - recursively parse the rest as a sub-keymap and add it as a child.
+- (:key KEY ...) - bind KEY in the keymap. forwarded to `assign-transient-key'.
+
+the returned keymap has `:show-p' set to `t' so it is displayed in the popup."
   (let ((keymap (make-keymap)))
     (setf (keymap-show-p keymap) t)
     (loop for tail = bindings then (cdr tail)
@@ -211,10 +225,19 @@ the setter stores directly."
                   (assign-transient-key keymap (second binding) (cddr binding))))))
     keymap))
 
-;; since in this function we dont have the context of the parent keymap, it doesnt support
-;; multi-key sequences (intermediate prefixes), unlike assign-transient-key.
-;; TODO: DRY this with `assign-transient-key'.
 (defun parse-prefix (args)
+  "parse the plist ARGS and return a new prefix instance.
+
+candidates for ARGS:
+- `:key'   the key string that activates this prefix (required).
+- `:type'  symbol of class to create an instance from (default: `prefix').
+- `:variable'     for infix subclasses, the lisp variable to sync with.
+- `:description'  label shown in the popup.
+- `:suffix'       command, lambda or keymap to invoke when the key is pressed.
+any other keyword is forwarded to `parse-transient-method'.
+
+only single-key sequences are supported here. for multi-key sequence behaving as a single-prefix
+use `assign-transient-key' instead."
   (let* ((prefix-type
            (intern (symbol-name
                     (if (getf args :type)
@@ -251,8 +274,14 @@ the setter stores directly."
     prefix))
 
 (defun assign-transient-key (keymap key &optional args)
-  "add a key binding to an existing transient KEYMAP.
-accepts the same keyword args as a (:key ...) entry in `define-transient'."
+  "add or replace the binding for KEY in transient KEYMAP.
+
+KEY is a key-spec string (e.g. \"C-c t\").
+ARGS is a plist of keyword properties forwarded to `parse-transient-method'.
+recognised keys are the same as in a (:key ...) entry in `parse-prefix'.
+
+if a binding for KEY already exists it is removed before the new one is added, so repeated
+calls do not accumulate duplicate entries."
   ;; redefine in place so repeated calls do not accumulate duplicate entries for the same key sequence.
   (undefine-key keymap key)
   (let* ((prefix-type (intern (symbol-name (if (getf args :type)

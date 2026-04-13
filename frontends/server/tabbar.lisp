@@ -27,6 +27,9 @@
    (buffer-list
     :accessor tabbar-window-buffer-list)))
 
+(defmethod header-window-height ((window tabbar-window))
+  2)
+
 (defvar *tabbar* nil)
 
 (defun tabbar-init ()

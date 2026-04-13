@@ -1044,7 +1044,7 @@ You can pass in the optional argument WINDOW-LIST to replace the default
 ;;;
 (defun adjust-all-window-size ()
   (dolist (window (frame-header-windows (current-frame)))
-    (window-set-size window (display-width) 1))
+    (window-set-size window (display-width) (header-window-height window)))
   (alexandria:when-let (window (frame-rightside-window (current-frame)))
     (resize-rightside-window window))
   (balance-windows))

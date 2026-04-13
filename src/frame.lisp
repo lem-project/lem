@@ -180,7 +180,9 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
 
 
 (defun topleft-window-y (frame)
-  (length (frame-header-windows frame)))
+  (reduce #'+ (frame-header-windows frame)
+          :key #'header-window-height
+          :initial-value 0))
 
 (defun topleft-window-x (frame)
   (if (null (frame-leftside-window frame))

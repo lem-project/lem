@@ -377,6 +377,7 @@
   ;; header-window.lisp
   (:export
    :header-window
+   :header-window-height
    :header-window-p)
   ;; side-window.lisp
   (:export

@@ -85,6 +85,7 @@ html, body {
     linear-gradient(180deg, #1c1c1c, var(--bg)) /* subtle top gradient */;
   border-bottom: 1px solid var(--border);
   overflow-x: auto;         /* horizontal scroll for multiple tabs */
+  overflow-y: hidden;        /* prevent vertical scroll */
   white-space: nowrap;      /* no line wrap */
   scrollbar-width: none;    /* Firefox: hide scrollbar */
   position: relative;

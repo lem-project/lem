@@ -180,7 +180,10 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
 
 
 (defun topleft-window-y (frame)
-  (length (frame-header-windows frame)))
+  "Return the Y coordinate where the topmost editor window begins.
+This is the sum of all header window heights in FRAME."
+  (loop :for w :in (frame-header-windows frame)
+        :sum (header-window-height w)))
 
 (defun topleft-window-x (frame)
   (if (null (frame-leftside-window frame))

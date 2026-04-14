@@ -1043,8 +1043,10 @@ You can pass in the optional argument WINDOW-LIST to replace the default
 
 ;;;
 (defun adjust-all-window-size ()
+  "Resize all windows to fit the current display dimensions.
+Each header window is set to full display width and its preferred height."
   (dolist (window (frame-header-windows (current-frame)))
-    (window-set-size window (display-width) 1))
+    (window-set-size window (display-width) (header-window-height window)))
   (alexandria:when-let (window (frame-rightside-window (current-frame)))
     (resize-rightside-window window))
   (balance-windows))

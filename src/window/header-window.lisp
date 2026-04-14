@@ -11,9 +11,8 @@ Subclasses can specialize this to request more vertical space.")
 (defmethod initialize-instance ((window header-window) &key &allow-other-keys)
   (with-slots (x y width height) window
     (setf x 0)
-    (setf y (reduce #'+ (frame-header-windows (current-frame))
-                    :key #'header-window-height
-                    :initial-value 0))
+    (setf y (loop :for w :in (frame-header-windows (current-frame))
+                  :sum (header-window-height w)))
     (setf width (display-width))
     (setf height (header-window-height window)))
   (add-header-window (current-frame) window)

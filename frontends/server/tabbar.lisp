@@ -54,191 +54,192 @@
       (message "~A" e))))
 
 (defun generate-html ()
-  (with-output-to-string (out)
+  (let ((editor-bg (lem-server::ensure-rgb (lem:background-color))))
+    (with-output-to-string (out)
     (format out "<head>")
-    (write-line "<style>
+    (format out "<style>
 /* ===== Theme tokens ===== */
 :root {
-  --bg: #1e1e1e;
-  --bg-elev: #232323;
-  --fg: #c8c8c8;
-  --fg-dim: #9ca3af;
-  --border: #2f2f2f;
-  --accent: #4cc2ff; /* Zed-like cool color */
-}
+  --tab-bg: #181818;
+  --tab-bg-hover: #252525;
+  --tab-bg-active: ~A;
+  --tab-fg: #8b8b8b;
+  --tab-fg-active: #e0e0e0;
+  --tab-border: #2a2a2a;
+  --tab-accent: #4cc2ff; /* Zed-like cool color */
+  --tab-dirty: #e5c07b; /* Orange for modified buffers */
+}" editor-bg)
+    (write-line "
 
 /* ===== Page base ===== */
 html, body {
-  margin: 0; padding: 0; height: 100%;
-  background: var(--bg);
-  color: var(--fg);
+  margin: 0; padding: 0;
+  width: 100%; height: 100%;
+  background: var(--tab-bg);
+  color: var(--tab-fg);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
 }
 
 /* ===== Tabbar container ===== */
 .lem-editor__tabbar {
   display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  padding: 0 8px;
+  align-items: stretch;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0;
   margin: 0;
-  background:
-    linear-gradient(180deg, #1c1c1c, var(--bg)) /* subtle top gradient */;
-  border-bottom: 1px solid var(--border);
-  overflow-x: auto;         /* horizontal scroll for multiple tabs */
-  overflow-y: hidden;        /* prevent vertical scroll */
-  white-space: nowrap;      /* no line wrap */
-  scrollbar-width: none;    /* Firefox: hide scrollbar */
-  position: relative;
+  background: var(--tab-bg);
+  box-shadow: inset 0 -1px 0 0 var(--tab-border);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
 }
-.lem-editor__tabbar::-webkit-scrollbar { display: none; } /* Chromium */
-
-/* scroll shadows at edges */
-.lem-editor__tabbar::before,
-.lem-editor__tabbar::after {
-  content: \"\";
-  position: sticky;
-  bottom: 0;
-  width: 16px;
-  height: 28px;
-  pointer-events: none;
-  z-index: 1;
-}
-.lem-editor__tabbar::before {
-  left: 0;
-  background: linear-gradient(90deg, var(--bg) 30%, transparent);
-}
-.lem-editor__tabbar::after {
-  right: 0;
-  background: linear-gradient(270deg, var(--bg) 30%, transparent);
-}
+.lem-editor__tabbar::-webkit-scrollbar { display: none; }
 
 /* ===== Tab button ===== */
 .lem-editor__tabbar-button {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: transparent;
   border: none;
-  color: var(--fg-dim);
-  padding: 6px 12px;
-  border-radius: 9px 9px 0 0;     /* pill-like top rounded */
-  font: 500 12.5px/1.35 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  border-right: 1px solid var(--tab-border);
+  color: var(--tab-fg);
+  padding: 0 14px;
+  width: fit-content;
+  font: 500 12px/1 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
   letter-spacing: .01em;
   cursor: pointer;
-  transition:
-    background .14s ease,
-    color .14s ease,
-    box-shadow .14s ease,
-    transform .08s ease;
-  transform: translateY(1px);     /* inactive tabs lowered by 1px */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background .1s ease, color .1s ease;
+  flex-shrink: 0;
 }
 
-/* hover: slightly raised */
+.lem-editor__tabbar-button:last-child {
+  border-right: none;
+}
+
+/* hover */
 .lem-editor__tabbar-button:hover {
-  background: #262626;
-  color: #e6e6e6;
-  transform: translateY(0);
+  background: var(--tab-bg-hover);
+  color: var(--tab-fg-active);
 }
 
-/* active: elevated surface + accent underline */
+/* active tab */
 .lem-editor__tabbar-button.active {
-  background: #3a3a3a; /* clearly brighter */
-  color: #ffffff;
-  font-weight: 600;
-  box-shadow:
-    inset 0 -2px 0 var(--accent),
-    0 1px 2px rgba(0,0,0,0.4); /* subtle outer shadow for elevation */
-  transform: translateY(0);
-  z-index: 1;
+  background: var(--tab-bg-active);
+  color: var(--tab-fg-active);
+  box-shadow: inset 0 1px 0 0 var(--tab-accent);
 }
 
-/* focus ring (keyboard-friendly) */
+
+
+/* focus ring */
 .lem-editor__tabbar-button:focus-visible {
   outline: none;
-  box-shadow:
-    0 0 0 2px rgba(76,194,255,.35),
-    inset 0 -2px 0 var(--accent);
+  box-shadow: inset 0 0 0 1px rgba(59,130,246,.5);
 }
 
-/* close button × (pseudo-element, shown only on hover) */
-.lem-editor__tabbar-button::after {
-  content: '';
-  font-size: 11px;
-  opacity: 0;
-  transition: opacity .12s ease;
-  margin-left: 8px;
-  vertical-align: middle;
+/* close icon */
+.tab-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  visibility: hidden;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: none;
+  background: transparent;
+  color: var(--tab-fg);
+  font-size: 14px;
+  line-height: 16px;
+  text-align: center;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
 }
-.lem-editor__tabbar-button:hover::after,
-.lem-editor__tabbar-button.active::after {
-  opacity: .6;
+.lem-editor__tabbar-button:hover .tab-close,
+.lem-editor__tabbar-button.active .tab-close {
+  visibility: visible;
 }
-.lem-editor__tabbar-button:active::after { opacity: .9; }
+.tab-close:hover {
+  background: rgba(255,255,255,.1);
+  color: var(--tab-fg-active);
+}
 
-/* unsaved dot (just add data-dirty='true') */
-.lem-editor__tabbar-button[data-dirty='true']::before {
-  content: '';
-  position: absolute;
-  left: 6px; top: 9px;
-  width: 6px; height: 6px;
+/* modified dot */
+.tab-dirty {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: var(--accent);
-  filter: drop-shadow(0 0 2px rgba(76,194,255,.6));
+  background: var(--tab-dirty);
+  flex-shrink: 0;
+  visibility: hidden;
 }
-/* reserve space for dot */
-.lem-editor__tabbar-button[data-dirty='true'] { padding-left: 18px; }
+.lem-editor__tabbar-button.dirty .tab-dirty {
+  visibility: visible;
+}
 
-/* disabled tab styling (if needed) */
+
+/* disabled */
 .lem-editor__tabbar-button[disabled] {
-  opacity: .45;
+  opacity: .4;
   cursor: default;
   pointer-events: none;
 }
-
-/* compact option (enable if needed)
-.lem-editor__tabbar-button { padding: 4px 10px; font-size: 12px; }
-*/
 </style>
 " out)
     (format out "</head>~%")
     (format out "<body>~%")
     (format out "<div class='lem-editor__tabbar'>~%")
     (loop :for buffer :in (get-tabbar-buffers)
-          :do (if (eq buffer (current-buffer))
-                  (format out
-                          "<button class=\"lem-editor__tabbar-button active\">~A</button>~%"
-                          (buffer-name buffer))
-                  (format out
-                          "<button class=\"lem-editor__tabbar-button\" onclick='handleClick(event)'>~A</button>~%"
-                          (buffer-name buffer))))
+          :for active-p := (eq buffer (current-buffer))
+          :for dirty-p := (buffer-modified-p buffer)
+          :for name := (buffer-name buffer)
+          :do (format out
+                      "<button class=\"lem-editor__tabbar-button~A~A\" data-name=\"~A\">"
+                      (if active-p " active" "")
+                      (if dirty-p " dirty" "")
+                      name)
+              (format out "<span class=\"tab-dirty\"></span>")
+              (format out "<span class=\"tab-label\">~A</span>" name)
+              (format out "<span class=\"tab-close\">×</span>")
+              (format out "</button>~%"))
     (format out "</div>~%")
     (write-line "
 <script>
-function handleClick(btn) {
-  invokeLem('tabbar/select', btn.textContent);
+function handleClick(name) {
+  invokeLem('tabbar/select', name);
 }
-const buttons = document.getElementsByTagName('button');
-for (const button of buttons) {
-  // Prevent focus movement (but allow clicks)
+function handleClose(name) {
+  invokeLem('tabbar/close', name);
+}
+const buttons = document.querySelectorAll('.lem-editor__tabbar-button');
+buttons.forEach(button => {
   button.addEventListener('mousedown', (e) => {
-    const btn = e.target.closest('.lem-editor__tabbar-button');
-    if (!btn) return;
     e.preventDefault();
   });
-  // Also prevent focus movement in touch environments
   button.addEventListener('touchstart', (e) => {
-    const btn = e.target.closest('.lem-editor__tabbar-button');
-    if (!btn) return;
     e.preventDefault();
   }, { passive: false });
-  // Click handling (keeping original focus)
   button.addEventListener('click', (e) => {
     const btn = e.target.closest('.lem-editor__tabbar-button');
     if (!btn) return;
-    handleClick(btn);
+    if (e.target.closest('.tab-close')) {
+      handleClose(btn.dataset.name);
+    } else {
+      handleClick(btn.dataset.name);
+    }
   });
-};
+});
 </script>"
                 out)
-    (format out "</body>~%")))
+    (format out "</body>~%"))))
 
 (lem-server:register-method
  "tabbar/select"
@@ -246,6 +247,14 @@ for (const button of buttons) {
    (send-event (lambda ()
                  (alexandria:when-let (buffer (get-buffer buffer-name))
                    (change-to-buffer buffer)
+                   (redraw-display))))))
+
+(lem-server:register-method
+ "tabbar/close"
+ (lambda (buffer-name)
+   (send-event (lambda ()
+                 (alexandria:when-let (buffer (get-buffer buffer-name))
+                   (kill-buffer buffer)
                    (redraw-display))))))
 
 (defun change-to-buffer (buffer)
@@ -263,6 +272,8 @@ for (const button of buttons) {
 (add-hook *switch-to-buffer-hook* 'update)
 (add-hook *switch-to-window-hook* 'update)
 (add-hook (variable-value 'kill-buffer-hook :global t) 'update)
+(add-hook (variable-value 'after-change-functions :global) 'update)
+(add-hook (variable-value 'after-save-hook :global) 'update)
 
 (defmethod window-redraw ((window tabbar-window) force)
   (declare (ignore force))

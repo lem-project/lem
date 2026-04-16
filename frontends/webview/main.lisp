@@ -2,25 +2,40 @@
   (:use :cl)
   (:export :main
            :webview-main
-           :webview))
+           :webview
+           :set-frame-color
+           :*webview-handle*))
 (in-package :lem-webview)
 
 (defclass webview (lem-server::jsonrpc lem-core:implementation) ())
+
+(defvar *webview-handle* nil
+  "The native webview handle, set during run-webview.")
 
 (defmethod lem-if:invoke ((implementation webview) function)
   (main)
   (call-next-method))
 
-(defun run-webview (&key title url width height)
+(defun run-webview (&key title url width height (frame-color :dark))
+  "Run the webview window. FRAME-COLOR is :dark or :light (macOS only)."
   (float-features:with-float-traps-masked t
     (let ((w (webview:webview-create 0 (cffi:null-pointer))))
+      (setf *webview-handle* w)
       (unwind-protect
            (progn
              (webview:webview-set-title w title)
              (webview:webview-set-size w width height 0)
+             (set-window-appearance w frame-color)
              (webview:webview-navigate w url)
              (webview:webview-run w))
+        (setf *webview-handle* nil)
         (webview:webview-destroy w)))))
+
+(defun set-frame-color (mode)
+  "Set the macOS window frame to :dark or :light mode.
+Can be called at any time while the webview is running."
+  (when *webview-handle*
+    (set-window-appearance *webview-handle* mode)))
 
 (defun main (&optional (args (uiop:command-line-arguments)))
   (let ((port (lem/common/socket:random-available-port)))

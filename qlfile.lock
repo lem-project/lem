@@ -25,7 +25,7 @@
 ("rove" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/fukamachi/rove.git")
-  :version "git-9868028edf511da5fe61355881af9f4c35f051df"))
+  :version "git-27c17044e647367ce8379c11b2f937e5024fb220"))
 ("cl-sdl2" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/cl-sdl2.git")
@@ -42,6 +42,10 @@
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/cxxxr/jsonrpc.git")
   :version "git-42fa96ec34f6b6be77a6f12f7c4e84f375eff019"))
+("named-readtables" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/melisgl/named-readtables.git")
+  :version "git-fb2aa150440b3368c2ae6bf0ce5e959e3b755a35"))
 ("lem-extension-manager" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/lem-extension-manager.git")

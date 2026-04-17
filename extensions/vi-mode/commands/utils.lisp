@@ -39,6 +39,7 @@
   (:export :bolp
            :eolp
            :fall-within-line
+           :fall-within-field
            :operator-pending-mode-p
            :read-universal-argument
            :*cursor-offset*
@@ -65,6 +66,11 @@
     (line-end point)
     (unless (bolp point)
       (character-offset point *cursor-offset*))))
+
+(defun fall-within-field (point)
+  "If POINT is within a :field region, move it past the field boundary."
+  (when (text-property-at point :field)
+    (next-single-property-change point :field)))
 
 (defun operator-pending-mode-p ()
   (typep (current-state) 'operator))

@@ -12,6 +12,7 @@
                 :vi-open-above)
   (:import-from :lem-vi-mode/commands/utils
                 :fall-within-line
+                :fall-within-field
                 :define-motion
                 :define-operator
                 :define-text-object-command)
@@ -64,6 +65,7 @@
                  (eq (vi-command-repeat command) t))
         (setf *last-repeat-keys* (vi-this-command-keys)))))
   (adjust-window-scroll)
+  (fall-within-field (current-point))
   (fall-within-line (current-point)))
 
 (defmethod post-command-hook ((state insert))

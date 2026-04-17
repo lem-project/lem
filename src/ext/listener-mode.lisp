@@ -9,6 +9,7 @@
    :listener-start
    :change-input-start-point
    :refresh-prompt
+   :clamp-cursor-to-input-area
    :clear-listener-using-mode
    :clear-listener
    ;; editor variables
@@ -70,11 +71,22 @@
     (add-hook (variable-value 'kill-buffer-hook :buffer (current-buffer))
               'save-history))
   (add-hook *exit-editor-hook* 'save-all-histories)
+  (add-hook *post-command-hook* 'clamp-cursor-to-input-area)
   (unless (input-start-point (current-buffer))
     (change-input-start-point (current-point))))
 
 (defun listener-buffer-p (buffer)
   (mode-active-p buffer 'listener-mode))
+
+(defun clamp-cursor-to-input-area ()
+  "Prevent the cursor from entering the read-only prompt region."
+  (let* ((buffer (current-buffer))
+         (start (input-start-point buffer)))
+    (when (and start
+               (listener-buffer-p buffer)
+               (same-line-p (current-point) start)
+               (point< (current-point) start))
+      (move-point (current-point) start))))
 
 (defun save-history (buffer)
   (assert (listener-buffer-p buffer))

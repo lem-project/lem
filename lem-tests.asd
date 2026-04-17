@@ -74,6 +74,7 @@
                (:file "command-line-arguments")
                (:file "window")
                (:file "legit")
-               (:file "filer"))
+               (:file "filer")
+               (:file "listener-mode"))
   :perform (test-op (o c)
                     (symbol-call :rove :run c)))

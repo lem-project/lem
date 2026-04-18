@@ -9,6 +9,10 @@
 #+darwin
 (progn
 
+;; The C callback for webview_dispatch has a fixed signature (handle, arg),
+;; so we use a dynamic variable to pass the desired appearance mode.
+(defvar *pending-appearance-mode* :dark)
+
 (cffi:define-foreign-library libobjc
   (:os-macosx "libobjc.dylib"))
 
@@ -34,12 +38,16 @@
   (sel :pointer)
   (arg :string))
 
-(defun %apply-appearance (webview-handle appearance-name)
-  "Apply the named appearance to the window. Must be called on the main thread."
+(defun %apply-window-appearance (webview-handle)
+  "Apply the appearance in *pending-appearance-mode* to the window.
+Must be called on the main thread."
   (let ((nswindow (webview:webview-get-window webview-handle)))
     (when (cffi:null-pointer-p nswindow)
-      (return-from %apply-appearance nil))
-    (let* ((ns-appearance-class (objc-get-class "NSAppearance"))
+      (return-from %apply-window-appearance nil))
+    (let* ((appearance-name (ecase *pending-appearance-mode*
+                              (:dark "NSAppearanceNameDarkAqua")
+                              (:light "NSAppearanceNameAqua")))
+           (ns-appearance-class (objc-get-class "NSAppearance"))
            (ns-name (objc-msg-send/str
                      (objc-get-class "NSString")
                      (sel-register-name "stringWithUTF8String:")
@@ -49,44 +57,31 @@
                         (sel-register-name "appearanceNamed:")
                         ns-name)))
       (when (cffi:null-pointer-p appearance)
-        (return-from %apply-appearance nil))
+        (return-from %apply-window-appearance nil))
       (objc-msg-send/ptr nswindow
                          (sel-register-name "setAppearance:")
                          appearance)
-      t)))
+      *pending-appearance-mode*)))
 
-(cffi:defcallback dispatch-set-dark-appearance :void
+(cffi:defcallback dispatch-set-appearance :void
     ((webview-handle :pointer) (arg :pointer))
   (declare (ignore arg))
-  (%apply-appearance webview-handle "NSAppearanceNameDarkAqua"))
-
-(cffi:defcallback dispatch-set-light-appearance :void
-    ((webview-handle :pointer) (arg :pointer))
-  (declare (ignore arg))
-  (%apply-appearance webview-handle "NSAppearanceNameAqua"))
-
-(defun mode-appearance-name (mode)
-  (ecase mode
-    (:dark "NSAppearanceNameDarkAqua")
-    (:light "NSAppearanceNameAqua")))
-
-(defun mode-dispatch-callback (mode)
-  (ecase mode
-    (:dark (cffi:callback dispatch-set-dark-appearance))
-    (:light (cffi:callback dispatch-set-light-appearance))))
+  (%apply-window-appearance webview-handle))
 
 (defun set-window-appearance (webview-handle mode)
   "Set the macOS window frame appearance for WEBVIEW-HANDLE.
 MODE should be :dark or :light. Called before the event loop starts,
 so it runs directly on the main thread."
-  (%apply-appearance webview-handle (mode-appearance-name mode)))
+  (setf *pending-appearance-mode* mode)
+  (%apply-window-appearance webview-handle))
 
 (defun dispatch-set-window-appearance (webview-handle mode)
   "Set the macOS window frame appearance via webview_dispatch.
 Use this when the event loop is already running to ensure the
 Cocoa API calls execute on the main thread."
+  (setf *pending-appearance-mode* mode)
   (webview:webview-dispatch webview-handle
-                            (mode-dispatch-callback mode)
+                            (cffi:callback dispatch-set-appearance)
                             (cffi:null-pointer))
   mode)
 

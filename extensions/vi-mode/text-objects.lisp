@@ -437,10 +437,74 @@
 ;;
 ;; angle-bracket-object
 
-(defclass angle-bracket-object (block-text-object) ()
-  (:default-initargs
-   :open-char #\<)
+(defclass angle-bracket-object (text-object) ()
   (:documentation "Text object for angle bracket pairs (<...>)."))
+
+(defun %find-enclosing-angle-brackets (point)
+  "Find the angle bracket pair enclosing POINT.
+Returns (values open-point past-close-point) or NIL."
+  (with-point ((open point))
+    ;; Search backward (including current position) for unmatched <
+    (let ((depth 0))
+      (loop :do
+        (let ((c (character-at open)))
+          (cond
+            ((null c)
+             (return-from %find-enclosing-angle-brackets nil))
+            ((char= c #\>) (incf depth))
+            ((char= c #\<)
+             (if (zerop depth) (return) (decf depth)))))
+        (if (start-buffer-p open)
+            (return-from %find-enclosing-angle-brackets nil)
+            (character-offset open -1))))
+    ;; open is now at the <. Search forward for matching >
+    (with-point ((close open))
+      (character-offset close 1)
+      (let ((depth 0))
+        (loop :do
+          (let ((c (character-at close)))
+            (cond
+              ((null c)
+               (return-from %find-enclosing-angle-brackets nil))
+              ((char= c #\<) (incf depth))
+              ((char= c #\>)
+               (if (zerop depth)
+                   (progn
+                     (character-offset close 1)
+                     (return-from %find-enclosing-angle-brackets
+                       (values open close)))
+                   (decf depth)))))
+          (character-offset close 1))))))
+
+(defmethod a-range-of ((object angle-bracket-object) state count)
+  (declare (ignore state))
+  (with-point ((p (current-point)))
+    (dotimes (i count)
+      (multiple-value-bind (open close)
+          (%find-enclosing-angle-brackets p)
+        (declare (ignore close))
+        (unless open (error 'text-object-abort))
+        (when (> i 0)
+          (move-point p open)
+          (character-offset p -1))))
+    (multiple-value-bind (open close)
+        (%find-enclosing-angle-brackets p)
+      (unless open (error 'text-object-abort))
+      (make-range open close))))
+
+(defmethod inner-range-of ((object angle-bracket-object) state count)
+  (let ((range (a-range-of object state count)))
+    (character-offset (range-beginning range) 1)
+    (character-offset (range-end range) -1)
+    range))
+
+(defmethod a-range-of :before ((object angle-bracket-object) (state visual) count)
+  (unless (visual-char-p)
+    (vi-visual-char)))
+
+(defmethod inner-range-of :before ((object angle-bracket-object) (state visual) count)
+  (unless (visual-char-p)
+    (vi-visual-char)))
 
 ;;
 ;; tag-object
@@ -515,10 +579,13 @@ Returns a range from the start of the opening tag to the end of the closing tag.
                      (decf depth)
                      (if (zerop depth)
                          (progn
-                           ;; Move past closing tag
-                           (move-point p found-close)
-                           (search-forward p ">")
-                           (return (values start p content-start found-close)))
+                           ;; Compute inner-end: start of closing tag
+                           (with-point ((content-end found-close))
+                             (character-offset content-end (- (length close-pattern)))
+                             ;; Move past closing tag
+                             (move-point p found-close)
+                             (search-forward p ">")
+                             (return (values start p content-start content-end))))
                          (move-point p found-close)))))))))))))
 
 (defun %find-tag-around-point (point)

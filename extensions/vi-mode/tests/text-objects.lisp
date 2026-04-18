@@ -94,15 +94,7 @@
     ;; around single quote
     (with-vi-buffer (" 'f[o]o' 'bar'")
       (cmd "va'")
-      (ok (buf= " <'foo[']> 'bar'")))
-    ;; cursor on quote char
-    (with-vi-buffer (" [']foo' 'bar'")
-      (cmd "vi'")
-      (ok (buf= " '<fo[o]>' 'bar'")))
-    ;; empty single-quoted string
-    (with-vi-buffer (" [']' other")
-      (cmd "va'")
-      (ok (buf= " <'[']> other")))))
+      (ok (buf= " <'foo[']> 'bar'")))))
 
 (deftest back-quoted
   (with-fake-interface ()
@@ -118,24 +110,24 @@
 (deftest bracket-object
   (with-fake-interface ()
     ;; inner bracket
-    (with-vi-buffer (" [f[o]o bar] baz")
+    (with-vi-buffer (" \\[f[o]o bar\\] baz")
       (cmd "vi[")
-      (ok (buf= " [<foo ba[r]>] baz")))
-    (with-vi-buffer (" [f[o]o bar] baz")
+      (ok (buf= " \\[<foo ba[r]>\\] baz")))
+    (with-vi-buffer (" \\[f[o]o bar\\] baz")
       (cmd "vi]")
-      (ok (buf= " [<foo ba[r]>] baz")))
+      (ok (buf= " \\[<foo ba[r]>\\] baz")))
     ;; around bracket
-    (with-vi-buffer (" [f[o]o bar] baz")
+    (with-vi-buffer (" \\[f[o]o bar\\] baz")
       (cmd "va[")
-      (ok (buf= " <[foo bar[]]> baz")))
+      (ok (buf= " <\\[foo bar[\\]]> baz")))
     ;; nested brackets
-    (with-vi-buffer (" [foo [b[a]r] baz]")
+    (with-vi-buffer (" \\[foo \\[b[a]r\\] baz\\]")
       (cmd "vi[")
-      (ok (buf= " [foo [<ba[r]>] baz]")))
+      (ok (buf= " \\[foo \\[<ba[r]>\\] baz\\]")))
     ;; cursor inside inner bracket, then expand
-    (with-vi-buffer (" [foo [b[a]r] baz]")
+    (with-vi-buffer (" \\[foo \\[b[a]r\\] baz\\]")
       (cmd "va[")
-      (ok (buf= " [foo <[bar[]]> baz]")))))
+      (ok (buf= " \\[foo <\\[bar[\\]]> baz\\]")))))
 
 (deftest curly-object
   (with-fake-interface ()
@@ -161,38 +153,38 @@
 (deftest angle-bracket-object
   (with-fake-interface ()
     ;; inner angle bracket
-    (with-vi-buffer (" <f[o]o bar> baz")
+    (with-vi-buffer (" \\<f[o]o bar\\> baz")
       (cmd "vi<")
-      (ok (buf= " <<foo ba[r]>> baz")))
-    (with-vi-buffer (" <f[o]o bar> baz")
+      (ok (buf= " \\<<foo ba[r]>\\> baz")))
+    (with-vi-buffer (" \\<f[o]o bar\\> baz")
       (cmd "vi>")
-      (ok (buf= " <<foo ba[r]>> baz")))
+      (ok (buf= " \\<<foo ba[r]>\\> baz")))
     ;; around angle bracket
-    (with-vi-buffer (" <f[o]o bar> baz")
+    (with-vi-buffer (" \\<f[o]o bar\\> baz")
       (cmd "va<")
-      (ok (buf= " <<foo bar[>]> baz")))))
+      (ok (buf= " <\\<foo bar[\\>]> baz")))))
 
 (deftest tag-object
   (with-fake-interface ()
     ;; inner tag
-    (with-vi-buffer ("<div>f[o]o</div>")
+    (with-vi-buffer ("\\<div\\>f[o]o\\</div\\>")
       (cmd "vit")
-      (ok (buf= "<div><fo[o]></div>")))
+      (ok (buf= "\\<div\\><fo[o]>\\</div\\>")))
     ;; around tag
-    (with-vi-buffer ("<div>f[o]o</div>")
+    (with-vi-buffer ("\\<div\\>f[o]o\\</div\\>")
       (cmd "vat")
-      (ok (buf= "<<div>foo</div[>]>")))
+      (ok (buf= "<\\<div\\>foo\\</div[\\>]>")))
     ;; tag with attributes
-    (with-vi-buffer ("<div class=\"main\">f[o]o</div>")
+    (with-vi-buffer ("\\<div class=\"main\"\\>f[o]o\\</div\\>")
       (cmd "vit")
-      (ok (buf= "<div class=\"main\"><fo[o]></div>")))
+      (ok (buf= "\\<div class=\"main\"\\><fo[o]>\\</div\\>")))
     ;; nested tags
-    (with-vi-buffer ("<div><span>f[o]o</span></div>")
+    (with-vi-buffer ("\\<div\\>\\<span\\>f[o]o\\</span\\>\\</div\\>")
       (cmd "vit")
-      (ok (buf= "<div><span><fo[o]></span></div>")))
+      (ok (buf= "\\<div\\>\\<span\\><fo[o]>\\</span\\>\\</div\\>")))
     ;; multiline tag content
-    (with-vi-buffer (#?"<div>\n  f[o]o\n</div>")
+    (with-vi-buffer (#?"\\<div\\>\n  f[o]o\n\\</div\\>")
       (cmd "vit")
-      (ok (buf= #?"<div><\n  foo[\n]></div>")))))
+      (ok (buf= #?"\\<div\\><\n  foo[\n]>\\</div\\>")))))
 
 

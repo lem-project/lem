@@ -454,11 +454,11 @@ Returns the point positioned at the '<' of the opening tag, or NIL."
                  (char= (character-at p 1) #\/))
         (character-offset p -1)
         (when (start-buffer-p p)
-          (return nil))
-        (go :continue))
-      ;; Found an opening tag
-      (return p)
-      :continue)))
+          (return nil)))
+      ;; Found an opening tag (not a closing tag)
+      (when (or (null (character-at p 1))
+                (char/= (character-at p 1) #\/))
+        (return p)))))
 
 (defun %find-matching-close-tag (point)
   "From POINT at '<' of an opening tag, find the matching closing tag.

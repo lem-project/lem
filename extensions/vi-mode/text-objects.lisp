@@ -513,7 +513,7 @@ Returns a range from the start of the opening tag to the end of the closing tag.
                            (move-point p found-close)
                            (search-forward p ">")
                            (return (values start p content-start found-close)))
-                         (move-point p found-close))))))))))))))
+                         (move-point p found-close)))))))))))))
 
 (defun %find-tag-around-point (point)
   "Find the innermost tag pair surrounding POINT.

@@ -222,7 +222,9 @@ Frontends that do not support frame color should use the default no-op.")
 
 (defun set-display-background-mode (mode)
   (check-type mode (member :light :dark nil))
-  (setf *display-background-mode* mode))
+  (setf *display-background-mode* mode)
+  (when mode
+    (lem-if:set-frame-color (implementation) mode)))
 
 (defun set-foreground (name)
   (when name

@@ -25,8 +25,14 @@
            :word-object
            :broad-word-object
            :paren-object
+           :bracket-object
+           :curly-object
+           :angle-bracket-object
            :paragraph-object
            :double-quoted-object
+           :single-quoted-object
+           :back-quoted-object
+           :tag-object
            :vi-operator-surrounding-blanks))
 (in-package :lem-vi-mode/text-objects)
 
@@ -393,6 +399,186 @@
 (defclass double-quoted-object (quoted-text-object) ()
   (:default-initargs
    :quote-char #\"))
+
+;;
+;; single-quoted-object
+
+(defclass single-quoted-object (quoted-text-object) ()
+  (:default-initargs
+   :quote-char #\'
+   :escape-char nil))
+
+;;
+;; back-quoted-object
+
+(defclass back-quoted-object (quoted-text-object) ()
+  (:default-initargs
+   :quote-char #\`
+   :escape-char nil))
+
+;;
+;; bracket-object
+
+(defclass bracket-object (block-text-object) ()
+  (:default-initargs
+   :open-char #\[))
+
+;;
+;; curly-object
+
+(defclass curly-object (block-text-object) ()
+  (:default-initargs
+   :open-char #\{))
+
+;;
+;; angle-bracket-object
+
+(defclass angle-bracket-object (block-text-object) ()
+  (:default-initargs
+   :open-char #\<))
+
+;;
+;; tag-object
+
+(defclass tag-object (text-object) ())
+
+(defun %find-tag-backward (point)
+  "Search backward from POINT to find the start of an opening tag.
+Returns the point positioned at the '<' of the opening tag, or NIL."
+  (with-point ((p point))
+    (loop
+      (unless (search-backward p "<")
+        (return nil))
+      ;; Skip closing tags
+      (when (and (character-at p 1)
+                 (char= (character-at p 1) #\/))
+        (character-offset p -1)
+        (when (start-buffer-p p)
+          (return nil))
+        (go :continue))
+      ;; Found an opening tag
+      (return p)
+      :continue)))
+
+(defun %find-matching-close-tag (point)
+  "From POINT at '<' of an opening tag, find the matching closing tag.
+Returns a range from the start of the opening tag to the end of the closing tag."
+  (with-point ((start point)
+               (p point))
+    ;; Extract the tag name
+    (character-offset p 1)
+    (let ((tag-start (copy-point p :temporary)))
+      (skip-chars-forward p (lambda (c)
+                              (and (char/= c #\Space)
+                                   (char/= c #\>)
+                                   (char/= c #\/)
+                                   (char/= c #\Newline))))
+      (let ((tag-name (points-to-string tag-start p)))
+        (when (string= tag-name "")
+          (return-from %find-matching-close-tag nil))
+        ;; Find the end of the opening tag
+        (unless (search-forward p ">")
+          (return-from %find-matching-close-tag nil))
+        ;; Check for self-closing tag
+        (when (char= (character-at p -2) #\/)
+          (return-from %find-matching-close-tag nil))
+        (with-point ((content-start p))
+          ;; Now find the matching closing tag, handling nesting
+          (let ((depth 1)
+                (open-pattern (format nil "<~A" tag-name))
+                (close-pattern (format nil "</~A" tag-name)))
+            (loop
+              (with-point ((next-open p)
+                           (next-close p))
+                (let ((found-open (search-forward next-open open-pattern))
+                      (found-close (search-forward next-close close-pattern)))
+                  (cond
+                    ((not found-close)
+                     (return nil))
+                    ((and found-open (point< found-open found-close))
+                     ;; Check it's actually an opening tag (not just a prefix match)
+                     (let ((after-name (character-at found-open)))
+                       (when (or (null after-name)
+                                 (char= after-name #\Space)
+                                 (char= after-name #\>)
+                                 (char= after-name #\/)
+                                 (char= after-name #\Newline))
+                         (incf depth)))
+                     (move-point p found-open))
+                    (t
+                     (decf depth)
+                     (if (zerop depth)
+                         (progn
+                           ;; Move past closing tag
+                           (move-point p found-close)
+                           (search-forward p ">")
+                           (return (values start p content-start found-close)))
+                         (move-point p found-close))))))))))))))
+
+(defun %find-tag-around-point (point)
+  "Find the innermost tag pair surrounding POINT.
+Returns four values: outer-start, outer-end, inner-start, inner-end."
+  (with-point ((search-point point))
+    ;; Search backward for opening tags and check if they enclose point
+    (loop
+      (let ((tag-start (%find-tag-backward search-point)))
+        (unless tag-start
+          (return nil))
+        (multiple-value-bind (outer-start outer-end inner-start inner-end)
+            (%find-matching-close-tag tag-start)
+          (when (and outer-start
+                     (point<= outer-start point)
+                     (point<= point outer-end))
+            (return (values outer-start outer-end inner-start inner-end))))
+        ;; This tag didn't enclose point, keep searching backward
+        (move-point search-point tag-start)
+        (when (start-buffer-p search-point)
+          (return nil))
+        (character-offset search-point -1)))))
+
+(defmethod a-range-of ((object tag-object) state count)
+  (declare (ignore state))
+  (with-point ((p (current-point)))
+    (dotimes (i count)
+      (multiple-value-bind (outer-start outer-end)
+          (%find-tag-around-point p)
+        (unless outer-start
+          (error 'text-object-abort))
+        (when (> i 0)
+          (move-point p outer-start)
+          (character-offset p -1))))
+    (multiple-value-bind (outer-start outer-end)
+        (%find-tag-around-point p)
+      (unless outer-start
+        (error 'text-object-abort))
+      (make-range outer-start outer-end))))
+
+(defmethod inner-range-of ((object tag-object) state count)
+  (declare (ignore state))
+  (with-point ((p (current-point)))
+    (dotimes (i count)
+      (multiple-value-bind (outer-start outer-end inner-start inner-end)
+          (%find-tag-around-point p)
+        (declare (ignore outer-end))
+        (unless outer-start
+          (error 'text-object-abort))
+        (when (> i 0)
+          (move-point p outer-start)
+          (character-offset p -1))))
+    (multiple-value-bind (outer-start outer-end inner-start inner-end)
+        (%find-tag-around-point p)
+      (declare (ignore outer-start outer-end))
+      (unless inner-start
+        (error 'text-object-abort))
+      (make-range inner-start inner-end))))
+
+(defmethod a-range-of :before ((object tag-object) (state visual) count)
+  (unless (visual-char-p)
+    (vi-visual-char)))
+
+(defmethod inner-range-of :before ((object tag-object) (state visual) count)
+  (unless (visual-char-p)
+    (vi-visual-char)))
 
 ;;
 ;; paragraph-object

@@ -138,8 +138,20 @@
            :vi-inner-broad-word
            :vi-a-double-quote
            :vi-inner-double-quote
+           :vi-a-single-quote
+           :vi-inner-single-quote
+           :vi-a-back-quote
+           :vi-inner-back-quote
            :vi-a-paren
            :vi-inner-paren
+           :vi-a-bracket
+           :vi-inner-bracket
+           :vi-a-curly
+           :vi-inner-curly
+           :vi-a-angle-bracket
+           :vi-inner-angle-bracket
+           :vi-a-tag
+           :vi-inner-tag
            :vi-a-paragraph
            :vi-inner-paragraph
            :vi-repeat
@@ -1134,6 +1146,22 @@ Only opens the file if it exists"
     ()
   (inner-range-of 'double-quoted-object (current-state) 1))
 
+(define-text-object-command vi-a-single-quote () ()
+    ()
+  (a-range-of 'single-quoted-object (current-state) 1))
+
+(define-text-object-command vi-inner-single-quote () ()
+    ()
+  (inner-range-of 'single-quoted-object (current-state) 1))
+
+(define-text-object-command vi-a-back-quote () ()
+    ()
+  (a-range-of 'back-quoted-object (current-state) 1))
+
+(define-text-object-command vi-inner-back-quote () ()
+    ()
+  (inner-range-of 'back-quoted-object (current-state) 1))
+
 (define-text-object-command vi-a-paren (count) ("p")
     (:expand-selection t)
   (a-range-of 'paren-object (current-state) count))
@@ -1141,6 +1169,38 @@ Only opens the file if it exists"
 (define-text-object-command vi-inner-paren (count) ("p")
     (:expand-selection t)
   (inner-range-of 'paren-object (current-state) count))
+
+(define-text-object-command vi-a-bracket (count) ("p")
+    (:expand-selection t)
+  (a-range-of 'bracket-object (current-state) count))
+
+(define-text-object-command vi-inner-bracket (count) ("p")
+    (:expand-selection t)
+  (inner-range-of 'bracket-object (current-state) count))
+
+(define-text-object-command vi-a-curly (count) ("p")
+    (:expand-selection t)
+  (a-range-of 'curly-object (current-state) count))
+
+(define-text-object-command vi-inner-curly (count) ("p")
+    (:expand-selection t)
+  (inner-range-of 'curly-object (current-state) count))
+
+(define-text-object-command vi-a-angle-bracket (count) ("p")
+    (:expand-selection t)
+  (a-range-of 'angle-bracket-object (current-state) count))
+
+(define-text-object-command vi-inner-angle-bracket (count) ("p")
+    (:expand-selection t)
+  (inner-range-of 'angle-bracket-object (current-state) count))
+
+(define-text-object-command vi-a-tag (count) ("p")
+    (:expand-selection t)
+  (a-range-of 'tag-object (current-state) count))
+
+(define-text-object-command vi-inner-tag (count) ("p")
+    (:expand-selection t)
+  (inner-range-of 'tag-object (current-state) count))
 
 (define-text-object-command vi-a-paragraph (count) ("p")
     (:expand-selection t)

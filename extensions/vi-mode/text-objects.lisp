@@ -406,7 +406,8 @@
 (defclass single-quoted-object (quoted-text-object) ()
   (:default-initargs
    :quote-char #\'
-   :escape-char nil))
+   :escape-char nil)
+  (:documentation "Text object for single-quoted strings ('...')."))
 
 ;;
 ;; back-quoted-object
@@ -414,39 +415,44 @@
 (defclass back-quoted-object (quoted-text-object) ()
   (:default-initargs
    :quote-char #\`
-   :escape-char nil))
+   :escape-char nil)
+  (:documentation "Text object for back-quoted strings (`...`)."))
 
 ;;
 ;; bracket-object
 
 (defclass bracket-object (block-text-object) ()
   (:default-initargs
-   :open-char #\[))
+   :open-char #\[)
+  (:documentation "Text object for square bracket pairs ([...])."))
 
 ;;
 ;; curly-object
 
 (defclass curly-object (block-text-object) ()
   (:default-initargs
-   :open-char #\{))
+   :open-char #\{)
+  (:documentation "Text object for curly brace pairs ({...})."))
 
 ;;
 ;; angle-bracket-object
 
 (defclass angle-bracket-object (block-text-object) ()
   (:default-initargs
-   :open-char #\<))
+   :open-char #\<)
+  (:documentation "Text object for angle bracket pairs (<...>)."))
 
 ;;
 ;; tag-object
 
-(defclass tag-object (text-object) ())
+(defclass tag-object (text-object) ()
+  (:documentation "Text object for HTML/XML tag pairs (<tag>...</tag>)."))
 
 (defun %find-tag-backward (point)
   "Search backward from POINT to find the start of an opening tag.
 Returns the point positioned at the '<' of the opening tag, or NIL."
   (with-point ((p point))
-    (loop
+    (loop :do
       (unless (search-backward p "<")
         (return nil))
       ;; Skip closing tags
@@ -487,7 +493,7 @@ Returns a range from the start of the opening tag to the end of the closing tag.
           (let ((depth 1)
                 (open-pattern (format nil "<~A" tag-name))
                 (close-pattern (format nil "</~A" tag-name)))
-            (loop
+            (loop :do
               (with-point ((next-open p)
                            (next-close p))
                 (let ((found-open (search-forward next-open open-pattern))
@@ -520,7 +526,7 @@ Returns a range from the start of the opening tag to the end of the closing tag.
 Returns four values: outer-start, outer-end, inner-start, inner-end."
   (with-point ((search-point point))
     ;; Search backward for opening tags and check if they enclose point
-    (loop
+    (loop :do
       (let ((tag-start (%find-tag-backward search-point)))
         (unless tag-start
           (return nil))

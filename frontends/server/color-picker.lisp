@@ -48,7 +48,7 @@ update();
     (add-hook *editor-abort-hook*
               'delete-color-picker-window)))
 
-(defmethod lem-color-preview:invoke-color-picker ((frontend lem-server::jsonrpc) callback)
+(defmethod lem-color-preview:invoke-color-picker ((frontend lem-server:jsonrpc) callback)
   (setf *callback* callback)
   (make-color-picker-window))
 

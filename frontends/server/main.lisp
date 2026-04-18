@@ -5,7 +5,8 @@
   (:local-nicknames (:display :lem-core/display)
                     (:queue :lem/common/queue)
                     (:mouse :lem-server/mouse))
-  (:export :register-method
+  (:export :jsonrpc
+           :register-method
            :run-tcp-server
            :run-stdio-server
            :run-websocket-server

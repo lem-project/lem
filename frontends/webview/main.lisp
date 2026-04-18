@@ -7,7 +7,7 @@
            :*webview-handle*))
 (in-package :lem-webview)
 
-(defclass webview (lem-server::jsonrpc lem-core:implementation) ())
+(defclass webview (lem-server:jsonrpc lem-core:implementation) ())
 
 (defvar *webview-handle* nil
   "The native webview handle, set during run-webview.")
@@ -31,16 +31,13 @@
         (setf *webview-handle* nil)
         (webview:webview-destroy w)))))
 
-;; FIXME: This doesn't seem to work unlike the set-frame-color below.
-(defmethod lem-if:set-frame-color ((implementation webview) mode)
+;; The editor thread's *implementation* is a jsonrpc instance (not webview),
+;; because run-websocket-server passes --interface JSONRPC.  We specialize
+;; on jsonrpc and guard with *webview-handle* so plain server frontends
+;; get a no-op.
+(defmethod lem-if:set-frame-color ((implementation lem-server:jsonrpc) mode)
   "Set the macOS window frame to :dark or :light mode.
 Can be called at any time while the webview is running."
-  (when *webview-handle*
-    (dispatch-set-window-appearance *webview-handle* mode)))
-
-(defun set-frame-color (mode)
-  "Set the macOS window frame to :dark or :light mode.
-Deprecated: use (lem:set-frame-color mode) instead."
   (when *webview-handle*
     (dispatch-set-window-appearance *webview-handle* mode)))
 

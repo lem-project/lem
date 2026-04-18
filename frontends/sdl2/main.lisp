@@ -424,10 +424,14 @@
 (defmethod lem-if:set-font-size ((implementation sdl2) size)
   (display:with-display (display)
     (display:with-renderer (display)
-      (let ((font-config (display:display-font-config display)))
+      (let* ((font-config (display:display-font-config display))
+             (ratio (round (first (display:display-scale display))))
+             (scaled-size (* ratio size)))
+        (setf (lem:config :sdl2-font-size) size)
         (display:change-font
          display
-         (change-size font-config size))))))
+         (change-size font-config scaled-size)
+         nil)))))
 
 (defmethod lem-if:resize-display-before ((implementation sdl2))
   (with-debug ("resize-display-before")

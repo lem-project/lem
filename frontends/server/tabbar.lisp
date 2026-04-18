@@ -54,7 +54,10 @@
       (message "~A" e))))
 
 (defun generate-html ()
-  (let ((editor-bg (lem:color-to-hex-string (lem:parse-color (lem:background-color)))))
+  (let ((editor-bg (let ((bg (lem:background-color)))
+                    (if bg
+                        (lem:color-to-hex-string (lem:parse-color bg))
+                        "#2d2d2d"))))
     (with-output-to-string (out)
     (format out "<head>")
     (format out "<style>

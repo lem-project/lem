@@ -93,6 +93,72 @@ function getLemEditorElement() {
   return document.getElementById('lem-editor');
 }
 
+function normalizeWheelDelta(deltaX, deltaY, deltaMode, fontHeight) {
+  switch (deltaMode) {
+    case 0: // pixels – convert to lines
+      return { dx: deltaX / fontHeight, dy: deltaY / fontHeight };
+    case 2: // pages – rough line conversion
+      return { dx: deltaX * 20, dy: deltaY * 20 };
+    default: // 1 = lines
+      return { dx: deltaX, dy: deltaY };
+  }
+}
+
+function extractWholeLines(accX, accY) {
+  const scrollX = Math.trunc(accX);
+  const scrollY = Math.trunc(accY);
+  return {
+    scrollX,
+    scrollY,
+    remainderX: accX - scrollX,
+    remainderY: accY - scrollY,
+  };
+}
+
+function cursorPosition(event, editor) {
+  const [displayX, displayY] = editor.getDisplayRectangle();
+  const pixelX = event.clientX - displayX;
+  const pixelY = event.clientY - displayY;
+  return {
+    pixelX,
+    pixelY,
+    x: Math.floor(pixelX / editor.option.fontWidth),
+    y: Math.floor(pixelY / editor.option.fontHeight),
+  };
+}
+
+function makeWheelHandler(editor) {
+  let acc = { x: 0, y: 0 };
+  let pending = false;
+  let lastPos = { pixelX: 0, pixelY: 0, x: 0, y: 0 };
+
+  return (event) => {
+    event.preventDefault();
+    lastPos = cursorPosition(event, editor);
+
+    const { dx, dy } = normalizeWheelDelta(
+      event.deltaX, event.deltaY, event.deltaMode, editor.option.fontHeight,
+    );
+    acc = { x: acc.x + dx, y: acc.y + dy };
+
+    if (!pending) {
+      pending = true;
+      requestAnimationFrame(() => {
+        pending = false;
+        const { scrollX, scrollY, remainderX, remainderY } = extractWholeLines(acc.x, acc.y);
+        acc = { x: remainderX, y: remainderY };
+
+        if (scrollX !== 0 || scrollY !== 0) {
+          editor.jsonrpc.notify('input', {
+            kind: 'wheel',
+            value: { ...lastPos, wheelX: -scrollX, wheelY: -scrollY },
+          });
+        }
+      });
+    }
+  };
+}
+
 function addMouseEventListeners({ dom, editor, isDraggable, draggableStyle }) {
   dom.addEventListener('contextmenu', (event) => {
     event.preventDefault();
@@ -168,26 +234,7 @@ function addMouseEventListeners({ dom, editor, isDraggable, draggableStyle }) {
     });
   }
 
-  dom.addEventListener('wheel', (event) => {
-    event.preventDefault();
-    const [displayX, displayY] = editor.getDisplayRectangle();
-    const pixelX = (event.clientX - displayX);
-    const pixelY = (event.clientY - displayY);
-    const x = Math.floor(pixelX / editor.option.fontWidth);
-    const y = Math.floor(pixelY / editor.option.fontHeight);
-
-    editor.jsonrpc.notify('input', {
-      kind: 'wheel',
-      value: {
-        pixelX: pixelX,
-        pixelY: pixelY,
-        x: x,
-        y: y,
-        wheelX: -Math.round(event.deltaX * 0.01),
-        wheelY: -Math.round(event.deltaY * 0.01),
-      },
-    });
-  });
+  dom.addEventListener('wheel', makeWheelHandler(editor));
 }
 
 const zIndexTable = {

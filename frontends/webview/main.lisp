@@ -7,10 +7,16 @@
            :*webview-handle*))
 (in-package :lem-webview)
 
-(defclass webview (lem-server:jsonrpc lem-core:implementation) ())
+(defclass webview (lem-server:jsonrpc lem-core:implementation)
+  ()
+  (:documentation "Webview frontend implementation.
+Combines the JSON-RPC server protocol with a native webview window."))
 
 (defvar *webview-handle* nil
-  "The native webview handle, set during run-webview.")
+  "The native webview handle, set during run-webview.
+This must be a dynamic variable because it is set on the main thread
+(inside run-webview) and read from the editor thread (via set-frame-color).
+The webview pointer is written once at startup and cleared on shutdown.")
 
 (defmethod lem-if:invoke ((implementation webview) function)
   (main)

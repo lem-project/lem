@@ -1,3 +1,5 @@
+;;; Package :lem-webview is defined in main.lisp; this file is loaded
+;;; after it via :serial t in lem-webview.asd.
 (in-package :lem-webview)
 
 ;;; macOS window appearance via Objective-C runtime

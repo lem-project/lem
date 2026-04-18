@@ -210,7 +210,8 @@
   ((open-char :type character
               :initarg :open-char)
    (close-char :type character
-               :initarg :close-char)))
+               :initarg :close-char))
+  (:documentation "Text object for matched block delimiter pairs (e.g. parens, brackets, braces)."))
 
 (defmethod initialize-instance :after ((object block-text-object) &key)
   "Derive close-char from open-char if not explicitly provided."
@@ -519,6 +520,7 @@ Returns (values open-point past-close-point) or NIL."
           (character-offset close 1))))))
 
 (defmethod a-range-of ((object angle-bracket-object) state count)
+  "Return the range around the enclosing angle bracket pair, including delimiters."
   (declare (ignore state))
   (with-point ((p (current-point)))
     (dotimes (i count)
@@ -535,6 +537,7 @@ Returns (values open-point past-close-point) or NIL."
       (make-range open close))))
 
 (defmethod inner-range-of ((object angle-bracket-object) state count)
+  "Return the range inside the enclosing angle bracket pair, excluding delimiters."
   (let ((range (a-range-of object state count)))
     (character-offset (range-beginning range) 1)
     (character-offset (range-end range) -1)
@@ -652,6 +655,7 @@ Returns four values: outer-start, outer-end, inner-start, inner-end."
         (character-offset search-point -1)))))
 
 (defmethod a-range-of ((object tag-object) state count)
+  "Return the range around the enclosing HTML/XML tag pair, including tags."
   (declare (ignore state))
   (with-point ((p (current-point)))
     (dotimes (i count)
@@ -669,6 +673,7 @@ Returns four values: outer-start, outer-end, inner-start, inner-end."
       (make-range outer-start outer-end))))
 
 (defmethod inner-range-of ((object tag-object) state count)
+  "Return the range inside the enclosing HTML/XML tag pair, excluding tags."
   (declare (ignore state))
   (with-point ((p (current-point)))
     (dotimes (i count)

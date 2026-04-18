@@ -34,16 +34,12 @@
   (sel :pointer)
   (arg :string))
 
-(defun set-window-appearance (webview-handle mode)
-  "Set the macOS window frame appearance for WEBVIEW-HANDLE.
-MODE should be :dark or :light."
+(defun %apply-appearance (webview-handle appearance-name)
+  "Apply the named appearance to the window. Must be called on the main thread."
   (let ((nswindow (webview:webview-get-window webview-handle)))
     (when (cffi:null-pointer-p nswindow)
-      (return-from set-window-appearance nil))
-    (let* ((appearance-name (ecase mode
-                              (:dark "NSAppearanceNameDarkAqua")
-                              (:light "NSAppearanceNameAqua")))
-           (ns-appearance-class (objc-get-class "NSAppearance"))
+      (return-from %apply-appearance nil))
+    (let* ((ns-appearance-class (objc-get-class "NSAppearance"))
            (ns-name (objc-msg-send/str
                      (objc-get-class "NSString")
                      (sel-register-name "stringWithUTF8String:")
@@ -53,16 +49,57 @@ MODE should be :dark or :light."
                         (sel-register-name "appearanceNamed:")
                         ns-name)))
       (when (cffi:null-pointer-p appearance)
-        (return-from set-window-appearance nil))
+        (return-from %apply-appearance nil))
       (objc-msg-send/ptr nswindow
                          (sel-register-name "setAppearance:")
                          appearance)
-      mode)))
+      t)))
+
+(cffi:defcallback dispatch-set-dark-appearance :void
+    ((webview-handle :pointer) (arg :pointer))
+  (declare (ignore arg))
+  (%apply-appearance webview-handle "NSAppearanceNameDarkAqua"))
+
+(cffi:defcallback dispatch-set-light-appearance :void
+    ((webview-handle :pointer) (arg :pointer))
+  (declare (ignore arg))
+  (%apply-appearance webview-handle "NSAppearanceNameAqua"))
+
+(defun mode-appearance-name (mode)
+  (ecase mode
+    (:dark "NSAppearanceNameDarkAqua")
+    (:light "NSAppearanceNameAqua")))
+
+(defun mode-dispatch-callback (mode)
+  (ecase mode
+    (:dark (cffi:callback dispatch-set-dark-appearance))
+    (:light (cffi:callback dispatch-set-light-appearance))))
+
+(defun set-window-appearance (webview-handle mode)
+  "Set the macOS window frame appearance for WEBVIEW-HANDLE.
+MODE should be :dark or :light. Called before the event loop starts,
+so it runs directly on the main thread."
+  (%apply-appearance webview-handle (mode-appearance-name mode)))
+
+(defun dispatch-set-window-appearance (webview-handle mode)
+  "Set the macOS window frame appearance via webview_dispatch.
+Use this when the event loop is already running to ensure the
+Cocoa API calls execute on the main thread."
+  (webview:webview-dispatch webview-handle
+                            (mode-dispatch-callback mode)
+                            (cffi:null-pointer))
+  mode)
 
 ) ; end #+darwin progn
 
 #-darwin
+(progn
 (defun set-window-appearance (webview-handle mode)
   "No-op: window appearance is only supported on macOS."
   (declare (ignore webview-handle mode))
   nil)
+(defun dispatch-set-window-appearance (webview-handle mode)
+  "No-op: window appearance is only supported on macOS."
+  (declare (ignore webview-handle mode))
+  nil)
+)

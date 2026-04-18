@@ -190,6 +190,13 @@ PIXEL-X, PIXEL-Y, PIXEL-WIDTH, PIXEL-HEIGHT are in pixels (may be nil for auto-c
     (declare (ignore wait))
     (error "unimplemented")))
 
+(defgeneric lem-if:set-frame-color (implementation mode)
+  (:documentation "Set the window frame appearance to MODE (:dark or :light).
+Frontends that do not support frame color should use the default no-op.")
+  (:method (implementation mode)
+    (declare (ignore implementation mode))
+    nil))
+
 (defvar *display-background-mode* nil)
 
 (defun implementation ()

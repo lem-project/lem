@@ -783,4 +783,5 @@
    :render-line
    :render-line-on-modeline
    :object-width
-   :object-height))
+   :object-height
+   :set-frame-color))

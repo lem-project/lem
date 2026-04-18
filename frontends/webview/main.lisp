@@ -3,7 +3,6 @@
   (:export :main
            :webview-main
            :webview
-           :set-frame-color
            :*webview-handle*))
 (in-package :lem-webview)
 
@@ -31,11 +30,10 @@
         (setf *webview-handle* nil)
         (webview:webview-destroy w)))))
 
-(defun set-frame-color (mode)
-  "Set the macOS window frame to :dark or :light mode.
-Can be called at any time while the webview is running."
+(defmethod lem-if:set-frame-color ((implementation webview) mode)
+  "Set the macOS window frame to :dark or :light mode."
   (when *webview-handle*
-    (set-window-appearance *webview-handle* mode)))
+    (dispatch-set-window-appearance *webview-handle* mode)))
 
 (defun main (&optional (args (uiop:command-line-arguments)))
   (let ((port (lem/common/socket:random-available-port)))

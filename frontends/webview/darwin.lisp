@@ -1,6 +1,8 @@
-;;; Package :lem-webview is defined in main.lisp; this file is loaded
-;;; after it via :serial t in lem-webview.asd.
-(in-package :lem-webview)
+(defpackage :lem-webview/darwin
+  (:use :cl)
+  (:export :set-window-appearance
+           :dispatch-set-window-appearance))
+(in-package :lem-webview/darwin)
 
 ;;; macOS window appearance via Objective-C runtime
 ;;;

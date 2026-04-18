@@ -1,5 +1,8 @@
 (uiop:define-package :lem-webview
   (:use :cl)
+  (:import-from :lem-webview/darwin
+   :set-window-appearance
+   :dispatch-set-window-appearance)
   (:export :main
            :webview-main
            :webview))

@@ -654,7 +654,8 @@
    :get-font
    :set-font
    :set-font-name
-   :set-font-size)
+   :set-font-size
+   :set-frame-color)
   ;; color-theme.lisp
   (:export
    :color-theme-names

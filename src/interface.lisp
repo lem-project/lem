@@ -197,6 +197,10 @@ Frontends that do not support frame color should use the default no-op.")
     (declare (ignore implementation mode))
     nil))
 
+(defun set-frame-color (&optional (mode :dark))
+  "Set the window frame appearance to MODE (:dark or :light)."
+  (lem-if:set-frame-color (implementation) mode))
+
 (defvar *display-background-mode* nil)
 
 (defun implementation ()

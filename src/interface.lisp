@@ -192,7 +192,8 @@ PIXEL-X, PIXEL-Y, PIXEL-WIDTH, PIXEL-HEIGHT are in pixels (may be nil for auto-c
 
 (defgeneric lem-if:set-frame-color (implementation mode)
   (:documentation "Set the window frame appearance to MODE (:dark or :light).
-Frontends that do not support frame color should use the default no-op.")
+Frontends on any platform may implement this to control the native window
+chrome. The default method is a no-op for frontends that do not support it.")
   (:method (implementation mode)
     (declare (ignore implementation mode))
     nil))

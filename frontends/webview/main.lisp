@@ -28,8 +28,9 @@ Combines the JSON-RPC server protocol with a native webview window."))
         (webview:webview-destroy w)))))
 
 (defmethod lem-if:set-frame-color ((implementation lem-server:jsonrpc) mode)
-  "Set the macOS window frame to :dark or :light mode.
-Can be called at any time from any thread."
+  "Set the window frame to :dark or :light mode.
+Currently implemented for macOS via darwin.lisp; on other platforms this
+is a no-op. Can be called from any thread."
   (dispatch-set-window-appearance mode))
 
 (defun main (&optional (args (uiop:command-line-arguments)))

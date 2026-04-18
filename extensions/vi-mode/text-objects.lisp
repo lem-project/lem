@@ -208,29 +208,71 @@
 
 (defclass block-text-object (text-object)
   ((open-char :type character
-              :initarg :open-char)))
+              :initarg :open-char)
+   (close-char :type character
+               :initarg :close-char)))
 
-;; XXX: Should not depend on lem:backward-up-list
-;;   to keep flexibility the pair of open/close chars
-(defmethod slurp-object ((object block-text-object) point direction)
-  (declare (ignore direction))
-  (with-slots (open-char) object
-    (let ((bob (buffer-start-point (point-buffer point))))
-      (loop
-        (lem:backward-up-list point)
-        (when (char= (character-at point) open-char)
-          (return))
-        (when (point= point bob)
-          (keyboard-quit)))))
-  point)
+(defmethod initialize-instance :after ((object block-text-object) &key)
+  "Derive close-char from open-char if not explicitly provided."
+  (unless (slot-boundp object 'close-char)
+    (with-slots (open-char close-char) object
+      (setf close-char
+            (ecase open-char
+              (#\( #\))
+              (#\[ #\])
+              (#\{ #\}))))))
+
+(defun %find-enclosing-block (point open-char close-char)
+  "Find the block pair enclosing POINT using character-level matching.
+Returns (values open-point past-close-point) or NIL."
+  (with-point ((open point))
+    ;; Search backward for unmatched open-char
+    (let ((depth 0))
+      (loop :do
+        (let ((c (character-at open)))
+          (cond
+            ((null c)
+             (return-from %find-enclosing-block nil))
+            ((char= c close-char) (incf depth))
+            ((char= c open-char)
+             (if (zerop depth) (return) (decf depth)))))
+        (if (start-buffer-p open)
+            (return-from %find-enclosing-block nil)
+            (character-offset open -1))))
+    ;; open is now at the open-char. Search forward for matching close-char.
+    (with-point ((close open))
+      (character-offset close 1)
+      (let ((depth 0))
+        (loop :do
+          (let ((c (character-at close)))
+            (cond
+              ((null c)
+               (return-from %find-enclosing-block nil))
+              ((char= c open-char) (incf depth))
+              ((char= c close-char)
+               (if (zerop depth)
+                   (progn
+                     (character-offset close 1)
+                     (return-from %find-enclosing-block
+                       (values open close)))
+                   (decf depth)))))
+          (character-offset close 1))))))
 
 (defmethod a-range-of ((object block-text-object) state count)
-  (with-point ((beg (current-point)))
-    (dotimes (i count)
-      (slurp-object object beg nil))
-    (with-point ((end beg))
-      (lem:form-offset end 1)
-      (make-range beg end))))
+  (with-slots (open-char close-char) object
+    (with-point ((p (current-point)))
+      (dotimes (i count)
+        (multiple-value-bind (open close)
+            (%find-enclosing-block p open-char close-char)
+          (declare (ignore close))
+          (unless open (error 'text-object-abort))
+          (when (> i 0)
+            (move-point p open)
+            (character-offset p -1))))
+      (multiple-value-bind (open close)
+          (%find-enclosing-block p open-char close-char)
+        (unless open (error 'text-object-abort))
+        (make-range open close)))))
 
 (defmethod inner-range-of ((object block-text-object) state count)
   (let ((range (a-range-of object state count)))

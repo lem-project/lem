@@ -48,8 +48,8 @@ REFERENCE
 Two commands are useful references throughout this tutorial:
 Use these any time you're unsure what a key does or what's available.
 
-C-x ?                  Describe any key - press the key when prompted.
-Alt-x describe-bindings   List all bindings active in the current buffer.
+  C-x ?                     Describe any key - press the key when prompted.
+  Alt-x describe-bindings   List all bindings active in the current buffer.
 
 QUITTING
 
@@ -138,6 +138,20 @@ Note: < and > require Shift. So M-< is Alt+Shift+, and M-> is Alt+Shift+.
 >> Press M-> to jump to the end of this file. Press M-< to return.
 -----
 
+SEARCH
+
+  C-s   Search forward (isearch)
+  C-r   Search backward
+
+Type to search incrementally - the cursor jumps to the first match
+as you type. Press C-s again to move to the next match. Press Escape
+or C-g to cancel and return to where you started.
+
+-----
+>> Press C-s and type a word from this buffer. Press C-s again to
+   find the next occurrence. Press Escape when done.
+-----
+
 GOTO LINE
 
   M-g   Go to a specific line number
@@ -153,7 +167,7 @@ end of this file.
 
 RECENTERING
 
-  C-l   recenter the window on the cursor
+  C-l   Recenter the window on the cursor
 
 -----
 >> Use C-n to move the cursor near the bottom of the screen without
@@ -168,6 +182,7 @@ SUMMARY
   M-f / M-b    Forward / backward one word
   M-} / M-{    Forward / backward one paragraph
   C-v / M-v    Scroll down / up one screen
+  C-s / C-r    Search forward / backward
   M-< / M->    Beginning / end of buffer
   M-g          Go to line number
   C-l          Recenter view on cursor
@@ -232,7 +247,8 @@ Each setting is a Lisp form. For example, to enable line numbers:
 
 or to enable them permanently at startup:
 
-  (add-hook *after-init-hook* (lambda () (lem/line-numbers:toggle-line-numbers)))
+  (add-hook *after-init-hook* (lambda () 
+                                (lem/line-numbers:toggle-line-numbers)))
 
 -----
 >> Add one line to your init file. Save it with C-x C-s.
@@ -261,6 +277,140 @@ SUMMARY
   C-x C-w   Save to a new filename
   C-x s     Save all modified buffers
   C-x C-h   Open a recent file
+
+------------------------------------------------------------------------
+
+LESSON 3: BUFFERS AND WINDOWS
+
+You opened files in Lesson 2. Each open file lives in a buffer.
+Lem can display multiple buffers at once by splitting the screen
+into windows. This lesson covers switching between buffers and
+arranging windows.
+
+SWITCHING BUFFERS
+
+  C-x b         Switch to a buffer by name
+  C-x Left      Previous buffer
+  C-x Right     Next buffer
+  C-x k         Close (kill) the current buffer
+
+-----
+>> Press C-x Right and C-x Left to cycle through your open buffers.
+>> Press C-x b, type a buffer name, press Enter to switch to it.
+-----
+
+BUFFER LIST
+
+  C-x C-b   Open the buffer list
+
+Shows all open buffers with their file paths. Buffers marked with a
+lock icon are read-only. Special buffers like *dashboard* and *tmp*
+appear here too - these start and end with * and are not tied to files.
+
+  Space     Mark a buffer
+  M-Space   Mark a buffer (cursor moves up)
+  C-k       Kill all marked buffers
+  Return    Open the buffer at point
+  Escape    Close the list
+
+-----
+>> Press C-x C-b. Browse the list, mark a buffer with Space,
+   then press Escape.
+-----
+
+SPLITTING WINDOWS
+
+A window is a view onto a buffer. Splitting the screen lets you
+see two buffers at once.
+
+  C-x 2   Split horizontally (one above the other)
+  C-x 3   Split vertically (side by side)
+  C-x 1   Close all other windows (fullscreen current)
+  C-x 0   Close the current window
+  C-x 4 b Open buffer in other window
+
+The most useful split for writing code is vertical - C-x 3 - 
+keeping a file on the left and a reference or REPL on the right.
+
+-----
+>> Press C-x 3 to split the screen vertically.
+>> Press C-x C-f to open a file in the new window.
+>> Press C-x 1 to return to a single window.
+-----
+
+SWITCHING WINDOWS
+
+  C-x o   Move to the next window
+  M-o     Move to the next window (faster, one key)
+
+-----
+>> Split with C-x 3. Use M-o to move between the two windows.
+-----
+
+AUTOMATIC SPLITS
+
+Lem splits the window automatically in some situations. When you
+start a REPL with Alt-x start-lisp-repl, it opens in a new window.
+The debugger does the same when an error occurs. You will see this
+in Lesson 6.
+
+For now, know that C-x 1 always gets you back to a single window,
+and M-o moves you between whatever windows are open.
+
+OTHER BUFFER COMMANDS
+
+  Alt-x revert-buffer   Reload the file from disk, discarding changes
+  Alt-x rename-buffer   Rename the current buffer
+  M-~                   Mark the buffer as unmodified without saving.
+                        Useful when you've made exploratory edits you want to discard.
+
+WORKSPACES (FRAME MULTIPLEXER)
+
+Lem supports multiple workspaces - separate window arrangements 
+within the same Lem instance. Each workspace has its own buffer 
+layout.
+
+  C-z c   Create a new workspace
+  C-z n   Next workspace
+  C-z p   Previous workspace
+  C-z d   Delete current workspace
+
+Useful when you want to keep a separate layout for different tasks -
+for example, one workspace for editing, another for the REPL and 
+debugger.
+
+-----
+>> Press C-z c to create a new workspace. Press C-z n and C-z p
+   to switch between them. Press C-z d to delete it.
+-----
+
+SUMMARY
+
+  C-x b                 Switch to buffer by name
+  C-x C-b               Open the buffer list
+  C-x Left/Right        Previous / next buffer
+  C-x k                 Kill current buffer
+  C-x 4 b               Select buffer in other window
+  M-~                   Clear the modified marker
+  Alt-x revert-buffer   Reload buffer from disk
+  Alt-x rename-buffer   Rename the current buffer
+
+  C-x 2           Split horizontally
+  C-x 3           Split vertically
+  C-x 1           Close other windows
+  C-x 0           Close current window
+  C-x o / M-o     Switch to next window
+
+  C-z c           Create new workspace
+  C-z n / C-z p   Next / previous workspace
+  C-z d           Delete current workspace
+
+  In buffer list (C-x C-b):
+  Space           Mark buffer
+  M-Space         Mark buffer (cursor up)
+  C-k             Kill marked buffers
+  Return          Open buffer at point
+
 ------------------------------------------------------------------------
 
 APPENDIX
@@ -270,10 +420,11 @@ lesson. Return here any time.
 
 LINE NUMBERS
 
-lem can display line numbers in the left margin.
+Lem can display line numbers in the left margin.
 
 -----
 >> Alt-x toggle-line-numbers
+   Press it again to turn them off.
 -----
 
 This toggles line numbers on and off for the current buffer. Useful

@@ -1,0 +1,5 @@
+*.fasl
+*.fas
+*.lib
+*.o
+lem-tutor-saves/

@@ -1,0 +1,288 @@
+lem TUTOR
+=========
+INTRODUCTION
+
+You are reading lem-tutor, an interactive tutorial for the lem editor.
+This is your working copy. Practice commands directly in this buffer.
+
+NOTATION
+
+  C-x      Hold Control, press x
+  Alt-x    Hold Alt, press x
+  C-x C-c  Hold Control, press x; then hold Control, press c
+
+"C-" means Control. "M-" means Alt.
+Lem uses "M-" notation internally - a remnant of the Meta key.
+They mean the same thing.
+
+Key sequences like C-x C-c mean: first C-x, then C-c.
+
+NAVIGATION
+
+Two keys that are useful right now:
+
+  C-v   Scroll down one screen
+  M-v   Scroll up one screen
+
+----- Quick exercises
+>> Press C-v to scroll down.
+>> Press M-v to scroll back up here.
+-----
+
+COMMANDS
+
+Every action in lem is a named command. Keys are shortcuts to commands,
+but there are many commands that have no key binding at all. You can call any command
+by name with Alt-x.
+
+-----
+>> Press Alt-x. Press Tab to see available commands. Notice that each
+   entry also shows its key binding, if it has one. Press Escape to close.
+-----
+
+Escape and C-g both cancel and dismiss pop-ups throughout lem.
+When in doubt, press one or the other.
+
+REFERENCE
+
+Two commands are useful references throughout this tutorial:
+Use these any time you're unsure what a key does or what's available.
+
+C-x ?                  Describe any key - press the key when prompted.
+Alt-x describe-bindings   List all bindings active in the current buffer.
+
+QUITTING
+
+To leave lem:
+  C-x C-c   Quit lem
+
+-----
+>> C-x C-c
+-----
+To return to this tutorial after quitting: Alt-x lem-tutor.
+
+
+LESSON 1: MOVEMENT
+
+You have already used two movement commands:
+
+  C-v   Scroll down one screen
+  M-v   Scroll up one screen
+
+This lesson covers the rest.
+
+CHARACTER MOVEMENT
+
+  C-f   Forward one character    (Right arrow also works)
+  C-b   Backward one character   (Left arrow also works)
+  C-n   Next line                (Down arrow also works)
+  C-p   Previous line            (Up arrow also works)
+
+Arrow keys work, but C-f, C-b, C-n, C-p keep your hands on the home
+row and compose with other keys in ways arrows do not. Worth learning.
+
+-----
+>> Move through this line character by character with C-f, then back with C-b.
+>> Move down a few lines with C-n, then back up with C-p.
+-----
+
+LINE MOVEMENT
+
+  C-a   Beginning of line   (Home also works)
+  C-e   End of line         (End also works)
+
+-----
+>> Press C-e to jump to the end of this line. Press C-a to return.
+-----
+
+WORD MOVEMENT
+
+One character at a time is slow across long lines.
+
+  M-f   Forward one word    (C-Right also works)
+  M-b   Backward one word   (C-Left also works)
+
+-----
+>> Use M-f to move through the words in this sentence, then M-b to return.
+-----
+
+PARAGRAPH MOVEMENT
+
+  M-}   Forward to next paragraph
+  M-{   Backward to previous paragraph
+
+Note: { and } require Shift. So M-} is Alt+Shift+] and M-{ is Alt+Shift+[.
+
+Here is the first practice paragraph. It exists so you can feel what
+paragraph movement does. The cursor lands on the blank line between
+paragraphs.
+
+Here is the second practice paragraph. From here, M-{ jumps back to
+the paragraph above. M-} moves forward again.
+
+-----
+>> Use M-} and M-{ to move between the two paragraphs above.
+-----
+  
+BUFFER MOVEMENT
+
+A buffer holds your text in memory. It may or may not be saved to a file -
+but for navigation purposes they feel the same.
+
+  M-<   Beginning of buffer
+  M->   End of buffer
+
+Note: < and > require Shift. So M-< is Alt+Shift+, and M-> is Alt+Shift+.
+
+-----
+>> Press M-> to jump to the end of this file. Press M-< to return.
+-----
+
+GOTO LINE
+
+  M-g   Go to a specific line number
+
+Lem will prompt you for a line number. Type it and press Enter.
+Knowing your current line number helps here - see LINE NUMBERS at the
+end of this file.
+
+-----
+>> Press M-g, enter 1, press Enter. Use M-< or M-> and C-v or M-v 
+   to orient yourself.
+-----
+
+RECENTERING
+
+  C-l   recenter the window on the cursor
+
+-----
+>> Use C-n to move the cursor near the bottom of the screen without
+   scrolling. Then press C-l to recenter the view on the cursor.
+-----
+
+SUMMARY
+
+  C-f / C-b    Forward / backward one character
+  C-n / C-p    Next / previous line
+  C-a / C-e    Beginning / end of line
+  M-f / M-b    Forward / backward one word
+  M-} / M-{    Forward / backward one paragraph
+  C-v / M-v    Scroll down / up one screen
+  M-< / M->    Beginning / end of buffer
+  M-g          Go to line number
+  C-l          Recenter view on cursor
+
+------------------------------------------------------------------------
+
+LESSON 2: FILES AND CONFIGURATION
+
+In Lem, the text you work with lives in a buffer. A buffer may be 
+tied to a file on disk, or exist only in memory. When you open a 
+file, Lem loads it into a buffer. When you save, the buffer contents
+are written to that file.
+
+This lesson covers opening and saving files, and introduces the one
+file that shapes how Lem behaves at startup: your init file.
+
+OPENING FILES
+
+  C-x C-f   Open a file (find-file)
+
+Lem prompts you for a path. You can use tab completion. If the file does not
+exist, Lem opens it in the buffer and creates it on disk when you save.
+
+-----
+>> Press C-x C-f and open any file on your system. Press Escape to
+   cancel if you prefer.
+-----
+
+SAVING FILES
+
+  C-x C-s   Save the current buffer to its file
+  C-x C-w   Save to a different filename (write-file)
+  C-x s     Save all modified buffers (prompts for each)
+
+-----
+>> Make a small edit anywhere in this buffer. Press C-x C-s to save it.
+-----
+
+The mode line runs along the bottom of the buffer. When a buffer has
+unsaved changes, a small indicator appears there. It clears when you save.
+
+YOUR INIT FILE
+
+Lem reads your init file at startup. This is where you configure
+keybindings, load extensions, and set preferences. It is a Common
+Lisp file evaluated when Lem starts.
+
+Its location is one of:
+  ~/.lem/init.lisp
+  ~/.config/lem/init.lisp   (Lem 2.2 and later)
+
+-----
+>> Press C-x C-f and open your init file. If it does not exist,
+   Lem will create it when you save.
+-----
+
+ADDING CONFIGURATION
+
+Each setting is a Lisp form. For example, to enable line numbers:
+
+  (lem/line-numbers:toggle-line-numbers)
+
+or to enable them permanently at startup:
+
+  (add-hook *after-init-hook* (lambda () (lem/line-numbers:toggle-line-numbers)))
+
+-----
+>> Add one line to your init file. Save it with C-x C-s.
+   Restart Lem and verify the change took effect.
+-----
+
+You do not need to understand the Lisp syntax fully yet. That comes
+later. For now, treat init file forms as configuration entries you
+can copy, paste, and modify.
+
+RECENT FILES
+
+Lem keeps track of files you have opened. Press C-x C-h and use tab
+completion to pick from the list.
+
+  C-x C-h   Open a recently visited file
+
+-----
+>> Press C-x C-h and reopen the file you just opened.
+-----
+
+SUMMARY
+
+  C-x C-f   Open a file
+  C-x C-s   Save current buffer
+  C-x C-w   Save to a new filename
+  C-x s     Save all modified buffers
+  C-x C-h   Open a recent file
+------------------------------------------------------------------------
+
+APPENDIX
+
+This section covers useful features that don't belong to a single
+lesson. Return here any time.
+
+LINE NUMBERS
+
+lem can display line numbers in the left margin.
+
+-----
+>> Alt-x toggle-line-numbers
+-----
+
+This toggles line numbers on and off for the current buffer. Useful
+when navigating with M-g or orienting yourself in a long file.
+
+For relative line numbers - showing the distance from the cursor rather
+than the absolute line number - add this to your init file:
+
+  (setf lem/line-numbers:*relative-line* t)
+
+Relative line numbers are useful when jumping by a known number of
+lines. The current line always shows its absolute number.

@@ -93,6 +93,24 @@ function getLemEditorElement() {
   return document.getElementById('lem-editor');
 }
 
+// --- Wheel / scroll handling ---------------------------------------------------
+//
+// Design: the Lem backend scrolls in whole-line increments, but browsers report
+// wheel deltas in pixels (trackpads), lines, or pages depending on the device
+// and OS.  We therefore:
+//
+//  1. Normalize every delta to fractional *line* units (normalizeWheelDelta).
+//  2. Accumulate fractional lines across events so small trackpad gestures are
+//     never silently dropped (extractWholeLines keeps the remainder).
+//  3. Coalesce all wheel events that arrive within a single animation frame
+//     into one JSON-RPC call (makeWheelHandler + requestAnimationFrame), which
+//     avoids flooding the WebSocket with redundant messages.
+//
+// The three pure helpers are deliberately kept separate from the stateful
+// factory (makeWheelHandler) so they can be tested or reused independently.
+// ---------------------------------------------------------------------------
+
+/** Convert raw browser wheel deltas to fractional line units. */
 function normalizeWheelDelta(deltaX, deltaY, deltaMode, fontHeight) {
   switch (deltaMode) {
     case 0: // pixels – convert to lines
@@ -104,6 +122,7 @@ function normalizeWheelDelta(deltaX, deltaY, deltaMode, fontHeight) {
   }
 }
 
+/** Split a float accumulator into whole-line scroll counts and a remainder. */
 function extractWholeLines(accX, accY) {
   const scrollX = Math.trunc(accX);
   const scrollY = Math.trunc(accY);
@@ -115,6 +134,7 @@ function extractWholeLines(accX, accY) {
   };
 }
 
+/** Derive pixel and character coordinates from a mouse/wheel event. */
 function cursorPosition(event, editor) {
   const [displayX, displayY] = editor.getDisplayRectangle();
   const pixelX = event.clientX - displayX;
@@ -127,6 +147,14 @@ function cursorPosition(event, editor) {
   };
 }
 
+/**
+ * Create a wheel-event handler bound to `editor`.
+ *
+ * State is encapsulated in the returned closure:
+ *  - `acc`     – fractional line remainder carried between frames
+ *  - `pending` – whether a rAF callback is already scheduled
+ *  - `lastPos` – cursor position from the most recent wheel event
+ */
 function makeWheelHandler(editor) {
   let acc = { x: 0, y: 0 };
   let pending = false;

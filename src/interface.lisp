@@ -190,6 +190,18 @@ PIXEL-X, PIXEL-Y, PIXEL-WIDTH, PIXEL-HEIGHT are in pixels (may be nil for auto-c
     (declare (ignore wait))
     (error "unimplemented")))
 
+(defgeneric lem-if:set-frame-color (implementation mode)
+  (:documentation "Set the window frame appearance to MODE (:dark or :light).
+Frontends on any platform may implement this to control the native window
+chrome. The default method is a no-op for frontends that do not support it.")
+  (:method (implementation mode)
+    (declare (ignore implementation mode))
+    nil))
+
+(defun set-frame-color (&optional (mode :dark))
+  "Set the window frame appearance to MODE (:dark or :light)."
+  (lem-if:set-frame-color (implementation) mode))
+
 (defvar *display-background-mode* nil)
 
 (defun implementation ()
@@ -211,7 +223,9 @@ PIXEL-X, PIXEL-Y, PIXEL-WIDTH, PIXEL-HEIGHT are in pixels (may be nil for auto-c
 
 (defun set-display-background-mode (mode)
   (check-type mode (member :light :dark nil))
-  (setf *display-background-mode* mode))
+  (setf *display-background-mode* mode)
+  (when mode
+    (set-frame-color mode)))
 
 (defun set-foreground (name)
   (when name

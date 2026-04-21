@@ -75,6 +75,7 @@
                (:file "window")
                (:file "legit")
                (:file "filer")
-               (:file "listener-mode"))
+               (:file "listener-mode")
+               (:file "interface"))
   :perform (test-op (o c)
                     (symbol-call :rove :run c)))

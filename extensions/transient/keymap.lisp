@@ -12,7 +12,7 @@
                           keymap
                           mode-keymap)))
       (*transient-always-show*
-       keymap))))
+       (or keymap *root-keymap*)))))
 
 (defmethod keymap-activate ((keymap keymap))
   (let ((resolved (resolve-transient-keymap keymap)))

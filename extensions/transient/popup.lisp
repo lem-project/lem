@@ -526,7 +526,17 @@ prefixes marked as :intermediate-p are flattened and shown with concatenated key
 
 (add-hook *post-command-hook* 'transient-post-command-update)
 (defun transient-post-command-update ()
-  (let ((resolved (resolve-transient-keymap)))
-    (if resolved
-        (show-transient resolved)
-        (hide-transient))))
+  ;; skip when this command was a :drop dispatch, those fire from inside read-command
+  ;; mid-key-sequence (call-command in the :drop branch), and read-command will call
+  ;; keymap-activate right after to re-render with the correct keymap. re-rendering here
+  ;; would flicker with the wrong keymap and reset scroll. we detect this by looking up
+  ;; the prefix for the keys that invoked this command and checking its behavior.
+  ;; this hack is another reason why we need to rewrite the event reading loop to allow for
+  ;; better control over things.
+  (unless (let* ((keys (this-command-keys))
+                 (prefix (and keys (lookup-keybind keys))))
+            (and prefix (eq (prefix-behavior prefix) :drop)))
+    (let ((resolved (resolve-transient-keymap)))
+      (if resolved
+          (show-transient resolved)
+          (hide-transient)))))

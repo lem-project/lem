@@ -1,19 +1,30 @@
 
 * What is a transient?
 
-A transient is a text pop-up window that shows keybindings and their
-associated commands.
+A transient is a text pop-up window, displaying at the bottom of the
+screen, that shows keybindings and their associated commands.
 
 The pop-up can stay in place when the user presses a key, which allows
 to always show help on-screen.
 
+#+html: <div style="text-align: center;">[[ <img src="transient-dashboard.png"/> ]]</div>
 
-* Behavior
 
-Setting ~lem/transient::*transient-always-show*~ to ~t~ makes it show everything but its not the default behavior. unless a specific mode enforces a transient keymap the default behavior is to not show anything.
+* Default behavior
+
+Setting ~lem/transient:*transient-always-show*~ to ~t~ makes it show
+everything but its not the default behavior.
+
+Unless a specific mode enforces a transient keymap the default
+behavior is to not show anything.
+
 ~shift+alt+up/down/right/left~ scroll the keybinding popup.
-this design is because it might make some sense to enable the transient popup for specific modes/popups but not others. but this variable i mentioned that makes it show everything everywhere.
-keymaps that dont define the transient properties explicitly inherit default display properties, which makes them show up as a simple grid.
+
+This design is because it might make some sense to enable the
+transient popup for specific modes/popups but not others. But this
+variable I mentioned that makes it show everything everywhere.
+Keymaps that dont define the transient properties explicitly inherit
+default display properties, which makes them show up as a simple grid.
 
 * Simple example
 
@@ -31,10 +42,27 @@ Defining a keymap with a few keys can be done like:
   (define-key *global-keymap* "C-c t" *demo-keymap-simple*)
 #+end_src
 
-This will define a keymap with some special properties that make it behave as a "transient" keymap. but this still just defines a keymap instance, it just assigns some properties that give a special behavior to that instance.
-when a key sequence is assigned to a keymap, it means that once that key is invoked the keymap will be entered. and if that keymap has the property ~:show-p~ set to ~t~ a popup will appear at the bottom showing the keybindings. the macro ~define-transient~ sets ~:show-p~ to ~t~ by default.
-this example assigns ~C-c t~ to a keymap, so when we hit ~C-c t~ the
-popup will contain the following text:
+Now when pressing =C-c t= you see the transient, offering you to press
+one key (and one is grayed out):
+
+#+html: <div style="text-align: center;">[[ <img src="transient-simple.png"/> ]]</div>
+
+When you press =a=, the command =example-command= is called.
+
+
+This will define a keymap with some special properties that make it
+behave as a "transient" keymap. but this still just defines a keymap
+instance, it just assigns some properties that give a special behavior
+to that instance.
+
+When a key sequence is assigned to a keymap, it means that once that
+key is invoked the keymap will be entered. and if that keymap has the
+property ~:show-p~ set to ~t~ a popup will appear at the bottom
+showing the keybindings. The macro ~define-transient~ sets ~:show-p~
+to ~t~ by default.
+
+This example assigns ~C-c t~ to a keymap, so when we hit ~C-c t~ the
+popup contains the following text:
 
 #+begin_src text
   [my demo keymap]
@@ -42,7 +70,8 @@ popup will contain the following text:
   b   demo prefix 2
 #+end_src
 
-(in the actual popup some things will be colorized to distinguish them.)
+In the actual popup some things are colorized to distinguish them, as
+we saw.
 
 * Vertical alignment
 

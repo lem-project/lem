@@ -1,6 +1,8 @@
 (defpackage :lem/transient
   (:use :cl :lem)
   (:export
+   :*transient-always-show*
+   :*transient-mode-keymap*
    :define-transient
    :define-prefix
    :parse-prefix
@@ -17,6 +19,6 @@
    :prefix-active-p
    :prefix-suffix
    :transient-mode
-   :*transient-mode-keymap*))
+   ))
 
 (in-package :lem/transient)

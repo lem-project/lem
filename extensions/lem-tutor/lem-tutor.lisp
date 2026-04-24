@@ -27,18 +27,21 @@
     (format stream "(:line ~D :column ~D)" line column))))
 
 (defun tutorial-load-progress ()
-  "Load cursor position from *progress-file* and restore it in *tutorial-buffer*."
-  (when (probe-file (tutorial-progress))
-    (with-open-file (stream (tutorial-progress)
-      :direction :input)
-    (let* ((plist (read stream))
-           (line (getf plist :line))
-           (column (getf plist :column))
-           (point (buffer-point (find-file-buffer (tutorial-save-file)))))
-      (move-to-line point line)
-      (move-to-column point column)))))
-             
-  
+  "Load cursor position from progress file and restore cursor position."
+  (handler-case
+      (when (probe-file (tutorial-progress))
+        (with-open-file (stream (tutorial-progress)
+                                :direction :input)
+          (let* ((plist (read stream))
+                 (line (getf plist :line))
+                 (column (getf plist :column))
+                 (point (buffer-point (find-file-buffer (tutorial-save-file)))))
+            (move-to-line point line)
+            (move-to-column point column))))
+    (error (e)
+      (declare (ignore e))
+      (lem:message "Something went wrong retrieving your last location, starting from the top of your saved file"))))
+
 (defun tutorial-enable ()
   "Enable tutorial mode: ensure save directory exists, initialize working copy if needed,
   open the save file, store the buffer and hook into after-save for progress tracking."

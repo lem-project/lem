@@ -540,3 +540,7 @@ prefixes marked as :intermediate-p are flattened and shown with concatenated key
       (if resolved
           (show-transient resolved)
           (hide-transient)))))
+
+(define-command transient-always-show () ()
+  "Show all current keybindings in a perpetual transient."
+  (setf *transient-always-show* (not *transient-always-show*)))

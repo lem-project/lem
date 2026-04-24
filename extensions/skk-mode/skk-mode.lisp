@@ -49,7 +49,7 @@
 ;;; Keymap
 
 (defvar *skk-mode-keymap*
-  (make-keymap :name '*skk-mode-keymap*)
+  (make-keymap :description '*skk-mode-keymap*)
   "Keymap for SKK mode. Binds printable characters for Japanese input.")
 
 ;; Bind all lowercase letters to skk-self-insert

@@ -29,6 +29,14 @@ Examples:
   (defun set-last-read-key-sequence (key-sequence)
     (setf last-read-key-sequence key-sequence)))
 
+(defmacro with-last-read-key-sequence (&body body)
+  "execute BODY with `last-read-key-sequence' temporarily set to NIL, preserving its original value."
+  (alexandria:with-gensyms (old-value)
+    `(let ((,old-value (last-read-key-sequence)))
+       (set-last-read-key-sequence nil)
+       (unwind-protect (progn ,@body)
+         (set-last-read-key-sequence ,old-value)))))
+
 (let ((key-recording-status-name " Def"))
   (defun start-record-key ()
     (modeline-add-status-list key-recording-status-name)
@@ -139,6 +147,28 @@ Pressing the same prefix key twice produces that key."
   (pop *this-command-keys*)
   (push key *unread-keys*))
 
+(defun count-intermediate-keys (keymap kseq)
+  "count how many keys in KSEQ traversed through intermediate prefixes."
+  (let ((count 0))
+    (labels ((find-prefix-matches (km key)
+               "find prefix children of KM matching KEY, recursing into child keymaps."
+               (when (and (typep km 'keymap) (keymap-active-p km))
+                 (append (loop for item in (keymap-prefixes km)
+                               when (and (prefix-active-p item)
+                                         (equal (prefix-key item) key))
+                                 collect item)
+                         (loop for child in (keymap-children km)
+                               append (find-prefix-matches child key)))))
+             (walk (binding keys)
+               (when keys
+                 (let ((matches (find-prefix-matches binding (car keys))))
+                   (dolist (match matches)
+                     (when (prefix-intermediate-p match)
+                       (incf count))
+                     (walk (prefix-suffix match) (cdr keys)))))))
+      (walk keymap kseq))
+    count))
+
 (defun read-command ()
   (let ((event (read-event)))
     (etypecase event
@@ -146,16 +176,70 @@ Pressing the same prefix key twice produces that key."
        (set-last-mouse-event event)
        (find-mouse-command event))
       (key
-       (let* ((cmd (lookup-keybind event))
-              (kseq (list event)))
-         (loop
-           (cond ((prefix-command-p cmd)
-                  (let ((event (read-key)))
-                    (setf kseq (nconc kseq (list event)))
-                    (setf cmd (lookup-keybind kseq))))
-                 (t
-                  (set-last-read-key-sequence kseq)
-                  (return cmd)))))))))
+       (let ((prefix)
+             (suffix)
+             (behavior)
+             (kseq (list event)))
+         (labels ((reset ()
+                    (setf prefix (lookup-keybind kseq))
+                    (setf suffix (when prefix (prefix-suffix prefix)))
+                    (setf behavior (when prefix (prefix-behavior prefix)))))
+           (loop
+             (reset)
+             (when prefix
+               (prefix-invoke prefix))
+             ;; if suffix was a function we call it and set to NIL so that we dont return it
+             (when (functionp suffix)
+               (funcall suffix)
+               (setf suffix nil))
+             (cond ((prefix-command-p suffix)
+                    (when (typep suffix 'keymap)
+                      (keymap-activate suffix))
+                    (let ((event (read-key)))
+                      (setf kseq (nconc kseq (list event)))
+                      (reset)))
+                   (t
+                    (cond
+                      ;; note: menu in these comments might mean keymaps, i used menu because
+                      ;; this is mostly intended for transient keymaps (i.e. key menus).
+                      ;; :drop removes the current key from kseq without changing "menus".
+                      ;; used for "infix" keys (toggles, choices) that act in-place.
+                      ;; also pops any intermediate prefix keys so the recorded
+                      ;; sequence reflects only the menu-level key that was pressed.
+                      ((eq behavior :drop)
+                       ;; command symbols are executed via call-command before dropping.
+                       (when suffix
+                         (call-command suffix nil))
+                       (setf kseq (butlast kseq))
+                       (dotimes (_ (count-intermediate-keys *root-keymap* kseq))
+                         (setf kseq (butlast kseq)))
+                       (set-last-read-key-sequence kseq)
+                       ;; TODO: this check here shouldnt be necessary but it currently is.
+                       (if (null kseq)
+                           (progn
+                             (keymap-activate *root-keymap*)
+                             (return nil))
+                           (reset)))
+                      ;; :back removes the current key and the key that entered
+                      ;; the current menu, navigating up one menu level.
+                      ;; also pops any intermediate prefix keys in between.
+                      ((eq behavior :back)
+                       (setf kseq (butlast kseq))
+                       (dotimes (_ (count-intermediate-keys *root-keymap* kseq))
+                         (setf kseq (butlast kseq)))
+                       ;; pop the key that entered the current "menu"
+                       (setf kseq (butlast kseq))
+                       (set-last-read-key-sequence kseq)
+                       (reset))
+                      ((eq behavior :cancel)
+                       (setf kseq nil)
+                       (set-last-read-key-sequence nil)
+                       (keymap-activate *root-keymap*)
+                       (return nil))
+                      (t
+                       (set-last-read-key-sequence kseq)
+                       (keymap-activate *root-keymap*)
+                       (return suffix))))))))))))
 
 (defun read-key-sequence ()
   (read-command)
@@ -171,8 +255,9 @@ Pressing the same prefix key twice produces that key."
     (do-command-loop (:interactive nil)
       (when (null *unread-keys*)
         (return))
-      (let ((*this-command-keys* nil))
-        (call-command (read-command) nil)))))
+      (let* ((*this-command-keys* nil)
+             (cmd (read-command)))
+        (call-command cmd nil)))))
 
 (defun sit-for (seconds &optional (update-window-p t) (force-update-p nil))
   (when update-window-p (redraw-display :force force-update-p))

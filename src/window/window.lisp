@@ -1049,6 +1049,8 @@ Each header window is set to full display width and its preferred height."
     (window-set-size window (display-width) (header-window-height window)))
   (alexandria:when-let (window (frame-rightside-window (current-frame)))
     (resize-rightside-window window))
+  (alexandria:when-let (window (frame-bottomside-window (current-frame)))
+    (resize-bottomside-window window (window-height window)))
   (balance-windows))
 
 (defun update-on-display-resized ()

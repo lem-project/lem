@@ -275,16 +275,14 @@
   `(let ((*vi-current-window* ,window))
      ,@body))
 
-(defstruct (vi-keymap (:include keymap)
-                      (:constructor %make-vi-keymap)))
+(defclass vi-keymap (keymap*)
+  ())
 
-(defun make-vi-keymap (&rest args &key undef-hook parent name)
-  (declare (ignore undef-hook parent name))
-  (let ((keymap (apply #'%make-vi-keymap args)))
-    (push keymap *keymaps*)
-    keymap))
+(defun make-vi-keymap (&rest args &key undef-hook base description)
+  (declare (ignore undef-hook base description))
+  (apply 'make-instance 'vi-keymap (alexandria:remove-from-plist args :base)))
 
-(defmacro define-keymap (name &key undef-hook parent)
-  `(defvar ,name (make-vi-keymap :name ',name
-                                 :undef-hook ,undef-hook
-                                 :parent ,parent)))
+(defmacro define-keymap (name &key undef-hook)
+  (declare (ignore parent))
+  `(defvar ,name (make-vi-keymap :description ',name
+                                 :undef-hook ,undef-hook)))

@@ -41,7 +41,7 @@
   "Current overlay used to highlight the selected function in source view.")
 
 (defvar *living-canvas-keymap*
-  (lem:make-keymap :name '*living-canvas-keymap*))
+  (lem:make-keymap :description '*living-canvas-keymap*))
 
 ;;; Attributes
 

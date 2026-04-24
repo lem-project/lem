@@ -1,20 +1,20 @@
 ## Move
 | Command                                                                                                       | Key bindings  | Documentation                                         |
 |---------------------------------------------------------------------------------------------------------------|---------------|-------------------------------------------------------|
-| [next-line](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L66)                          | C-n, Down     | Move the cursor to next line.                         |
+| [next-line](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L66)                          | Down, C-n     | Move the cursor to next line.                         |
 | [next-logical-line](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L73)                  |               | Move the cursor to the next logical line.             |
-| [previous-line](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L80)                      | C-p, Up       | Move the cursor to the previous line.                 |
+| [previous-line](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L80)                      | Up, C-p       | Move the cursor to the previous line.                 |
 | [previous-logical-line](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L84)              |               | Move the cursor to the previous logical line.         |
-| [forward-char](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L88)                       | C-f, Right    | Move the cursor to the next character.                |
-| [backward-char](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L94)                      | C-b, Left     | Move the cursor to the previous character.            |
-| [move-to-beginning-of-buffer](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L99)        | M-<, C-Home   | Move the cursor to the beginning of the buffer.       |
-| [move-to-end-of-buffer](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L104)             | M->, C-End    | Move the cursor to the end of the buffer.             |
-| [move-to-beginning-of-line](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L109)         | C-a, Home     | Move the cursor to the beginning of the line.         |
+| [forward-char](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L88)                       | Right, C-f    | Move the cursor to the next character.                |
+| [backward-char](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L94)                      | Left, C-b     | Move the cursor to the previous character.            |
+| [move-to-beginning-of-buffer](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L99)        | C-Home, M-<   | Move the cursor to the beginning of the buffer.       |
+| [move-to-end-of-buffer](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L104)             | C-End, M->    | Move the cursor to the end of the buffer.             |
+| [move-to-beginning-of-line](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L109)         | Home, C-a     | Move the cursor to the beginning of the line.         |
 | [move-to-beginning-of-logical-line](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L125) |               | Move the cursor to the beginning of the logical line. |
-| [move-to-end-of-line](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L129)               | C-e, End      | Move the cursor to the end of the line.               |
+| [move-to-end-of-line](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L129)               | End, C-e      | Move the cursor to the end of the line.               |
 | [move-to-end-of-logical-line](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L135)       |               | Move the cursor to the end of the logical line.       |
-| [next-page](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L139)                         | C-v, PageDown | Move the cursor to the next page by one page.         |
-| [previous-page](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L147)                     | M-v, PageUp   | Move the cursor to the previous page by one page.     |
+| [next-page](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L139)                         | PageDown, C-v | Move the cursor to the next page by one page.         |
+| [previous-page](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L147)                     | PageUp, M-v   | Move the cursor to the previous page by one page.     |
 | [next-page-char](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L155)                    | C-x ]         | Move the cursor to the next page character (^L).      |
 | [previous-page-char](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L165)                | C-x [         | Move the cursor to the previous page character (^L).  |
 | [goto-line](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L169)                         | M-g           | Move the cursor to the specified line number.         |
@@ -26,8 +26,8 @@
 | [newline](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L100)                    | Return            | Insert a new line.                                                                                                                                                                                           |
 | [open-line](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L104)                  | C-o               | Insert a new line without moving the cursor position.                                                                                                                                                        |
 | [quoted-insert](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L108)              | C-q               | Insert the next entered key (including control characters).                                                                                                                                                  |
-| [delete-next-char](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L123)           | C-d, Delete       | Delete the next character.                                                                                                                                                                                   |
-| [delete-previous-char](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L146)       | C-h, Backspace    | Delete the previous character.                                                                                                                                                                               |
+| [delete-next-char](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L123)           | Delete, C-d       | Delete the next character.                                                                                                                                                                                   |
+| [delete-previous-char](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L146)       | Backspace, C-h    | Delete the previous character.                                                                                                                                                                               |
 | [copy-region](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L160)                | M-w               | Copy the text of region.                                                                                                                                                                                     |
 | [copy-region-to-clipboard](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L166)   |                   | Copy the selected text to the clipboard.                                                                                                                                                                     |
 | [kill-region](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L178)                | C-w               | Kill the text of region.                                                                                                                                                                                     |
@@ -49,7 +49,7 @@ current line.                                                                   
 | [delete-indentation](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L356)         | M-^               | Merge the current line with the previous line.                                                                                                                                                               |
 | [transpose-characters](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L376)       | C-t               | Swaps the characters before and after the cursor.                                                                                                                                                            |
 | [undo](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L393)                       | C-\               | Undo.                                                                                                                                                                                                        |
-| [redo](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L400)                       | C-_, C-/          | Redo.                                                                                                                                                                                                        |
+| [redo](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L400)                       | C-/, C-_          | Redo.                                                                                                                                                                                                        |
 | [delete-trailing-whitespace](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L427) |                   | Removes all end-of-line and end-of-buffer whitespace from the current buffer.                                                                                                                                |
 | [mark-and-forward-char](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L482)      | Shift-Right       | Sets a mark if none is set, then moves cursor forward by n characters                                                                                                                                        |
 | [mark-and-backward-char](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L488)     | Shift-Left        | Sets a mark if none is set, then moves cursor backward by n characters                                                                                                                                       |
@@ -59,17 +59,17 @@ current line.                                                                   
 ## Mark
 | Command                                                                                          | Key bindings | Documentation                                                  |
 |--------------------------------------------------------------------------------------------------|--------------|----------------------------------------------------------------|
-| [mark-set](https://github.com/lem-project/lem/blob/main/src/commands/mark.lisp#L15)              | C-@, C-Space | Sets a mark at the current cursor position.                    |
+| [mark-set](https://github.com/lem-project/lem/blob/main/src/commands/mark.lisp#L15)              | C-Space, C-@ | Sets a mark at the current cursor position.                    |
 | [exchange-point-mark](https://github.com/lem-project/lem/blob/main/src/commands/mark.lisp#L23)   | C-x C-x      | Exchange the current cursor position with the marked position. |
 | [mark-set-whole-buffer](https://github.com/lem-project/lem/blob/main/src/commands/mark.lisp#L31) | C-x h        | Select the whole buffer as a region.                           |
 
 ## Word
 | Command                                                                                          | Key bindings                    | Documentation                                             |
 |--------------------------------------------------------------------------------------------------|---------------------------------|-----------------------------------------------------------|
-| [forward-word](https://github.com/lem-project/lem/blob/main/src/commands/word.lisp#L84)          | M-f, C-Right                    | Move to cursor to next word.                              |
-| [previous-word](https://github.com/lem-project/lem/blob/main/src/commands/word.lisp#L88)         | M-b, C-Left                     | Move to cursor to previous word                           |
-| [delete-word](https://github.com/lem-project/lem/blob/main/src/commands/word.lisp#L92)           | M-d, C-Delete                   | Delete the next word.                                     |
-| [backward-delete-word](https://github.com/lem-project/lem/blob/main/src/commands/word.lisp#L106) | M-C-h, M-Backspace, C-Backspace | Delete the previous word.                                 |
+| [forward-word](https://github.com/lem-project/lem/blob/main/src/commands/word.lisp#L84)          | C-Right, M-f                    | Move to cursor to next word.                              |
+| [previous-word](https://github.com/lem-project/lem/blob/main/src/commands/word.lisp#L88)         | C-Left, M-b                     | Move to cursor to previous word                           |
+| [delete-word](https://github.com/lem-project/lem/blob/main/src/commands/word.lisp#L92)           | C-Delete, M-d                   | Delete the next word.                                     |
+| [backward-delete-word](https://github.com/lem-project/lem/blob/main/src/commands/word.lisp#L106) | C-Backspace, M-Backspace, M-C-h | Delete the previous word.                                 |
 | [downcase-region](https://github.com/lem-project/lem/blob/main/src/commands/word.lisp#L137)      | C-x C-l                         | Replaces the selected region with a downcase.             |
 | [uppercase-region](https://github.com/lem-project/lem/blob/main/src/commands/word.lisp#L141)     | C-x C-u                         | Replaces the selected region with a uppercase.            |
 | [capitalize-word](https://github.com/lem-project/lem/blob/main/src/commands/word.lisp#L162)      | M-c                             | Replace the following word with capital-case.             |
@@ -89,7 +89,7 @@ current line.                                                                   
 | [backward-list](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L49)   | M-C-p            | Move the cursor to the backward list.             |
 | [down-list](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L53)       | M-C-d            | Move the cursor to the inner expression.          |
 | [up-list](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L57)         | M-C-u            | Move the cursor to the outer expression.          |
-| [mark-sexp](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L62)       | M-C-@, M-C-Space | Select the forward expression as a region.        |
+| [mark-sexp](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L62)       | M-C-Space, M-C-@ | Select the forward expression as a region.        |
 | [kill-sexp](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L72)       | M-C-k            | Kill the forward expression as a region.          |
 | [transpose-sexps](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L81) | M-C-t            | Swaps the expression before and after the cursor. |
 
@@ -152,7 +152,7 @@ Supported modes include: c-mode with clang-format, go-mode with gofmt, js-mode a
 | [recenter](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L120)                         | C-l            | Scroll so that the cursor is in the middle.                           |
 | [split-active-window-vertically](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L134)   | C-x 2          | Split the current window vertically.                                  |
 | [split-active-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L140) | C-x 3          | Split the current window horizontally.                                |
-| [next-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L146)                      | C-x o, M-o     | Go to the next window.                                                |
+| [next-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L146)                      | M-o, C-x o     | Go to the next window.                                                |
 | [previous-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L158)                  | M-O            |                                                                       |
 | [switch-to-last-focused-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L161)    |                | Go to the window that was last in focus.                              |
 | [window-move-down](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L169)                 |                | Go to the window below.                                               |
@@ -160,14 +160,14 @@ Supported modes include: c-mode with clang-format, go-mode with gofmt, js-mode a
 | [window-move-right](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L179)                |                | Go to the window on the right.                                        |
 | [window-move-left](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L184)                 |                | Go to the window on the left.                                         |
 | [delete-other-windows](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L189)             | C-x 1          | Delete all other windows.                                             |
-| [delete-active-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L214)             | C-x 0, M-q     | Delete the active window.                                             |
+| [delete-active-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L214)             | M-q, C-x 0     | Delete the active window.                                             |
 | [quit-active-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L222)               |                | Quit the active window. This is a command for a popped-up window.     |
 | [grow-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L227)                      | C-x ^          | Grow the window's height.                                             |
 | [shrink-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L235)                    | C-x C-z        | Shrink the window's height.                                           |
 | [grow-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L243)         | C-x }          | Grow the window's width.                                              |
 | [shrink-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L251)       | C-x {          | Shrink the window's width.                                            |
-| [scroll-down](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L262)                      | C-Down, M-Down | Scroll down.                                                          |
-| [scroll-up](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L276)                        | C-Up, M-Up     | Scroll up.                                                            |
+| [scroll-down](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L262)                      | M-Down, C-Down | Scroll down.                                                          |
+| [scroll-up](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L276)                        | M-Up, C-Up     | Scroll up.                                                            |
 | [find-file-next-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L288)            | C-x 4 f        | Open a file in another window. Split the screen vertically if needed. |
 | [read-file-next-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L289)            | C-x 4 r        | Read a file in another window.                                        |
 | [select-buffer-next-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L290)        | C-x 4 b        | Select a buffer in another window.                                    |
@@ -188,11 +188,11 @@ Supported modes include: c-mode with clang-format, go-mode with gofmt, js-mode a
 | Command                                                                                      | Key bindings | Documentation                                                                |
 |----------------------------------------------------------------------------------------------|--------------|------------------------------------------------------------------------------|
 | [describe-key](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L15)      | C-x ?        | Tell what is the command associated to a keybinding.                         |
-| [describe-bindings](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L44) |              | Describe the bindings of the buffer's current major mode.                    |
-| [list-modes](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L66)        |              | Output all available major and minor modes.                                  |
-| [describe-mode](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L87)     |              | Show information about current major mode and enabled minor modes.           |
-| [apropos-command](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L113)  |              | Find all symbols in the running Lisp image whose names match a given string. |
-| [lem-version](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L124)      |              | Display Lem's version.                                                       |
+| [describe-bindings](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L43) |              | Describe the bindings of the buffer's current major mode.                    |
+| [list-modes](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L65)        |              | Output all available major and minor modes.                                  |
+| [describe-mode](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L86)     |              | Show information about current major mode and enabled minor modes.           |
+| [apropos-command](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L112)  |              | Find all symbols in the running Lisp image whose names match a given string. |
+| [lem-version](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L123)      |              | Display Lem's version.                                                       |
 
 ## Font
 | Command                                                                                       | Key bindings | Documentation                                                        |
@@ -210,7 +210,7 @@ Supported modes include: c-mode with clang-format, go-mode with gofmt, js-mode a
 | [exit-lem](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L54)           | C-x C-c        | Ask for modified buffers before exiting lem.                 |
 | [quick-exit](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L67)         |                | Exit the lem job and kill it.                                |
 | [execute-command](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L111)   | M-x            | Read a command name, then read the ARG and call the command. |
-| [show-context-menu](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L126) | Shift-F10, M-h |                                                              |
+| [show-context-menu](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L126) | M-h, Shift-F10 |                                                              |
 | [load-library](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L132)      |                | Load the Lisp library named NAME.                            |
 
 ## Frame

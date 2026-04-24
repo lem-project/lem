@@ -1,24 +1,24 @@
-* behavior
-setting ~*transient-always-show*~ to ~t~ makes it show everything but its not the default behavior. unless a specific mode enforces a transient keymap the default behavior is to not show anything.
+
+* What is a transient?
+
+A transient is a text pop-up window that shows keybindings and their
+associated commands.
+
+The pop-up can stay in place when the user presses a key, which allows
+to always show help on-screen.
+
+
+* Behavior
+
+Setting ~lem/transient::*transient-always-show*~ to ~t~ makes it show everything but its not the default behavior. unless a specific mode enforces a transient keymap the default behavior is to not show anything.
 ~shift+alt+up/down/right/left~ scroll the keybinding popup.
 this design is because it might make some sense to enable the transient popup for specific modes/popups but not others. but this variable i mentioned that makes it show everything everywhere.
 keymaps that dont define the transient properties explicitly inherit default display properties, which makes them show up as a simple grid.
-* design
-the code for the transient extension is only vaguely inspired by emacs' transient since i never really used it much and only skimmed briefly through the code of transient.el for initial inspiration. the implementation i ended up with is the one that made the most sense to me at the time.
-the design is relatively simple. it mainly makes use of 2 concepts, a keymap and a prefix.
-- a prefix is essentially a single key. a key sequence is basically a sequence of prefixes each leading to one another (via intermediate keymaps that store these prefixes as children).
-  a prefix contains the field ~suffix~, which is what comes "after" the prefix. a suffix can be one of
-  - command: if the suffix is a command, when this prefix is reached, we run the command.
-  - keymap: if the suffix is a keymap, then we call this keymap a "prefixed keymap", as there is a prefix that leads to it. when this prefix is entered, we arrive at this keymap.
-- a keymap stores a list of prefixes, and a list of keymaps. the prefixes it stores represent the keys that are bound in this keymap.
-  keymaps can be thought of as containers, the keymaps that are stored directly as children are mostly for maintaining a structure and possibly for separating different functionalities that are related. but they also are used to decide the visual structure of the popup later in the transient extension.
-** keymap hierarchy
-currently, the keymap structure uses different concepts of a 'hierarchy' for different use cases, such as a hierarchy for keymap precedence, another for keymap inheritance, and another for keymap prefixing. the 3rd is naturally distinct but the first 2 have some form of relation and im thinking of a way to unify them (and possibly turning keymaps into types instead of just instances).
-* issues
-- we need to turn lambda suffixes into commands. together with rewriting the event/key-reading loop to make help keys work properly. currently running help-key on a key sequence that is bound to a lambda doesnt function like you'd expect.
-- performance may be a concern since the original implementation had hashmaps which made the traversal as fast as ~O(log n)~ (its actually ~O(1)~ because the key sequences are always gonna be constant in length) while the new one traverses the entire tree to find a key which is ~O(n)~. i dont think its really an issue unless lem is used in a script since the keymap traversal happens as a person types and it would be absurd if you could type keys faster than a computer could traverse a simple keybinding tree. but there is no reason that we couldnt make the new data structure traverse things in ~O(log n)~ time anyway.
-* simple example
-defining a keymap with a few keys can be done like:
+
+* Simple example
+
+Defining a keymap with a few keys can be done like:
+
 #+begin_src lisp :eval no
   (define-command example-command () ()
     (message "example message"))
@@ -30,17 +30,26 @@ defining a keymap with a few keys can be done like:
 
   (define-key *global-keymap* "C-c t" *demo-keymap-simple*)
 #+end_src
-this will define a keymap with some special properties that make it behave as a "transient" keymap. but this still just defines a keymap instance, it just assigns some properties that give a special behavior to that instance.
+
+This will define a keymap with some special properties that make it behave as a "transient" keymap. but this still just defines a keymap instance, it just assigns some properties that give a special behavior to that instance.
 when a key sequence is assigned to a keymap, it means that once that key is invoked the keymap will be entered. and if that keymap has the property ~:show-p~ set to ~t~ a popup will appear at the bottom showing the keybindings. the macro ~define-transient~ sets ~:show-p~ to ~t~ by default.
-this example assigns ~C-c t~ to a keymap, so when we hit ~C-c t~ the popup will contain the following text:
+this example assigns ~C-c t~ to a keymap, so when we hit ~C-c t~ the
+popup will contain the following text:
+
 #+begin_src text
   [my demo keymap]
   a   demo prefix 1
   b   demo prefix 2
 #+end_src
+
 (in the actual popup some things will be colorized to distinguish them.)
-* vertical alignment
-keymaps can act as visual containers, we can have keymaps display as separate columns. the way children keymaps are layed out is determined by the ~:display-style~ property which defaults to ~:row~.
+
+* Vertical alignment
+
+Keymaps can act as visual containers, we can have keymaps display as
+separate columns. The way children keymaps are layed out is determined
+by the ~:display-style~ property which defaults to ~:row~.
+
 #+begin_src lisp :eval no
   (define-command example-command () ()
     (message "example message"))
@@ -56,14 +65,22 @@ keymaps can act as visual containers, we can have keymaps display as separate co
 
   (define-key *global-keymap* "C-c t" *demo-keymap-columns*)
 #+end_src
-notice that children prefixes are always displayed in a column.
+
+Notice that children prefixes are always displayed in a column.
+
 #+begin_src text
   [my demo keymap]
   a   demo prefix 1 | c   demo prefix 3
   b   demo prefix 2 | d   demo prefix 4
 #+end_src
+
 * CLOS overrides
-the code makes heavy use of CLOS. properties are stored in a plist but grabbed/modified using generic methods. consider the following example which defines behavior using generic method overrides, and allows for "dynamic" behavior depending on the context.
+
+The code makes heavy use of CLOS. properties are stored in a plist but
+grabbed/modified using generic methods. Consider the following example
+which defines behavior using generic method overrides, and allows for
+"dynamic" behavior depending on the context.
+
 #+begin_src lisp :eval no
   (lem/transient:define-prefix *prefix-1*
     :key "M-h"
@@ -102,9 +119,17 @@ the code makes heavy use of CLOS. properties are stored in a plist but grabbed/m
   (defmethod prefix-suffix ((p (eql *prefix-1*)))
     'example-command)
 #+end_src
-the ~:drop~ property makes the keys not drop the whole sequence, so that we dont have to type ~C-c t~ more than once if we want to execute keybindings from ~*keymap-1*~ multiple times.
-* infixes and variables
-infixes can eb useful for adjusting values using keybindings. consider the following example which provides a way to toggle a boolean using an "infix".
+
+The ~:drop~ property makes the keys not drop the whole sequence, so
+that we dont have to type ~C-c t~ more than once if we want to execute
+keybindings from ~*keymap-1*~ multiple times.
+
+* Infixes and variables
+
+Infixes can be useful for adjusting values using keybindings. Consider
+the following example which provides a way to toggle a boolean using
+an "infix".
+
 #+begin_src lisp :eval no
   (defvar *my-bool*
     nil
@@ -123,3 +148,57 @@ infixes can eb useful for adjusting values using keybindings. consider the follo
   (define-command demo-run () ()
     (message "variable value: ~A" *my-bool*))
 #+end_src
+
+* Design
+
+The code for the transient extension is only vaguely inspired by
+Emacs' transient since I (@mahmoodsh36 aka @metnal) never really used
+it much and only skimmed briefly through the code of transient.el for
+initial inspiration. The implementation I ended up with is the one
+that made the most sense to me at the time.
+
+The design is relatively simple. It mainly makes use of 2 concepts, a
+keymap and a prefix.
+
+- a prefix is essentially a single key. A key sequence is basically a
+  sequence of prefixes each leading to one another (via intermediate
+  keymaps that store these prefixes as children).
+  A prefix contains the field ~suffix~, which is what comes "after"
+  the prefix. A suffix can be one of
+  - command: if the suffix is a command, when this prefix is reached,
+    we run the command.
+  - keymap: if the suffix is a keymap, then we call this keymap a
+    "prefixed keymap", as there is a prefix that leads to it. When
+    this prefix is entered, we arrive at this keymap.
+- a keymap stores a list of prefixes, and a list of keymaps. The
+  prefixes it stores represent the keys that are bound in this keymap.
+  keymaps can be thought of as containers, the keymaps that are stored
+  directly as children are mostly for maintaining a structure and
+  possibly for separating different functionalities that are
+  related. But they also are used to decide the visual structure of
+  the popup later in the transient extension.
+
+** Keymap hierarchy
+
+Currently, the keymap structure uses different concepts of a
+'hierarchy' for different use cases, such as a hierarchy for keymap
+precedence, another for keymap inheritance, and another for keymap
+prefixing. The 3rd is naturally distinct but the first 2 have some
+form of relation and im thinking of a way to unify them (and possibly
+turning keymaps into types instead of just instances).
+
+* Issues
+- we need to turn lambda suffixes into commands. Together with
+  rewriting the event/key-reading loop to make help keys work
+  properly. Currently running help-key on a key sequence that is bound
+  to a lambda doesnt function like you'd expect.
+- performance may be a concern since the original implementation had
+  hashmaps which made the traversal as fast as ~O(log n)~ (its
+  actually ~O(1)~ because the key sequences are always gonna be
+  constant in length) while the new one traverses the entire tree to
+  find a key which is ~O(n)~. I dont think its really an issue unless
+  lem is used in a script since the keymap traversal happens as a
+  person types and it would be absurd if you could type keys faster
+  than a computer could traverse a simple keybinding tree. But there
+  is no reason that we couldnt make the new data structure traverse
+  things in ~O(log n)~ time anyway.

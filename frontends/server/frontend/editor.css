@@ -6,7 +6,7 @@
 .lem-cursor {
   position: absolute;
   pointer-events: none;
-  z-index: 100;
+  z-index: 300;
   animation: lem-cursor-blink 1s step-end infinite;
   overflow: hidden;
   white-space: pre;

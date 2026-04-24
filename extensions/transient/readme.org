@@ -7,13 +7,14 @@ screen, that shows keybindings and their associated commands.
 The pop-up can stay in place when the user presses a key, which allows
 to always show help on-screen.
 
-#+html: <div style="text-align: center;">[[ <img src="transient-dashboard.png"/> ]]</div>
+#+html: <div style="text-align: center;"> <img src="transient-dashboard.png"/> </div>
 
 
 * Default behavior
 
-Setting ~lem/transient:*transient-always-show*~ to ~t~ makes it show
-everything but its not the default behavior.
+Using `Alt-x transient-always-show` or setting ~lem/transient:*transient-always-show*~ to ~t~
+displays a transient that shows
+every keybinding bound in the current keymap(s) (as seen in the screenshot above).
 
 Unless a specific mode enforces a transient keymap the default
 behavior is to not show anything.
@@ -45,7 +46,7 @@ Defining a keymap with a few keys can be done like:
 Now when pressing =C-c t= you see the transient, offering you to press
 one key (and one is grayed out):
 
-#+html: <div style="text-align: center;">[[ <img src="transient-simple.png"/> ]]</div>
+#+html: <div style="text-align: center;"> <img src="transient-simple.png"/> </div>
 
 When you press =a=, the command =example-command= is called.
 

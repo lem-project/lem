@@ -5,7 +5,7 @@
 (in-package :lem-tutor)
  
 (defun tutorial-text ()
-   (merge-pathnames "original.txt" (asdf:system-source-directory :lem-tutor)))
+   (merge-pathnames "tutorial-basics.txt" (asdf:system-source-directory :lem-tutor)))
 (defun tutorial-save-file ()
   (merge-pathnames "lem-tutor-saves/lem-tutor-save.txt" (lem-home)))
 (defun tutorial-progress ()

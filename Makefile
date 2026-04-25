@@ -81,6 +81,7 @@ test:
 	$(LISP) --load .qlot/setup.lisp \
 		--eval '(asdf:test-system "lem-tests")' \
 		--eval '(asdf:test-system "lem-vi-mode")' \
+		--eval '(asdf:test-system "lem-transient")' \
 		--quit
 
 doc:

@@ -19,6 +19,7 @@
    :prefix-active-p
    :prefix-suffix
    :transient-mode
+   :find-prefix-by-id
    ))
 
 (in-package :lem/transient)

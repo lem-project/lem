@@ -43,6 +43,9 @@ by name with Alt-x.
 Escape and C-g both cancel and dismiss pop-ups throughout Lem.
 When in doubt, press one or the other.
 
+Lem also has a vi-mode for those who prefer it. To enable it:
+  Alt-x vi-mode
+
 REFERENCE
 
 Two commands are useful references throughout this tutorial:
@@ -432,7 +435,10 @@ SUMMARY
   Return          Open buffer at point
 
 ------------------------------------------------------------------------
+LESSON 4: EDITING
 
+
+------------------------------------------------------------------------
 APPENDIX
 
 This section covers useful features that don't belong to a single

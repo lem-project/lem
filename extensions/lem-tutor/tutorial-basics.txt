@@ -17,6 +17,14 @@ They mean the same thing.
 
 Key sequences like C-x C-c mean: first C-x, then C-c.
 
+CONVENTIONS
+
+Throughout this tutorial, commands are shown in this format:
+  key     command-name   Description of what it does
+
+For commands without a key binding, Alt-x takes the place of the key:
+  Alt-x   command-name   Description of what it does
+
 NAVIGATION
 
 Two keys that are useful right now:
@@ -127,7 +135,7 @@ the paragraph above. M-} moves forward again.
 -----
 >> Use M-} and M-{ to move between the two paragraphs above.
 -----
-  
+
 BUFFER MOVEMENT
 
 A buffer holds your text in memory. It may or may not be saved to a file -
@@ -167,7 +175,7 @@ Knowing your current line number helps here - see LINE NUMBERS at the
 end of this file.
 
 -----
->> Press M-g, enter 1, press Enter. Use M-< or M-> and C-v or M-v 
+>> Press M-g, enter 1, press Enter. Use M-< or M-> and C-v or M-v
    to orient yourself.
 -----
 
@@ -182,23 +190,31 @@ RECENTERING
 
 SUMMARY
 
-  C-f / C-b    Forward / backward one character
-  C-n / C-p    Next / previous line
-  C-a / C-e    Beginning / end of line
-  M-f / M-b    Forward / backward one word
-  M-} / M-{    Forward / backward one paragraph
-  C-v / M-v    Scroll down / up one screen
-  C-s / C-r    Search forward / backward
-  M-< / M->    Beginning / end of buffer
-  M-g          Go to line number
-  C-l          Recenter view on cursor
+  C-f   forward-char                 Move forward one character
+  C-b   backward-char                Move backward one character
+  C-n   next-line                    Move to next line
+  C-p   previous-line                Move to previous line
+  C-a   move-to-beginning-of-line    Move to beginning of line
+  C-e   move-to-end-of-line          Move to end of line
+  M-f   forward-word                 Move forward one word
+  M-b   previous-word                Move backward one word
+  M-}   forward-paragraph            Move forward one paragraph
+  M-{   backward-paragraph           Move backward one paragraph
+  C-v   next-page                    Scroll down one screen
+  M-v   previous-page                Scroll up one screen
+  C-s   isearch-forward              Search forward
+  C-r   isearch-backward             Search backward
+  M-<   move-to-beginning-of-buffer  Move to beginning of buffer
+  M->   move-to-end-of-buffer        Move to end of buffer
+  M-g   goto-line                    Go to line number
+  C-l   recenter                     Recenter view on cursor
 
 ------------------------------------------------------------------------
 
 LESSON 2: FILES AND CONFIGURATION
 
-In Lem, the text you work with lives in a buffer. A buffer may be 
-tied to a file on disk, or exist only in memory. When you open a 
+In Lem, the text you work with lives in a buffer. A buffer may be
+tied to a file on disk, or exist only in memory. When you open a
 file, Lem loads it into a buffer. When you save, the buffer contents
 are written to that file.
 
@@ -248,12 +264,12 @@ ADDING CONFIGURATION
 
 Each setting is a Lisp form. For example, to enable line numbers at start-up.
 Type the expression below in your init.lisp file. Save with C-x C-s.
-Then close and re-open Lem. 
+Then close and re-open Lem.
 
   (lem/line-numbers:toggle-line-numbers)
 
 Line numbers do not appear in the special buffers like *tmp*, *dashboard* or
-*messages*. To see if it worked open a text or code file. Your init.lisp file 
+*messages*. To see if it worked open a text or code file. Your init.lisp file
 itself should now have line-numbers.
 
 In your init file you can write normal Lisp code, including your own commands
@@ -293,12 +309,11 @@ completion to pick from the list.
 
 SUMMARY
 
-  C-x C-f   Open a file
-  C-x C-s   Save current buffer
-  C-x C-w   Save to a new filename
-  C-x s     Save all modified buffers
-  C-x C-h   Open a recent file
-
+  C-x C-f   find-file             Open a file
+  C-x C-s   save-current-buffer   Save current buffer
+  C-x C-w   write-file            Save to a new filename
+  C-x s     save-some-buffers     Save all modified buffers
+  C-x C-h   find-recent-file      Open a recent file
 ------------------------------------------------------------------------
 
 LESSON 3: BUFFERS AND WINDOWS
@@ -352,7 +367,7 @@ not the orientation of the dividing bar.
   C-x 0   delete-active-window
   C-x 4 b select-buffer-next-window
 
-The most useful split for writing code is side by side -- C-x 3 -- 
+The most useful split for writing code is side by side -- C-x 3 --
 keeping a file on the left and a reference or REPL on the right.
 
 -----
@@ -389,8 +404,8 @@ OTHER BUFFER COMMANDS
 
 WORKSPACES (FRAME MULTIPLEXER)
 
-Lem supports multiple workspaces - separate window arrangements 
-within the same Lem instance. Each workspace has its own buffer 
+Lem supports multiple workspaces - separate window arrangements
+within the same Lem instance. Each workspace has its own buffer
 layout.
 
   C-z c   frame-multiplexer-create-with-new-buffer-list  Create a new workspace
@@ -399,7 +414,7 @@ layout.
   C-z d   frame-multiplexer-delete                       Delete current workspace
 
 Useful when you want to keep a separate layout for different tasks -
-for example, one workspace for editing, another for the REPL and 
+for example, one workspace for editing, another for the REPL and
 debugger.
 
 -----
@@ -409,36 +424,174 @@ debugger.
 
 SUMMARY
 
-  C-x b                 Switch to buffer by name
-  C-x C-b               Open the buffer list
-  C-x Left/Right        Previous / next buffer
-  C-x k                 Kill current buffer
-  C-x 4 b               Select buffer in other window
-  M-~                   Clear the modified marker
+  C-x b         select-buffer                               Switch to buffer by name
+  C-x C-b       list-buffers                                Open the buffer list
+  C-x Left      previous-buffer                             Previous buffer
+  C-x Right     next-buffer                                 Next buffer
+  C-x k         kill-buffer                                 Kill current buffer
+  C-x 4 b       select-buffer-next-window                   Select buffer in other window
+  M-~           unmark-buffer                               Clear the modified marker
+  C-x 2         split-active-window-vertically              Windows appear above and below
+  C-x 3         split-active-window-horizontally            Windows appear side by side
+  C-x 1         delete-other-windows                        Close other windows
+  C-x 0         delete-active-window                        Close current window
+  C-x o         next-window                                 Switch to next window
+  M-o           next-window                                 Switch to next window
+  C-z c         frame-multiplexer-create-with-new-buffer-list   Create new workspace
+  C-z n         frame-multiplexer-next                      Next workspace
+  C-z p         frame-multiplexer-prev                      Previous workspace
+  C-z d         frame-multiplexer-delete                    Delete current workspace
+
   Alt-x revert-buffer   Reload buffer from disk
   Alt-x rename-buffer   Rename the current buffer
 
-  C-x 2           Windows appear above and below each other
-  C-x 3           Windows appear side by side
-  C-x 1           Close other windows
-  C-x 0           Close current window
-  C-x o / M-o     Switch to next window
-
-  C-z c           Create new workspace
-  C-z n / C-z p   Next / previous workspace
-  C-z d           Delete current workspace
-
   In buffer list (C-x C-b):
-  Space           Mark buffer
-  M-Space         Mark buffer (cursor up)
-  C-k             Kill marked buffers
-  Return          Open buffer at point
+  Space         Mark buffer
+  M-Space       Mark buffer (cursor up)
+  C-k           Kill marked buffers
+  Return        Open buffer at point
 
 ------------------------------------------------------------------------
+
 LESSON 4: EDITING
 
+Lessons 1 through 3 covered moving around and managing files, buffers,
+and windows. This lesson covers changing text — selecting, cutting,
+copying, pasting, undoing, and cleaning up whitespace.
+
+REGION
+
+A region is a selection of text between the mark and the cursor.
+Set the mark with C-Space, then move the cursor — the region is
+everything between them.
+
+  C-Space   mark-set                 Set the mark here
+  C-x h     mark-set-whole-buffer    Select the entire buffer
+
+Shift+arrow keys also set the mark and move simultaneously, like
+selection in most editors.
+
+-----
+>> Press C-Space at the start of the practice line below.
+   Move with C-f or C-n to select some text. The region highlights
+   as you move. Press C-g to cancel the selection.
+
+The quick brown fox jumps over the lazy dog.
+-----
+
+KILL AND YANK
+
+In Lem, "kill" means cut and "yank" means paste. Killed text goes
+onto the kill ring — a clipboard that remembers multiple entries.
+
+  C-k     kill-line       Kill from cursor to end of line
+  C-w     kill-region     Kill the active region
+  M-w     copy-region     Copy the region without killing it
+  C-y     yank            Paste the most recently killed text
+  M-y     yank-pop        Cycle through earlier kill ring entries
+
+C-k on an empty line kills the newline itself. Press it twice on a
+normal line to kill the line and its newline together.
+
+-----
+>> Move to the kill line below. Press C-k to kill it.
+   Move down a few lines. Press C-y to yank it back.
+>> Press C-Space, select a word, then M-w to copy it.
+   Move elsewhere and C-y to paste.
+>> Press C-y again, then M-y to cycle to an earlier kill.
+
+Kill this:  one   two   three   four   five
+-----
+
+UNDO AND REDO
+
+  C-\   undo
+  C-/   redo
+  C-_   redo
+
+Undo walks back through every change. Redo walks forward again.
+
+-----
+>> Make a few edits on the line below. Press C-\ repeatedly to undo
+   them one by one. Press C-/ to redo.
+
+Undo test: delete or change the words on this line, then undo.
+-----
+
+WHITESPACE
+
+  M-Space  just-one-space      Collapse surrounding whitespace to one space
+  M-^      delete-indentation  Join current line to the line above
+
+  Alt-x delete-trailing-whitespace   Remove trailing whitespace from the buffer
+  Alt-x format-current-buffer        Reformat the whole buffer according to its mode rules
+
+-----
+>> Put the cursor between two words in the whitespace line below.
+   Press M-Space to collapse the spaces to one.
+>> Move to the indented line and press M-^ to join it to the line above.
+
+Whitespace test: collapse    these    extra    spaces    to    one.
+Joining test: 
+	this line should join to the one above it.
+-----
+
+COMMENTS
+
+Lem can toggle comments on a selected region using the comment
+syntax of the current mode.
+
+  Alt-x comment-or-uncomment-region
+
+This command is mode-aware — it uses the correct comment syntax for
+the language you are editing. It has no effect in plain text buffers.
+See Lesson 6 for a practical exercise in a Lisp buffer.
+
+SEARCH AND REPLACE
+
+  M-%   query-replace
+
+Lem prompts for a search string, then a replacement. For each match
+it asks what to do:
+
+  y   replace this match and move to the next
+  n   skip this match
+  !   replace all remaining matches without asking
+  q   stop replacing
+  C-g exit query-replace
+
+Query-replace searches forward from your current cursor or point position.
+Use M-< first to start from the beginning of buffer.
+
+-----
+>> Press M-% and replace "cat" with "dog" in the line below.
+   Try y to replace one at a time, or ! to replace all at once.
+   Press q or Escape when done.
+
+Replace test: cat cat cat cat cat
+-----
+
+SUMMARY
+
+  C-Space   mark-set                Set the mark
+  C-x h     mark-set-whole-buffer   Select the whole buffer
+  C-k       kill-line               Kill line
+  C-w       kill-region             Kill region
+  M-w       copy-region             Copy region
+  C-y       yank                    Yank
+  M-y       yank-pop                Cycle kill ring
+  C-\       undo                    Undo
+  C-/       redo                    Redo
+  M-Space   just-one-space          Collapse whitespace around cursor to one space
+  M-^       delete-indentation      Join line to line above
+  M-%       query-replace           Query-replace
+
+  Alt-x delete-trailing-whitespace     Remove trailing whitespace from the buffer
+  Alt-x comment-or-uncomment-region    Toggle comments on region
+  Alt-x format-current-buffer          Reformat the buffer according to its mode rules
 
 ------------------------------------------------------------------------
+
 APPENDIX
 
 This section covers useful features that don't belong to a single

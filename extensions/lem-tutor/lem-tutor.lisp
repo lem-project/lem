@@ -1,0 +1,65 @@
+(defpackage :lem-tutor
+  (:use :cl :lem)
+  (:export #:tutorial))
+
+(in-package :lem-tutor)
+ 
+(defun tutorial-text ()
+   (merge-pathnames "tutorial-basics.txt" (asdf:system-source-directory :lem-tutor)))
+(defun tutorial-save-file ()
+  (merge-pathnames "lem-tutor-saves/lem-tutor-save.txt" (lem-home)))
+(defun tutorial-progress ()
+  (merge-pathnames "lem-tutor-saves/lem-tutor-progress.lisp" (lem-home)))
+
+(define-command tutorial () ()
+  "Open the Lem interactive tutorial"
+  (tutorial-mode t))
+
+(defun tutorial-save-progress (buffer)
+  "Create or update a save file with the cursor position, for easy continuation of the tutorial"
+  (let* ((point (buffer-point buffer))
+        (line (line-number-at-point point))
+        (column (point-column point)))
+    (with-open-file (stream (tutorial-progress)
+                 :direction :output
+                 :if-exists :supersede
+                 :if-does-not-exist :create)
+    (format stream "(:line ~D :column ~D)" line column))))
+
+(defun tutorial-load-progress ()
+  "Load cursor position from progress file and restore cursor position."
+  (handler-case
+      (when (probe-file (tutorial-progress))
+        (with-open-file (stream (tutorial-progress)
+                                :direction :input)
+          (let* ((plist (read stream))
+                 (line (getf plist :line))
+                 (column (getf plist :column))
+                 (point (buffer-point (find-file-buffer (tutorial-save-file)))))
+            (move-to-line point line)
+            (move-to-column point column))))
+    (error (e)
+      (declare (ignore e))
+      (lem:message "Something went wrong retrieving your last location, starting from the top of your saved file"))))
+
+(defun tutorial-enable ()
+  "Enable tutorial mode: ensure save directory exists, initialize working copy if needed,
+  open the save file, store the buffer and hook into after-save for progress tracking."
+  (ensure-directories-exist (tutorial-save-file))
+  (unless (probe-file  (tutorial-save-file))
+    (uiop:copy-file (tutorial-text) (tutorial-save-file)))
+  (let ((buffer (find-file-buffer (tutorial-save-file))))
+    (tutorial-load-progress)
+    (add-hook (variable-value 'after-save-hook :buffer buffer)
+            #'tutorial-save-progress)
+    (switch-to-buffer buffer)))
+
+(defun tutorial-disable ()
+    "Save progress when tutorial mode is disabled."
+  (tutorial-save-progress (find-file-buffer (tutorial-save-file))))
+
+(define-minor-mode tutorial-mode
+    (:name "Lem-tutor"
+     :description "A tutorial for the lem editor."
+     :enable-hook  #'tutorial-enable
+     :disable-hook #'tutorial-disable))

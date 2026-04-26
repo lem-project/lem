@@ -243,18 +243,34 @@ Its location is:
 
 ADDING CONFIGURATION
 
-Each setting is a Lisp form. For example, to enable line numbers:
+Each setting is a Lisp form. For example, to enable line numbers at start-up.
+Type the expression below in your init.lisp file. Save with C-x C-s.
+Then close and re-open Lem. 
 
   (lem/line-numbers:toggle-line-numbers)
 
-or to enable them permanently at startup:
+Line numbers do not appear in the special buffers like *tmp*, *dashboard* or
+*messages*. To see if it worked open a text or code file. Your init.lisp file 
+itself should now have line-numbers.
 
-  (add-hook *after-init-hook* (lambda () 
-                                (lem/line-numbers:toggle-line-numbers)))
+In your init file you can write normal Lisp code, including your own commands
+with key-bindings.
+For example, a command to open your init file quickly:
+
+  (lem:define-command open-init-file () ()
+    "Open the Lem init file for editing"
+    (lem:find-file
+      (merge-pathnames "init.lisp" (lem:lem-home))))
+
+  (define-keys *global-keymap*
+    ("M-C-e" 'open-init-file))
+
+Here we've defined a command open-init-file and bound it to a combination of keys.
+You can call it with Alt-x open-init-file or press Control+Alt+e.
 
 -----
->> Add one line to your init file. Save it with C-x C-s.
-   Restart Lem and verify the change took effect.
+>> Add both forms to your init file. Save it with C-x C-s.
+   Restart Lem. Try Alt-x open-init-file or the keybinding.
 -----
 
 You do not need to understand the Lisp syntax fully yet. That comes
@@ -324,8 +340,8 @@ SPLITTING WINDOWS
 
 A window is a view onto a buffer. Splitting the screen lets you
 see two buffers at once.
-The command names of the split window commands describe the way the windows stack.
-Not the orientation of the dividing bar.
+The command names of the split window commands describe the way the windows stack,
+not the orientation of the dividing bar.
 
   C-x 2   split-active-window-vertically        windows appear above and below each other
   C-x 3   split-active-window-horizontally      windows appear side by side

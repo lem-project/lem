@@ -56,7 +56,8 @@
                         :collect (list import-package import-symbol)))))
 
 (defun read-symbol-name (symbol-string)
-  ;; FIXME: prefix:name という形式でclientにパッケージがない時はエラーになり取り出せない
+  ;; FIXME: For symbols of the form `prefix:name`, if the package doesn't exist in the client,
+  ;;   it causes an error and can't extract the name.
   (ignore-errors
     (let ((*read-eval* nil))
       (read-from-string symbol-string))))
@@ -127,4 +128,4 @@
   (remove-unused-import buffer))
 
 ;; TODO:
-;; - exportするシンボルはimport-fromから除外してはならない
+;; - Exported symbols shouldn't be removed from `import-from`

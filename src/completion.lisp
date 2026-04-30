@@ -28,7 +28,7 @@
               :while pos))))
 
 (defun completion (name elements &key (test #'search) separator key rank)
-  "Perform completion on ELEMENTS matching NAME. Returns matching elements, 
+  "Perform completion on ELEMENTS matching NAME. Returns matching elements,
    optionally sorted by RANK function."
   (labels ((apply-key (elt) (if key (funcall key elt) elt))
            (test-with-separator (elt)
@@ -62,7 +62,7 @@
     (t (length elt))))
 
 (defun completion-strings (str strings &key key)
-  (completion str strings 
+  (completion str strings
               :test #'fuzzy-match-p
               :key key
               :rank #'string-completion-rank))
@@ -84,7 +84,7 @@
       (t (length elt)))))
 
 (defun completion-files (str strings &key key)
-  (completion str strings 
+  (completion str strings
               :test #'fuzzy-match-p
               :key key
               :rank #'file-completion-rank))
@@ -116,7 +116,7 @@
                              :key #'(lambda (path)
                                       (enough-namestring path input-directory))))))
       strings)))
-          
+
 (defun completion-buffer (str &optional (buffer-list (buffer-list)))
   (let ((candidates1
           (completion str buffer-list

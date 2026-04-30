@@ -282,8 +282,11 @@
 
 (defmacro define-text-object-command (name arg-list arg-descriptors (&key expand-selection)
                                       &body body)
-  `(define-command (,name (:advice-classes vi-text-object)) ,arg-list
-       (,(parse-arg-descriptors arg-descriptors))
-     (call-define-text-object-command
-      (lambda () ,@body)
-      :expand-selection ,expand-selection)))
+  "Define a text-object command. An optional docstring may appear as the first form of BODY."
+  (let ((docstring (when (stringp (car body)) (pop body))))
+    `(define-command (,name (:advice-classes vi-text-object)) ,arg-list
+         (,(parse-arg-descriptors arg-descriptors))
+       ,@(when docstring (list docstring))
+       (call-define-text-object-command
+        (lambda () ,@body)
+        :expand-selection ,expand-selection))))

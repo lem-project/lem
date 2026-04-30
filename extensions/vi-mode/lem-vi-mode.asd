@@ -57,7 +57,8 @@
      (:file "registers")
      (:file "kbdmacro")
      (:file "jumplist")
-     (:file "options")))
+     (:file "options")
+     (:file "insert")))
    (:file "utils"
     :pathname "tests/utils"))
   :perform (test-op (op c) (symbol-call :rove '#:run c)))

@@ -138,8 +138,20 @@
            :vi-inner-broad-word
            :vi-a-double-quote
            :vi-inner-double-quote
+           :vi-a-single-quote
+           :vi-inner-single-quote
+           :vi-a-back-quote
+           :vi-inner-back-quote
            :vi-a-paren
            :vi-inner-paren
+           :vi-a-bracket
+           :vi-inner-bracket
+           :vi-a-curly
+           :vi-inner-curly
+           :vi-a-angle-bracket
+           :vi-inner-angle-bracket
+           :vi-a-tag
+           :vi-inner-tag
            :vi-a-paragraph
            :vi-inner-paragraph
            :vi-repeat
@@ -158,12 +170,14 @@
            :vi-window-split-new-buffer
            :vi-window-split-horizontally-new
            :vi-window-split-vertically-new
-           :vi-switch-to-buffer))
+           :vi-switch-to-buffer
+           :vi-goto-file))
 (in-package :lem-vi-mode/commands)
 
 (defun extract-count-keys (keys)
   (loop for key in keys
-        for cmd = (lem-core::keymap-find-keybind *motion-keymap* key nil)
+        for prefix = (lem-core::keymap-find *motion-keymap* key)
+        for cmd = (when prefix (prefix-suffix prefix))
         unless (member cmd '(lem/universal-argument:universal-argument-0
                              lem/universal-argument:universal-argument-1
                              lem/universal-argument:universal-argument-2
@@ -554,7 +568,7 @@ Move the cursor to the first non-blank character of the line."
         (and (enable-clipboard-p) (values (get-clipboard-data) :block)))))
 
 (define-command vi-paste-after (&optional (n 1)) (:universal)
-  (dotimes (i n) 
+  (dotimes (i n)
     (multiple-value-bind (string type)
         (vi-yank-from-clipboard-or-killring)
       (cond
@@ -579,7 +593,7 @@ Move the cursor to the first non-blank character of the line."
       (paste-yank string type :after))))
 
 (define-command vi-paste-before (&optional (n 1)) (:universal)
-  (dotimes (i n) 
+  (dotimes (i n)
     (multiple-value-bind (string type)
         (vi-yank-from-clipboard-or-killring)
       (cond
@@ -924,6 +938,31 @@ on the same line or at eol if there are none."
      :jump t)
   (move-to-column (current-point) (1- n)))
 
+(define-command vi-goto-file () ()
+  "Open the file using the filename under the cursor,
+trailing punctuation characters ',.!?:;' are removed.
+Only opens the file if it exists"
+  (flet ((remove-trailing-punctuations (string)
+           (let* ((punctuation (list #\. #\, #\!
+                                     #\: #\; #\?))
+                  (end-of-path (position-if-not
+                                (lambda (char)
+                                  (member char punctuation))
+                                string
+                                :from-end t)))
+             (subseq string 0 (1+ end-of-path)))))
+    (let* ((symbol-at-point (symbol-string-at-point (current-point)))
+           (parsed-path (uiop:parse-native-namestring
+                         (remove-trailing-punctuations symbol-at-point)))
+           ;; Unless absolute path, path is relative to current buffer
+           (path (if (eq (first (pathname-directory parsed-path))
+                         :absolute)
+                     parsed-path
+                     (merge-pathnames parsed-path (buffer-directory)))))
+      (if (probe-file path)
+          (lem:find-file path)
+          (editor-error "Can't find file \"~a\"" path)))))
+
 (define-command vi-return (&optional (n 1)) (:universal)
   (vi-next-line n)
   (vi-move-to-beginning-of-line))
@@ -1108,6 +1147,26 @@ on the same line or at eol if there are none."
     ()
   (inner-range-of 'double-quoted-object (current-state) 1))
 
+(define-text-object-command vi-a-single-quote () ()
+    ()
+  "Select a single-quoted string including the quote delimiters."
+  (a-range-of 'single-quoted-object (current-state) 1))
+
+(define-text-object-command vi-inner-single-quote () ()
+    ()
+  "Select the contents of a single-quoted string, excluding delimiters."
+  (inner-range-of 'single-quoted-object (current-state) 1))
+
+(define-text-object-command vi-a-back-quote () ()
+    ()
+  "Select a back-quoted string including the quote delimiters."
+  (a-range-of 'back-quoted-object (current-state) 1))
+
+(define-text-object-command vi-inner-back-quote () ()
+    ()
+  "Select the contents of a back-quoted string, excluding delimiters."
+  (inner-range-of 'back-quoted-object (current-state) 1))
+
 (define-text-object-command vi-a-paren (count) ("p")
     (:expand-selection t)
   (a-range-of 'paren-object (current-state) count))
@@ -1115,6 +1174,46 @@ on the same line or at eol if there are none."
 (define-text-object-command vi-inner-paren (count) ("p")
     (:expand-selection t)
   (inner-range-of 'paren-object (current-state) count))
+
+(define-text-object-command vi-a-bracket (count) ("p")
+    (:expand-selection t)
+  "Select a square bracket block including the [ ] delimiters."
+  (a-range-of 'bracket-object (current-state) count))
+
+(define-text-object-command vi-inner-bracket (count) ("p")
+    (:expand-selection t)
+  "Select the contents of a square bracket block, excluding delimiters."
+  (inner-range-of 'bracket-object (current-state) count))
+
+(define-text-object-command vi-a-curly (count) ("p")
+    (:expand-selection t)
+  "Select a curly brace block including the { } delimiters."
+  (a-range-of 'curly-object (current-state) count))
+
+(define-text-object-command vi-inner-curly (count) ("p")
+    (:expand-selection t)
+  "Select the contents of a curly brace block, excluding delimiters."
+  (inner-range-of 'curly-object (current-state) count))
+
+(define-text-object-command vi-a-angle-bracket (count) ("p")
+    (:expand-selection t)
+  "Select an angle bracket block including the < > delimiters."
+  (a-range-of 'angle-bracket-object (current-state) count))
+
+(define-text-object-command vi-inner-angle-bracket (count) ("p")
+    (:expand-selection t)
+  "Select the contents of an angle bracket block, excluding delimiters."
+  (inner-range-of 'angle-bracket-object (current-state) count))
+
+(define-text-object-command vi-a-tag (count) ("p")
+    (:expand-selection t)
+  "Select an HTML/XML tag block including the opening and closing tags."
+  (a-range-of 'tag-object (current-state) count))
+
+(define-text-object-command vi-inner-tag (count) ("p")
+    (:expand-selection t)
+  "Select the contents between HTML/XML tags, excluding the tags themselves."
+  (inner-range-of 'tag-object (current-state) count))
 
 (define-text-object-command vi-a-paragraph (count) ("p")
     (:expand-selection t)

@@ -522,7 +522,7 @@
 (setf *prompt-buffer-completion-function* 'prompt-buffer-completion)
 (setf *prompt-command-completion-function* 'prompt-command-completion)
 
-(defvar *file-prompt-keymap* (make-keymap :name '*file-mode-prompt-keymap*))
+(defvar *file-prompt-keymap* (make-keymap :description '*file-mode-prompt-keymap*))
 (define-key *file-prompt-keymap* "C-Backspace" 'file-prompt-parent-folder)
 
 (define-command file-prompt-parent-folder () ()

@@ -206,6 +206,7 @@
    :frame-message-window
    :frame-leftside-window
    :frame-rightside-window
+   :frame-bottomside-window
    :notify-frame-redisplay-required
    :map-frame
    :get-frame
@@ -336,6 +337,13 @@
    :floating-window-border-shape
    :floating-window-focusable-p
    :floating-window-p
+   :floating-window-pixel-x
+   :floating-window-pixel-y
+   :floating-window-pixel-width
+   :floating-window-pixel-height
+   :floating-window-set-pixel-position
+   :floating-window-set-pixel-size
+   :floating-window-pixel-bounds
    :attached-window-p
    :attach-buffer
    :update-on-display-resized
@@ -370,6 +378,7 @@
   ;; header-window.lisp
   (:export
    :header-window
+   :header-window-height
    :header-window-p)
   ;; side-window.lisp
   (:export
@@ -378,7 +387,10 @@
    :make-leftside-window
    :delete-leftside-window
    :make-rightside-window
-   :delete-rightside-window)
+   :delete-rightside-window
+   :make-bottomside-window
+   :delete-bottomside-window
+   :resize-bottomside-window)
   ;; popup.lisp
   (:export
    :*default-popup-message-timeout*
@@ -433,6 +445,7 @@
   (:export
    :ensure-mode-object
    :major-mode
+   :mode
    :mode-name
    :mode-description
    :mode-keymap
@@ -442,6 +455,7 @@
    :mode-active-p
    :major-modes
    :minor-modes
+   :all-active-modes
    :find-mode
    :toggle-minor-mode
    :define-major-mode
@@ -461,12 +475,27 @@
    :paste-using-mode)
   ;; keymap.lisp
   (:export
-   :*keymaps*
    :keymap
-   :keymap-name
-   :keymap-parent
+   :prefix
+   :keymap*
+   :*root-keymap*
+   :prefix-active-p
+   :prefix-intermediate-p
+   :prefix-behavior
+   :keymap-prefixes
+   :keymap-children
+   :keymap-description
+   :keymap-properties
+   :keymap-base
+   :parse-keyspec
+   :prefix-properties
    :keymap-undef-hook
+   :keymap-activate
    :make-keymap
+   :make-prefix
+   :prefix-description
+   :prefix-key
+   :prefix-suffix
    :*global-keymap*
    :define-key
    :define-keys
@@ -476,13 +505,16 @@
    :find-keybind
    :insertion-key-p
    :lookup-keybind
-   :keymap-find-keybind
+   :keymap-find
    :*abort-key*
    :abort-key-p
    :with-special-keymap
    :traverse-keymap
    :compute-keymaps
-   :collect-command-keybindings)
+   :collect-command-keybindings
+   :keymap-add-child
+   :keymap-add-prefix
+   :prefix-invoke)
   ;; reexport common/timer
   (:export
    :timer
@@ -514,7 +546,9 @@
   ;; input.lisp
   (:export
    :*input-hook*
+   :meta-prefix-keys
    :last-read-key-sequence
+   :with-last-read-key-sequence
    :start-record-key
    :stop-record-key
    :key-recording-p
@@ -626,6 +660,7 @@
    :implementation
    :redraw-after-modifying-floating-window
    :support-floating-window
+   :support-pixel-positioning-p
    :html-support-p
    :underline-color-support-p
    :no-force-needed-p
@@ -644,7 +679,8 @@
    :get-font
    :set-font
    :set-font-name
-   :set-font-size)
+   :set-font-size
+   :set-frame-color)
   ;; color-theme.lisp
   (:export
    :color-theme-names
@@ -738,6 +774,9 @@
    :clear
    :set-view-size
    :set-view-pos
+   :make-view-with-pixels
+   :set-view-pos-pixels
+   :set-view-size-pixels
    :redraw-view-before
    :redraw-view-after
    :will-update-display
@@ -770,4 +809,5 @@
    :render-line
    :render-line-on-modeline
    :object-width
-   :object-height))
+   :object-height
+   :set-frame-color))

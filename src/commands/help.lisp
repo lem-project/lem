@@ -28,7 +28,7 @@
     (terpri s))
   (let ((column-width 16))
     (loop :while keymap
-          :do (format s "~A (~(~A~))~%" name (keymap-name keymap))
+          :do (format s "~A (~(~A~))~%" name (keymap-description keymap))
               (format s "~va~a~%" column-width "key" "binding")
               (format s "~va~a~%" column-width "---" "-------")
               (traverse-keymap keymap
@@ -38,7 +38,6 @@
                                            column-width
                                            (keyseq-to-string kseq)
                                            (symbol-name command)))))
-              (setf keymap (keymap-parent keymap))
               (terpri s))))
 
 (define-command describe-bindings () ()

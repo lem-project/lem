@@ -17,8 +17,8 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
           # ---------- Pull Requests ----------
-          days-before-pr-stale: 30            # Mark PR stale after 30 days of inactivity
-          days-before-pr-close: 7              # Close PR 7 days after being marked stale
+          days-before-pr-stale: 90            # Mark PR stale after 30 days of inactivity
+          days-before-pr-close: 14              # Close PR 7 days after being marked stale
           stale-pr-label: stale
           stale-pr-message: >
             This pull request has been inactive for {days} days.
@@ -31,12 +31,12 @@ jobs:
           exempt-draft-pr: true
 
           # ---------- Issues ----------
-          days-before-issue-stale: 45          # Mark Issue stale after 45 days of inactivity
-          days-before-issue-close: 14          # Close Issue 14 days after being marked stale
+          days-before-issue-stale: 360          # Mark Issue stale after 45 days of inactivity
+          days-before-issue-close: 30          # Close Issue 14 days after being marked stale
           stale-issue-label: stale
           stale-issue-message: >
-            This issue has been inactive for {days} days.
-            If there is no activity within the next 14 days, it will be automatically closed.
+            This issue has been inactive for 360 days.
+            If there is no activity within the next 30 days, it will be automatically closed.
             Please add a comment if it is still relevant.
           close-issue-message: >
             Closing this issue due to inactivity.

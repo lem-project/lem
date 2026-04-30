@@ -36,6 +36,8 @@
                #+sbcl
                sb-concurrency
                "lem-mailbox"
+               ;; Disabled for Nix build due to QL-DIST dependency
+               #-nix-build
                "lem-extension-manager"
                #+sbcl
                "sb-sprof")
@@ -183,11 +185,11 @@
                              (:file "multi-column-list")
                              (:file "context-menu")
                              (:file "list-buffers")
+                             (:file "loading-spinner")
                              (:file "completion-mode")
                              (:file "prompt-window")
                              (:file "tmlanguage")
                              (:file "button")
-                             (:file "loading-spinner")
                              (:file "listener-mode")
                              (:file "interactive-mode")
                              (:file "universal-argument")
@@ -251,12 +253,16 @@
                "lem-typescript-mode"
                "lem-json-mode"
                "lem-rust-mode"
+               "lem-zig-mode"
+               "lem-kotlin-mode"
                "lem-paredit-mode"
                "lem-nim-mode"
                #-clasp
                "lem-scheme-mode"
+               "lem-clojure-mode"
 
                "lem-patch-mode"
+               "lem-toml-mode"
                "lem-yaml-mode"
                "lem-review-mode"
                "lem-asciidoc-mode"
@@ -267,6 +273,7 @@
                "lem-haskell-mode"
                "lem-ocaml-mode"
                "lem-asm-mode"
+               "lem-wat-mode"
                "lem-makefile-mode"
                "lem-shell-mode"
                "lem-sql-mode"
@@ -274,6 +281,7 @@
                #+sbcl
                "lem-elixir-mode"
                "lem-ruby-mode"
+               "lem-perl-mode"
                "lem-erlang-mode"
                "lem-documentation-mode"
                "lem-elisp-mode"
@@ -287,14 +295,22 @@
                "lem-serial-monitor"
                "lem-dashboard"
                "lem-copilot"
-               "lem-claude-code"))
+               "lem-claude-code"
+               "lem-bookmark"
+               "lem-mcp-server"
+               "lem-transient"
+               #+sbcl
+               "lem-living-canvas"
+               "lem-tree-sitter"
+               "lem-git-gutter"
+               "lem-skk-mode"))
 
 (defsystem "lem"
   :version "2.3.0"
   :defsystem-depends-on ("deploy")
   :build-operation #+os-macosx "osx-app-deploy-op" #-os-macosx "deploy-op"
   :build-pathname "lem"
-  :entry-point "lem-webview:main"
+  :entry-point "lem:main"
   :depends-on ("lem-webview"
                "lem-server"
                #+(and os-unix (not os-macosx)) ; workaround: because (adf:make :lem) fails

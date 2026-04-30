@@ -96,9 +96,9 @@ for example, to maintain an attribute like CURSOR.")
     (unless theme
       (editor-error "undefined color theme: ~A" name))
     (apply-theme theme)
+    (setf (current-theme) name)
     (message nil)
     (redraw-display :force t)
-    (setf (current-theme) name)
     (when save-theme
       (setf (config :color-theme) (current-theme))))
   (run-hooks *after-load-theme-hook*))

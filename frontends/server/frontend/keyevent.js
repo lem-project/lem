@@ -1,6 +1,6 @@
 "use strict";
 
-const modifierKeys = ["Shift", "Control", "Alt", "Meta"];
+const modifierKeys = ["Shift", "Control", "Alt", "Meta", "CapsLock"];
 
 const convertKeyTable = {
   Enter: "Return",

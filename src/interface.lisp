@@ -39,20 +39,40 @@ When rendering the DOM and a window in a one-to-one manner, no redraw is require
     :initform nil
     :initarg :underline-color-support
     :reader underline-color-support-p
-    :documentation "If a color different from the foreground color can be assigned to the underline, then it is T (in Terminal, it becomes nil).")))
+    :documentation "If a color different from the foreground color can be assigned to the underline, then it is T (in Terminal, it becomes nil).")
+   (support-pixel-positioning
+    :initform nil
+    :initarg :support-pixel-positioning
+    :reader support-pixel-positioning-p
+    :documentation "When true, the frontend supports pixel-based floating window positioning.")))
 
-(defun get-default-implementation (&key (implementation :ncurses))
-  (let* ((classes (c2mop:class-direct-subclasses (find-class 'implementation)))
-         (class (case (length classes)
-                  (0
-                   (error "Implementation does not exist.~
+(defun get-default-implementation (&key implementation)
+  (let ((classes (c2mop:class-direct-subclasses (find-class 'implementation)))
+        implementation-fallback
+        class)
+    (when (>= 0 (length classes))
+      (error "Implementation does not exist.~
                              (probably because you didn't load the lem-ncurses system)"))
-                  (otherwise
-                   (dolist (class classes)
-                     (when (string= implementation (class-name class))
-                       (return class)))))))
-    (when class
-      (make-instance class))))
+
+    ;; set interfaces as fallbacks if a non-existant interface is selected
+    (setf implementation-fallback
+          (mapcar (lambda (impl)
+                    (find impl classes :test 'string= :key 'class-name))
+                  ;; always try to find specified implementation first
+                  (list implementation :webview :ncurses :sdl2)))
+
+    ;; pick the first implementation that is available
+    (setf class (funcall #'some #'identity implementation-fallback))
+
+    (if (string= (class-name class) implementation)
+         (log:info "Using interface: ~A" implementation)
+         (log:warn "User specified non-existant interface ~A; Using ~A instead.
+Available interfaces: ~A"
+                   implementation class classes))
+    
+    (if class
+      (make-instance class)
+      (error "No interfaces found (is lem compiled with an interface?)"))))
 
 (defvar lem-if:*background-color-of-drawing-window* nil)
 
@@ -83,6 +103,25 @@ When rendering the DOM and a window in a one-to-one manner, no redraw is require
 (defgeneric lem-if:clear (implementation view))
 (defgeneric lem-if:set-view-size (implementation view width height))
 (defgeneric lem-if:set-view-pos (implementation view x y))
+(defgeneric lem-if:make-view-with-pixels (implementation window x y width height
+                                          pixel-x pixel-y pixel-width pixel-height
+                                          use-modeline)
+  (:documentation "Create a view with both character and pixel coordinates.
+X, Y, WIDTH, HEIGHT are in character units.
+PIXEL-X, PIXEL-Y, PIXEL-WIDTH, PIXEL-HEIGHT are in pixels (may be nil for auto-calculate).")
+  (:method (implementation window x y width height pixel-x pixel-y pixel-width pixel-height use-modeline)
+    (declare (ignore pixel-x pixel-y pixel-width pixel-height))
+    (lem-if:make-view implementation window x y width height use-modeline)))
+(defgeneric lem-if:set-view-pos-pixels (implementation view x y pixel-x pixel-y)
+  (:documentation "Set view position with both character and pixel coordinates.")
+  (:method (implementation view x y pixel-x pixel-y)
+    (declare (ignore pixel-x pixel-y))
+    (lem-if:set-view-pos implementation view x y)))
+(defgeneric lem-if:set-view-size-pixels (implementation view width height pixel-width pixel-height)
+  (:documentation "Set view size with both character and pixel coordinates.")
+  (:method (implementation view width height pixel-width pixel-height)
+    (declare (ignore pixel-width pixel-height))
+    (lem-if:set-view-size implementation view width height)))
 (defgeneric lem-if:redraw-view-before (implementation view)
   (:method (implementation view)))
 (defgeneric lem-if:redraw-view-after (implementation view)
@@ -95,7 +134,9 @@ When rendering the DOM and a window in a one-to-one manner, no redraw is require
                                        &key action-callback
                                             print-spec
                                             style
-                                            max-display-items))
+                                         max-display-items)
+  (:documentation "Create a popup-menu and display it. See `display-popup-menu`."))
+
 (defgeneric lem-if:popup-menu-update
     (implementation popup-menu items &key print-spec max-display-items keep-focus))
 (defgeneric lem-if:popup-menu-quit (implementation popup-menu))
@@ -132,7 +173,7 @@ When rendering the DOM and a window in a one-to-one manner, no redraw is require
 
 (defgeneric lem-if:get-mouse-position (implementation)
   (:method (implementation)
-    (values 0 0)))
+    (values -1 -1)))
 
 (defgeneric lem-if:get-char-width (implementation))
 (defgeneric lem-if:get-char-height (implementation))
@@ -148,6 +189,18 @@ When rendering the DOM and a window in a one-to-one manner, no redraw is require
   (:method (implementation view code &key wait)
     (declare (ignore wait))
     (error "unimplemented")))
+
+(defgeneric lem-if:set-frame-color (implementation mode)
+  (:documentation "Set the window frame appearance to MODE (:dark or :light).
+Frontends on any platform may implement this to control the native window
+chrome. The default method is a no-op for frontends that do not support it.")
+  (:method (implementation mode)
+    (declare (ignore implementation mode))
+    nil))
+
+(defun set-frame-color (&optional (mode :dark))
+  "Set the window frame appearance to MODE (:dark or :light)."
+  (lem-if:set-frame-color (implementation) mode))
 
 (defvar *display-background-mode* nil)
 
@@ -170,13 +223,17 @@ When rendering the DOM and a window in a one-to-one manner, no redraw is require
 
 (defun set-display-background-mode (mode)
   (check-type mode (member :light :dark nil))
-  (setf *display-background-mode* mode))
+  (setf *display-background-mode* mode)
+  (when mode
+    (set-frame-color mode)))
 
 (defun set-foreground (name)
-  (lem-if:update-foreground (implementation) name))
+  (when name
+    (lem-if:update-foreground (implementation) name)))
 
 (defun set-background (name)
-  (lem-if:update-background (implementation) name))
+  (when name
+    (lem-if:update-background (implementation) name)))
 
 (defun attribute-foreground-color (attribute)
   (or (and attribute

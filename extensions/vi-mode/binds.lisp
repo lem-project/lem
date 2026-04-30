@@ -7,8 +7,6 @@
         :lem-vi-mode/commands
         :lem-vi-mode/ex
         :lem-vi-mode/visual)
-  (:import-from :lem-core
-                :keymap-table)
   (:import-from :lem/prompt-window
                 :prompt-previous-history
                 :prompt-next-history))
@@ -156,6 +154,7 @@
 (define-key *normal-keymap* "q" 'vi-record-macro)
 (define-key *normal-keymap* "@" 'vi-execute-macro)
 (define-key *normal-keymap* "Q" 'vi-execute-last-recorded-macro)
+(define-key *normal-keymap* "g f" 'vi-goto-file)
 
 (define-key *insert-keymap* "Escape" 'vi-end-insert)
 (define-key *insert-keymap* "C-p" 'abbrev)
@@ -191,20 +190,48 @@
 (define-key *inner-text-objects-keymap* "W" 'vi-inner-broad-word)
 (define-key *outer-text-objects-keymap* "\"" 'vi-a-double-quote)
 (define-key *inner-text-objects-keymap* "\"" 'vi-inner-double-quote)
+(define-key *outer-text-objects-keymap* "'" 'vi-a-single-quote)
+(define-key *inner-text-objects-keymap* "'" 'vi-inner-single-quote)
+(define-key *outer-text-objects-keymap* "`" 'vi-a-back-quote)
+(define-key *inner-text-objects-keymap* "`" 'vi-inner-back-quote)
 (define-key *outer-text-objects-keymap* "(" 'vi-a-paren)
 (define-key *outer-text-objects-keymap* ")" 'vi-a-paren)
 (define-key *outer-text-objects-keymap* "b" 'vi-a-paren)
 (define-key *inner-text-objects-keymap* "(" 'vi-inner-paren)
 (define-key *inner-text-objects-keymap* ")" 'vi-inner-paren)
 (define-key *inner-text-objects-keymap* "b" 'vi-inner-paren)
+(define-key *outer-text-objects-keymap* "[" 'vi-a-bracket)
+(define-key *outer-text-objects-keymap* "]" 'vi-a-bracket)
+(define-key *inner-text-objects-keymap* "[" 'vi-inner-bracket)
+(define-key *inner-text-objects-keymap* "]" 'vi-inner-bracket)
+(define-key *outer-text-objects-keymap* "{" 'vi-a-curly)
+(define-key *outer-text-objects-keymap* "}" 'vi-a-curly)
+(define-key *outer-text-objects-keymap* "B" 'vi-a-curly)
+(define-key *inner-text-objects-keymap* "{" 'vi-inner-curly)
+(define-key *inner-text-objects-keymap* "}" 'vi-inner-curly)
+(define-key *inner-text-objects-keymap* "B" 'vi-inner-curly)
+(define-key *outer-text-objects-keymap* "<" 'vi-a-angle-bracket)
+(define-key *outer-text-objects-keymap* ">" 'vi-a-angle-bracket)
+(define-key *inner-text-objects-keymap* "<" 'vi-inner-angle-bracket)
+(define-key *inner-text-objects-keymap* ">" 'vi-inner-angle-bracket)
+(define-key *outer-text-objects-keymap* "t" 'vi-a-tag)
+(define-key *inner-text-objects-keymap* "t" 'vi-inner-tag)
 (define-key *outer-text-objects-keymap* "p" 'vi-a-paragraph)
 (define-key *inner-text-objects-keymap* "p" 'vi-inner-paragraph)
 
-(setf (gethash (lem:make-key :sym "a") (keymap-table *operator-keymap*))
-      (keymap-table *outer-text-objects-keymap*))
-(setf (gethash (lem:make-key :sym "i") (keymap-table *operator-keymap*))
-      (keymap-table *inner-text-objects-keymap*))
-(setf (gethash (lem:make-key :sym "a") (keymap-table *visual-keymap*))
-      (keymap-table *outer-text-objects-keymap*))
-(setf (gethash (lem:make-key :sym "i") (keymap-table *visual-keymap*))
-      (keymap-table *inner-text-objects-keymap*))
+(lem-core:keymap-add-prefix
+ *operator-keymap*
+ (lem:make-prefix :key (lem:make-key :sym "a")
+                  :suffix *outer-text-objects-keymap*))
+(lem-core:keymap-add-prefix
+ *operator-keymap*
+ (lem:make-prefix :key (lem:make-key :sym "i")
+                  :suffix *inner-text-objects-keymap*))
+(lem-core:keymap-add-prefix
+ *visual-keymap*
+ (lem:make-prefix :key (lem:make-key :sym "a")
+                  :suffix *outer-text-objects-keymap*))
+(lem-core:keymap-add-prefix
+ *visual-keymap*
+ (lem:make-prefix :key (lem:make-key :sym "i")
+                  :suffix *inner-text-objects-keymap*))

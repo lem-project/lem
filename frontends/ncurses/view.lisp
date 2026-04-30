@@ -101,7 +101,9 @@
                    :cursor-invisible cursor-invisible)))
 
 (defun delete-view (view)
-  (charms/ll:delwin (view-scrwin view))
+  "Destroy the view's main and modeline windows, ignoring curses errors."
+  ;; XXX: Muffle "Unhandled memory fault at ..." error
+  (ignore-errors (charms/ll:delwin (view-scrwin view)))
   (when (view-modeline-scrwin view)
     (charms/ll:delwin (view-modeline-scrwin view))))
 
@@ -210,7 +212,7 @@
       (charms/ll:move (view-y view) (1- (view-x view)))
       (loop :for y :from -1 :to (view-height view)
             :do (let ((y (+ (view-y view) y)))
-                  (when (< 0 y)
+                  (when (<= 0 y)
                     (print-yx
                      y
                      (1- (view-x view))

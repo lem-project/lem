@@ -771,7 +771,8 @@
                  (end point))
       (scan-lists end 1 0)
       (send-string-to-listener (points-to-string start end)
-                               (buffer-package (current-buffer))))))
+                               :package-name (buffer-package (current-buffer))
+                               :evaluate t))))
 
 (defun form-string-at-point ()
   (with-point ((point (current-point)))
@@ -855,26 +856,27 @@
 (defun completion-symbol-async (point then)
   (check-connection)
   (let ((string (symbol-string-at-point point)))
-    (when string
-      (remote-eval-from-string
-       (current-connection)
-       (lem-lisp-mode/completion:make-completions-form-string string (current-package))
-       :continuation (lambda (result)
-                       (alexandria:destructuring-ecase result
-                         ((:ok completions)
-                          (with-point ((start (current-point))
-                                       (end (current-point)))
-                            (skip-symbol-backward start)
-                            (skip-symbol-forward end)
-                            (funcall then
-                                     (lem-lisp-mode/completion:make-completion-items
-                                      completions
-                                      start
-                                      end))))
-                         ((:abort condition)
-                          (editor-error "abort ~A" condition))))
-       :thread (current-micros-thread)
-       :package (current-package)))))
+    (if string
+        (remote-eval-from-string
+         (current-connection)
+         (lem-lisp-mode/completion:make-completions-form-string string (current-package))
+         :continuation (lambda (result)
+                         (alexandria:destructuring-ecase result
+                           ((:ok completions)
+                            (with-point ((start (current-point))
+                                         (end (current-point)))
+                              (skip-symbol-backward start)
+                              (skip-symbol-forward end)
+                              (funcall then
+                                       (lem-lisp-mode/completion:make-completion-items
+                                        completions
+                                        start
+                                        end))))
+                           ((:abort condition)
+                            (editor-error "abort ~A" condition))))
+         :thread (current-micros-thread)
+         :package (current-package))
+        (funcall then '()))))
 
 (defun describe-symbol (symbol-name)
   (when symbol-name
@@ -1148,9 +1150,9 @@
                               (incf retry-count))))
                      (:no-error (conn)
                        (connected-slime-message conn)
-                       ;; replのプロンプトの表示とカーソル位置の変更をしたいが
-                       ;; 他のファイルの作業中にバッファ/ウィンドウが切り替わると作業の邪魔なので
-                       ;; with-current-windowで元に戻す
+                       ;; We want to to show the repl prompt and change the cursor position.
+                       ;; However, it's disruptive to change the buffer/window while working on another file,
+                       ;; so we use `with-current-window` to switch back afterwards.
                        (unless (repl-buffer)
                          (with-current-window (current-window) (start-lisp-repl)))
                        (success))))
@@ -1222,7 +1224,6 @@
     (self-connect))
   (when start-repl (start-lisp-repl)))
 
-
 (defun buffer-pathname-type (buffer)
   (alexandria:when-let (pathname (buffer-filename buffer))
     (pathname-type pathname)))

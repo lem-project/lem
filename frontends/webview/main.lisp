@@ -1,38 +1,53 @@
 (uiop:define-package :lem-webview
   (:use :cl)
+  (:import-from :lem-webview/darwin
+   :set-window-appearance
+   :dispatch-set-window-appearance)
   (:export :main
-           :webview-main))
+           :webview-main
+           :webview))
 (in-package :lem-webview)
 
-(defun run-webview (&key title url width height)
+(defclass webview (lem-server:jsonrpc lem-core:implementation)
+  ()
+  (:documentation "Webview frontend implementation.
+Combines the JSON-RPC server protocol with a native webview window."))
+
+(defmethod lem-if:invoke ((implementation webview) function)
+  (main)
+  (call-next-method))
+
+(defun run-webview (&key title url width height (frame-color :dark))
+  "Run the webview window. FRAME-COLOR is :dark or :light (macOS only)."
   (float-features:with-float-traps-masked t
     (let ((w (webview:webview-create 0 (cffi:null-pointer))))
       (unwind-protect
            (progn
              (webview:webview-set-title w title)
              (webview:webview-set-size w width height 0)
+             (set-window-appearance w frame-color)
              (webview:webview-navigate w url)
              (webview:webview-run w))
         (webview:webview-destroy w)))))
 
+(defmethod lem-if:set-frame-color ((implementation lem-server:jsonrpc) mode)
+  "Set the window frame to :dark or :light mode.
+Currently implemented for macOS via darwin.lisp; on other platforms this
+is a no-op. Can be called from any thread."
+  (dispatch-set-window-appearance mode))
+
 (defun main (&optional (args (uiop:command-line-arguments)))
-  (let ((parsed-args (lem:parse-args args)))
-    (cond ((eq :jsonrpc (or (lem:command-line-arguments-interface parsed-args)
-                            :jsonrpc))
-           (let ((port (lem/common/socket:random-available-port)))
-             (bt2:make-thread (lambda ()
-                                (lem-server:run-websocket-server
-                                 :port port
-                                 :args args))
-                              :name "lem-server")
-             (run-webview :title "Lem"
-                          :url (format nil "http://127.0.0.1:~D" port)
-                          :width 1024
-                          :height 768)
-             (uiop:quit)))
-          (t
-           (setf (lem:command-line-arguments-interface parsed-args) :ncurses)
-           (lem:launch parsed-args)))))
+  (let ((port (lem/common/socket:random-available-port)))
+    (bt2:make-thread (lambda ()
+                       (lem-server:run-websocket-server
+                        :port port
+                        :args args))
+                     :name "lem-server")
+    (run-webview :title "Lem"
+                 :url (format nil "http://127.0.0.1:~D" port)
+                 :width 1024
+                 :height 768)
+    (uiop:quit)))
 
 (defun webview-main (&optional (args (uiop:command-line-arguments)))
   (let ((spec '((("url") :type string :optional nil :documentation "url")

@@ -15,40 +15,25 @@ env:
   REGISTRY_PASSWORD: ${{ github.token }}
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
-      - name: Install system dependencies
+
+      - name: Lint - Check for internal symbol usage
         run: |
-          sudo apt-get update
-          sudo apt-get install -y curl bzip2 git libzstd-dev file libgtk-4-1 libwebkitgtk-6.0-4 libwebkit2gtk-4.1-0
-      - name: Install Roswell
-        env:
-          LISP: ${{ matrix.lisp }}
-        run: |
-          curl -L https://raw.githubusercontent.com/roswell/roswell/v22.12.14.113/scripts/install-for-ci.sh | sh
-      - name: Run test
-        run: |
-          set -ex
-
-          ros config set dynamic-space-size 2048
-          curl -L https://qlot.tech/installer | bash
-          export PATH="/home/runner/.qlot/bin:$PATH"
-
-          qlot install
-
-          # make lint
-
           if [ $(grep -r --include="*.lisp" 'lem::' | wc -l) -ne 0 ]; then
             echo 'using `lem::` internal symbols'
             echo 'https://google.github.io/styleguide/lispguide.xml?showone=Packages#Packages'
             exit 1
           fi
 
-            .qlot/bin/rove lem-tests.asd
-            .qlot/bin/rove extensions/vi-mode/lem-vi-mode.asd
+      - name: Build test image
+        run: docker build -f docker/Dockerfile.test -t lem-tests .
+
+      - name: Run tests
+        run: docker run --rm lem-tests
 
   push_image:
     name: Push Image to GHCR

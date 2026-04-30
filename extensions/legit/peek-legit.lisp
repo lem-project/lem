@@ -195,28 +195,34 @@ Notes:
     (list peek-window source-window)))
 
 (defun display (collector &key (minor-mode 'peek-legit-mode))
-  (when (boundp '*peek-window*)
-    (delete-window *peek-window*))
-  (when (boundp '*source-window*)
-    (delete-window *source-window*))
+  (let ((refreshing (and (boundp '*peek-window*)
+                         (not (deleted-window-p *peek-window*)))))
+    ;; Delete old windows, skipping finalize-peek-legit to avoid state corruption
+    (let ((*is-finalzing* t))
+      ;; Must switch away from peek/source window before deleting
+      (when refreshing
+        (setf (current-window) *parent-window*))
+      (when (boundp '*peek-window*)
+        (delete-window *peek-window*))
+      (when (boundp '*source-window*)
+        (delete-window *source-window*)))
 
-  (destructuring-bind (peek-window source-window)
-      (make-two-side-by-side-windows (collector-buffer collector))
+    (destructuring-bind (peek-window source-window)
+        (make-two-side-by-side-windows (collector-buffer collector))
 
-    (unless (boundp '*parent-window*)
-      (setf *parent-window* (current-window)))
+      ;; Only set *parent-window* on initial open, not on refresh
+      (unless refreshing
+        (setf *parent-window* (current-window)))
 
-    (setf *peek-window* peek-window)
-    (setf *source-window* source-window)
+      (setf *peek-window* peek-window)
+      (setf *source-window* source-window)
 
-    (setf (current-window) peek-window)
+      (setf (current-window) peek-window)
 
-    (funcall minor-mode t)
-    ;; aka:
-    ;; (peek-legit-mode t)
+      (funcall minor-mode t)
 
-    (start-move-point (buffer-point (collector-buffer collector)))
-    (show-matched-line)))
+      (start-move-point (buffer-point (collector-buffer collector)))
+      (show-matched-line))))
 
 (defun make-peek-legit-buffer (&key (name "*peek-legit*"))
   "Get or create a buffer of name NAME. By default, use a `*peek-legit*' buffer.
@@ -245,7 +251,7 @@ Notes:
                                       (case buffer
                                         (:status "*peek-legit*")
                                         (:commits-log "*legit-commits-log*")
-                                        (t (error "Unknown buffer name to display legit data: ~a" buffer))))))
+                                        (otherwise (error "Unknown buffer name to display legit data: ~a" buffer))))))
          (point (buffer-point (collector-buffer *collector*))))
     (declare (ignorable point))
     (funcall function *collector*)
@@ -408,7 +414,7 @@ Notes:
                          (point (funcall stage)))
     ;; Update the buffer, to see that a staged file goes to the staged section.
     ;; This calls git again and refreshes everything.
-    (lem/legit:legit-status)
+    (show-legit-status)
     point))
 
 (define-command peek-legit-unstage-file () ()
@@ -417,7 +423,7 @@ Notes:
                          (point (funcall unstage)))
     ;; Update the buffer, to see that a staged file goes to the staged section.
     ;; This calls git again and refreshes everything.
-    (lem/legit:legit-status)
+    (show-legit-status)
     point))
 
 (define-command peek-legit-discard-file () ()
@@ -426,7 +432,7 @@ Notes:
                          (point (funcall fn)))
     ;; Update the buffer.
     ;; This calls git again and refreshes everything.
-    (lem/legit:legit-status)
+    (show-legit-status)
     point))
 
 (defun %legit-quit ()

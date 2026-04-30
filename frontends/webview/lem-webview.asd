@@ -3,4 +3,5 @@
                "float-features"
                "lem-server")
   :serial t
-  :components ((:file "main")))
+  :components ((:file "darwin")
+               (:file "main")))

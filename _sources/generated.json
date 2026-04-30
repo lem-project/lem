@@ -1,0 +1,143 @@
+{
+    "async-process": {
+        "cargoLocks": null,
+        "date": "2025-12-16",
+        "extract": null,
+        "name": "async-process",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "rev": "3ea46fcd238fdda101b644221ecf5e311c171a21",
+            "sha256": "sha256-2qBjZ7ruhz6zmhkQBOkIQ/4eKH1Nvzfr5Gsa+0P8OFA=",
+            "sparseCheckout": [],
+            "type": "git",
+            "url": "https://github.com/lem-project/async-process"
+        },
+        "version": "3ea46fcd238fdda101b644221ecf5e311c171a21"
+    },
+    "jsonrpc": {
+        "cargoLocks": null,
+        "date": "2025-08-04",
+        "extract": null,
+        "name": "jsonrpc",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "rev": "42fa96ec34f6b6be77a6f12f7c4e84f375eff019",
+            "sha256": "sha256-tG2poXDvHX6twLmW8keaJedKfrFpmoHJZAmyuN0NRFk=",
+            "sparseCheckout": [],
+            "type": "git",
+            "url": "https://github.com/cxxxr/jsonrpc"
+        },
+        "version": "42fa96ec34f6b6be77a6f12f7c4e84f375eff019"
+    },
+    "lem-mailbox": {
+        "cargoLocks": null,
+        "date": "2023-09-10",
+        "extract": null,
+        "name": "lem-mailbox",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "rev": "12d629541da440fadf771b0225a051ae65fa342a",
+            "sha256": "sha256-hb6GSWA7vUuvSSPSmfZ80aBuvSVyg74qveoCPRP2CeI=",
+            "sparseCheckout": [],
+            "type": "git",
+            "url": "https://github.com/lem-project/lem-mailbox"
+        },
+        "version": "12d629541da440fadf771b0225a051ae65fa342a"
+    },
+    "micros": {
+        "cargoLocks": null,
+        "date": "2025-12-17",
+        "extract": null,
+        "name": "micros",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "rev": "2ec61c8d6028d219cc511a0e41d9228761c84251",
+            "sha256": "sha256-HGcKeHy5foq2M1sKQRr7eahYLTESBbQAr7ufz1+Dyhw=",
+            "sparseCheckout": [],
+            "type": "git",
+            "url": "https://github.com/lem-project/micros"
+        },
+        "version": "2ec61c8d6028d219cc511a0e41d9228761c84251"
+    },
+    "tree-sitter-cl": {
+        "cargoLocks": null,
+        "date": "2025-12-20",
+        "extract": null,
+        "name": "tree-sitter-cl",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "rev": "431b572d0e49d64a78320cc5f4b4a90391024ce6",
+            "sha256": "sha256-XbChbpGoS1oDB7r3PiNBqbZUqAAYSgW+vF9xtMqky4Y=",
+            "sparseCheckout": [],
+            "type": "git",
+            "url": "https://github.com/lem-project/tree-sitter-cl"
+        },
+        "version": "431b572d0e49d64a78320cc5f4b4a90391024ce6"
+    },
+    "webview": {
+        "cargoLocks": null,
+        "date": "2025-08-23",
+        "extract": null,
+        "name": "webview",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "rev": "238a0be10c6c37311ce2587ef99142f65abd880a",
+            "sha256": "sha256-PsHF4PoSa93x2vHrqU1aeNHKutli6Y//Yqs5SQGxGWU=",
+            "sparseCheckout": [],
+            "type": "git",
+            "url": "https://github.com/lem-project/webview.git"
+        },
+        "version": "238a0be10c6c37311ce2587ef99142f65abd880a"
+    },
+    "webview-upstream": {
+        "cargoLocks": null,
+        "date": null,
+        "extract": null,
+        "name": "webview-upstream",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "owner": "webview",
+            "repo": "webview",
+            "rev": "0.12.0",
+            "sha256": "sha256-pmqodl2fIlCNJTZz1U5spW4MpcoMhQt5WFh3+TRny3U=",
+            "sparseCheckout": [],
+            "type": "github"
+        },
+        "version": "0.12.0"
+    }
+}

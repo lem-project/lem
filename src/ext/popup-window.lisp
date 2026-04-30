@@ -53,6 +53,20 @@
   (popup-window-source-window window))
 
 (defun ensure-gravity (gravity)
+  "The possible gravity values are as follow, as keywords. They should be self-explanatory.
+
+  :center
+  :top-display
+  :bottom-display
+  :top
+  :topright
+  :cursor
+  :follow-cursor
+  :mouse-cursor
+  :vertically-adjacent-window
+  :vertically-adjacent-window-dynamic
+  :horizontally-adjacent-window
+  :horizontally-above-window"
   (if (typep gravity 'gravity)
       gravity
       (ecase gravity

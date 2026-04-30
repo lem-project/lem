@@ -36,6 +36,9 @@ build/*
 /systems/
 
 /result
+.direnv/
 
 TODO
 artifacts/
+logs/
+.serena/

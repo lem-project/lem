@@ -132,7 +132,7 @@ allows to learn about the file state: modified, deleted, ignored… "
    (concatenate 'list
                 *file-diff-args*
                 (list (format nil "-U~D" lem/porcelain:*diff-context-lines*))
-                (if cached '("--cached"))
+                (when cached '("--cached"))
                 (list file))))
 
 (defmethod show-commit-diff ((vcs vcs-git) ref &key ignore-all-space)
@@ -476,3 +476,9 @@ I am stopping in case you still have something valuable there."))
                      "-p" ;; view as patch = view diff
                      (princ-to-string position)))
       (format nil "Invalid stash reference: ~s. We expect a positive number." position)))
+
+(defmethod remote-url ((vcs vcs-git) &key (remote "origin"))
+  "Get the remote URL for the Git repository."
+  (let ((output (run-git (list "remote" "get-url" remote))))
+    (when (and output (plusp (length output)))
+      (str:trim output))))

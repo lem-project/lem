@@ -1,0 +1,115 @@
+version: 2
+
+trigger:
+  paths:
+    - "extensions/**"
+    - "frontends/**/*.lisp"
+    - "src/**"
+    - "tests/**"
+    - "contrib/**"
+    - "**/*.asd"
+  head_branches:
+    exclude:
+      - 'revert-*'
+
+validation:
+  limits:
+    max_total_changed_lines: 400
+    max_delete_ratio: 0.5
+    max_files_changed: 10
+    severity: warning
+
+  ai:
+    system_prompt: |
+      You are a senior Common Lisp engineer reviewing code for Lem editor.
+      Lem is a text editor with multiple frontends (ncurses, SDL2, webview).
+      Focus on maintainability, consistency with existing code, and Lem-specific conventions.
+    rules:
+      # === File Structure ===
+      - name: defpackage_rule
+        prompt: |
+          First form must be `defpackage` or `uiop:define-package`.
+          Package name should match filename (e.g., `foo.lisp` → `:lem-ext/foo` or `:lem-foo`).
+          Extensions must use `lem-` prefix (e.g., `:lem-python-mode`).
+
+      - name: file_structure_rule
+        prompt: |
+          File organization (top to bottom):
+          1. defpackage
+          2. defvar/defparameter declarations
+          3. Key bindings (define-key, define-keys)
+          4. Class/struct definitions
+          5. Functions and commands
+
+      # === Style ===
+      - name: loop_keywords_rule
+        prompt: |
+          Loop keywords must use colons: `(loop :for x :in list :do ...)`
+          NOT: `(loop for x in list do ...)`
+
+      - name: naming_conventions_rule
+        prompt: |
+          Naming conventions:
+          - Functions/variables: kebab-case (e.g., `find-buffer`)
+          - Special variables: *earmuffs* (e.g., `*global-keymap*`)
+          - Constants: +plus-signs+ (e.g., `+default-tab-size+`)
+          - Predicates: -p suffix for functions (e.g., `buffer-modified-p`)
+          - Do NOT use -p suffix for user-configurable variables
+
+      # === Documentation ===
+      - name: docstring_rule
+        prompt: |
+          Required docstrings for:
+          - Exported functions, methods, classes
+          - `define-command` (explain what the command does)
+          - Generic functions (`:documentation` option)
+          Important functions should explain "why", not just "what".
+        severity: warning
+
+      # === Lem-Specific ===
+      - name: internal_symbol_rule
+        prompt: |
+          Use exported symbols from `lem` or `lem-core` package.
+          Avoid `lem::internal-symbol` access.
+          If internal access is necessary, document why.
+
+      - name: error_handling_rule
+        prompt: |
+          - `error`: Internal/programming errors
+          - `editor-error`: User-facing errors (displayed in echo area)
+          Always use `editor-error` for messages shown to users.
+
+      - name: frontend_interface_rule
+        prompt: |
+          Frontend-specific code must use `lem-if:*` protocol.
+          Do not call frontend implementation directly from core.
+        severity: warning
+
+      # === Functional Style ===
+      - name: functional_style_rule
+        prompt: |
+          Prefer explicit function arguments over dynamic variables.
+          Avoid using `defvar` for state passed between functions.
+          Exception: Well-documented cases like `*current-buffer*`.
+
+      - name: dynamic_symbol_call_rule
+        prompt: |
+          Avoid `uiop:symbol-call`. Rethink architecture instead.
+          If unavoidable, document the reason.
+
+      # === Libraries ===
+      - name: alexandria_usage_rule
+        prompt: |
+          Alexandria utilities allowed: `if-let`, `when-let`, `with-gensyms`, etc.
+          Avoid: `alexandria:curry` (use explicit lambdas)
+          Avoid: `alexandria-2:*` functions not yet used in codebase
+
+      # === Macros ===
+      - name: macro_style_rule
+        prompt: |
+          Keep macros small. For complex logic, use `call-with-*` pattern:
+          ```lisp
+          (defmacro with-foo (() &body body)
+            `(call-with-foo (lambda () ,@body)))
+          ```
+          Prefer `list` over backquote outside macros.

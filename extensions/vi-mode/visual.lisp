@@ -34,7 +34,7 @@
            :vi-visual-opposite-side))
 (in-package :lem-vi-mode/visual)
 
-(defvar *visual-keymap* (make-keymap :name '*visual-keymap*))
+(defvar *visual-keymap* (make-keymap :description '*visual-keymap*))
 
 (defmethod make-region-overlays-using-global-mode ((global-mode vi-mode) cursor)
   (let ((buffer (point-buffer cursor)))

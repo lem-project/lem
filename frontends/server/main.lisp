@@ -5,7 +5,8 @@
   (:local-nicknames (:display :lem-core/display)
                     (:queue :lem/common/queue)
                     (:mouse :lem-server/mouse))
-  (:export :register-method
+  (:export :jsonrpc
+           :register-method
            :run-tcp-server
            :run-stdio-server
            :run-websocket-server
@@ -62,7 +63,7 @@
                                                "frontend/dist/~A"
                                                (string-left-trim "/" path)))))
             ((alexandria:starts-with-subseq "/local/" path)
-             (let* ((file (pathname (subseq path (length "/local"))))
+             (let* ((file (uiop:parse-native-namestring (subseq path (length "/local"))))
                     (mime-type (hunchentoot:mime-type file)))
                `(200 (:content-type ,mime-type)
                      ,file)))
@@ -108,7 +109,8 @@
    :window-bottom-margin 0
    :html-support t
    :underline-color-support t
-   :no-force-needed t))
+   :no-force-needed t
+   :support-pixel-positioning t))
 
 (defun get-all-views ()
   (if (null (lem:current-frame))
@@ -237,8 +239,9 @@
     (notify jsonrpc "update-background" color-name)))
 
 (defmethod lem-if:update-cursor-shape ((jsonrpc jsonrpc) cursor-type)
-  ;; TODO
-  )
+  (with-error-handler ()
+    (notify jsonrpc "update-cursor-shape"
+            (hash "cursorType" (string-downcase (string cursor-type))))))
 
 (defmethod lem-if:display-width ((jsonrpc jsonrpc))
   (with-error-handler ()
@@ -323,6 +326,54 @@
                    "x" x
                    "y" y))))
 
+(defmethod lem-if:make-view-with-pixels ((jsonrpc jsonrpc) window x y width height
+                                         pixel-x pixel-y pixel-width pixel-height
+                                         use-modeline)
+  (let ((view (make-view :window window
+                         :x x
+                         :y y
+                         :width width
+                         :height height
+                         :pixel-x pixel-x
+                         :pixel-y pixel-y
+                         :pixel-width pixel-width
+                         :pixel-height pixel-height
+                         :use-modeline use-modeline
+                         :kind (cond ((or (lem:floating-window-p window)
+                                          (lem:attached-window-p window))
+                                      "floating")
+                                     ((lem:header-window-p window)
+                                      "header")
+                                     (t
+                                      "tile"))
+                         :border (lem:window-border window)
+                         :border-shape (and (lem:floating-window-p window)
+                                            (lem:floating-window-border-shape window)))))
+    (notify* jsonrpc "make-view" view)
+    view))
+
+(defmethod lem-if:set-view-pos-pixels ((jsonrpc jsonrpc) view x y pixel-x pixel-y)
+  (with-error-handler ()
+    (move-view view x y pixel-x pixel-y)
+    (notify* jsonrpc
+             "move-view"
+             (hash "viewInfo" view
+                   "x" x
+                   "y" y
+                   "pixelX" pixel-x
+                   "pixelY" pixel-y))))
+
+(defmethod lem-if:set-view-size-pixels ((jsonrpc jsonrpc) view width height pixel-width pixel-height)
+  (with-error-handler ()
+    (resize-view view width height pixel-width pixel-height)
+    (notify* jsonrpc
+             "resize-view"
+             (hash "viewInfo" view
+                   "width" width
+                   "height" height
+                   "pixelWidth" pixel-width
+                   "pixelHeight" pixel-height))))
+
 (defmethod lem-if:redraw-view-before ((jsonrpc jsonrpc) view)
   )
 
@@ -339,12 +390,31 @@
 
 (defmethod lem-if:update-display ((jsonrpc jsonrpc))
   (with-error-handler ()
-    (let ((view (lem:window-view (lem:current-window)))
-          (x (lem:last-print-cursor-x (lem:current-window)))
-          (y (lem:last-print-cursor-y (lem:current-window))))
+    (let* ((view (lem:window-view (lem:current-window)))
+           (x (lem:last-print-cursor-x (lem:current-window)))
+           (y (lem:last-print-cursor-y (lem:current-window)))
+           (cursor-attr (lem:ensure-attribute 'lem:cursor nil))
+           (impl (lem:implementation))
+           (cursor-color (ensure-rgb
+                          (or (when cursor-attr
+                                (lem:attribute-background cursor-attr))
+                              (lem-if:get-foreground-color impl))))
+           (cursor-char (lem:character-at
+                         (lem:buffer-point
+                          (lem:window-buffer (lem:current-window)))))
+           (cursor-text (if (and cursor-char (char/= cursor-char #\Newline))
+                            (string cursor-char)
+                            " "))
+           (cursor-fg (ensure-rgb
+                       (or (when cursor-attr
+                             (lem:attribute-foreground cursor-attr))
+                           (lem-if:get-background-color impl)))))
       (notify* jsonrpc
                "move-cursor"
-               (hash "viewInfo" view "x" x "y" y)))
+               (hash "viewInfo" view "x" x "y" y
+                     "color" cursor-color
+                     "cursorText" cursor-text
+                     "cursorForeground" cursor-fg)))
     (notify* jsonrpc "update-display" nil)
     (notify-all jsonrpc)))
 
@@ -478,7 +548,8 @@
         (yason:encode-object-element "background" (ensure-rgb (lem:attribute-background attribute)))
         (yason:encode-object-element "reverse" (bool (lem:attribute-reverse attribute)))
         (yason:encode-object-element "bold" (bool (lem:attribute-bold attribute)))
-        (yason:encode-object-element "underline" (lem:attribute-underline attribute))))))
+        (yason:encode-object-element "underline" (lem:attribute-underline attribute))
+        (yason:encode-object-element "cursor" (bool (lem-core:cursor-attribute-p attribute)))))))
 
 
 
@@ -561,10 +632,11 @@
 
 (defmethod draw-object (jsonrpc (object display:eol-cursor-object) x y view)
   (lem-core::set-last-print-cursor (view-window view) x y)
-  (put jsonrpc view x y " "
-       (lem:make-attribute
-        :background
-        (lem:color-to-hex-string (display:eol-cursor-object-color object)))))
+  (let ((attr (lem:make-attribute
+               :background
+               (lem:color-to-hex-string (display:eol-cursor-object-color object)))))
+    (lem-core:set-cursor-attribute attr)
+    (put jsonrpc view x y " " attr)))
 
 (defmethod draw-object (jsonrpc (object display:extend-to-eol-object) x y view)
   (let ((width (lem-if:view-width (lem-core:implementation) view)))

@@ -112,7 +112,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 (define-key *peek-legit-keymap* "z p" 'legit-stash-pop)
 
 ;; redraw everything:
-(define-key *peek-legit-keymap* "g" 'legit-status)
+(define-key *peek-legit-keymap* "g" 'legit-refresh)
 
 ;; navigation
 (define-key *legit-diff-mode-keymap* "C-n" 'next-line)
@@ -297,10 +297,10 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
   It is the last point of the line preceding the following \"@@ \" line,
   or the end of buffer."
   (line-start end?)
-  (if (str:starts-with-p "@@ " (line-string end?))
-      ;; start searching from next line.
-      (setf end?
-            (move-to-next-virtual-line end?)))
+  (when (str:starts-with-p "@@ " (line-string end?))
+    ;; start searching from next line.
+    (setf end?
+          (move-to-next-virtual-line end?)))
   (move-point
    end?
    (or
@@ -505,17 +505,14 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
     (switch-to-buffer buffer)))
 
 
-(define-command legit-status () ()
-  "Show changes, untracked files, stashes and latest commits in an interactive window."
+(defun show-legit-status ()
+  "Display the legit status window. Called by legit-status command and internal refresh operations."
   (with-current-project (vcs)
     (multiple-value-bind (untracked-files unstaged-files staged-files)
         (lem/porcelain:components vcs)
 
-      ;; big try! It works \o/
       (with-collecting-sources (collector :read-only nil
                                           :minor-mode 'peek-legit-mode)
-        ;; (if we don't specify the minor-mode, the macro arguments's default value will not be found)
-        ;;
         ;; Header: current branch.
         (collector-insert
          (format nil "Branch: ~a" (lem/porcelain:current-branch vcs))
@@ -523,7 +520,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
         (collector-insert "")
 
         ;; Is a git rebase in progress?
-        (let ((rebase-status (lem/porcelain::rebase-in-progress-p vcs)))
+        (let ((rebase-status (lem/porcelain:rebase-in-progress-p vcs)))
           (when (getf rebase-status :status)
             (collector-insert
              (format nil "!rebase in progress: ~a onto ~a"
@@ -567,49 +564,49 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
         (collector-insert "")
         (collector-insert (format nil "Unstaged changes (~a):" (length unstaged-files)) :header t)
         (if unstaged-files
-            (loop for file-info in unstaged-files
-                  for file = (getf file-info :file)
-                  for type = (getf file-info :type)
-                  do (with-appending-source
-                         (point :move-function (make-diff-function file :type type)
-                                :visit-file-function (make-visit-file-function file)
-                                :stage-function (make-stage-function file)
-                                :unstage-function (make-unstage-function file :already-unstaged t)
-                                :discard-file-function (make-discard-file-function file))
-                       (insert-string point
-                                      (format nil "~10a ~a"
-                                              (case type
-                                                (:modified "modified")
-                                                (:deleted "deleted")
-                                                (t ""))
-                                              file)
-                                      :attribute 'filename-attribute
-                                      :read-only t)))
+            (loop :for file-info :in unstaged-files
+                  :for file := (getf file-info :file)
+                  :for type := (getf file-info :type)
+                  :do (with-appending-source
+                          (point :move-function (make-diff-function file :type type)
+                                 :visit-file-function (make-visit-file-function file)
+                                 :stage-function (make-stage-function file)
+                                 :unstage-function (make-unstage-function file :already-unstaged t)
+                                 :discard-file-function (make-discard-file-function file))
+                        (insert-string point
+                                       (format nil "~10a ~a"
+                                               (case type
+                                                 (:modified "modified")
+                                                 (:deleted "deleted")
+                                                 (otherwise ""))
+                                               file)
+                                       :attribute 'filename-attribute
+                                       :read-only t)))
             (collector-insert "<none>"))
 
         ;; Staged changes
         (collector-insert "")
         (collector-insert (format nil "Staged changes (~a):" (length staged-files)) :header t)
         (if staged-files
-            (loop for file-info in staged-files
-                  for file = (getf file-info :file)
-                  for type = (getf file-info :type)
-                  do (with-appending-source
-                         (point :move-function (make-diff-function file :cached t :type type)
-                                :visit-file-function (make-visit-file-function file)
-                                :stage-function (make-stage-function file)
-                                :unstage-function (make-unstage-function file)
-                                :discard-file-function (make-discard-file-function file :is-staged t))
-                       (insert-string point
-                                      (format nil "~10a ~a"
-                                              (case type
-                                                (:modified "modified")
-                                                (:added "created")
-                                                (:deleted "deleted")
-                                                (t ""))
-                                              file)
-                                      :attribute 'filename-attribute
-                                      :read-only t)))
+            (loop :for file-info :in staged-files
+                  :for file := (getf file-info :file)
+                  :for type := (getf file-info :type)
+                  :do (with-appending-source
+                          (point :move-function (make-diff-function file :cached t :type type)
+                                 :visit-file-function (make-visit-file-function file)
+                                 :stage-function (make-stage-function file)
+                                 :unstage-function (make-unstage-function file)
+                                 :discard-file-function (make-discard-file-function file :is-staged t))
+                        (insert-string point
+                                       (format nil "~10a ~a"
+                                               (case type
+                                                 (:modified "modified")
+                                                 (:added "created")
+                                                 (:deleted "deleted")
+                                                 (otherwise ""))
+                                               file)
+                                       :attribute 'filename-attribute
+                                       :read-only t)))
             (collector-insert "<none>"))
 
         ;; Latest commits.
@@ -617,36 +614,52 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
         (collector-insert "Latest commits:" :header t)
         (let ((latest-commits (lem/porcelain:latest-commits vcs)))
           (if latest-commits
-              (loop for commit in latest-commits
-                    for line = nil
-                    for hash = nil
-                    for message = nil
-                    if (consp commit)
-                      do (setf line (getf commit :line))
-                         (setf hash (getf commit :hash))
-                         (setf message (getf commit :message))
-                    else
-                      do (setf line commit)
+              (loop :for commit :in latest-commits
+                    :for line := nil
+                    :for hash := nil
+                    :for message := nil
+                    :if (consp commit)
+                      :do (setf line (getf commit :line))
+                          (setf hash (getf commit :hash))
+                          (setf message (getf commit :message))
+                    :else
+                      :do (setf line commit)
 
-                    do (with-appending-source
-                           (point :move-function (make-show-commit-function hash)
-                                  :visit-file-function (lambda ())
-                                  :stage-function (lambda () )
-                                  :unstage-function (lambda () ))
-                         (with-point ((start point))
-                           (when hash
-                             (insert-string point hash :attribute 'filename-attribute :read-only t))
-                           (if message
-                               (insert-string point message)
-                               (insert-string point line))
+                    :do (with-appending-source
+                            (point :move-function (make-show-commit-function hash)
+                                   :visit-file-function (lambda ())
+                                   :stage-function (lambda () )
+                                   :unstage-function (lambda () ))
+                          (with-point ((start point))
+                            (when hash
+                              (insert-string point hash :attribute 'filename-attribute :read-only t))
+                            (if message
+                                (insert-string point message)
+                                (insert-string point line))
 
-                           ;; Save the hash on this line for later use.
-                           (when hash
-                             (put-text-property start point :commit-hash hash)))))
+                            ;; Save the hash on this line for later use.
+                            (when hash
+                              (put-text-property start point :commit-hash hash)))))
               (collector-insert "<none>")))
 
         (add-hook (variable-value 'after-change-functions :buffer (collector-buffer collector))
                   'change-grep-buffer)))))
+
+(defun legit-status-active-p ()
+  "Return t if the legit status window is currently open."
+  (and (boundp '*peek-window*)
+       (not (deleted-window-p *peek-window*))))
+
+(define-command legit-status () ()
+  "Show changes, untracked files, stashes and latest commits in an interactive window.
+If the legit window is already open, close it (toggle behavior)."
+  (if (legit-status-active-p)
+      (legit-quit)
+      (show-legit-status)))
+
+(define-command legit-refresh () ()
+  "Refresh the legit status window."
+  (show-legit-status))
 
 (define-command legit () ()
   "Show changes, untracked files and latest commits in an interactive window.
@@ -678,7 +691,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
         (run-function (lambda ()
                         (lem/porcelain:checkout vcs branch))
                       :message (format nil "Checked out ~a" branch))
-        (legit-status)))))
+        (show-legit-status)))))
 
 (define-command legit-branch-create () ()
   "Create and checkout a new branch."
@@ -690,7 +703,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
         (run-function (lambda ()
                         (lem/porcelain:checkout-create vcs new base))
                       :message (format nil "Created ~a" new))
-        (legit-status)))))
+        (show-legit-status)))))
 
 (define-command legit-pull () ()
   "Pull changes, update HEAD."
@@ -718,7 +731,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
         (return-from legit-rebase-interactive))
 
       (run-function (lambda ()
-                      (lem/porcelain::rebase-interactively vcs :from commit-hash)))
+                      (lem/porcelain:rebase-interactively vcs :from commit-hash)))
 
       (let ((buffer (find-file-buffer ".git/rebase-merge/git-rebase-todo")))
         (when buffer
@@ -814,16 +827,16 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
   "Ask for a message and stash the current changes."
   (with-current-project (vcs)
     (let ((message (prompt-for-string "Stash message: ")))
-      (lem/porcelain::stash-push vcs :message message)
-      (legit-status))))
+      (lem/porcelain:stash-push vcs :message message)
+      (show-legit-status))))
 
 (define-command legit-stash-pop () ()
   "Pop the latest staged changes"
   (with-current-project (vcs)
     (let ((confirm (prompt-for-y-or-n-p "Pop the latest stash to the current branch? ")))
       (when confirm
-        (lem/porcelain::stash-pop vcs)
-        (legit-status)))))
+        (lem/porcelain:stash-pop vcs)
+        (show-legit-status)))))
 
 (define-command legit-quit () ()
   "Quit"

@@ -461,17 +461,17 @@
                       (+ cursor-x (object-width cursor-object)))
                    (setf (horizontal-scroll-start window)
                          (+ (- cursor-x width)
-                            (object-width cursor-object))))))
-          (setf objects
-                (extract-object-in-display-range
-                 (mapcan (lambda (object)
-                           (if (typep object 'text-object)
-                               (explode-object object)
-                               (list object)))
-                         objects)
-                 (horizontal-scroll-start window)
-                 (+ (horizontal-scroll-start window)
-                    (window-view-width window)))))
+                            (object-width cursor-object)))))))
+        (setf objects
+              (extract-object-in-display-range
+               (mapcan (lambda (object)
+                         (if (typep object 'text-object)
+                             (explode-object object)
+                             (list object)))
+                       objects)
+               (horizontal-scroll-start window)
+               (+ (horizontal-scroll-start window)
+                  (window-view-width window))))
         (render-line-with-caching window 0 y (append left-side-objects objects) height))
       height)))
 

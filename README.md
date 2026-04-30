@@ -4,6 +4,7 @@
 ![Build Status](https://github.com/lem-project/lem/workflows/CI/badge.svg)
 [![Backers on Open Collective](https://opencollective.com/lem/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/lem/sponsors/badge.svg)](#sponsors)
 [![GitHub Sponsors](https://img.shields.io/badge/-Sponsor-fafbfc?logo=GitHub-Sponsors)](https://github.com/sponsors/cxxxr)
+[![gitcgr](https://gitcgr.com/badge/lem-project/lem.svg)](https://gitcgr.com/lem-project/lem)
 
 
 
@@ -17,6 +18,41 @@ Tested on Ubuntu 24.04 and macOS(apple silicon).
 
 https://github.com/lem-project/lem/releases/tag/nightly-latest
 
+### Nix
+
+    $ nix profile add github:lem-project/lem#
+    $ nix profile add github:lem-project/lem#lem-ncurses
+    $ nix profile add github:lem-project/lem#lem-webview
+    $ nix profile add github:lem-project/lem#lem-sdl2
+
+Or run Lem temporarily (no install):
+
+    $ nix run github:lem-project/lem#
+    $ nix run github:lem-project/lem#lem-ncurses
+    $ nix run github:lem-project/lem#lem-webview
+    $ nix run github:lem-project/lem#lem-sdl2
+
+Use the overlay when you already have a flake-based NixOS/home-manager config and
+want `pkgs.lem-ncurses` (and `apps.lem-ncurses`) available from your `nixpkgs` set.
+You can also consume `lem` as an overlay in `flake.nix`:
+
+    {
+      inputs = {
+        nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+        lem.url = "github:lem-project/lem";
+      };
+
+      outputs = { self, nixpkgs, lem, ... }: {
+        nixosConfigurations.example = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            { nixpkgs.overlays = [ lem.overlays.default ]; }
+            { environment.systemPackages = [ pkgs.lem-ncurses ]; }
+          ];
+        };
+      };
+    }
+
 ### docker
 
 With Docker (terminal version):
@@ -25,15 +61,16 @@ With Docker (terminal version):
 
 ## Build
 
-### Lem(terminal version)
-- [GNU/Linux](https://lem-project.github.io/installation/ncurses/linux/)
-- [MacOS](https://lem-project.github.io/installation/ncurses/macos/)
-- [Windows](https://lem-project.github.io/installation/ncurses/windows/)
+Instructions to build Lem on GNU/Linux, Macos and Windows.
 
-### Lem(sdl2 version)
-- [GNU/Linux](https://lem-project.github.io//installation/sdl2/linux/)
-- [MacOS](https://lem-project.github.io//installation/sdl2/macos/)
-- [Windows](https://lem-project.github.io//installation/sdl2/windows/)
+### Terminal version
+https://lem-project.github.io/installation/ncurses/
+
+### Webview version
+https://lem-project.github.io/installation/webview/
+
+### SDL2 version
+https://lem-project.github.io/installation/sdl2/
 
 ## Vision
 

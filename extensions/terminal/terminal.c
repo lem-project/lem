@@ -244,7 +244,7 @@ void terminal_process_input(struct terminal *terminal)
 VTermScreenCell *terminal_query_cell(struct terminal *terminal, int x,
 				     int y)
 {
-  VTermPos pos = { row: y, col:x };
+  VTermPos pos = { .row = y, .col = x };
   VTermScreenCell cell;
   vterm_screen_get_cell(terminal->screen, pos, &cell);
   if (VTERM_COLOR_IS_INDEXED(&cell.fg)) {
@@ -257,7 +257,7 @@ VTermScreenCell *terminal_query_cell(struct terminal *terminal, int x,
   return &terminal->lastCell;
 }
 
-int *terminal_last_cell_chars(struct terminal *terminal)
+uint32_t *terminal_last_cell_chars(struct terminal *terminal)
 {
   return terminal->lastCell.chars;
 }

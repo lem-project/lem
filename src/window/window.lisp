@@ -146,13 +146,27 @@
      (if (window-use-modeline-p window) 1 0)))
 
 (defun make-view-from-window (window)
-  (lem-if:make-view (implementation)
-                    window
-                    (window-x window)
-                    (window-y window)
-                    (window-width window)
-                    (window-height-without-modeline window)
-                    (window-use-modeline-p window)))
+  "Create a view for a window. For floating windows with pixel coordinates,
+uses pixel-aware view creation if the implementation supports it."
+  (let ((x (window-x window))
+        (y (window-y window))
+        (width (window-width window))
+        (height (window-height-without-modeline window))
+        (use-modeline (window-use-modeline-p window)))
+    (if (and (floating-window-p window)
+             (support-pixel-positioning-p (implementation)))
+        (lem-if:make-view-with-pixels (implementation)
+                                      window
+                                      x y width height
+                                      (floating-window-pixel-x window)
+                                      (floating-window-pixel-y window)
+                                      (floating-window-pixel-width window)
+                                      (floating-window-pixel-height window)
+                                      use-modeline)
+        (lem-if:make-view (implementation)
+                          window
+                          x y width height
+                          use-modeline))))
 
 (defmethod initialize-instance :after ((window window) &rest initargs)
   (declare (ignore initargs))
@@ -1029,10 +1043,14 @@ You can pass in the optional argument WINDOW-LIST to replace the default
 
 ;;;
 (defun adjust-all-window-size ()
+  "Resize all windows to fit the current display dimensions.
+Each header window is set to full display width and its preferred height."
   (dolist (window (frame-header-windows (current-frame)))
-    (window-set-size window (display-width) 1))
+    (window-set-size window (display-width) (header-window-height window)))
   (alexandria:when-let (window (frame-rightside-window (current-frame)))
     (resize-rightside-window window))
+  (alexandria:when-let (window (frame-bottomside-window (current-frame)))
+    (resize-bottomside-window window (window-height window)))
   (balance-windows))
 
 (defun update-on-display-resized ()

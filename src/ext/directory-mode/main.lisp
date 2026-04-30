@@ -3,9 +3,18 @@
   (:use-reexport :lem/directory-mode/commands)
   (:use-reexport :lem/directory-mode/mode)
   (:import-from :lem/directory-mode/internal
-                :*default-sort-method*)
+                :*default-sort-method*
+                :*file-entry-inserters*
+                :item-pathname
+                :item-directory
+                :update-buffer)
   (:export :*default-sort-method*
-           :*directory-mode-keymap*))
+           :*directory-mode-keymap*
+           ;; Extension points for plugins
+           :*file-entry-inserters*
+           :item-pathname
+           :item-directory
+           :update-buffer))
 (in-package :lem/directory-mode)
 
 #+sbcl

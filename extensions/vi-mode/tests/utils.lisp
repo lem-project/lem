@@ -59,12 +59,38 @@
     (:visual-line 'visual-line)
     (:visual-block 'visual-block)))
 
+(defun %unescape-markers (string)
+  "Replace escaped DSL markers (\\[, \\], \\<, \\>) with placeholder characters.
+Each two-character escape sequence becomes a single placeholder, preserving positions."
+  (with-output-to-string (out)
+    (loop :with i := 0
+          :while (< i (length string))
+          :do (if (and (< (1+ i) (length string))
+                       (char= (aref string i) #\\)
+                       (member (aref string (1+ i)) '(#\[ #\] #\< #\>)))
+                  (progn
+                    (write-char (code-char (1+ (position (aref string (1+ i)) "[]<>"))) out)
+                    (incf i 2))
+                  (progn
+                    (write-char (aref string i) out)
+                    (incf i))))))
+
+(defun %restore-markers (string)
+  "Convert placeholder characters back to the original marker characters."
+  (let ((result (copy-seq string)))
+    (setf result (substitute #\[ (code-char 1) result))
+    (setf result (substitute #\] (code-char 2) result))
+    (setf result (substitute #\< (code-char 3) result))
+    (setf result (substitute #\> (code-char 4) result))
+    result))
+
 (defun parse-buffer-string (buffer-string)
-  (let ((offset 0)
-        cursor
-        vstart
-        visual-regions)
-    (ppcre:do-matches (s e "(?<!\\\\)(\\[|\\]|<|>)" buffer-string)
+  (let* ((buffer-string (%unescape-markers buffer-string))
+         (offset 0)
+         cursor
+         vstart
+         visual-regions)
+    (ppcre:do-matches (s e "(\\[|\\]|<|>)" buffer-string)
       (let ((char (aref buffer-string s)))
         (ecase char
           (#\[
@@ -86,9 +112,10 @@
            (push (cons vstart (- e offset)) visual-regions)
            (setf vstart nil)))
         (incf offset)))
-    (values (ppcre:regex-replace-all "(?<!\\\\)(\\[|\\]|<|>)"
-                                     buffer-string
-                                     "")
+    (values (%restore-markers
+             (ppcre:regex-replace-all "(\\[|\\]|<|>)"
+                                      buffer-string
+                                      ""))
             cursor
             (nreverse visual-regions))))
 

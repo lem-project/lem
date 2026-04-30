@@ -1,0 +1,72 @@
+name: Nix CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  # Trigger manually to optionally include heavier/unstable targets
+  workflow_dispatch:
+    inputs:
+      include_optional:
+        description: 'Include optional targets (SDL2, Intel Mac)'
+        type: boolean
+        default: false
+
+jobs:
+  # 1. Job to generate the matrix dynamically based on inputs
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      os: ${{ steps.set-matrix.outputs.os }}
+      backend: ${{ steps.set-matrix.outputs.backend }}
+    steps:
+      - name: Generate Matrix JSON
+        id: set-matrix
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Default configuration (Stable & Lightweight targets)
+            let osList = ["ubuntu-24.04", "ubuntu-24.04-arm", "macos-15"];
+            let backendList = ["lem-ncurses", "lem-webview"];
+
+            // Check if optional targets should be included
+            // (Only strictly when triggered via workflow_dispatch with the flag set to true)
+            if (context.payload.inputs && context.payload.inputs.include_optional === 'true') {
+              console.log("Adding optional targets (SDL2, Intel Mac)...");
+              osList.push("macos-15-intel");
+              backendList.push("lem-sdl2");
+            }
+
+            // Set outputs for the next job to consume
+            core.setOutput('os', JSON.stringify(osList));
+            core.setOutput('backend', JSON.stringify(backendList));
+
+  # 2. Build job using the dynamically generated matrix
+  build:
+    needs: setup
+    name: builds ${{ matrix.backend }} on ${{ matrix.os }}
+    # The 'runs-on' key also uses the dynamic matrix
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Parse JSON strings from the setup job outputs
+        os: ${{ fromJson(needs.setup.outputs.os) }}
+        backend: ${{ fromJson(needs.setup.outputs.backend) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v16
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v8
+
+      - name: Check flake
+        run: nix flake check --all-systems --no-build
+
+      - name: Build ${{ matrix.backend }}
+        run: nix build .#${{ matrix.backend }} --print-build-logs

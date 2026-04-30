@@ -37,7 +37,7 @@
   (:lock t))
 (in-package :lem/isearch)
 
-(defvar *isearch-keymap* (make-keymap :name '*isearch-keymap*
+(defvar *isearch-keymap* (make-keymap :description '*isearch-keymap*
                                       :undef-hook 'isearch-self-insert))
 (defvar *isearch-prompt*)
 (defvar *isearch-string*)

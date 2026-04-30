@@ -98,7 +98,8 @@
               (point (buffer-point buffer)))
     (buffer-end point)
     (with-point ((start point))
-      ;; TODO: lisp-modeに依存するのはおかしいので汎用的なパッケージを用意する
+      ;; TODO: 
+      ;; This shouldn't depend on `lisp-mode`. Provide a general-purpose package.
       (lem-lisp-mode/internal::insert-escape-sequence-string point string)
       (lem/link::scan-link start point :set-attribute-function 'set-link-attribute))
     (lem/listener-mode:refresh-prompt buffer nil)))

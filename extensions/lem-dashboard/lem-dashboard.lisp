@@ -101,6 +101,14 @@
           (dolist (item *dashboard-layout*)
             (draw-dashboard-item item point)))
         (change-buffer-mode buffer 'dashboard-mode)
+        ;; Show the Lem version in the modeline for the dashboard buffer only
+        (setf (variable-value 'modeline-format :buffer buffer)
+              '("  " modeline-write-info modeline-name
+                (modeline-posline nil :right)
+                (modeline-position nil :right)
+                (modeline-minor-modes nil :right)
+                (modeline-major-mode nil :right)
+                (modeline-version nil :right)))
         (move-to-line (buffer-point buffer) old-line)
         (move-to-column (buffer-point buffer) old-column)))))
 

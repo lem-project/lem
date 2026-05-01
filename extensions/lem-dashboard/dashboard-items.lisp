@@ -18,6 +18,20 @@
     (insert-string point (create-centered-string line) :attribute (item-attribute item))
     (insert-character point #\Newline)))
 
+;; Version (Doom Emacs style — centered below splash)
+(defclass dashboard-version (dashboard-item)
+  ()
+  (:documentation "Displays the Lem version string centered, like Doom Emacs.")
+  (:default-initargs
+   :item-attribute 'document-header4-attribute
+   :bottom-margin 1))
+
+(defmethod draw-dashboard-item ((item dashboard-version) point)
+  (let ((version-str (format nil "v~A" (asdf:component-version (asdf:find-system :lem)))))
+    (insert-string point (create-centered-string version-str)
+                   :attribute (item-attribute item))
+    (insert-character point #\Newline)))
+
 ;; Url
 (defclass dashboard-url (dashboard-item)
   ((url :initarg :url :accessor url)

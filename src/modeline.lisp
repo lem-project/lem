@@ -39,6 +39,12 @@
 (define-attribute inactive-modeline-posline-attribute
   (t :foreground "black" :background "#505050"))
 
+(define-attribute modeline-version-attribute
+  (t :foreground "#6a6a6a"))
+
+(define-attribute inactive-modeline-version-attribute
+  (t :foreground "#444444"))
+
 (defvar *modeline-status-list* nil)
 
 (defun modeline-add-status-list (x &optional (buffer nil bufferp))
@@ -123,6 +129,11 @@
           (if (eq window (current-window))
               'modeline-posline-attribute
               'inactive-modeline-posline-attribute)))
+
+(defun modeline-version (window)
+  (declare (ignore window))
+  (values (format nil " v~A " (asdf:component-version (asdf:find-system :lem)))
+          'modeline-version-attribute))
 
 (defgeneric convert-modeline-element (element window))
 

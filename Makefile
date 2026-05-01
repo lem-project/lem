@@ -50,12 +50,17 @@ install-bin:
 	install -m 755 lem $(PREFIX)/bin
 
 # TODO: on the fly edit lem.desktop depends on $(PREFIX)
-install-desktop: 
+install-desktop:
 	install -m 644 scripts/install/lem.svg /usr/share/icons/hicolor/scalable/apps/
 	gtk-update-icon-cache /usr/share/icons/hicolor
 	install -m 644 scripts/install/lem-$(VARIANT).desktop /usr/share/applications/lem.desktop
 
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+install: install-bin
+else
 install: install-bin install-desktop
+endif
 	@echo "+--------------------------------+"
 	@echo "|   Lem installation complete!   |"
 	@echo "+--------------------------------+"
@@ -143,6 +148,23 @@ lint:
 	.qlot/bin/sblint extensions/xml-mode/lem-xml-mode.asd
 	.qlot/bin/sblint extensions/yaml-mode/lem-yaml-mode.asd
 	.qlot/bin/sblint extensions/ruby-mode/lem-ruby-mode.asd
+
+resources/lem.icns: resources/lem.png
+	mkdir -p resources/lem.iconset
+	sips -z 16 16     $< --out resources/lem.iconset/icon_16x16.png
+	sips -z 32 32     $< --out resources/lem.iconset/icon_16x16@2x.png
+	sips -z 32 32     $< --out resources/lem.iconset/icon_32x32.png
+	sips -z 64 64     $< --out resources/lem.iconset/icon_32x32@2x.png
+	sips -z 128 128   $< --out resources/lem.iconset/icon_128x128.png
+	sips -z 256 256   $< --out resources/lem.iconset/icon_128x128@2x.png
+	sips -z 256 256   $< --out resources/lem.iconset/icon_256x256.png
+	sips -z 256 256   $< --out resources/lem.iconset/icon_256x256@2x.png
+	sips -z 256 256   $< --out resources/lem.iconset/icon_512x512.png
+	sips -z 256 256   $< --out resources/lem.iconset/icon_512x512@2x.png
+	iconutil -c icns resources/lem.iconset -o $@
+	rm -rf resources/lem.iconset
+
+icns: resources/lem.icns
 
 AppImage:
 	docker buildx build -f docker/Dockerfile-AppImage --progress=plain --target artifact --output type=local,dest=./artifacts .

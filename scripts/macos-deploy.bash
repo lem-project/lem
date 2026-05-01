@@ -11,7 +11,8 @@ cd "$parent_dir"
 qlot install
 qlot exec sbcl --eval '(ql:quickload :lem)' --eval '(asdf:make :lem)'
 
-# アイコン（存在しなくても続行）
+# アイコン（.icns for macOS dock/taskbar icon, .png as fallback）
+cp resources/lem.icns bin/lem.app/Contents/Resources/ || true
 cp resources/lem.png bin/lem.app/Contents/Resources/ || true
 
 # ===== 2) OpenSSL を同梱し、参照先を @loader_path 化 =====

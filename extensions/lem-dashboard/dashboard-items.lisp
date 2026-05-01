@@ -18,10 +18,10 @@
     (insert-string point (create-centered-string line) :attribute (item-attribute item))
     (insert-character point #\Newline)))
 
-;; Version (Doom Emacs style — centered below splash)
+;; Version
 (defclass dashboard-version (dashboard-item)
   ()
-  (:documentation "Displays the Lem version string centered, like Doom Emacs.")
+  (:documentation "Displays the Lem version string centered below the splash.")
   (:default-initargs
    :item-attribute 'document-header4-attribute
    :bottom-margin 1))

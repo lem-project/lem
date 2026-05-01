@@ -42,7 +42,7 @@
                               (splash *default-splash*)
                               (footer-messages *default-footer-messages*)
                               hide-links)
-  (let ((dashboard-items 
+  (let ((dashboard-items
           (list (make-instance 'dashboard-splash
                                :item-attribute 'document-metadata-attribute
                                :splash-texts splash)

@@ -1,29 +1,5 @@
 (in-package :lem-dashboard)
 
-(defun split-display-text (text)
-  "Splits TEXT into three parts: a leading icon/glyph prefix, the main text,
-and a trailing keymap hint suffix like \" (x)\".
-Returns three values: prefix, main-text, suffix."
-  (let* (;; Strip leading icons and spaces
-         (start (or (position-if (lambda (c)
-                                   (not (or (lem/common/character/icon:icon-code-p (char-code c))
-                                            (char= c #\Space))))
-                                 text)
-                    (length text)))
-         (prefix (subseq text 0 start))
-         (after-prefix (subseq text start))
-         ;; Strip trailing " (x)" keymap hint
-         (len (length after-prefix))
-         (suffix-start (if (and (>= len 4)
-                                (char= (char after-prefix (- len 1)) #\))
-                                (char= (char after-prefix (- len 3)) #\()
-                                (char= (char after-prefix (- len 4)) #\Space))
-                           (- len 4)
-                           len))
-         (main-text (subseq after-prefix 0 suffix-start))
-         (suffix (subseq after-prefix suffix-start)))
-    (values prefix main-text suffix)))
-
 ;; Splash
 (defclass dashboard-splash (dashboard-item)
   ((splash-texts :initarg :splash-texts :accessor splash-texts 
@@ -155,8 +131,8 @@ Returns three values: prefix, main-text, suffix."
         (let* ((longest-project (reduce #'(lambda (a b) (if (> (length a) (length b)) a b)) display-projects))
                (max-length (length longest-project))
                (left-padding (floor (- (window-width (current-window)) max-length) 2)))
-          (loop for project in display-projects
-                do (let ((line-start (copy-point point :temporary)))
+          (loop :for project :in display-projects
+                :do (let ((line-start (copy-point point :temporary)))
                      (insert-string point (str:fit left-padding " ") :attribute (item-attribute item))
                      (let ((text-start (copy-point point :temporary)))
                        (insert-string point (format nil "~A" project) :attribute (item-attribute item))
@@ -169,7 +145,29 @@ Returns three values: prefix, main-text, suffix."
                               (uiop:with-current-directory (p)
                                 (project:project-find-file p)))))))
                      (insert-character point #\Newline))))))))
-
+(defun split-display-text (text)
+  "Splits TEXT into three parts: a leading icon/glyph prefix, the main text,
+and a trailing keymap hint suffix like \" (x)\".
+Returns three values: prefix, main-text, suffix."
+  (let* (;; Strip leading icons and spaces
+         (start (or (position-if (lambda (c)
+                                   (not (or (lem/common/character/icon:icon-code-p (char-code c))
+                                            (char= c #\Space))))
+                                 text)
+                    (length text)))
+         (prefix (subseq text 0 start))
+         (after-prefix (subseq text start))
+         ;; Strip trailing " (x)" keymap hint
+         (len (length after-prefix))
+         (suffix-start (if (and (>= len 4)
+                                (char= (char after-prefix (- len 1)) #\))
+                                (char= (char after-prefix (- len 3)) #\()
+                                (char= (char after-prefix (- len 4)) #\Space))
+                           (- len 4)
+                           len))
+         (main-text (subseq after-prefix 0 suffix-start))
+         (suffix (subseq after-prefix suffix-start)))
+    (values prefix main-text suffix)))
 ;; Recent files
 (defclass dashboard-recent-files (dashboard-item)
   ((file-count :initarg :file-count :accessor file-count :initform 5))
@@ -201,8 +199,8 @@ Returns three values: prefix, main-text, suffix."
         (let* ((longest-file (reduce #'(lambda (a b) (if (> (length a) (length b)) a b)) display-files))
                (max-length (length longest-file))
                (left-padding (floor (- (window-width (current-window)) max-length) 2)))
-          (loop for file in display-files
-                do (let ((line-start (copy-point point :temporary)))
+          (loop :for file :in display-files
+                :do (let ((line-start (copy-point point :temporary)))
                      (insert-string point (str:fit left-padding " ") :attribute (item-attribute item))
                      (let ((text-start (copy-point point :temporary)))
                        (insert-string point (format nil "~A" file) :attribute (item-attribute item))

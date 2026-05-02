@@ -389,8 +389,7 @@ AUTOMATIC SPLITS
 
 Lem splits the window automatically in some situations. When you
 start a REPL with Alt-x start-lisp-repl, it opens in a new window.
-The debugger does the same when an error occurs. You will see this
-in Lesson 6.
+The debugger does the same when an error occurs.
 
 For now, know that C-x 1 always gets you back to a single window,
 and M-o moves you between whatever windows are open.

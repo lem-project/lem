@@ -4,6 +4,8 @@ INTRODUCTION
 
 You are reading lem-tutor, an interactive tutorial for the Lem editor.
 This is your working copy. Practice commands directly in this buffer.
+For an on-line overview of lems usage look at:
+https://lem-project.github.io/usage/usage/
 
 NOTATION
 
@@ -626,3 +628,10 @@ than the absolute line number - add this to your init file:
 
 Relative line numbers are useful when jumping by a known number of
 lines. The current line always shows its absolute number.
+
+Resources:
+
+https://lem-project.github.io
+https://lem-project.github.io/installation/webview/
+https://lem-project.github.io/usage/usage/
+https://github.com/lem-project/lem/blob/main/docs/default-keybindings.md

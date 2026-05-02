@@ -111,9 +111,10 @@ WORD MOVEMENT
 One character at a time is slow across long lines.
 Move by word is available.
 
-  M-f   forward-word   C-Right also works
-  M-b   previous-word  C-Left also works
-
+  M-f          forward-word          C-Right also works
+  M-b          previous-word         C-Left also works
+  M-d          delete-word           delete word from cursor to end of word
+  M-Backspace  backward-delete-word  delete word from cursor to beginning of word
 -----
 >> Use M-f to move through the words in this sentence, then M-b to return.
 -----
@@ -190,24 +191,26 @@ RECENTERING
 
 SUMMARY
 
-  C-f   forward-char                 Move forward one character
-  C-b   backward-char                Move backward one character
-  C-n   next-line                    Move to next line
-  C-p   previous-line                Move to previous line
-  C-a   move-to-beginning-of-line    Move to beginning of line
-  C-e   move-to-end-of-line          Move to end of line
-  M-f   forward-word                 Move forward one word
-  M-b   previous-word                Move backward one word
-  M-}   forward-paragraph            Move forward one paragraph
-  M-{   backward-paragraph           Move backward one paragraph
-  C-v   next-page                    Scroll down one screen
-  M-v   previous-page                Scroll up one screen
-  C-s   isearch-forward              Search forward
-  C-r   isearch-backward             Search backward
-  M-<   move-to-beginning-of-buffer  Move to beginning of buffer
-  M->   move-to-end-of-buffer        Move to end of buffer
-  M-g   goto-line                    Go to line number
-  C-l   recenter                     Recenter view on cursor
+  C-f          forward-char                 Move forward one character
+  C-b          backward-char                Move backward one character
+  C-n          next-line                    Move to next line
+  C-p          previous-line                Move to previous line
+  C-a          move-to-beginning-of-line    Move to beginning of line
+  C-e          move-to-end-of-line          Move to end of line
+  M-f          forward-word                 Move forward one word
+  M-b          previous-word                Move backward one word
+  M-d          delete-word                  del word from cursor to end of word
+  M-Backspace  backward-delete-word         del word from cursor to beginning of word
+  M-}          forward-paragraph            Move forward one paragraph
+  M-{          backward-paragraph           Move backward one paragraph
+  C-v          next-page                    Scroll down one screen
+  M-v          previous-page                Scroll up one screen
+  C-s          isearch-forward              Search forward
+  C-r          isearch-backward             Search backward
+  M-<          move-to-beginning-of-buffer  Move to beginning of buffer
+  M->          move-to-end-of-buffer        Move to end of buffer
+  M-g          goto-line                    Go to line number
+  C-l          recenter                     Recenter view on cursor
 
 ------------------------------------------------------------------------
 
@@ -534,6 +537,12 @@ Whitespace test: collapse    these    extra    spaces    to    one.
 Joining test: 
 	this line should join to the one above it.
 -----
+LINE EDITING
+
+Two commands that comein handy are those that create and destroy a blanck line.
+
+  C-o     open-line           Creates a blank line above cursor and moves cursor to the start of that line
+  C-x C-o delete-blank-lines  Collapses all blank lines around cursor if on empty line, else only below cursor
 
 COMMENTS
 
@@ -584,7 +593,9 @@ SUMMARY
   M-Space   just-one-space          Collapse whitespace around cursor to one space
   M-^       delete-indentation      Join line to line above
   M-%       query-replace           Query-replace
-
+  C-o       open-line               Creates a blank line above cursor and moves cursor to the start of that line
+  C-x C-o   delete-blank-lines      Collapses all blank lines around cursor if on empty line, else only below cursor
+  
   Alt-x delete-trailing-whitespace     Remove trailing whitespace from the buffer
   Alt-x comment-or-uncomment-region    Toggle comments on region
   Alt-x format-current-buffer          Reformat the buffer according to its mode rules

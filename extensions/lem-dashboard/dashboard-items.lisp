@@ -31,10 +31,18 @@
     (setf action (lambda () (open-external-file url)))))
 
 (defmethod draw-dashboard-item ((item dashboard-url) point)
-  (button:insert-button point 
-                        (create-centered-string (display-text item))
-                        (lambda () (open-external-file (url item)))
-                        :attribute (item-attribute item)))
+  (let* ((text (display-text item))
+         (padding (max 0 (floor (- (window-width (current-window)) (length text)) 2))))
+    (insert-string point (make-string padding :initial-element #\Space) :attribute (item-attribute item))
+    (multiple-value-bind (icon-prefix main-text suffix) (split-display-text text)
+      (when (plusp (length icon-prefix))
+        (insert-string point icon-prefix :attribute (item-attribute item)))
+      (button:insert-button point
+                            main-text
+                            (lambda () (open-external-file (url item)))
+                            :attribute (item-attribute item))
+      (when (plusp (length suffix))
+        (insert-string point suffix :attribute (item-attribute item))))))
 
 ;; Working dir
 (defclass dashboard-working-dir (dashboard-item)
@@ -78,10 +86,18 @@
     (setf action (lambda () (funcall action-command)))))
 
 (defmethod draw-dashboard-item ((item dashboard-command) point)
-  (button:insert-button point 
-                        (create-centered-string (display-text item))
-                        (lambda () (funcall (action-command item)))
-                        :attribute (item-attribute item)))
+  (let* ((text (display-text item))
+         (padding (max 0 (floor (- (window-width (current-window)) (length text)) 2))))
+    (insert-string point (make-string padding :initial-element #\Space) :attribute (item-attribute item))
+    (multiple-value-bind (icon-prefix main-text suffix) (split-display-text text)
+      (when (plusp (length icon-prefix))
+        (insert-string point icon-prefix :attribute (item-attribute item)))
+      (button:insert-button point
+                            main-text
+                            (lambda () (funcall (action-command item)))
+                            :attribute (item-attribute item))
+      (when (plusp (length suffix))
+        (insert-string point suffix :attribute (item-attribute item))))))
 
 ;; Recent projects
 (defclass dashboard-recent-projects (dashboard-item)
@@ -115,12 +131,43 @@
         (let* ((longest-project (reduce #'(lambda (a b) (if (> (length a) (length b)) a b)) display-projects))
                (max-length (length longest-project))
                (left-padding (floor (- (window-width (current-window)) max-length) 2)))
-          (loop for project in display-projects
-                do (let ((line-start (copy-point point :temporary)))
-                     (insert-string point (str:fit left-padding " "))
-                     (insert-string point (format nil "~A~%" project))
-                     (put-text-property line-start point :project-path project))))))))
-
+          (loop :for project :in display-projects
+                :do (let ((line-start (copy-point point :temporary)))
+                     (insert-string point (str:fit left-padding " ") :attribute (item-attribute item))
+                     (let ((text-start (copy-point point :temporary)))
+                       (insert-string point (format nil "~A" project) :attribute (item-attribute item))
+                       (let ((text-end (copy-point point :temporary)))
+                         (put-text-property line-start text-end :project-path project)
+                         (button:apply-button-between-points
+                          text-start text-end
+                          (let ((p project))
+                            (lambda ()
+                              (uiop:with-current-directory (p)
+                                (project:project-find-file p)))))))
+                     (insert-character point #\Newline))))))))
+(defun split-display-text (text)
+  "Splits TEXT into three parts: a leading icon/glyph prefix, the main text,
+and a trailing keymap hint suffix like \" (x)\".
+Returns three values: prefix, main-text, suffix."
+  (let* (;; Strip leading icons and spaces
+         (start (or (position-if (lambda (c)
+                                   (not (or (lem/common/character/icon:icon-code-p (char-code c))
+                                            (char= c #\Space))))
+                                 text)
+                    (length text)))
+         (prefix (subseq text 0 start))
+         (after-prefix (subseq text start))
+         ;; Strip trailing " (x)" keymap hint
+         (len (length after-prefix))
+         (suffix-start (if (and (>= len 4)
+                                (char= (char after-prefix (- len 1)) #\))
+                                (char= (char after-prefix (- len 3)) #\()
+                                (char= (char after-prefix (- len 4)) #\Space))
+                           (- len 4)
+                           len))
+         (main-text (subseq after-prefix 0 suffix-start))
+         (suffix (subseq after-prefix suffix-start)))
+    (values prefix main-text suffix)))
 ;; Recent files
 (defclass dashboard-recent-files (dashboard-item)
   ((file-count :initarg :file-count :accessor file-count :initform 5))
@@ -152,8 +199,16 @@
         (let* ((longest-file (reduce #'(lambda (a b) (if (> (length a) (length b)) a b)) display-files))
                (max-length (length longest-file))
                (left-padding (floor (- (window-width (current-window)) max-length) 2)))
-          (loop for file in display-files
-                do (let ((line-start (copy-point point :temporary)))
-                     (insert-string point (str:fit left-padding " "))
-                     (insert-string point (format nil "~A~%" file))
-                     (put-text-property line-start point :file-path file))))))))
+          (loop :for file :in display-files
+                :do (let ((line-start (copy-point point :temporary)))
+                     (insert-string point (str:fit left-padding " ") :attribute (item-attribute item))
+                     (let ((text-start (copy-point point :temporary)))
+                       (insert-string point (format nil "~A" file) :attribute (item-attribute item))
+                       (let ((text-end (copy-point point :temporary)))
+                         (put-text-property line-start text-end :file-path file)
+                         (button:apply-button-between-points
+                          text-start text-end
+                          (let ((f file))
+                            (lambda ()
+                              (find-file f))))))
+                     (insert-character point #\Newline))))))))

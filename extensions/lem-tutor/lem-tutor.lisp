@@ -1,18 +1,21 @@
 (defpackage :lem-tutor
   (:use :cl :lem)
-  (:export #:tutorial))
+  (:export #:tutorial :tutorial-rescan))
 
 (in-package :lem-tutor)
  
 (defun tutorial-text ()
-   (merge-pathnames "tutorial-basics.txt" (asdf:system-source-directory :lem-tutor)))
+  "Set correct paths to core and save files"
+  (merge-pathnames "tutorial-basics.txt" (asdf:system-source-directory :lem-tutor)))
+
 (defun tutorial-save-file ()
   (merge-pathnames "lem-tutor-saves/lem-tutor-save.txt" (lem-home)))
+
 (defun tutorial-progress ()
   (merge-pathnames "lem-tutor-saves/lem-tutor-progress.lisp" (lem-home)))
 
 (define-command tutorial () ()
-  "Open the Lem interactive tutorial"
+  "Learn Lem interactively with guided exercises and progress tracking."
   (tutorial-mode t))
 
 (defun tutorial-save-progress (buffer)
@@ -40,7 +43,7 @@
             (move-to-column point column))))
     (error (e)
       (declare (ignore e))
-      (lem:message "Something went wrong retrieving your last location, starting from the top of your saved file"))))
+      (editor-error "Could not restore latest savepoint. Starting at the top, previously made edits are preserved"))))
 
 (defun tutorial-enable ()
   "Enable tutorial mode: ensure save directory exists, initialize working copy if needed,
@@ -49,14 +52,21 @@
   (unless (probe-file  (tutorial-save-file))
     (uiop:copy-file (tutorial-text) (tutorial-save-file)))
   (let ((buffer (find-file-buffer (tutorial-save-file))))
+    (switch-to-buffer buffer)
     (tutorial-load-progress)
     (add-hook (variable-value 'after-save-hook :buffer buffer)
-            #'tutorial-save-progress)
-    (switch-to-buffer buffer)))
+            #'tutorial-save-progress)))
 
 (defun tutorial-disable ()
     "Save progress when tutorial mode is disabled."
   (tutorial-save-progress (find-file-buffer (tutorial-save-file))))
+
+(define-command tutorial-rescan () ()
+  "Force a syntax rescan of the tutorial buffer"
+  (let ((buffer (find-file-buffer (tutorial-save-file))))
+    (lem-tutor/syntax-parser:scan-region 
+     (buffer-start-point buffer)
+     (buffer-end-point buffer))))
 
 (define-minor-mode tutorial-mode
     (:name "Lem-tutor"

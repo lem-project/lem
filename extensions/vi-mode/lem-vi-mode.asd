@@ -8,6 +8,7 @@
                "alexandria"
                "split-sequence"
                "lem-lisp-mode"
+               "lem-dashboard"
                "trivial-types")
   :components ((:file "core")
                (:file "leader" :depends-on ("core"))

@@ -413,6 +413,8 @@
    :modeline-write-info
    :modeline-name
    :modeline-mode-names
+   :modeline-major-mode
+   :modeline-minor-modes
    :modeline-position
    :modeline-posline
    :modeline-name-attribute
@@ -426,6 +428,9 @@
    :inactive-modeline-position-attribute
    :inactive-modeline-name-attribute
    :inactive-modeline-posline-attribute
+   :modeline-version
+   :modeline-version-attribute
+   :inactive-modeline-version-attribute
    :convert-modeline-element)
   ;; command.lisp
   (:export

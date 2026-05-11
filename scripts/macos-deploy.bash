@@ -11,16 +11,36 @@ cd "$parent_dir"
 qlot install
 qlot exec sbcl --eval '(ql:quickload :lem)' --eval '(asdf:make :lem)'
 
+# Rename the deploy output (lem.app) to use the user-facing name (Lem.app).
+# The asdf system is named "lem" so the deploy library produces lem.app; we
+# rename the bundle, executable, and Info.plist fields here so Finder, the
+# Dock, and the menu bar show "Lem".
+#
+# APFS (and HFS+) are case-insensitive but case-preserving by default, so
+# `mv lem.app Lem.app` is a no-op (same path) and `rm -rf bin/Lem.app`
+# would delete the bundle we just built. Force a case change by going
+# through a uniquely-named intermediate.
+mv bin/lem.app bin/__lem_renaming__.app
+mv bin/__lem_renaming__.app bin/Lem.app
+mv bin/Lem.app/Contents/MacOS/lem bin/Lem.app/Contents/MacOS/__lem_renaming__
+mv bin/Lem.app/Contents/MacOS/__lem_renaming__ bin/Lem.app/Contents/MacOS/Lem
+PLIST="bin/Lem.app/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleName Lem"        "$PLIST"
+/usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName Lem" "$PLIST"
+/usr/libexec/PlistBuddy -c "Set :CFBundleExecutable Lem"  "$PLIST"
+/usr/libexec/PlistBuddy -c "Set :CFBundleIconFile Lem"    "$PLIST"
+
 # アイコン（.icns for macOS dock/taskbar icon, .png as fallback）
 # Generate the .icns first so a missing icon is a hard failure rather than
-# silently shipping an iconless .app.
+# silently shipping an iconless .app. The bundle is now Lem.app, and
+# CFBundleIconFile is "Lem", so the icon must be named Lem.icns.
 make icns
-cp resources/lem.icns bin/lem.app/Contents/Resources/
-cp resources/lem.png bin/lem.app/Contents/Resources/ || true
+cp resources/lem.icns bin/Lem.app/Contents/Resources/Lem.icns
+cp resources/lem.png  bin/Lem.app/Contents/Resources/Lem.png || true
 
 # ===== 2) OpenSSL を同梱し、参照先を @loader_path 化 =====
-APP="bin/lem.app"
-EXE="$APP/Contents/MacOS/lem"
+APP="bin/Lem.app"
+EXE="$APP/Contents/MacOS/Lem"
 LIBDIR="$APP/Contents/MacOS"
 
 if [[ ! -x "$EXE" ]]; then
@@ -80,15 +100,15 @@ fi
 
 # ===== 5) 配布用 ZIP =====
 README_PATH="bin/README.md"
-echo "The following command must be executed for lem.app to start.
+echo "The following command must be executed for Lem.app to start.
 ```
-xattr -dr com.apple.quarantine lem.app/
+xattr -dr com.apple.quarantine Lem.app/
 ```
 " > "$README_PATH"
 
 rm -f lem-macos.zip
 (
   cd bin
-  zip -r ../lem-macos.zip "lem.app" "README.md"
+  zip -r ../lem-macos.zip "Lem.app" "README.md"
 )
 echo "Packaged: $(pwd)/lem-macos.zip"

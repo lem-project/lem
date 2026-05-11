@@ -42,3 +42,8 @@ TODO
 artifacts/
 logs/
 .serena/
+
+# macOS deploy artifacts
+resources/lem.icns
+lem-macos.zip
+lem-macos/

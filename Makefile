@@ -149,6 +149,10 @@ lint:
 	.qlot/bin/sblint extensions/yaml-mode/lem-yaml-mode.asd
 	.qlot/bin/sblint extensions/ruby-mode/lem-ruby-mode.asd
 
+# Generate macOS .icns from resources/lem.png. The source PNG is currently
+# 256x256, which is the largest entry we can include without upscaling.
+# Replace lem.png with a 1024x1024 source to also produce 256@2x/512/512@2x
+# entries for Retina-quality dock and Finder icons.
 resources/lem.icns: resources/lem.png
 	mkdir -p resources/lem.iconset
 	sips -z 16 16     $< --out resources/lem.iconset/icon_16x16.png
@@ -158,9 +162,6 @@ resources/lem.icns: resources/lem.png
 	sips -z 128 128   $< --out resources/lem.iconset/icon_128x128.png
 	sips -z 256 256   $< --out resources/lem.iconset/icon_128x128@2x.png
 	sips -z 256 256   $< --out resources/lem.iconset/icon_256x256.png
-	sips -z 256 256   $< --out resources/lem.iconset/icon_256x256@2x.png
-	sips -z 256 256   $< --out resources/lem.iconset/icon_512x512.png
-	sips -z 256 256   $< --out resources/lem.iconset/icon_512x512@2x.png
 	iconutil -c icns resources/lem.iconset -o $@
 	rm -rf resources/lem.iconset
 

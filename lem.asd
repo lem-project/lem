@@ -144,6 +144,7 @@
                (:file "html-buffer")
                (:file "site-init")
                (:file "command-line-arguments")
+               (:file "tabbar-config")
                (:file "lem")
 
                (:file "color-theme")

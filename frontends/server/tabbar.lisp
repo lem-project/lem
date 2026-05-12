@@ -328,6 +328,10 @@ buttons.forEach(button => {
       (change-to-buffer buffer))))
 
 (defun enable-tabbar ()
+  "Enable the tabbar by setting the global `tabbar' editor variable to T.
+The change observer on that variable creates the tabbar window. This is
+the programmatic counterpart to `M-x toggle-tabbar' and is invoked
+automatically after init when `*enable-tabbar-on-startup*' is non-NIL."
   (setf (variable-value 'tabbar :global) t))
 
 (add-hook *after-init-hook*

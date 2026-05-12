@@ -10,9 +10,7 @@
            :tabbar-active-tab-attribute
            :tabbar-attribute
            :tabbar-background-attribute
-           :tabbar)
-  #+sbcl
-  (:lock t))
+           :tabbar))
 (in-package :lem/tabbar)
 
 (define-attribute tabbar-active-tab-attribute

@@ -830,9 +830,7 @@
 
 (defun init ()
   ;; TODO: Fix this problem: frame-multiplexer cannot be used with lem-server, disable them for now.
-  (lem:remove-hook lem:*after-init-hook* 'lem/frame-multiplexer::enable-frame-multiplexer)
-  ;; Enable tabbar instead of the above issue
-  (lem:add-hook lem:*after-init-hook* (find-symbol "ENABLE-TABBAR" :lem/tabbar)))
+  (lem:remove-hook lem:*after-init-hook* 'lem/frame-multiplexer::enable-frame-multiplexer))
 
 (defun run-websocket-server (&key (port 50000) (hostname "127.0.0.1") args)
   (let ((*server-runner*

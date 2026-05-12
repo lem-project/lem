@@ -1,4 +1,9 @@
-(defpackage :lem/tabbar
+;; The :lem/tabbar package + *enable-tabbar-on-startup* are defined in
+;; src/tabbar-config.lisp (loaded by lem/core) so user init files can refer
+;; to the variable on every frontend, including those (e.g. ncurses) that
+;; never load this implementation file. Here we extend the package with the
+;; symbols that only make sense when the tabbar is actually loaded.
+(uiop:define-package :lem/tabbar
   (:use :cl :lem :lem/button)
   (:export :*enable-tabbar-on-startup*
            :enable-tabbar
@@ -34,11 +39,8 @@
 
 (defvar *tabbar* nil)
 
-(defvar *enable-tabbar-on-startup* t
-  "When non-NIL (default), the tabbar is enabled automatically after init.
-Set this in your init file to opt out:
-
-  (setf lem/tabbar:*enable-tabbar-on-startup* nil)")
+;; *enable-tabbar-on-startup* is defined in src/tabbar-config.lisp so the
+;; symbol exists on every frontend's init file load.
 
 (defun tabbar-init ()
   (let ((buffer (make-buffer "*tabbar*" :temporary t :enable-undo-p nil)))

@@ -285,6 +285,7 @@ buttons.forEach(button => {
 (add-hook (variable-value 'kill-buffer-hook :global t) 'update)
 (add-hook (variable-value 'after-change-functions :global) 'update)
 (add-hook (variable-value 'after-save-hook :global) 'update)
+(add-hook *after-load-theme-hook* 'update)
 
 (defmethod window-redraw ((window tabbar-window) force)
   (declare (ignore force))

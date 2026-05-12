@@ -1,6 +1,8 @@
 (defpackage :lem/tabbar
   (:use :cl :lem :lem/button)
-  (:export :tabbar-active-tab-attribute
+  (:export :*enable-tabbar-on-startup*
+           :enable-tabbar
+           :tabbar-active-tab-attribute
            :tabbar-attribute
            :tabbar-background-attribute
            :tabbar)
@@ -31,6 +33,12 @@
   2)
 
 (defvar *tabbar* nil)
+
+(defvar *enable-tabbar-on-startup* t
+  "When non-NIL (default), the tabbar is enabled automatically after init.
+Set this in your init file to opt out:
+
+  (setf lem/tabbar:*enable-tabbar-on-startup* nil)")
 
 (defun tabbar-init ()
   (let ((buffer (make-buffer "*tabbar*" :temporary t :enable-undo-p nil)))
@@ -321,3 +329,8 @@ buttons.forEach(button => {
 
 (defun enable-tabbar ()
   (setf (variable-value 'tabbar :global) t))
+
+(add-hook *after-init-hook*
+          (lambda ()
+            (when *enable-tabbar-on-startup*
+              (enable-tabbar))))

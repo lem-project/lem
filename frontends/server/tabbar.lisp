@@ -285,7 +285,15 @@ buttons.forEach(button => {
 (add-hook (variable-value 'kill-buffer-hook :global t) 'update)
 (add-hook (variable-value 'after-change-functions :global) 'update)
 (add-hook (variable-value 'after-save-hook :global) 'update)
-(add-hook *after-load-theme-hook* 'update)
+
+(defun update-on-theme-change ()
+  ;; *after-load-theme-hook* fires after load-theme's own (redraw-display),
+  ;; so just marking the tabbar dirty leaves the HTML stale until the next
+  ;; unrelated event. Mark dirty and trigger another redraw cycle.
+  (update)
+  (redraw-display))
+
+(add-hook *after-load-theme-hook* 'update-on-theme-change)
 
 (defmethod window-redraw ((window tabbar-window) force)
   (declare (ignore force))

@@ -1,5 +1,10 @@
 (in-package :lem-core)
 
+(defvar *cached-lem-version-string*
+  (format nil " v~A " (asdf:component-version (asdf:find-system :lem)))
+  "Cached version string for the modeline. Computed once at load time
+to avoid calling asdf:find-system on every frame.")
+
 (define-editor-variable modeline-format '("  "
                                           modeline-write-info
                                           modeline-name
@@ -132,7 +137,7 @@
 
 (defun modeline-version (window)
   (declare (ignore window))
-  (values (format nil " v~A " (asdf:component-version (asdf:find-system :lem)))
+  (values *cached-lem-version-string*
           'modeline-version-attribute))
 
 (defgeneric convert-modeline-element (element window))

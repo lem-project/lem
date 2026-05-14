@@ -99,7 +99,19 @@ NIL to append it to the key sequence normally.")
     :initarg :base
     :accessor keymap-base
     :initform nil
-    :documentation "the keymap that this keymap extends.")))
+    :documentation "the keymap that this keymap extends.")
+   (parents
+    :accessor keymap-parents
+    :initform nil
+    :documentation "Back-pointers to keymaps that contain this keymap as a
+child or as a prefix suffix.  Used to propagate cache invalidation up the
+keymap tree when a binding is added or removed.")
+   (binding-cache
+    :accessor keymap-binding-cache
+    :initform nil
+    :documentation "Cached command->keys hash table built by
+collect-command-keybindings, valid until cleared by
+invalidate-keybinding-cache.")))
 
 (defgeneric keymap-prefixes (keymap)
   (:method ((keymap keymap))
@@ -133,17 +145,43 @@ NIL to append it to the key sequence normally.")
   (:method (new-value (keymap keymap))
     (setf (slot-value keymap 'active-p) new-value)))
 
+(defun link-keymap-parent (parent child)
+  "Register PARENT as a parent of CHILD when CHILD is a keymap, so that
+later cache invalidation on CHILD also invalidates PARENT's cached
+binding map."
+  (when (typep child 'keymap)
+    (pushnew parent (keymap-parents child))))
+
+(defun prefix-suffix-keymap (prefix)
+  "Return PREFIX's suffix only when the slot is bound and holds a keymap;
+otherwise nil.  Used to safely query suffixes that may not be set yet."
+  (when (and (slot-boundp prefix 'suffix)
+             (typep (slot-value prefix 'suffix) 'keymap))
+    (slot-value prefix 'suffix)))
+
 (defmethod keymap-add-prefix ((keymap keymap) (prefix prefix) &optional after)
   (unless (find prefix (keymap-prefixes keymap))
     (if after
         (setf (keymap-prefixes keymap) (append (slot-value keymap 'prefixes) (list prefix)))
-        (push prefix (slot-value keymap 'prefixes)))))
+        (push prefix (slot-value keymap 'prefixes)))
+    (alexandria:when-let (suffix-keymap (prefix-suffix-keymap prefix))
+      (link-keymap-parent keymap suffix-keymap))))
 
 (defmethod keymap-add-child ((keymap keymap) (keymap2 keymap) &optional after)
   (unless (find keymap2 (keymap-children keymap))
     (if after
         (setf (keymap-children keymap) (append (slot-value keymap 'children) (list keymap2)))
-        (push keymap2 (slot-value keymap 'children)))))
+        (push keymap2 (slot-value keymap 'children)))
+    (link-keymap-parent keymap keymap2)))
+
+(defmethod initialize-instance :after ((keymap keymap) &key &allow-other-keys)
+  "Populate parent back-pointers on any keymaps supplied via :prefixes
+or :children initargs (e.g. from make-keymap)."
+  (dolist (prefix (keymap-prefixes keymap))
+    (alexandria:when-let (suffix-keymap (prefix-suffix-keymap prefix))
+      (link-keymap-parent keymap suffix-keymap)))
+  (dolist (child (keymap-children keymap))
+    (link-keymap-parent keymap child)))
 
 (defgeneric prefix-p (keymap)
   (:documentation "check whether this is a prefix of another prefix.
@@ -260,6 +298,7 @@ Example: (define-key *global-keymap* \"C-'\" 'list-modes)"
     (string
      (let ((keys (parse-keyspec keyspec)))
        (define-key-internal keymap keys command-name))))
+  (invalidate-keybinding-cache keymap)
   (values))
 
 (defmacro define-keys (keymap &body bindings)
@@ -301,7 +340,8 @@ Example: (define-key *global-keymap* \"C-'\" 'list-modes)"
                     ;; suffix is a command, need to create intermediate keymap. but why would we get here?
                     (progn
                       (setf next-keymap (make-instance 'keymap))
-                      (setf (prefix-suffix next-prefix) next-keymap))))
+                      (setf (prefix-suffix next-prefix) next-keymap)
+                      (link-keymap-parent keymap next-keymap))))
               (progn
                 (setf next-keymap (make-instance 'keymap))
                 (setf next-prefix
@@ -324,6 +364,7 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
     (string
      (let ((keys (parse-keyspec keyspec)))
        (undefine-key-internal keymap keys))))
+  (invalidate-keybinding-cache keymap)
   (values))
 
 (defmacro undefine-keys (keymap &body bindings)
@@ -565,13 +606,29 @@ higher-priority keymap (e.g. vi normal mode remaps self-insert to undefined-key)
                     (traverse-prefix node prefix)))))
     (traverse-node keymap nil)))
 
+(defun invalidate-keybinding-cache (keymap)
+  "Clear KEYMAP's cached binding map and propagate the invalidation to
+every ancestor that aggregated KEYMAP's bindings, so the next call to
+collect-command-keybindings rebuilds from the current keymap structure."
+  (when (keymap-binding-cache keymap)
+    (setf (keymap-binding-cache keymap) nil))
+  (dolist (parent (keymap-parents keymap))
+    (invalidate-keybinding-cache parent)))
+
+(defun get-keybinding-map (keymap)
+  "Return a hash table mapping command-name to a list of key sequences
+for KEYMAP, populating and reusing the keymap's binding-cache slot."
+  (or (keymap-binding-cache keymap)
+      (let ((map (make-hash-table :test 'eq)))
+        (traverse-keymap keymap
+                         (lambda (kseq cmd)
+                           (push kseq (gethash cmd map))))
+        (setf (keymap-binding-cache keymap) map)
+        map)))
+
 (defun collect-command-keybindings (command keymap)
-  (let ((bindings '()))
-    (traverse-keymap keymap
-                     (lambda (kseq cmd)
-                       (when (eq cmd command)
-                         (push kseq bindings))))
-    (nreverse bindings)))
+  (let ((map (get-keybinding-map keymap)))
+    (nreverse (copy-list (gethash command map)))))
 
 (defvar *abort-key*)
 

@@ -403,11 +403,17 @@ Returns T if the cached entry matches (render can be skipped)."
 ;;; Line fingerprint cache — avoids creating drawing objects for unchanged lines
 
 (defun line-fingerprint-cache (window)
+  "Return WINDOW's line-fingerprint hash table, lazily allocating one.
+Stored on the window's parameter plist so the cache lives and dies with
+the window itself (no global state)."
   (or (window-parameter window 'line-fingerprint-cache)
       (setf (window-parameter window 'line-fingerprint-cache)
             (make-hash-table :test 'eql))))
 
 (defun clear-line-fingerprint-cache (window)
+  "Drop all cached line fingerprints on WINDOW.  Invoked when the screen
+is force-redrawn or marked as needing redraw, since cached heights may
+no longer reflect the current layout."
   (alexandria:when-let ((cache (window-parameter window 'line-fingerprint-cache)))
     (clrhash cache)))
 

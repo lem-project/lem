@@ -27,19 +27,37 @@ work; otherwise `lem-sprof-start' (CPU mode) is the default.  Any
 in-progress profile is stopped and reset first."
   (start-profiling-in-mode :alloc))
 
-(define-command lem-sprof-report () ()
-  "Stop profiling, write the report to /tmp/, and reset.
-Reports the absolute path of the generated file via `message'."
-  (sb-sprof:stop-profiling)
+(defun %sprof-report-pathname ()
+  "Return an absolute pathname for the next sprof report file."
   (multiple-value-bind (sec min hour day month year)
       (decode-universal-time (get-universal-time))
-    (let ((file (format nil
-                        "/tmp/lem-profile-report-~4,'0D~2,'0D~2,'0D~2,'0D~2,'0D~2,'0D.txt"
-                        year month day hour min sec)))
-      (with-open-file (stream file
-                              :direction :output
-                              :if-exists :supersede
-                              :if-does-not-exist :create)
-        (sb-sprof:report :stream stream))
-      (sb-sprof:reset)
-      (message "Profile written to ~A" file))))
+    (pathname
+     (format nil
+             "/tmp/lem-profile-report-~4,'0D~2,'0D~2,'0D~2,'0D~2,'0D~2,'0D.txt"
+             year month day hour min sec))))
+
+(define-command lem-sprof-report () ()
+  "Stop profiling, write the report to /tmp/, and reset.
+Reports the absolute path of the generated file via `message'.  Any
+error from `sb-sprof:report' or the underlying file write is surfaced
+through `message' rather than swallowed by the command dispatcher."
+  (handler-case
+      (progn
+        (sb-sprof:stop-profiling)
+        (let ((file (%sprof-report-pathname)))
+          (with-open-file (stream file
+                                  :direction :output
+                                  :if-exists :supersede
+                                  :if-does-not-exist :create)
+            (sb-sprof:report :stream stream)
+            (finish-output stream))
+          (sb-sprof:reset)
+          (cond
+            ((not (probe-file file))
+             (message "sprof: write succeeded but ~A is missing" file))
+            ((zerop (with-open-file (s file) (file-length s)))
+             (message "sprof: ~A is empty (no samples collected?)" file))
+            (t
+             (message "Profile written to ~A" file)))))
+    (error (c)
+      (message "sprof report failed: ~A: ~A" (type-of c) c))))

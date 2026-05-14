@@ -120,7 +120,11 @@
 
 (defun clear-all-attribute-cache ()
   (dolist (attribute *attributes*)
-    (setf (get attribute '%attribute-value) nil)))
+    (setf (get attribute '%attribute-value) nil))
+  ;; Also clear the parse-color memoization cache, since color theme
+  ;; changes may reassign the meaning of named colors or invalidate
+  ;; cached results.
+  (lem/common/color:clear-parse-color-cache))
 
 (defun get-attribute-cache (attribute &rest args &key background)
   (declare (ignore background))

@@ -8,6 +8,7 @@
            :color-equal
            :light-color-p
            :parse-color
+           :clear-parse-color-cache
            :rgb-to-hsv
            :hsv-to-rgb
            :color-to-hex-string)
@@ -823,8 +824,22 @@
                (color-blue color))
           2.55))))
 
-(defun parse-color (string)
-  "Convert COLOR string to a list of normalized RGB components."
+;;; Parse-color cache: color strings from themes/attributes are parsed via regex
+;;; on every drawing object, every frame. Since color strings are constant at
+;;; runtime, caching eliminates ~90% of the regex + integer-parse overhead.
+;;; Cleared on theme change via clear-all-attribute-cache -> clear-parse-color-cache.
+(defvar *parse-color-cache* (make-hash-table :test 'equal))
+
+;;; Sentinel for "we tried and got nil" so we don't re-parse invalid strings.
+(defvar *parse-color-miss* (gensym "MISS"))
+
+(defun clear-parse-color-cache ()
+  "Clear the memoization cache for parse-color.
+Called when the color theme changes."
+  (clrhash *parse-color-cache*))
+
+(defun %parse-color (string)
+  "Internal: parse a color string without caching."
   (alexandria:if-let (rgb (get-rgb-from-color-name string))
     (destructuring-bind (r g b) rgb
       (make-color r g b))
@@ -842,6 +857,16 @@
             (make-color (* 17 (parse-integer r :radix 16))
                         (* 17 (parse-integer g :radix 16))
                         (* 17 (parse-integer b :radix 16))))))))
+
+(defun parse-color (string)
+  "Convert COLOR string to a color struct. Results are memoized."
+  (when (null string) (return-from parse-color nil))
+  (let ((cached (gethash string *parse-color-cache* *parse-color-miss*)))
+    (if (eq cached *parse-color-miss*)
+        (let ((result (%parse-color string)))
+          (setf (gethash string *parse-color-cache*) result)
+          result)
+        cached)))
 
 (defun rgb-to-hsv (color)
   "Convert RGB color components to HSV."

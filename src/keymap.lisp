@@ -260,6 +260,7 @@ Example: (define-key *global-keymap* \"C-'\" 'list-modes)"
     (string
      (let ((keys (parse-keyspec keyspec)))
        (define-key-internal keymap keys command-name))))
+  (invalidate-keybinding-cache)
   (values))
 
 (defmacro define-keys (keymap &body bindings)
@@ -324,6 +325,7 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
     (string
      (let ((keys (parse-keyspec keyspec)))
        (undefine-key-internal keymap keys))))
+  (invalidate-keybinding-cache)
   (values))
 
 (defmacro undefine-keys (keymap &body bindings)
@@ -565,13 +567,44 @@ higher-priority keymap (e.g. vi normal mode remaps self-insert to undefined-key)
                     (traverse-prefix node prefix)))))
     (traverse-node keymap nil)))
 
-(defun collect-command-keybindings (command keymap)
-  (let ((bindings '()))
+;;; Keybinding cache: avoid re-traversing the full keymap tree on every
+;;; collect-command-keybindings call.  During command completion, this function
+;;; is called once per candidate — traversing the tree ~200 times to find
+;;; bindings.  Instead, we traverse once and build a command→bindings hash table,
+;;; cached per (keymap . generation).
+;;;
+;;; The generation counter is bumped on define-key / undefine-key.
+
+(defvar *keybinding-cache-generation* 0
+  "Monotonically increasing counter.  Incremented on define-key / undefine-key
+so that cached keybinding maps are invalidated.")
+
+(defvar *keybinding-cache* (make-hash-table :test 'eq)
+  "Maps keymap object → (generation . command→bindings hash table).
+The command→bindings table maps command-name symbol → list of key sequences.")
+
+(defun invalidate-keybinding-cache ()
+  "Bump the generation counter so all cached keybinding maps are stale."
+  (incf *keybinding-cache-generation*))
+
+(defun get-keybinding-map (keymap)
+  "Return a hash table mapping command-name → list-of-key-sequences for KEYMAP.
+Uses a cached version if the generation hasn't changed."
+  (let ((entry (gethash keymap *keybinding-cache*)))
+    (when (and entry (eql (car entry) *keybinding-cache-generation*))
+      (return-from get-keybinding-map (cdr entry))))
+  ;; Cache miss — traverse and build the map
+  (let ((map (make-hash-table :test 'eq)))
     (traverse-keymap keymap
                      (lambda (kseq cmd)
-                       (when (eq cmd command)
-                         (push kseq bindings))))
-    (nreverse bindings)))
+                       (push kseq (gethash cmd map))))
+    (setf (gethash keymap *keybinding-cache*)
+          (cons *keybinding-cache-generation* map))
+    map))
+
+(defun collect-command-keybindings (command keymap)
+  (let ((map (get-keybinding-map keymap)))
+    (nreverse (copy-list (gethash command map)))))
 
 (defvar *abort-key*)
 

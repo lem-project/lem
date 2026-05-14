@@ -135,7 +135,23 @@
     (lem-sdl2/display:display-font-config
      (lem-sdl2/display:current-display)))))
 
+(defun free-tree-surfaces (drawables)
+  "Explicitly free SDL2 surfaces held by text-node instances.
+Cancels autocollect finalizers first to prevent double-free."
+  (dolist (drawable drawables)
+    (when (typep drawable 'text-node)
+      (let ((surface (text-node-surface drawable)))
+        (when surface
+          (handler-case
+              (progn
+                (trivial-garbage:cancel-finalization surface)
+                (sdl2:free-surface surface))
+            (error () nil)))))))
+
 (defun draw (buffer node)
+  ;; Free surfaces from previous tree before creating new ones.
+  (when (slot-boundp buffer 'drawables)
+    (free-tree-surfaces (tree-view-buffer-drawables buffer)))
   (let ((drawables '())
         (font (load-font)))
     (labels ((recursive (node current-x)

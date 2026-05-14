@@ -361,6 +361,9 @@
   (with-debug ("will-update-display")
     (display:with-display (display)
       (display:with-renderer (display)
+        ;; Bound cache memory: full reset when cache exceeds threshold.
+        ;; Runs inside with-renderer so sdl2:destroy-texture is on the main thread.
+        (lem-sdl2/text-surface-cache:sweep-if-oversize)
         (sdl2:set-render-target (display:display-renderer display) (display:display-texture display))
         (display:set-render-color display (display:display-background-color display))
         (sdl2:render-clear (display:display-renderer display))))))
@@ -389,7 +392,11 @@
             (display:set-render-color display (display:display-background-color display))
             (sdl2:render-fill-rect (display:display-renderer display) rect)
             (sdl2:render-copy (display:display-renderer display) texture :dest-rect rect))
-          (sdl2:destroy-texture texture))))))
+          (sdl2:destroy-texture texture)
+          ;; Explicitly free the surface now instead of waiting for GC finalizer.
+          ;; Cancel the autocollect finalizer first to prevent double-free.
+          (trivial-garbage:cancel-finalization surface)
+          (sdl2:free-surface surface))))))
 
 (defmethod lem-if:update-display ((implementation sdl2))
   (with-debug ("lem-if:update-display")

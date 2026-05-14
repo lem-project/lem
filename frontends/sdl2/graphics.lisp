@@ -19,6 +19,9 @@
            :reader drawable-target)
    (draw-function :initarg :draw-function
                   :reader drawable-draw-function)
+   (cleanup-function :initarg :cleanup-function
+                     :initform nil
+                     :reader drawable-cleanup-function)
    (targets :initform '()
             :accessor drawable-targets)))
 
@@ -56,7 +59,11 @@
 
 (defun delete-drawable (drawable)
   (dolist (target (drawable-targets drawable))
-    (alexandria:deletef (drawables target) drawable)))
+    (alexandria:deletef (drawables target) drawable))
+  ;; Run cleanup callback (e.g. free native surfaces) when drawable is removed.
+  (when (drawable-cleanup-function drawable)
+    (handler-case (funcall (drawable-cleanup-function drawable))
+      (error () nil))))
 
 (defun clear-drawables (target)
   (mapc #'delete-drawable (drawables target))
@@ -68,11 +75,12 @@
   (dolist (drawable (buffer-drawables buffer))
     (funcall (drawable-draw-function drawable))))
 
-(defun call-with-drawable (target draw-function)
+(defun call-with-drawable (target draw-function &key cleanup-function)
   (let ((drawable
           (make-instance 'drawable
                          :target target
-                         :draw-function draw-function)))
+                         :draw-function draw-function
+                         :cleanup-function cleanup-function)))
     (add-drawable target drawable)
     drawable))
 
@@ -134,14 +142,19 @@
                                                 (lem:color-green color)
                                                 (lem:color-blue color)
                                                 0)))
-    (with-drawable (target)
-      (let ((texture (sdl2:create-texture-from-surface (lem-sdl2:current-renderer) surface)))
-        (sdl2:with-rects ((dest-rect x
-                                     y
-                                     (sdl2:surface-width surface)
-                                     (sdl2:surface-height surface)))
-          (sdl2:render-copy (lem-sdl2:current-renderer) texture :dest-rect dest-rect))
-        (sdl2:destroy-texture texture)))))
+    (call-with-drawable
+     target
+     (lambda ()
+       (let ((texture (sdl2:create-texture-from-surface (lem-sdl2:current-renderer) surface)))
+         (sdl2:with-rects ((dest-rect x
+                                      y
+                                      (sdl2:surface-width surface)
+                                      (sdl2:surface-height surface)))
+           (sdl2:render-copy (lem-sdl2:current-renderer) texture :dest-rect dest-rect))
+         (sdl2:destroy-texture texture)))
+     :cleanup-function (lambda ()
+                         (trivial-garbage:cancel-finalization surface)
+                         (sdl2:free-surface surface)))))
 
 (defclass image ()
   ((surface :initarg :surface

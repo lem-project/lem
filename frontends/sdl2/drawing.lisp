@@ -19,7 +19,9 @@
        (or (lem-core:attribute-font attribute)
            (display:get-display-font display
                                      :type type
-                                     :bold (and attribute (lem:attribute-bold attribute))))
+                                     :bold (and attribute (lem:attribute-bold attribute))
+                                     :character (and (plusp (length string))
+                                                     (char string 0))))
        c-string
        (lem:color-red foreground)
        (lem:color-green foreground)
@@ -44,26 +46,24 @@
                         :foreground (lem-if:get-background-color (lem:implementation))))))
     (make-text-surface-with-cache display string attribute type)))
 
-(defmethod get-surface ((drawing-object icon-object) display)
-  (let* ((string (text-object-string drawing-object))
-         (attribute (text-object-attribute drawing-object))
-         (font (lem-sdl2/icon-font:icon-font
-                (char (text-object-string drawing-object) 0)
-                (lem-sdl2/font:font-config-size
-                 (display:display-font-config display))))
-         (foreground (lem-core:attribute-foreground-with-reverse attribute)))
-    (cffi:with-foreign-string (c-string string)
-      (sdl2-ttf:render-utf8-blended font
-                                    c-string
-                                    (lem:color-red foreground)
-                                    (lem:color-green foreground)
-                                    (lem:color-blue foreground)
-                                    0))))
+;;; icon-object: no specialized get-surface needed.
+;;; Falls through to the text-object method which uses make-text-surface-with-cache.
+;;; make-text-surface now passes :character to get-display-font, which finds the
+;;; correct icon font via icon-font:icon-font. The surface is cached by
+;;; (string, attribute, :icon) key, preventing orphaned textures.
 
 (defmethod get-surface ((drawing-object folder-object) display)
-  (sdl2-image:load-image
-   (lem-sdl2/resource:get-resource-pathname
-    "resources/open-folder.png")))
+  "Cache the folder PNG surface in the text-surface-cache.
+Uses a sentinel key so it participates in the normal cache lifecycle
+(cleared on font change, cleared by sweep-if-oversize)."
+  (or (lem-sdl2/text-surface-cache:get-text-surface-cache
+       "__folder_icon__" nil :folder)
+      (let ((surface (sdl2-image:load-image
+                      (lem-sdl2/resource:get-resource-pathname
+                       "resources/open-folder.png"))))
+        (lem-sdl2/text-surface-cache:register-text-surface-cache
+         "__folder_icon__" nil :folder surface)
+        surface)))
 
 (defgeneric object-width (drawing-object display))
 
@@ -162,7 +162,7 @@
          (surface-height (object-height drawing-object display))
          (attribute (text-object-attribute drawing-object))
          (background (lem-core:attribute-background-with-reverse attribute))
-         (texture (sdl2:create-texture-from-surface
+         (texture (lem-sdl2/text-surface-cache:get-or-create-texture
                    (display:display-renderer display)
                    (get-surface drawing-object display)))
          (y (- bottom-y surface-height)))
@@ -177,7 +177,6 @@
                                    y
                                    surface-width
                                    surface-height)
-    (sdl2:destroy-texture texture)
     (when (and attribute
                (lem:attribute-underline attribute))
       (display:render-line display

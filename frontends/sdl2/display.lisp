@@ -39,7 +39,10 @@
            :adapt-high-dpi-font-size
            :change-font
            :with-renderer
-           :with-display-render-target))
+           :with-display-render-target
+           :display-scratch-rect
+           :call-with-scratch-rect
+           :with-scratch-rect))
 (in-package :lem-sdl2/display)
 
 (defvar *display*)
@@ -87,7 +90,34 @@
                          :accessor display-redraw-at-least-once-p)
    (scale :initform '(1 1)
           :initarg :scale
-          :accessor display-scale)))
+          :accessor display-scale)
+   (scratch-rect :initform (sdl2:make-rect 0 0 0 0)
+                 :reader display-scratch-rect
+                 :documentation
+                 "Pre-allocated SDL_Rect reused across all render calls to
+avoid heap-allocating a new rect + Lisp wrapper on every draw-rect,
+fill-to-end-of-line, render-texture, etc.  Mutated in-place by
+`call-with-scratch-rect' / `with-scratch-rect'; do not rely on its
+contents outside the dynamic extent of that call.")))
+
+(declaim (inline call-with-scratch-rect))
+(defun call-with-scratch-rect (display x y w h function)
+  "Set the display's scratch SDL_Rect to (X Y W H) and call FUNCTION with it.
+Single mutation + funcall — no heap allocation.  Used by
+`with-scratch-rect'; expose the underlying function so callers that
+want to pass a closure directly can skip the macro."
+  (let ((rect (display-scratch-rect display)))
+    (setf (sdl2:rect-x rect) x
+          (sdl2:rect-y rect) y
+          (sdl2:rect-width rect) w
+          (sdl2:rect-height rect) h)
+    (funcall function rect)))
+
+(defmacro with-scratch-rect ((var display-form x y w h) &body body)
+  "Bind VAR to the display's pre-allocated SDL_Rect with fields set to X Y W H.
+The rect is mutated in-place — no heap allocation occurs.  Thin wrapper
+over `call-with-scratch-rect'."
+  `(call-with-scratch-rect ,display-form ,x ,y ,w ,h (lambda (,var) ,@body)))
 
 (defmethod display-latin-font ((display display))
   (font:font-latin-normal-font (display-font display)))
@@ -231,7 +261,7 @@
         (y (* y (display-char-height display)))
         (width (* width (display-char-width display)))
         (height (* height (display-char-height display))))
-    (sdl2:with-rects ((rect x y width height))
+    (with-scratch-rect (rect display x y width height)
       (set-render-color display color)
       (sdl2:render-fill-rect (display-renderer display) rect))))
 
@@ -240,7 +270,7 @@
   (sdl2:render-draw-line (display-renderer display) x1 y1 x2 y2))
 
 (defmethod render-fill-rect-by-pixels ((display display) x y width height &key color)
-  (sdl2:with-rects ((rect x y width height))
+  (with-scratch-rect (rect display x y width height)
     (set-render-color display color)
     (sdl2:render-fill-rect (display-renderer display) rect)))
 
@@ -249,7 +279,7 @@
          (y1 (- (* y (display-char-height display)) (floor (display-char-height display) 2)))
          (x2 (1- (+ x1 (* (+ w 1) (display-char-width display)))))
          (y2 (+ y1 (* (+ h 1) (display-char-height display)))))
-    (sdl2:with-rects ((rect x1 y1 (- x2 x1) (- y2 y1)))
+    (with-scratch-rect (rect display x1 y1 (- x2 x1) (- y2 y1))
       (set-render-color display (display-background-color display))
       (sdl2:render-fill-rect (display-renderer display) rect))
     (sdl2:with-points ((upleft x1 y1)

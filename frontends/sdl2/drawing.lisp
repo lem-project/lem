@@ -144,7 +144,7 @@ Uses a sentinel key so it participates in the normal cache lifecycle
   0)
 
 (defun draw-rect (display x y width height color)
-  (sdl2:with-rects ((rect x y width height))
+  (display:with-scratch-rect (rect display x y width height)
     (display:set-render-color display color)
     (sdl2:render-fill-rect (display:display-renderer display) rect)))
 
@@ -171,12 +171,12 @@ Uses a sentinel key so it participates in the normal cache lifecycle
            (draw-cursor display x y surface-width surface-height background))
           (t
            (draw-rect display x y surface-width surface-height background)))
-    (lem-sdl2/utils:render-texture (display:display-renderer display)
-                                   texture
-                                   x
-                                   y
-                                   surface-width
-                                   surface-height)
+    (display:with-scratch-rect (dest-rect display x y surface-width surface-height)
+      (sdl2:render-copy-ex (display:display-renderer display)
+                           texture
+                           :source-rect nil
+                           :dest-rect dest-rect
+                           :flip (list :none)))
     (when (and attribute
                (lem:attribute-underline attribute))
       (display:render-line display
@@ -205,10 +205,11 @@ Uses a sentinel key so it participates in the normal cache lifecycle
 
 (defmethod draw-object ((drawing-object extend-to-eol-object) x bottom-y display view)
   (display:set-render-color display (extend-to-eol-object-color drawing-object))
-  (sdl2:with-rects ((rect x
-                          (- bottom-y (display:display-char-height display))
-                          (- (lem-if:view-width (lem-core:implementation) view) x)
-                          (display:display-char-height display)))
+  (display:with-scratch-rect (rect display
+                              x
+                              (- bottom-y (display:display-char-height display))
+                              (- (lem-if:view-width (lem-core:implementation) view) x)
+                              (display:display-char-height display))
     (sdl2:render-fill-rect (display:display-renderer display) rect))
   (object-width drawing-object display))
 
@@ -227,12 +228,12 @@ Uses a sentinel key so it participates in the normal cache lifecycle
          (texture (sdl2:create-texture-from-surface (display:display-renderer display)
                                                     (image-object-image drawing-object)))
          (y (- bottom-y surface-height)))
-    (lem-sdl2/utils:render-texture (display:display-renderer display)
-                                   texture
-                                   x
-                                   y
-                                   surface-width
-                                   surface-height)
+    (display:with-scratch-rect (dest-rect display x y surface-width surface-height)
+      (sdl2:render-copy-ex (display:display-renderer display)
+                           texture
+                           :source-rect nil
+                           :dest-rect dest-rect
+                           :flip (list :none)))
     (sdl2:destroy-texture texture)
     surface-width))
 
@@ -258,7 +259,7 @@ Uses a sentinel key so it participates in the normal cache lifecycle
             (draw-object object current-x y display view)))
 
 (defun fill-to-end-of-line (display view x y height &optional default-attribute)
-  (sdl2:with-rects ((rect x y (- (lem-if:view-width (lem-core:implementation) view) x) height))
+  (display:with-scratch-rect (rect display x y (- (lem-if:view-width (lem-core:implementation) view) x) height)
     (display:set-render-color display
                               (lem-core:attribute-background-color default-attribute))
     (sdl2:render-fill-rect (display:display-renderer display) rect)))
@@ -294,10 +295,11 @@ Uses a sentinel key so it participates in the normal cache lifecycle
   (display:with-display (display)
     (display:set-render-color display
                               (display:display-background-color display))
-    (sdl2:with-rects ((rect 0
-                            y
-                            (lem-if:view-width implementation view)
-                            (- (lem-if:view-height implementation view) y)))
+    (display:with-scratch-rect (rect display
+                                0
+                                y
+                                (lem-if:view-width implementation view)
+                                (- (lem-if:view-height implementation view) y))
       (sdl2:render-fill-rect (display:display-renderer display) rect))))
 
 (defmethod lem-core:redraw-buffer :before ((implementation lem-sdl2/sdl2:sdl2) buffer window force)

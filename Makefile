@@ -39,12 +39,18 @@ webview-ncurses:
 
 lem: webview
 
-.PHONY: legit
+.PHONY: legit terminal-lib
 
 legit:
 	qlot install
 	$(LISP) --load .qlot/setup.lisp \
 		--load scripts/build-legit.lisp
+
+# Build the lem-terminal native helper (terminal.so) for the current
+# platform. Requires libvterm and a C toolchain. Optional: lem-terminal
+# silently disables itself at runtime when the library is missing.
+terminal-lib:
+	$(LISP) --load scripts/build-terminal.lisp
 
 install-bin:
 	install -m 755 lem $(PREFIX)/bin

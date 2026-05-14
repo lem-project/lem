@@ -163,13 +163,16 @@
   (cols :int))
 
 (cffi:defcfun ("terminal_sb_line_to_string" terminal-sb-line-to-string) :int
+  (terminal :pointer)
   (cols :int)
   (cells :pointer)
   (out :pointer)
   (out-size :int))
 
-;; Zero-allocation version: extracts into a static C buffer, returns pointer
+;; Zero-allocation: extracts into the terminal's per-terminal C buffer,
+;; returns pointer. Trailing ASCII spaces are stripped during extraction.
 (cffi:defcfun ("terminal_sb_line_extract" terminal-sb-line-extract) :pointer
+  (terminal :pointer)
   (cols :int)
   (cells :pointer)
   (out-len (:pointer :int)))

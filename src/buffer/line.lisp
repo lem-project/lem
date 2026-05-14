@@ -7,6 +7,7 @@
            :line-previous
            :line-next
            :line-string
+           :set-line-string
            :line-plist
            :line-syntax-context
            :line-points

@@ -62,6 +62,10 @@
    (dirty-rows :initform nil
                :accessor terminal-dirty-rows
                :documentation "Bit vector tracking which rows need re-rendering.")
+   (dirty-any-p :initform nil
+                :accessor terminal-dirty-any-p
+                :documentation "Fast-path flag: T if any bit in dirty-rows is set.
+Avoids an O(rows) scan in the hot update loop.")
    (scrollback-ring :initform nil
                     :accessor terminal-scrollback-ring
                     :documentation "Simple-vector ring buffer of scrollback line strings.")
@@ -95,19 +99,20 @@
     (if (and dirty (= (length dirty) rows))
         (fill dirty 1)
         (setf (terminal-dirty-rows terminal)
-              (make-array rows :element-type 'bit :initial-element 1)))))
+              (make-array rows :element-type 'bit :initial-element 1))))
+  (setf (terminal-dirty-any-p terminal) t))
 
 (defun mark-rows-dirty (terminal start-row end-row)
   "Mark rows from START-ROW (inclusive) to END-ROW (exclusive) as dirty."
   (let ((dirty (terminal-dirty-rows terminal)))
     (when dirty
       (loop :for r :from (max 0 start-row) :below (min end-row (length dirty))
-            :do (setf (aref dirty r) 1)))))
+            :do (setf (aref dirty r) 1))
+      (setf (terminal-dirty-any-p terminal) t))))
 
 (defun any-rows-dirty-p (terminal)
-  "Return T if any row is marked dirty."
-  (let ((dirty (terminal-dirty-rows terminal)))
-    (and dirty (find 1 dirty))))
+  "Return T if any row is marked dirty.  O(1) — reads the cached flag."
+  (terminal-dirty-any-p terminal))
 
 (defvar *scrollback-limit* 500
   "Maximum number of scrollback lines stored in the ring buffer.")
@@ -203,28 +208,41 @@ Prevents UI freeze by yielding to the renderer after this budget.")
 
 (declaim (inline pack-attribute-key))
 (defun pack-attribute-key (fg-r fg-g fg-b bg-r bg-g bg-b bold underline reverse-attr)
-  "Pack cell style into a single fixnum key (51 bits — fits in a 64-bit fixnum)."
+  "Pack cell style into a single fixnum key (51 bits — fits in a 64-bit fixnum).
+Attr flags are masked to one bit each: some vterm builds expose underline as
+a multi-bit style enum, and an unmasked value would collide with the bg-b
+field (bits 3..10) or with neighbouring flags."
   (logior (ash fg-r 43) (ash fg-g 35) (ash fg-b 27)
           (ash bg-r 19) (ash bg-g 11) (ash bg-b 3)
-          (ash bold 2) (ash underline 1) reverse-attr))
+          (ash (logand bold 1) 2)
+          (ash (logand underline 1) 1)
+          (logand reverse-attr 1)))
 
 (defun default-bg-p (r g b)
   "Return T if the RGB values represent the terminal default background (black)."
   (and (zerop r) (zerop g) (zerop b)))
+
+(defparameter *attribute-cache-limit* 4096
+  "Maximum entries in a terminal's attribute cache.  When exceeded the cache
+is cleared wholesale — cheaper than maintaining LRU bookkeeping on the
+render hot path, and the cache refills quickly for the active palette.")
 
 (defun get-attribute-for-cell (terminal fg-r fg-g fg-b bg-r bg-g bg-b bold underline reverse-attr)
   "Return a cached attribute for the given cell style components."
   (let* ((key (pack-attribute-key fg-r fg-g fg-b bg-r bg-g bg-b bold underline reverse-attr))
          (cache (terminal-attribute-cache terminal)))
     (or (gethash key cache)
-        (setf (gethash key cache)
-              (make-attribute :foreground (fix-blue-color (make-color fg-r fg-g fg-b))
-                              :background (if (default-bg-p bg-r bg-g bg-b)
-                                              nil
-                                              (fix-blue-color (make-color bg-r bg-g bg-b)))
-                              :reverse (= 1 reverse-attr)
-                              :bold (= 1 bold)
-                              :underline (= 1 underline))))))
+        (progn
+          (when (>= (hash-table-count cache) *attribute-cache-limit*)
+            (clrhash cache))
+          (setf (gethash key cache)
+                (make-attribute :foreground (fix-blue-color (make-color fg-r fg-g fg-b))
+                                :background (if (default-bg-p bg-r bg-g bg-b)
+                                                nil
+                                                (fix-blue-color (make-color bg-r bg-g bg-b)))
+                                :reverse (= 1 (logand reverse-attr 1))
+                                :bold (= 1 (logand bold 1))
+                                :underline (= 1 (logand underline 1))))))))
 
 ;; Pre-computed byte offsets into cell-data struct (14 bytes per cell):
 ;; uint32 ch (0), uint8 fg_r(4), fg_g(5), fg_b(6), bg_r(7), bg_g(8), bg_b(9),
@@ -248,9 +266,14 @@ Prevents UI freeze by yielding to the renderer after this budget.")
 
 (defun render-row-direct (terminal line-obj cols row buf cell-size)
   "Render a row directly into LINE-OBJ, bypassing the buffer edit API.
-Builds the complete line string and attribute list in one pass, then
-directly sets them on the line object.  Eliminates all method dispatch,
-change hooks, marker shifting, and temporary point allocations."
+
+CONTRACT: this deliberately skips before/after-change hooks, undo
+recording, and marker shifting.  It is safe ONLY for the terminal
+buffer, whose content is owned exclusively by the vterm renderer:
+nothing else writes to it, nothing observes its change hooks (the
+terminal mode bypasses standard editing commands in EXECUTE), and
+undo is irrelevant for a live shell.  Do not use this on any buffer
+that may be edited by the user or watched by other features."
   (ffi::terminal-get-row (terminal-viscus terminal) row buf cols)
   (let ((chars (make-string cols))
         (attrs nil)
@@ -284,9 +307,10 @@ change hooks, marker shifting, and temporary point allocations."
                 (setf (schar chars col) char))
           :finally (when previous-attribute
                      (push (list run-start cols previous-attribute) attrs)))
-    ;; Directly set line content — bypass all buffer edit machinery
-    ;; set-line-string is the slot writer (not exported, hence double-colon)
-    (lem/buffer/line::set-line-string chars line-obj)
+    ;; Directly set line content — bypass all buffer edit machinery.
+    ;; See CONTRACT above; this is permitted because the terminal buffer
+    ;; is rendered-into, not edited.
+    (line:set-line-string chars line-obj)
     (setf (getf (line:line-plist line-obj) :attribute)
           (nreverse attrs))))
 
@@ -364,7 +388,7 @@ Called when transitioning from scrollback-active to normal view."
       ;; Get the first line object and walk the linked list directly.
       ;; This avoids all point manipulation during row rendering.
       (move-to-line point 1)
-      (let ((first-line (lem/buffer/internal::point-line point)))
+      (let ((first-line (point-line point)))
         (cffi:with-foreign-object (buf '(:struct ffi::cell-data) cols)
           (cond
             ;; Full redraw: render every row directly
@@ -375,7 +399,8 @@ Called when transitioning from scrollback-active to normal view."
                    :while cur-line
                    :do (render-row-direct terminal cur-line cols row buf cell-size))
              (setf (terminal-dirty-rows terminal)
-                   (make-array rows :element-type 'bit :initial-element 0)))
+                   (make-array rows :element-type 'bit :initial-element 0))
+             (setf (terminal-dirty-any-p terminal) nil))
             ;; Partial update: only dirty rows
             (t
              (loop :for row :from 0 :below rows
@@ -383,7 +408,8 @@ Called when transitioning from scrollback-active to normal view."
                    :while cur-line
                    :do (when (= 1 (aref dirty row))
                          (render-row-direct terminal cur-line cols row buf cell-size)))
-             (fill dirty 0)))))
+             (fill dirty 0)
+             (setf (terminal-dirty-any-p terminal) nil)))))
       ;; Position cursor
       (move-to-line point (1+ (ffi::terminal-cursor-row viscus)))
       (move-to-column point (ffi::terminal-cursor-col viscus)))))
@@ -466,18 +492,20 @@ Called when transitioning from scrollback-active to normal view."
 
 (defun cb-sb-pushline (cols cells id)
   "Store scrollback line in the ring buffer.  Uses zero-allocation C extraction
-into a static buffer; only copies the resulting Lisp string."
+into the terminal's per-terminal buffer; trailing spaces are stripped C-side
+so only the final Lisp string is allocated here."
   (let ((terminal (find-terminal-by-id id)))
     (when terminal
       (let* ((ring (terminal-scrollback-ring terminal))
              (limit (length ring))
              (head (terminal-scrollback-head terminal)))
-        ;; Extract text using static C buffer (no foreign alloc from Lisp)
+        ;; Extract text via the C extension's per-terminal buffer.
         (cffi:with-foreign-object (len-ptr :int)
-          (let* ((c-str (ffi::terminal-sb-line-extract cols cells len-ptr))
+          (let* ((c-str (ffi::terminal-sb-line-extract
+                         (terminal-viscus terminal) cols cells len-ptr))
                  (len (cffi:mem-ref len-ptr :int))
                  (text (cffi:foreign-string-to-lisp c-str :count len :encoding :utf-8)))
-            (setf (aref ring head) (string-right-trim '(#\Space) text))))
+            (setf (aref ring head) text)))
         (setf (terminal-scrollback-head terminal) (mod (1+ head) limit))
         (when (< (scrollback-count terminal) limit)
           (incf (scrollback-count terminal))))

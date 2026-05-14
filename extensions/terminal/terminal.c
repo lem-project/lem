@@ -58,6 +58,13 @@ struct terminal {
   int (*cb_sb_pushline)(int cols, const VTermScreenCell *cells, int id);
   int (*cb_sb_popline)(int cols, VTermScreenCell *cells, int id);
   int (*cb_sb_clear)(int id); // TODO
+
+  /* Per-terminal scrollback line extraction buffer.
+     Max line: 1024 cols * 4 bytes UTF-8 + NUL = 4097 bytes.
+     Per-terminal (not file-scope static) so concurrent terminals
+     don't race when their I/O threads invoke vterm callbacks. */
+  char sb_line_buf[4097];
+  int  sb_line_len;
 };
 
 static int cb_damage(VTermRect rect, void *user)
@@ -179,6 +186,8 @@ struct terminal *terminal_new(int id,
   terminal->cb_resize = cb_resize;
   terminal->cb_sb_pushline = cb_sb_pushline;
   terminal->cb_sb_popline = cb_sb_popline;
+  terminal->sb_line_buf[0] = '\0';
+  terminal->sb_line_len = 0;
 
   vterm_output_set_callback(vterm, output_callback, (void *) terminal);
   vterm_screen_set_callbacks(screen, &screen_callbacks, terminal);
@@ -330,57 +339,63 @@ int terminal_get_row(struct terminal *terminal, int row,
   return cols;
 }
 
-/* Pre-allocated buffer for scrollback line text extraction.
-   Avoids per-callback allocation from Lisp side.
-   Max line: 1024 cols * 4 bytes UTF-8 + NUL = 4097 bytes. */
-static char sb_line_buf[4097];
-static int  sb_line_len = 0;
-
-/* Extract text from a VTermScreenCell array into the static buffer.
-   Returns pointer to the static buffer; caller must copy before next call. */
-const char *terminal_sb_line_extract(int cols, const VTermScreenCell *cells,
+/* Extract text from a VTermScreenCell array into the terminal's per-terminal
+   buffer.  Trailing ASCII spaces are stripped during extraction so the Lisp
+   side does not need to allocate a trimmed copy.  Returns pointer to the
+   buffer; caller must copy before the next call on the same terminal. */
+const char *terminal_sb_line_extract(struct terminal *terminal,
+                                     int cols,
+                                     const VTermScreenCell *cells,
                                      int *out_len)
 {
+  char *buf = terminal->sb_line_buf;
   int pos = 0;
-  int max = sizeof(sb_line_buf) - 1;
+  int last_nonspace = 0;
+  int max = (int)sizeof(terminal->sb_line_buf) - 1;
   for (int col = 0; col < cols; col++) {
     if (cells[col].width == 0) continue;
     uint32_t ch = cells[col].chars[0];
     if (ch == 0) ch = ' ';
+    int start = pos;
     if (ch < 0x80) {
       if (pos + 1 > max) break;
-      sb_line_buf[pos++] = (char)ch;
+      buf[pos++] = (char)ch;
     } else if (ch < 0x800) {
       if (pos + 2 > max) break;
-      sb_line_buf[pos++] = 0xC0 | (ch >> 6);
-      sb_line_buf[pos++] = 0x80 | (ch & 0x3F);
+      buf[pos++] = 0xC0 | (ch >> 6);
+      buf[pos++] = 0x80 | (ch & 0x3F);
     } else if (ch < 0x10000) {
       if (pos + 3 > max) break;
-      sb_line_buf[pos++] = 0xE0 | (ch >> 12);
-      sb_line_buf[pos++] = 0x80 | ((ch >> 6) & 0x3F);
-      sb_line_buf[pos++] = 0x80 | (ch & 0x3F);
+      buf[pos++] = 0xE0 | (ch >> 12);
+      buf[pos++] = 0x80 | ((ch >> 6) & 0x3F);
+      buf[pos++] = 0x80 | (ch & 0x3F);
     } else {
       if (pos + 4 > max) break;
-      sb_line_buf[pos++] = 0xF0 | (ch >> 18);
-      sb_line_buf[pos++] = 0x80 | ((ch >> 12) & 0x3F);
-      sb_line_buf[pos++] = 0x80 | ((ch >> 6) & 0x3F);
-      sb_line_buf[pos++] = 0x80 | (ch & 0x3F);
+      buf[pos++] = 0xF0 | (ch >> 18);
+      buf[pos++] = 0x80 | ((ch >> 12) & 0x3F);
+      buf[pos++] = 0x80 | ((ch >> 6) & 0x3F);
+      buf[pos++] = 0x80 | (ch & 0x3F);
     }
+    if (ch != ' ') last_nonspace = pos;
+    (void)start;
   }
-  sb_line_buf[pos] = '\0';
-  sb_line_len = pos;
+  pos = last_nonspace;
+  buf[pos] = '\0';
+  terminal->sb_line_len = pos;
   if (out_len) *out_len = pos;
-  return sb_line_buf;
+  return buf;
 }
 
 /* Legacy wrapper for compatibility */
-int terminal_sb_line_to_string(int cols, const VTermScreenCell *cells,
+int terminal_sb_line_to_string(struct terminal *terminal,
+                               int cols,
+                               const VTermScreenCell *cells,
                                char *out, int out_size)
 {
   int len;
-  terminal_sb_line_extract(cols, cells, &len);
+  terminal_sb_line_extract(terminal, cols, cells, &len);
   int copy = len < out_size ? len : out_size - 1;
-  memcpy(out, sb_line_buf, copy);
+  memcpy(out, terminal->sb_line_buf, copy);
   out[copy] = '\0';
   return copy;
 }

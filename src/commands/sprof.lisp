@@ -28,16 +28,19 @@ in-progress profile is stopped and reset first."
   (start-profiling-in-mode :alloc))
 
 (defun %sprof-report-pathname ()
-  "Return an absolute pathname for the next sprof report file."
+  "Return an absolute pathname for the next sprof report file.
+Located in `uiop:temporary-directory' so it works on every platform Lem
+runs on, not just unix-like systems with a writable /tmp."
   (multiple-value-bind (sec min hour day month year)
       (decode-universal-time (get-universal-time))
-    (pathname
+    (merge-pathnames
      (format nil
-             "/tmp/lem-profile-report-~4,'0D~2,'0D~2,'0D~2,'0D~2,'0D~2,'0D.txt"
-             year month day hour min sec))))
+             "lem-profile-report-~4,'0D~2,'0D~2,'0D~2,'0D~2,'0D~2,'0D.txt"
+             year month day hour min sec)
+     (uiop:temporary-directory))))
 
 (define-command lem-sprof-report () ()
-  "Stop profiling, write the report to /tmp/, and reset.
+  "Stop profiling, write the report to the OS temp directory, and reset.
 Reports the absolute path of the generated file via `message'.  Any
 error from `sb-sprof:report' or the underlying file write is surfaced
 through `message' rather than swallowed by the command dispatcher."

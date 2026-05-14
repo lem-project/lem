@@ -98,6 +98,17 @@ for example, to maintain an attribute like CURSOR.")
     (apply-theme theme)
     (setf (current-theme) name)
     (message nil)
+    ;; The per-window drawing-cache compares attributes via ensure-attribute,
+    ;; which resolves to the *current* theme on both sides — so after a color
+    ;; change the cache silently treats every line as unchanged and skips
+    ;; render-line. With :no-force-needed implementations (e.g. webview),
+    ;; (redraw-display :force t) above also strips force, so non-current
+    ;; windows never invalidate their cache. Mark every window dirty so
+    ;; clear-cache-if-screen-modified drops the stale cache.
+    (dolist (window (window-list))
+      (need-to-redraw window))
+    (dolist (window (frame-floating-windows (current-frame)))
+      (need-to-redraw window))
     (redraw-display :force t)
     (when save-theme
       (setf (config :color-theme) (current-theme))))

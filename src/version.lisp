@@ -1,5 +1,9 @@
 (in-package :lem-core)
 
+(defvar *cached-lem-version*
+  (asdf:component-version (asdf:find-system :lem))
+  "Cached lem version from ASDF. Computed once at load time.")
+
 (defun get-git-hash ()
   "Return lem's git hash."
   ;; Skip git operations during Nix build
@@ -26,10 +30,6 @@
 (defun lem-git-revision ()
   "Return lem's git revision in string."
   *git-revision*)
-
-(defvar *cached-lem-version*
-  (asdf:component-version (asdf:find-system :lem))
-  "Cached lem version from ASDF. Computed once at load time.")
 
 (defun get-version-string ()
   "Return the version number of this version of Lem."

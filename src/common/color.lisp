@@ -16,6 +16,15 @@
   (:lock t))
 (in-package :lem/common/color)
 
+;;; Parse-color cache: color strings from themes/attributes are parsed via regex
+;;; on every drawing object, every frame. Since color strings are constant at
+;;; runtime, caching eliminates ~90% of the regex + integer-parse overhead.
+;;; Cleared on theme change via clear-all-attribute-cache -> clear-parse-color-cache.
+(defvar *parse-color-cache* (make-hash-table :test 'equal))
+
+;;; Sentinel for "we tried and got nil" so we don't re-parse invalid strings.
+(defvar *parse-color-miss* (gensym "MISS"))
+
 (defparameter *rgb.txt* "! $Xorg: rgb.txt,v 1.3 2000/08/17 19:54:00 cpqbld Exp $
 255 250 250  snow
 248 248 255  ghost white
@@ -823,15 +832,6 @@
                (color-green color)
                (color-blue color))
           2.55))))
-
-;;; Parse-color cache: color strings from themes/attributes are parsed via regex
-;;; on every drawing object, every frame. Since color strings are constant at
-;;; runtime, caching eliminates ~90% of the regex + integer-parse overhead.
-;;; Cleared on theme change via clear-all-attribute-cache -> clear-parse-color-cache.
-(defvar *parse-color-cache* (make-hash-table :test 'equal))
-
-;;; Sentinel for "we tried and got nil" so we don't re-parse invalid strings.
-(defvar *parse-color-miss* (gensym "MISS"))
 
 (defun clear-parse-color-cache ()
   "Invalidate the parse-color memoization table.  Call this whenever

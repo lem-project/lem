@@ -57,7 +57,14 @@
     :initarg :string
     :initform nil
     :reader line-string
-    :writer set-line-string)
+    :writer set-line-string
+    :documentation "Raw text of the line as a simple-string.
+
+`set-line-string' is the writer for this slot, exposed as a fast-path
+API for renderers that fully own a buffer (e.g. the terminal extension)
+and need to replace a line's text without going through the
+buffer-edit machinery (change hooks, undo, marker shifting).  Do not
+call it from code that participates in normal editing.")
    (plist
     :initarg :plist
     :initform nil

@@ -21,14 +21,53 @@
            :snap-to-bottom))
 (in-package :lem-terminal/terminal)
 
-;;; id generator
-(defvar *terminal-id-counter* 0)
+;;; --- module-level state and tunables ---------------------------------
+;;; Kept at the top of the file per the contract's file_structure_rule.
+
+(defvar *terminal-id-counter* 0
+  "Monotonic counter for `generate-terminal-id'.")
+
+(defvar *terminals* '()
+  "All live terminals, used by callbacks to locate their Lisp object by id.")
+
+(defparameter *scrollback-limit* 500
+  "Maximum number of scrollback lines stored in the ring buffer.")
+
+(defparameter *write-timeout-ms* 12
+  "Max milliseconds to spend parsing PTY data per update tick (xterm.js pattern).
+Prevents UI freeze by yielding to the renderer after this budget.")
+
+(defparameter *attribute-cache-limit* 4096
+  "Maximum entries in a terminal's attribute cache.  When exceeded the cache
+is cleared wholesale — cheaper than maintaining LRU bookkeeping on the
+render hot path, and the cache refills quickly for the active palette.")
+
+(defparameter *fixed-blue* (parse-color "#3465A4")
+  "Replacement colour used by `fix-blue-color' for vterm's unreadable default blue.")
+
+(defparameter *blue-to-fix* (make-color 0 0 #xe0)
+  "vterm's default \"blue\" — too dark on most terminals; replaced with `*fixed-blue*'.")
+
+;; Byte offsets into the packed cell-data struct (14 bytes per cell):
+;; uint32 ch (0), uint8 fg_r(4), fg_g(5), fg_b(6), bg_r(7), bg_g(8), bg_b(9),
+;; bold(10), underline(11), reverse(12), width(13)
+(defconstant +cell-off-ch+ 0)
+(defconstant +cell-off-fg-r+ 4)
+(defconstant +cell-off-fg-g+ 5)
+(defconstant +cell-off-fg-b+ 6)
+(defconstant +cell-off-bg-r+ 7)
+(defconstant +cell-off-bg-g+ 8)
+(defconstant +cell-off-bg-b+ 9)
+(defconstant +cell-off-bold+ 10)
+(defconstant +cell-off-underline+ 11)
+(defconstant +cell-off-reverse+ 12)
+
+;;; --- id generator ----------------------------------------------------
 
 (defun generate-terminal-id ()
   (incf *terminal-id-counter*))
 
-;;; terminals
-(defvar *terminals* '())
+;;; --- terminals registry ----------------------------------------------
 
 (defun add-terminal (terminal)
   (push terminal *terminals*))
@@ -114,13 +153,6 @@ Avoids an O(rows) scan in the hot update loop.")
   "Return T if any row is marked dirty.  O(1) — reads the cached flag."
   (terminal-dirty-any-p terminal))
 
-(defvar *scrollback-limit* 500
-  "Maximum number of scrollback lines stored in the ring buffer.")
-
-(defvar *write-timeout-ms* 12
-  "Max milliseconds to spend parsing PTY data per update tick (xterm.js pattern).
-Prevents UI freeze by yielding to the renderer after this budget.")
-
 (defun update (terminal)
   (process-input terminal)
   (when (and (= 0 (event-queue-length))
@@ -198,11 +230,8 @@ Prevents UI freeze by yielding to the renderer after this budget.")
 (defmethod copy-mode-off ((terminal terminal))
   (setf (terminal-copy-mode terminal) nil))
 
-(defvar *fixed-blue* (parse-color "#3465A4"))
-(defvar *blue-to-fix* (make-color 0 0 #xe0))
-
 (defun fix-blue-color (color)
-  (if (lem/common/color::color-equal color *blue-to-fix*)
+  (if (lem/common/color:color-equal color *blue-to-fix*)
       *fixed-blue*
       color))
 
@@ -222,11 +251,6 @@ field (bits 3..10) or with neighbouring flags."
   "Return T if the RGB values represent the terminal default background (black)."
   (and (zerop r) (zerop g) (zerop b)))
 
-(defparameter *attribute-cache-limit* 4096
-  "Maximum entries in a terminal's attribute cache.  When exceeded the cache
-is cleared wholesale — cheaper than maintaining LRU bookkeeping on the
-render hot path, and the cache refills quickly for the active palette.")
-
 (defun get-attribute-for-cell (terminal fg-r fg-g fg-b bg-r bg-g bg-b bold underline reverse-attr)
   "Return a cached attribute for the given cell style components."
   (let* ((key (pack-attribute-key fg-r fg-g fg-b bg-r bg-g bg-b bold underline reverse-attr))
@@ -244,25 +268,12 @@ render hot path, and the cache refills quickly for the active palette.")
                                 :bold (= 1 (logand bold 1))
                                 :underline (= 1 (logand underline 1))))))))
 
-;; Pre-computed byte offsets into cell-data struct (14 bytes per cell):
-;; uint32 ch (0), uint8 fg_r(4), fg_g(5), fg_b(6), bg_r(7), bg_g(8), bg_b(9),
-;; bold(10), underline(11), reverse(12), width(13)
-(defconstant +cell-off-ch+ 0)
-(defconstant +cell-off-fg-r+ 4)
-(defconstant +cell-off-fg-g+ 5)
-(defconstant +cell-off-fg-b+ 6)
-(defconstant +cell-off-bg-r+ 7)
-(defconstant +cell-off-bg-g+ 8)
-(defconstant +cell-off-bg-b+ 9)
-(defconstant +cell-off-bold+ 10)
-(defconstant +cell-off-underline+ 11)
-(defconstant +cell-off-reverse+ 12)
-;; Cached struct size — avoid calling cffi:foreign-type-size every frame
-(defvar *cell-data-size* nil)
+;; Cached struct size — resolved once at load time so we never call
+;; cffi:foreign-type-size on the render hot path and don't carry a
+;; mutable lazy-init global.
+(declaim (inline cell-data-size))
 (defun cell-data-size ()
-  (or *cell-data-size*
-      (setf *cell-data-size*
-            (cffi:foreign-type-size '(:struct ffi::cell-data)))))
+  (load-time-value (cffi:foreign-type-size '(:struct ffi::cell-data)) t))
 
 (defun render-row-direct (terminal line-obj cols row buf cell-size)
   "Render a row directly into LINE-OBJ, bypassing the buffer edit API.

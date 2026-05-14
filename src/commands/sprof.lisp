@@ -41,9 +41,10 @@ runs on, not just unix-like systems with a writable /tmp."
 
 (define-command lem-sprof-report () ()
   "Stop profiling, write the report to the OS temp directory, and reset.
-Reports the absolute path of the generated file via `message'.  Any
-error from `sb-sprof:report' or the underlying file write is surfaced
-through `message' rather than swallowed by the command dispatcher."
+Reports the absolute path of the generated file via `message' on
+success.  Failures (write error, missing-after-write, empty report)
+are surfaced via `editor-error' so the command dispatcher displays
+them in the echo area instead of swallowing them silently."
   (handler-case
       (progn
         (sb-sprof:stop-profiling)
@@ -57,10 +58,11 @@ through `message' rather than swallowed by the command dispatcher."
           (sb-sprof:reset)
           (cond
             ((not (probe-file file))
-             (message "sprof: write succeeded but ~A is missing" file))
+             (editor-error "sprof: write succeeded but ~A is missing" file))
             ((zerop (with-open-file (s file) (file-length s)))
-             (message "sprof: ~A is empty (no samples collected?)" file))
+             (editor-error "sprof: ~A is empty (no samples collected?)" file))
             (t
              (message "Profile written to ~A" file)))))
+    (editor-error (c) (error c))
     (error (c)
-      (message "sprof report failed: ~A: ~A" (type-of c) c))))
+      (editor-error "sprof report failed: ~A: ~A" (type-of c) c))))

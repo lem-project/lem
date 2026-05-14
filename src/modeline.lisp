@@ -47,6 +47,11 @@
 
 (defvar *modeline-status-list* nil)
 
+(defvar *cached-lem-version-string*
+  (format nil " v~A " (asdf:component-version (asdf:find-system :lem)))
+  "Cached version string for the modeline. Computed once at load time
+to avoid calling asdf:find-system on every frame.")
+
 (defun modeline-add-status-list (x &optional (buffer nil bufferp))
   (if bufferp
       (pushnew x (buffer-value buffer 'modeline-status-list))
@@ -129,11 +134,6 @@
           (if (eq window (current-window))
               'modeline-posline-attribute
               'inactive-modeline-posline-attribute)))
-
-(defvar *cached-lem-version-string*
-  (format nil " v~A " (asdf:component-version (asdf:find-system :lem)))
-  "Cached version string for the modeline. Computed once at load time
-to avoid calling asdf:find-system on every frame.")
 
 (defun modeline-version (window)
   (declare (ignore window))

@@ -1,5 +1,17 @@
 (in-package :lem-core)
 
+;;; Editor-wide modification clock for keymaps — analogous to *current-buffer*:
+;;; implicit editor context that any binding-related cache can stamp itself
+;;; with.  Bumped by define-key / undefine-key so that each keymap's local
+;;; binding-cache slot can detect staleness without holding a back-pointer to
+;;; every parent that might have indexed it.
+(defvar *keybinding-cache-generation* 0)
+
+(defun invalidate-keybinding-cache ()
+  "Bump the editor-wide keymap modification clock so existing per-keymap
+binding caches detect themselves as stale on next access."
+  (incf *keybinding-cache-generation*))
+
 (defclass prefix ()
   ((key
     :initarg :key
@@ -99,7 +111,13 @@ NIL to append it to the key sequence normally.")
     :initarg :base
     :accessor keymap-base
     :initform nil
-    :documentation "the keymap that this keymap extends.")))
+    :documentation "the keymap that this keymap extends.")
+   (binding-cache
+    :accessor keymap-binding-cache
+    :initform nil
+    :documentation "Cached (generation . command->keys-hash) used by
+collect-command-keybindings to avoid re-traversing the keymap tree
+each call.  Validated against *keybinding-cache-generation*.")))
 
 (defgeneric keymap-prefixes (keymap)
   (:method ((keymap keymap))
@@ -567,38 +585,18 @@ higher-priority keymap (e.g. vi normal mode remaps self-insert to undefined-key)
                     (traverse-prefix node prefix)))))
     (traverse-node keymap nil)))
 
-;;; Keybinding cache: avoid re-traversing the full keymap tree on every
-;;; collect-command-keybindings call.  During command completion, this function
-;;; is called once per candidate — traversing the tree ~200 times to find
-;;; bindings.  Instead, we traverse once and build a command→bindings hash table,
-;;; cached per (keymap . generation).
-;;;
-;;; The generation counter is bumped on define-key / undefine-key.
-
-(defvar *keybinding-cache-generation* 0
-  "Monotonically increasing counter.  Incremented on define-key / undefine-key
-so that cached keybinding maps are invalidated.")
-
-(defvar *keybinding-cache* (make-hash-table :test 'eq)
-  "Maps keymap object → (generation . command→bindings hash table).
-The command→bindings table maps command-name symbol → list of key sequences.")
-
-(defun invalidate-keybinding-cache ()
-  "Bump the generation counter so all cached keybinding maps are stale."
-  (incf *keybinding-cache-generation*))
-
 (defun get-keybinding-map (keymap)
   "Return a hash table mapping command-name → list-of-key-sequences for KEYMAP.
-Uses a cached version if the generation hasn't changed."
-  (let ((entry (gethash keymap *keybinding-cache*)))
+Uses the keymap's cached map if its stamped generation still matches the
+editor-wide modification clock."
+  (let ((entry (keymap-binding-cache keymap)))
     (when (and entry (eql (car entry) *keybinding-cache-generation*))
       (return-from get-keybinding-map (cdr entry))))
-  ;; Cache miss — traverse and build the map
   (let ((map (make-hash-table :test 'eq)))
     (traverse-keymap keymap
                      (lambda (kseq cmd)
                        (push kseq (gethash cmd map))))
-    (setf (gethash keymap *keybinding-cache*)
+    (setf (keymap-binding-cache keymap)
           (cons *keybinding-cache-generation* map))
     map))
 

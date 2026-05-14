@@ -137,7 +137,8 @@
    :point-closest
    :point-min
    :point-max
-   :get-string-and-attributes-at-point)
+   :get-string-and-attributes-at-point
+   :point-line)
   ;; basic.lisp
   (:export
    :first-line-p

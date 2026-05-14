@@ -126,8 +126,13 @@
 (cffi:defcfun ("terminal_process_input_wait" terminal-process-input-wait) :void
   (terminal :pointer))
 
-(cffi:defcfun ("terminal_process_input_nonblock" terminal-process-input-nonblock) :bool
+(cffi:defcfun ("terminal_process_input_nonblock" terminal-process-input-nonblock) :size
   (terminal :pointer))
+
+;; Time-budgeted PTY drain: processes data for up to max-ms milliseconds
+(cffi:defcfun ("terminal_process_input_timed" terminal-process-input-timed) :size
+  (terminal :pointer)
+  (max-ms :int))
 
 (cffi:defcfun ("terminal_process_input" terminal-process-input) :void
   (terminal :pointer))
@@ -136,6 +141,41 @@
   (terminal :pointer)
   (x :int)
   (y :int))
+
+;; Packed cell data struct for bulk row transfer (12 bytes per cell)
+(cffi:defcstruct cell-data
+  (ch :uint32)
+  (fg-r :uint8)
+  (fg-g :uint8)
+  (fg-b :uint8)
+  (bg-r :uint8)
+  (bg-g :uint8)
+  (bg-b :uint8)
+  (bold :uint8)
+  (underline :uint8)
+  (reverse-attr :uint8)
+  (width :uint8))
+
+(cffi:defcfun ("terminal_get_row" terminal-get-row) :int
+  (terminal :pointer)
+  (row :int)
+  (out :pointer)
+  (cols :int))
+
+(cffi:defcfun ("terminal_sb_line_to_string" terminal-sb-line-to-string) :int
+  (terminal :pointer)
+  (cols :int)
+  (cells :pointer)
+  (out :pointer)
+  (out-size :int))
+
+;; Zero-allocation: extracts into the terminal's per-terminal C buffer,
+;; returns pointer. Trailing ASCII spaces are stripped during extraction.
+(cffi:defcfun ("terminal_sb_line_extract" terminal-sb-line-extract) :pointer
+  (terminal :pointer)
+  (cols :int)
+  (cells :pointer)
+  (out-len (:pointer :int)))
 
 (cffi:defcfun ("terminal_last_cell_chars" terminal-last-cell-chars) :pointer
   (terminal :pointer))

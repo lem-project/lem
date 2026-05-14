@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/select.h>
+#include <sys/time.h>
 #include <vterm.h>
 #include <signal.h>
 
@@ -57,6 +58,13 @@ struct terminal {
   int (*cb_sb_pushline)(int cols, const VTermScreenCell *cells, int id);
   int (*cb_sb_popline)(int cols, VTermScreenCell *cells, int id);
   int (*cb_sb_clear)(int id); // TODO
+
+  /* Per-terminal scrollback line extraction buffer.
+     Max line: 1024 cols * 4 bytes UTF-8 + NUL = 4097 bytes.
+     Per-terminal (not file-scope static) so concurrent terminals
+     don't race when their I/O threads invoke vterm callbacks. */
+  char sb_line_buf[4097];
+  int  sb_line_len;
 };
 
 static int cb_damage(VTermRect rect, void *user)
@@ -178,6 +186,8 @@ struct terminal *terminal_new(int id,
   terminal->cb_resize = cb_resize;
   terminal->cb_sb_pushline = cb_sb_pushline;
   terminal->cb_sb_popline = cb_sb_popline;
+  terminal->sb_line_buf[0] = '\0';
+  terminal->sb_line_len = 0;
 
   vterm_output_set_callback(vterm, output_callback, (void *) terminal);
   vterm_screen_set_callbacks(screen, &screen_callbacks, terminal);
@@ -213,22 +223,51 @@ void terminal_process_input_wait(struct terminal *terminal)
   select(fd + 1, &readfds, NULL, NULL, NULL);
 }
 
-bool terminal_process_input_nonblock(struct terminal *terminal)
+/* Time-budgeted PTY drain (xterm.js WriteBuffer pattern).
+   Reads and parses PTY data in a loop until either:
+   - the fd would block (no more data), or
+   - max_ms milliseconds have elapsed since the call started.
+   Uses a 64KB read buffer.  Returns total bytes processed.
+   Pass max_ms=0 to drain fully without time limit. */
+size_t terminal_process_input_timed(struct terminal *terminal, int max_ms)
 {
   int fd = terminal->fd;
-  fd_set readfds;
-  FD_ZERO(&readfds);
-  FD_SET(fd, &readfds);
-  struct timeval timeout = { 0, 0 };
-  if (select(fd + 1, &readfds, NULL, NULL, &timeout) > 0) {
-    char buf[4096];
+  char buf[65536];
+  size_t total = 0;
+  struct timeval start;
+  gettimeofday(&start, NULL);
+
+  for (;;) {
+    fd_set readfds;
+    FD_ZERO(&readfds);
+    FD_SET(fd, &readfds);
+    struct timeval timeout = { 0, 0 };
+    if (select(fd + 1, &readfds, NULL, NULL, &timeout) <= 0)
+      break;
     ssize_t size = read(fd, buf, sizeof(buf));
-    if (size > 0) {
-      vterm_input_write(terminal->vterm, buf, size);
-      return true;
+    if (size <= 0)
+      break;
+    vterm_input_write(terminal->vterm, buf, size);
+    total += size;
+
+    /* Check time budget */
+    if (max_ms > 0) {
+      struct timeval now;
+      gettimeofday(&now, NULL);
+      long elapsed_ms = (now.tv_sec - start.tv_sec) * 1000
+                      + (now.tv_usec - start.tv_usec) / 1000;
+      if (elapsed_ms >= max_ms)
+        break;
+    } else {
+      /* max_ms == 0: single-shot drain, but still loop to empty the fd */
     }
   }
-  return false;
+  return total;
+}
+
+size_t terminal_process_input_nonblock(struct terminal *terminal)
+{
+  return terminal_process_input_timed(terminal, 0);
 }
 
 void terminal_process_input(struct terminal *terminal)
@@ -255,6 +294,110 @@ VTermScreenCell *terminal_query_cell(struct terminal *terminal, int x,
   }
   terminal->lastCell = cell;
   return &terminal->lastCell;
+}
+
+/* Packed cell data for bulk row transfer - 12 bytes per cell */
+struct cell_data {
+  uint32_t ch;          /* first character code (0 if empty) */
+  uint8_t  fg_r, fg_g, fg_b;
+  uint8_t  bg_r, bg_g, bg_b;
+  uint8_t  bold;
+  uint8_t  underline;
+  uint8_t  reverse_attr;
+  uint8_t  width;
+};
+
+/* Fill 'out' with packed cell data for an entire row.
+   Caller must provide a buffer of at least 'cols' cell_data structs.
+   Returns the number of cells written (== cols). */
+int terminal_get_row(struct terminal *terminal, int row,
+                     struct cell_data *out, int cols)
+{
+  VTermScreen *screen = terminal->screen;
+  for (int col = 0; col < cols; col++) {
+    VTermPos pos = { .row = row, .col = col };
+    VTermScreenCell cell;
+    vterm_screen_get_cell(screen, pos, &cell);
+    if (VTERM_COLOR_IS_INDEXED(&cell.fg)) {
+      vterm_screen_convert_color_to_rgb(screen, &cell.fg);
+    }
+    if (VTERM_COLOR_IS_INDEXED(&cell.bg)) {
+      vterm_screen_convert_color_to_rgb(screen, &cell.bg);
+    }
+    out[col].ch          = cell.chars[0];
+    out[col].fg_r        = cell.fg.rgb.red;
+    out[col].fg_g        = cell.fg.rgb.green;
+    out[col].fg_b        = cell.fg.rgb.blue;
+    out[col].bg_r        = cell.bg.rgb.red;
+    out[col].bg_g        = cell.bg.rgb.green;
+    out[col].bg_b        = cell.bg.rgb.blue;
+    out[col].bold        = cell.attrs.bold;
+    out[col].underline   = cell.attrs.underline;
+    out[col].reverse_attr = cell.attrs.reverse;
+    out[col].width       = cell.width;
+  }
+  return cols;
+}
+
+/* Extract text from a VTermScreenCell array into the terminal's per-terminal
+   buffer.  Trailing ASCII spaces are stripped during extraction so the Lisp
+   side does not need to allocate a trimmed copy.  Returns pointer to the
+   buffer; caller must copy before the next call on the same terminal. */
+const char *terminal_sb_line_extract(struct terminal *terminal,
+                                     int cols,
+                                     const VTermScreenCell *cells,
+                                     int *out_len)
+{
+  char *buf = terminal->sb_line_buf;
+  int pos = 0;
+  int last_nonspace = 0;
+  int max = (int)sizeof(terminal->sb_line_buf) - 1;
+  for (int col = 0; col < cols; col++) {
+    if (cells[col].width == 0) continue;
+    uint32_t ch = cells[col].chars[0];
+    if (ch == 0) ch = ' ';
+    int start = pos;
+    if (ch < 0x80) {
+      if (pos + 1 > max) break;
+      buf[pos++] = (char)ch;
+    } else if (ch < 0x800) {
+      if (pos + 2 > max) break;
+      buf[pos++] = 0xC0 | (ch >> 6);
+      buf[pos++] = 0x80 | (ch & 0x3F);
+    } else if (ch < 0x10000) {
+      if (pos + 3 > max) break;
+      buf[pos++] = 0xE0 | (ch >> 12);
+      buf[pos++] = 0x80 | ((ch >> 6) & 0x3F);
+      buf[pos++] = 0x80 | (ch & 0x3F);
+    } else {
+      if (pos + 4 > max) break;
+      buf[pos++] = 0xF0 | (ch >> 18);
+      buf[pos++] = 0x80 | ((ch >> 12) & 0x3F);
+      buf[pos++] = 0x80 | ((ch >> 6) & 0x3F);
+      buf[pos++] = 0x80 | (ch & 0x3F);
+    }
+    if (ch != ' ') last_nonspace = pos;
+    (void)start;
+  }
+  pos = last_nonspace;
+  buf[pos] = '\0';
+  terminal->sb_line_len = pos;
+  if (out_len) *out_len = pos;
+  return buf;
+}
+
+/* Legacy wrapper for compatibility */
+int terminal_sb_line_to_string(struct terminal *terminal,
+                               int cols,
+                               const VTermScreenCell *cells,
+                               char *out, int out_size)
+{
+  int len;
+  terminal_sb_line_extract(terminal, cols, cells, &len);
+  int copy = len < out_size ? len : out_size - 1;
+  memcpy(out, terminal->sb_line_buf, copy);
+  out[copy] = '\0';
+  return copy;
 }
 
 uint32_t *terminal_last_cell_chars(struct terminal *terminal)

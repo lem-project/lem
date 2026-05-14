@@ -834,8 +834,9 @@
 (defvar *parse-color-miss* (gensym "MISS"))
 
 (defun clear-parse-color-cache ()
-  "Clear the memoization cache for parse-color.
-Called when the color theme changes."
+  "Invalidate the parse-color memoization table.  Call this whenever
+theme or attribute definitions change so subsequent parse-color calls
+re-parse strings instead of returning colors from the previous theme."
   (clrhash *parse-color-cache*))
 
 (defun %parse-color (string)

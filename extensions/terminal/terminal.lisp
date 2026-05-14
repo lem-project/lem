@@ -129,7 +129,11 @@ Avoids an O(rows) scan in the hot update loop.")
                  :documentation "Number of consecutive frames skipped since last render.")
    (attribute-cache :initform (make-hash-table :test #'eql)
                     :accessor terminal-attribute-cache
-                    :documentation "Cache of packed-fixnum-key -> attribute.")))
+                    :documentation "Cache of packed-fixnum-key -> attribute.")
+   (render-deferred :initform nil
+                    :accessor terminal-render-deferred
+                    :type boolean
+                    :documentation "T when a deferred render event is already in the queue.")))
 
 (defun mark-all-rows-dirty (terminal)
   "Mark every row as dirty so the next render redraws the full screen."
@@ -155,22 +159,26 @@ Avoids an O(rows) scan in the hot update loop.")
 
 (defun update (terminal)
   (process-input terminal)
-  (when (and (= 0 (event-queue-length))
-             (not (terminal-copy-mode terminal))
+  (when (and (not (terminal-copy-mode terminal))
              (any-rows-dirty-p terminal))
-    (let* ((now (get-internal-real-time))
-           (elapsed-ms (* 1000 (/ (- now (terminal-last-render-time terminal))
-                                  internal-time-units-per-second))))
-      (cond
-        ;; Throttle: at most ~60fps unless we've already skipped 3 frames.
-        ((and (< elapsed-ms 16)
-              (< (terminal-render-skips terminal) 3))
-         (incf (terminal-render-skips terminal)))
-        (t
-         (setf (terminal-last-render-time terminal) now
-               (terminal-render-skips terminal) 0)
-         (render terminal)
-         (redraw-display))))))
+    (cond
+      ;; Other events pending — defer render to avoid starving key handling.
+      ;; Schedule a retry event so dirty rows are rendered even if no more
+      ;; PTY data arrives (fixes missing prompt after command finishes).
+      ((> (event-queue-length) 0)
+       (unless (terminal-render-deferred terminal)
+         (setf (terminal-render-deferred terminal) t)
+         (send-event (lambda ()
+                       (setf (terminal-render-deferred terminal) nil)
+                       (ignore-errors (update terminal))))))
+      (t
+       ;; Render immediately.  Previous versions skipped frames when the
+       ;; throttle interval hadn't elapsed, but that caused the final frame
+       ;; (e.g. shell prompt) to be lost when no more PTY data followed.
+       (setf (terminal-last-render-time terminal) (get-internal-real-time)
+             (terminal-render-skips terminal) 0)
+       (render terminal)
+       (redraw-display)))))
 
 (defun create (&key (rows (alexandria:required-argument :rows))
                     (cols (alexandria:required-argument :cols))

@@ -179,9 +179,21 @@
   (adjust-current-point))
 
 (defmethod execute ((mode terminal-mode) command argment)
-  (if (member command *bypass-commands* :test #'typep)
-      (call-next-method)
-      (terminal-input)))
+  (cond
+    ((member command *bypass-commands* :test #'typep)
+     (call-next-method))
+    ((typep command 'scroll-up)
+     ;; Populate buffer with scrollback lines so Lem can scroll up
+     (alexandria:when-let ((terminal (get-current-terminal)))
+       (terminal:activate-scrollback terminal))
+     (call-next-method))
+    ((typep command 'scroll-down)
+     (call-next-method))
+    (t
+     ;; Any other command (typing, etc.) — remove scrollback from buffer
+     (alexandria:when-let ((terminal (get-current-terminal)))
+       (terminal:deactivate-scrollback terminal))
+     (terminal-input))))
 
 (defun resize-terminal (terminal window)
   (terminal:resize terminal

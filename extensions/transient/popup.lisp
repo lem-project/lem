@@ -27,6 +27,16 @@
   nil
   "whether to always show the transient buffer. by default only keymaps that have show-p set are shown.")
 
+(defvar *transient-popup-delay*
+  500
+  "delay in milliseconds before showing the transient popup.
+set to 0 or nil to show immediately (no delay).
+default is 500ms, similar to doom emacs which-key-idle-delay.")
+
+(defvar *transient-delay-timer*
+  nil
+  "internal timer used for delayed popup display.")
+
 (define-attribute transient-matched-key-attribute
   (t
    :foreground (attribute-foreground (ensure-attribute 'syntax-string-attribute))))
@@ -513,8 +523,16 @@ prefixes marked as :intermediate-p are flattened and shown with concatenated key
             (max 0 (- current *transient-horizontal-scroll-amount*))))
     (redraw-display)))
 
+(defun cancel-transient-delay-timer ()
+  "cancel any pending delayed popup timer."
+  (when (and *transient-delay-timer*
+             (not (timer-expired-p *transient-delay-timer*)))
+    (stop-timer *transient-delay-timer*))
+  (setf *transient-delay-timer* nil))
+
 (defun hide-transient ()
   "hide (delete) the transient window."
+  (cancel-transient-delay-timer)
   (when (and *transient-popup-window*
              (not (deleted-window-p *transient-popup-window*)))
     (modeline-remove-status-list 'transient-scroll-status)

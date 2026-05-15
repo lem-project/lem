@@ -2,6 +2,7 @@
   (:use :cl :lem)
   (:export
    :*transient-always-show*
+   :*transient-popup-delay*
    :*transient-mode-keymap*
    :define-transient
    :define-prefix

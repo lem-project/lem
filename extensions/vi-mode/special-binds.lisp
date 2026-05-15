@@ -5,6 +5,9 @@
   (:import-from :lem/directory-mode
                 :directory-mode
                 :*directory-mode-keymap*)
+  (:import-from :lem/filer
+                :filer-mode
+                :*filer-mode-keymap*)
   (:import-from :lem-lisp-mode/sldb
                 :sldb-mode
                 :*sldb-keymap*)
@@ -24,6 +27,9 @@
 
 (defmethod mode-specific-keymaps ((mode lisp-inspector-mode))
   (list *lisp-inspector-keymap*))
+
+(defmethod mode-specific-keymaps ((mode filer-mode))
+  (list *filer-mode-keymap*))
 
 (defmethod mode-specific-keymaps ((mode dashboard-mode))
   (list *dashboard-mode-keymap*))

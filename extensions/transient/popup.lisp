@@ -27,6 +27,21 @@
   nil
   "whether to always show the transient buffer. by default only keymaps that have show-p set are shown.")
 
+(defvar *transient-popup-delay*
+  500
+  "User-configurable delay in milliseconds before the transient popup appears.
+Set to 0 or nil to show immediately (no delay). Default is 500ms.
+When the user completes a key sequence faster than this delay, the
+popup never appears, avoiding flicker for fast typists.")
+
+(defvar *transient-delay-timer*
+  nil
+  "Internal timer scheduling the delayed popup display, or nil when idle.
+Held as global state to mirror the lifecycle of `*transient-popup-window*':
+both must be reachable from `hide-transient' and from any subsequent
+`keymap-activate' so the pending popup can be canceled regardless of
+which call site aborts the transient sequence.")
+
 (define-attribute transient-matched-key-attribute
   (t
    :foreground (attribute-foreground (ensure-attribute 'syntax-string-attribute))))
@@ -513,8 +528,16 @@ prefixes marked as :intermediate-p are flattened and shown with concatenated key
             (max 0 (- current *transient-horizontal-scroll-amount*))))
     (redraw-display)))
 
+(defun cancel-transient-delay-timer ()
+  "cancel any pending delayed popup timer."
+  (when (and *transient-delay-timer*
+             (not (timer-expired-p *transient-delay-timer*)))
+    (stop-timer *transient-delay-timer*))
+  (setf *transient-delay-timer* nil))
+
 (defun hide-transient ()
   "hide (delete) the transient window."
+  (cancel-transient-delay-timer)
   (when (and *transient-popup-window*
              (not (deleted-window-p *transient-popup-window*)))
     (modeline-remove-status-list 'transient-scroll-status)

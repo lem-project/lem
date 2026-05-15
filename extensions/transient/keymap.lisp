@@ -14,10 +14,32 @@
       (*transient-always-show*
        (or keymap *root-keymap*)))))
 
+(defun show-transient-with-delay (keymap)
+  "show the transient popup for KEYMAP, either immediately or after a delay.
+if the popup is already visible (e.g. navigating sub-menus), show immediately.
+otherwise, wait *transient-popup-delay* milliseconds before showing."
+  (cancel-transient-delay-timer)
+  (let ((delay *transient-popup-delay*))
+    (if (or (null delay)
+            (<= delay 0)
+            (transient-window-alive-p))
+        ;; show immediately: no delay configured, or popup already visible (sub-menu navigation)
+        (show-transient keymap)
+        ;; delayed: start a one-shot timer
+        (let ((target-keymap keymap))
+          (setf *transient-delay-timer*
+                (start-timer
+                 (make-timer (lambda ()
+                               (let ((resolved (resolve-transient-keymap target-keymap)))
+                                 (when resolved
+                                   (show-transient resolved))))
+                             :name "transient-popup-delay")
+                 delay))))))
+
 (defmethod keymap-activate ((keymap keymap))
   (let ((resolved (resolve-transient-keymap keymap)))
     (if resolved
-        (show-transient resolved)
+        (show-transient-with-delay resolved)
         (hide-transient))))
 
 (defgeneric mode-transient-keymap (mode)

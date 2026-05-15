@@ -29,13 +29,18 @@
 
 (defvar *transient-popup-delay*
   500
-  "delay in milliseconds before showing the transient popup.
-set to 0 or nil to show immediately (no delay).
-default is 500ms, similar to doom emacs which-key-idle-delay.")
+  "User-configurable delay in milliseconds before the transient popup appears.
+Set to 0 or nil to show immediately (no delay). Default is 500ms.
+When the user completes a key sequence faster than this delay, the
+popup never appears, avoiding flicker for fast typists.")
 
 (defvar *transient-delay-timer*
   nil
-  "internal timer used for delayed popup display.")
+  "Internal timer scheduling the delayed popup display, or nil when idle.
+Held as global state to mirror the lifecycle of `*transient-popup-window*':
+both must be reachable from `hide-transient' and from any subsequent
+`keymap-activate' so the pending popup can be canceled regardless of
+which call site aborts the transient sequence.")
 
 (define-attribute transient-matched-key-attribute
   (t

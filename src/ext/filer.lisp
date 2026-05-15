@@ -13,7 +13,12 @@
            :*filer-item-inserters*
            :root-item
            :render
-           :filer-buffer))
+           :filer-buffer
+           :filer-mode
+           :*filer-mode-keymap*
+           :filer
+           :filer-directory
+           :filer-at-directory))
 (in-package :lem/filer)
 
 (defparameter *filer-item-inserters* '()
@@ -292,19 +297,26 @@ Expands the tree to show the buffer's directory and highlights the current file.
     (next-window))
   (delete-leftside-window))
 
+(defun focus-filer-window ()
+  "Switch focus to the filer's leftside window if it exists."
+  (alexandria:when-let ((window (lem-core::frame-leftside-window (current-frame))))
+    (switch-to-window window)))
+
 (define-command filer () ()
   "Open the filer tree view at the project root."
   (if (filer-active-p)
       (deactive-filer)
       (let ((directory (lem-core/commands/project:find-root (buffer-directory))))
-        (make-leftside-window (make-filer-buffer directory)))))
+        (make-leftside-window (make-filer-buffer directory))
+        (focus-filer-window))))
 
 (define-command filer-directory () ()
   "Open the filer tree view at this directory."
   (if (filer-active-p)
       (deactive-filer)
       (let ((directory (buffer-directory)))
-        (make-leftside-window (make-filer-buffer directory)))))
+        (make-leftside-window (make-filer-buffer directory))
+        (focus-filer-window))))
 
 (define-command filer-at-directory () ()
   "Prompt for a directory and open the filer tree view at this directory."
@@ -314,7 +326,8 @@ Expands the tree to show the buffer's directory and highlights the current file.
                                          :use-border t)))
     (when (filer-active-p)
       (deactive-filer))
-    (make-leftside-window (make-filer-buffer directory))))
+    (make-leftside-window (make-filer-buffer directory))
+    (focus-filer-window)))
 
 (define-command filer-select () ()
   (select (back-to-indentation (current-point))))

@@ -3,6 +3,7 @@
         :lem)
   (:export
    :grep
+   :project-grep
    :change-grep-command
    :*grep-command*
    :*grep-args*)

@@ -33,9 +33,18 @@ Each function takes (point item root-directory) arguments.")
 
 (define-major-mode filer-mode ()
     (:name "Filer"
-     :keymap *filer-mode-keymap*)
+     :keymap *filer-mode-keymap*
+     :description "Major mode for the Filer tree view buffer.
+Renders a navigable directory tree in a side window. Use Return to
+expand or open the item at point and D to delete the file at point.")
   (setf (variable-value 'line-wrap :buffer (current-buffer)) nil)
   (setf (buffer-read-only-p (current-buffer)) t))
+
+(setf (documentation '*filer-mode-keymap* 'variable)
+      "Keymap active in `filer-mode' buffers.
+Bindings here take precedence over global bindings while a Filer
+buffer is current. Other modes (e.g. vi-mode) can reference this
+keymap to ensure Filer bindings remain reachable.")
 
 (define-key *global-keymap* "C-x d" 'filer)
 (define-key *filer-mode-keymap* "Return" 'filer-select)
@@ -299,7 +308,7 @@ Expands the tree to show the buffer's directory and highlights the current file.
 
 (defun focus-filer-window ()
   "Switch focus to the filer's leftside window if it exists."
-  (alexandria:when-let ((window (lem-core::frame-leftside-window (current-frame))))
+  (alexandria:when-let ((window (frame-leftside-window (current-frame))))
     (switch-to-window window)))
 
 (define-command filer () ()

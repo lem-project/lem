@@ -40,15 +40,15 @@ expand or open the item at point and D to delete the file at point.")
   (setf (variable-value 'line-wrap :buffer (current-buffer)) nil)
   (setf (buffer-read-only-p (current-buffer)) t))
 
+(define-key *global-keymap* "C-x d" 'filer)
+(define-key *filer-mode-keymap* "Return" 'filer-select)
+(define-key *filer-mode-keymap* "D" 'filer-delete-file)
+
 (setf (documentation '*filer-mode-keymap* 'variable)
       "Keymap active in `filer-mode' buffers.
 Bindings here take precedence over global bindings while a Filer
 buffer is current. Other modes (e.g. vi-mode) can reference this
 keymap to ensure Filer bindings remain reachable.")
-
-(define-key *global-keymap* "C-x d" 'filer)
-(define-key *filer-mode-keymap* "Return" 'filer-select)
-(define-key *filer-mode-keymap* "D" 'filer-delete-file)
 
 (defclass item ()
   ((pathname :initarg :pathname

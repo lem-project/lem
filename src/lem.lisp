@@ -47,20 +47,12 @@
       (unless (uiop:pathname-equal current-dir (user-homedir-pathname))
         (maybe-load (merge-pathnames ".lemrc" current-dir))))))
 
-(defun initialize-source-registry ()
-  (asdf:initialize-source-registry
-   `(:source-registry
-     :inherit-configuration
-     (:also-exclude ".qlot")
-     (:tree ,(asdf:system-source-directory :lem)))))
-
 (defun init-at-build-time ()
   "This function is called when an lem executable file is built.
 If a file named $HOME/.lem/build-init.lisp exists, it is loaded.
 The difference is that init.lisp loading is called when the editor is started,
 while build-init.lisp is called when the binary file is created.
 See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
-  (initialize-source-registry)
   (let ((file (merge-pathnames "build-init.lisp" (lem-home))))
     (when (uiop:file-exists-p file)
       (load file))))

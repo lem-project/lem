@@ -236,11 +236,6 @@
       (connect-to-micros *localhost* port)
       (update-buffer-package)
 
-      ;; XXX:
-      ;; Systems added after lem initialization are not visible from within this process and must
-      ;; be re-initialized.
-      (asdf:clear-source-registry)
-
       (setf *self-connected-port* port))))
 
 (defun self-connection ()

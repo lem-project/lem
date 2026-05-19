@@ -51,6 +51,12 @@
   session
   (pending-responses (make-hash-table :test 'equal))
   (response-handlers (make-hash-table :test 'equal))
+  ;; Handlers registered here are invoked directly on the reader thread,
+  ;; bypassing send-event.  This is required for synchronous callers like
+  ;; nrepl-send-sync that block the main thread waiting on a condition
+  ;; variable -- routing their handler through send-event would deadlock
+  ;; because the main thread can never pump its event queue while blocked.
+  (sync-response-handlers (make-hash-table :test 'equal))
   reader-thread)
 
 ;;;; Connection Management
@@ -153,7 +159,7 @@
          (lock (bt:make-lock))
          (cv (bt:make-condition-variable)))
     (setf (gethash "id" message) id)
-    (setf (gethash id (nrepl-connection-response-handlers connection))
+    (setf (gethash id (nrepl-connection-sync-response-handlers connection))
           (lambda (response)
             (bt:with-lock-held (lock)
               (push response responses)
@@ -175,11 +181,20 @@
         (loop
           (let* ((response (read-bencode-message stream))
                  (id (gethash "id" response))
-                 (handler (gethash id (nrepl-connection-response-handlers connection))))
-            (when handler
-              (send-event (lambda () (funcall handler response))))
-            ;; Clean up handler if done
-            (when (member "done" (gethash "status" response) :test #'equal)
+                 (sync-handler (gethash id (nrepl-connection-sync-response-handlers connection)))
+                 (async-handler (gethash id (nrepl-connection-response-handlers connection)))
+                 (done-p (member "done" (gethash "status" response) :test #'equal)))
+            ;; Sync handlers run on this thread so synchronous callers
+            ;; blocked on a condition variable can be notified without
+            ;; depending on the main thread's event loop.
+            (when sync-handler
+              (funcall sync-handler response))
+            ;; Async handlers may touch buffers/UI -- they must run on
+            ;; the main thread.
+            (when async-handler
+              (send-event (lambda () (funcall async-handler response))))
+            (when done-p
+              (remhash id (nrepl-connection-sync-response-handlers connection))
               (remhash id (nrepl-connection-response-handlers connection))))))
     (end-of-file ()
       (send-event (lambda () (message "nREPL connection closed"))))

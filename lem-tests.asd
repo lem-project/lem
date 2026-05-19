@@ -58,6 +58,7 @@
                (:file "syntax-test")
                (:file "syntax-scanner")
                (:file "buffer-list-test")
+               (:file "keymap")
                (:file "popup-window")
                (:file "prompt")
                (:file "cursors")

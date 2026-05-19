@@ -155,12 +155,16 @@
     id))
 
 (defun nrepl-send-sync (connection message &key (timeout 30))
-  "Send MESSAGE synchronously and wait for response."
+  "Send MESSAGE synchronously and wait up to TIMEOUT seconds for the
+matching response.  Signals an `editor-error' if the server does not
+reply with a status \"done\" message before the deadline elapses."
   (let* ((id (generate-message-id))
          (responses nil)
          (done nil)
          (lock (bt:make-lock))
-         (cv (bt:make-condition-variable)))
+         (cv (bt:make-condition-variable))
+         (deadline (+ (get-internal-real-time)
+                      (* timeout internal-time-units-per-second))))
     (setf (gethash "id" message) id)
     (setf (gethash id (nrepl-connection-sync-response-handlers connection))
           (lambda (response)
@@ -169,11 +173,22 @@
               (when (member "done" (gethash "status" response) :test #'equal)
                 (setf done t)
                 (bt:condition-notify cv)))))
-    (nrepl-send connection message)
-    (bt:with-lock-held (lock)
-      (loop :until done
-            :do (bt:condition-wait cv lock :timeout timeout)))
-    (nreverse responses)))
+    (unwind-protect
+         (progn
+           (nrepl-send connection message)
+           (bt:with-lock-held (lock)
+             (loop :until done
+                   :for remaining := (/ (- deadline (get-internal-real-time))
+                                        internal-time-units-per-second)
+                   :do (when (<= remaining 0)
+                         (error 'editor-error
+                                :message (format nil "nREPL request ~A timed out after ~A seconds"
+                                                 (gethash "op" message) timeout)))
+                       (bt:condition-wait cv lock :timeout remaining)))
+           (nreverse responses))
+      ;; Drop the handler so a late response does not push onto a
+      ;; stale closure and so the table does not grow unbounded.
+      (remhash id (nrepl-connection-sync-response-handlers connection)))))
 
 ;;;; Reader Loop
 

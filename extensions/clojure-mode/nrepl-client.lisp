@@ -78,14 +78,17 @@
                           :port port
                           :socket socket
                           :stream stream)))
-        ;; Clone a session
-        (let ((session-id (nrepl-clone-session-sync connection)))
-          (setf (nrepl-connection-session connection) session-id))
-        ;; Start reader thread
+        ;; Start the reader thread *before* any synchronous request so
+        ;; that there is a reader draining the socket when nrepl-send-sync
+        ;; blocks waiting for the response.  Otherwise the response sits
+        ;; in the kernel buffer and the main thread waits forever.
         (setf (nrepl-connection-reader-thread connection)
               (bt:make-thread
                (lambda () (nrepl-reader-loop connection))
                :name "nREPL Reader"))
+        ;; Clone a session
+        (let ((session-id (nrepl-clone-session-sync connection)))
+          (setf (nrepl-connection-session connection) session-id))
         (setf *nrepl-connection* connection)
         (message "Connected to nREPL server at ~A:~D" host port)
         connection)

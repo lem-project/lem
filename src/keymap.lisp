@@ -594,7 +594,7 @@ higher-priority keymap (e.g. vi normal mode remaps self-insert to undefined-key)
                (cond ((or (typep suffix 'keymap)
                           (typep suffix 'prefix))
                       (traverse-node suffix (cons key prefix)))
-                     (t
+                     ((symbolp suffix)
                       (funcall fun (reverse (cons key prefix)) suffix)))))
            (traverse-node (node prefix)
              (cond ((typep node 'keymap)

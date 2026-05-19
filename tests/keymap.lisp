@@ -21,6 +21,10 @@ infixes."
     (values keymap closure)))
 
 (deftest traverse-keymap-skips-non-symbol-suffixes
+  "Regression test for #2100: transient closures (toggle/choice infix
+suffixes) must not be yielded to traverse-keymap callbacks, since
+callers like describe-bindings-internal call symbol-name on the
+result and would signal a type-error on function objects."
   (multiple-value-bind (keymap closure) (make-test-keymap-with-closure-suffix)
     (let ((yielded '()))
       (traverse-keymap keymap
@@ -33,6 +37,10 @@ infixes."
 
 #+sbcl
 (deftest describe-bindings-internal-terminates
+  "Regression test for #2100: describe-bindings-internal used to loop
+forever because the keymap-walk advance was removed but the
+surrounding (loop :while keymap ...) was kept.  Wrap the call in a
+timeout so a regression fails CI cleanly instead of hanging it."
   (let ((keymap (make-test-keymap-with-closure-suffix))
         (output nil))
     (let ((result
@@ -40,6 +48,11 @@ infixes."
                 (bordeaux-threads:with-timeout (5)
                   (setf output
                         (with-output-to-string (s)
+                          ;; Internal access: this helper is intentionally
+                          ;; not exported (-internal suffix); the test pins
+                          ;; down the regression at the unit level rather
+                          ;; than committing to its stream-printing shape
+                          ;; as a public contract.
                           (lem-core/commands/help::describe-bindings-internal
                            s "test" keymap t)))
                   :ok)

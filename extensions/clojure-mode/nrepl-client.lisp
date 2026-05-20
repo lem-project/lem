@@ -65,6 +65,34 @@
   "Generate a unique message ID."
   (format nil "msg-~D-~D" (get-universal-time) (incf *message-id-counter*)))
 
+(defun nrepl-bootstrap-session (connection)
+  "Send a `clone' op on CONNECTION and synchronously read responses on
+the current thread until one with status \"done\" arrives.  Returns
+the new session id, or signals an `editor-error' on protocol failure.
+
+Called only at connect time, before the reader thread is started, so
+the request/response handshake does not depend on cross-thread
+condition-variable signalling -- which has proven fragile inside
+Lem's event loop (the reader thread can observe only the first byte
+of the reply before the next `read-byte' blocks indefinitely)."
+  (let* ((id (generate-message-id))
+         (message (make-nrepl-message :op "clone"))
+         (stream (nrepl-connection-stream connection))
+         (new-session nil))
+    (setf (gethash "id" message) id)
+    (let ((octets (babel:string-to-octets (bencode-encode message)
+                                          :encoding :utf-8)))
+      (write-sequence octets stream)
+      (force-output stream))
+    (loop
+      (let ((response (read-bencode-message stream)))
+        (alexandria:when-let ((s (gethash "new-session" response)))
+          (setf new-session s))
+        (when (member "done" (gethash "status" response) :test #'equal)
+          (unless new-session
+            (editor-error "nREPL clone-session completed without a new-session id"))
+          (return new-session))))))
+
 (defun nrepl-connect (host port)
   "Connect to an nREPL server at HOST:PORT."
   (when *nrepl-connection*
@@ -78,17 +106,19 @@
                           :port port
                           :socket socket
                           :stream stream)))
-        ;; Start the reader thread *before* any synchronous request so
-        ;; that there is a reader draining the socket when nrepl-send-sync
-        ;; blocks waiting for the response.  Otherwise the response sits
-        ;; in the kernel buffer and the main thread waits forever.
+        ;; Bootstrap the session inline (single-threaded write+read on
+        ;; this socket) before any reader thread exists.  Using
+        ;; nrepl-send-sync here would require the reader thread to be
+        ;; running, and we have observed that the cross-thread handoff
+        ;; can stall after a single byte under Lem's event loop.
+        (setf (nrepl-connection-session connection)
+              (nrepl-bootstrap-session connection))
+        ;; Session established -- hand the socket over to the reader
+        ;; thread for ongoing asynchronous response delivery.
         (setf (nrepl-connection-reader-thread connection)
               (bt:make-thread
                (lambda () (nrepl-reader-loop connection))
                :name "nREPL Reader"))
-        ;; Clone a session
-        (let ((session-id (nrepl-clone-session-sync connection)))
-          (setf (nrepl-connection-session connection) session-id))
         (setf *nrepl-connection* connection)
         (message "Connected to nREPL server at ~A:~D" host port)
         connection)

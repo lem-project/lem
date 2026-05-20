@@ -231,10 +231,15 @@ Use this when lsp-mode has side effects that you want to avoid."
     (setf (workspace-list-current-workspace workspace-list) workspace)))
 
 (defun find-workspace (language-id &key (errorp t))
-  (if-let (workspace-list (gethash language-id *workspace-list-per-language-id*))
-    (workspace-list-current-workspace workspace-list)
-    (when errorp
-      (error "The ~A workspace is not found." language-id))))
+  ;; A nil LANGUAGE-ID means the buffer's current major mode has no
+  ;; registered language spec (e.g. a REPL mode whose parent had one).
+  ;; That is not an error condition -- the buffer simply does not
+  ;; participate in LSP.  Return nil silently regardless of ERRORP.
+  (when language-id
+    (if-let (workspace-list (gethash language-id *workspace-list-per-language-id*))
+      (workspace-list-current-workspace workspace-list)
+      (when errorp
+        (error "The ~A workspace is not found." language-id)))))
 
 (defun buffer-workspace (buffer &optional (errorp t))
   (find-workspace (buffer-language-id buffer) :errorp errorp))
@@ -613,22 +618,24 @@ Use this when lsp-mode has side effects that you want to avoid."
 ;;; Text Synchronization
 
 (defun text-document/did-open (buffer)
-  (request:request
-   (workspace-client (buffer-workspace buffer))
-   (make-instance 'lsp:text-document/did-open)
-   (make-instance 'lsp:did-open-text-document-params
-                  :text-document (buffer-to-text-document-item buffer))))
+  (when-let (workspace (buffer-workspace buffer nil))
+    (request:request
+     (workspace-client workspace)
+     (make-instance 'lsp:text-document/did-open)
+     (make-instance 'lsp:did-open-text-document-params
+                    :text-document (buffer-to-text-document-item buffer)))))
 
 (defun text-document/did-change (buffer content-changes)
-  (request:request
-   (workspace-client (buffer-workspace buffer))
-   (make-instance
-    'lsp:text-document/did-change)
-   (make-instance 'lsp:did-change-text-document-params
-                  :text-document (make-instance 'lsp:versioned-text-document-identifier
-                                                :version (buffer-version buffer)
-                                                :uri (buffer-uri buffer))
-                  :content-changes content-changes)))
+  (when-let (workspace (buffer-workspace buffer nil))
+    (request:request
+     (workspace-client workspace)
+     (make-instance
+      'lsp:text-document/did-change)
+     (make-instance 'lsp:did-change-text-document-params
+                    :text-document (make-instance 'lsp:versioned-text-document-identifier
+                                                  :version (buffer-version buffer)
+                                                  :uri (buffer-uri buffer))
+                    :content-changes content-changes))))
 
 (defun provide-did-save-text-document-p (workspace)
   (let ((sync (lsp:server-capabilities-text-document-sync
@@ -644,20 +651,22 @@ Use this when lsp-mode has side effects that you want to avoid."
            nil))))))
 
 (defun text-document/did-save (buffer)
-  (when (provide-did-save-text-document-p (buffer-workspace buffer))
-    (request:request
-     (workspace-client (buffer-workspace buffer))
-     (make-instance 'lsp:text-document/did-save)
-     (make-instance 'lsp:did-save-text-document-params
-                    :text-document (make-text-document-identifier buffer)
-                    :text (buffer-text buffer)))))
+  (when-let (workspace (buffer-workspace buffer nil))
+    (when (provide-did-save-text-document-p workspace)
+      (request:request
+       (workspace-client workspace)
+       (make-instance 'lsp:text-document/did-save)
+       (make-instance 'lsp:did-save-text-document-params
+                      :text-document (make-text-document-identifier buffer)
+                      :text (buffer-text buffer))))))
 
 (defun text-document/did-close (buffer)
-  (request:request
-   (workspace-client (buffer-workspace buffer))
-   (make-instance 'lsp:text-document/did-close)
-   (make-instance 'lsp:did-close-text-document-params
-                  :text-document (make-text-document-identifier buffer))))
+  (when-let (workspace (buffer-workspace buffer nil))
+    (request:request
+     (workspace-client workspace)
+     (make-instance 'lsp:text-document/did-close)
+     (make-instance 'lsp:did-close-text-document-params
+                    :text-document (make-text-document-identifier buffer)))))
 
 ;;; publishDiagnostics
 

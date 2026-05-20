@@ -38,7 +38,8 @@
                 :components ((:file "mock-client")
                              (:file "test-utils")
                              (:file "tests")
-                             (:file "integration-tests")))
+                             (:file "integration-tests")
+                             (:file "spec-test")))
                #+sbcl
                (:module "mcp-server"
                 :components ((:file "utils")

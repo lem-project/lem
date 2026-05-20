@@ -84,14 +84,14 @@ of the reply before the next `read-byte' blocks indefinitely)."
                                           :encoding :utf-8)))
       (write-sequence octets stream)
       (force-output stream))
-    (loop :do
-      (let ((response (read-bencode-message stream)))
-        (alexandria:when-let ((s (gethash "new-session" response)))
-          (setf new-session s))
-        (when (member "done" (gethash "status" response) :test #'equal)
-          (unless new-session
-            (editor-error "nREPL clone-session completed without a new-session id"))
-          (return new-session))))))
+    (loop :for response := (read-bencode-message stream)
+          :do (alexandria:when-let ((s (gethash "new-session" response)))
+                (setf new-session s))
+          :until (member "done" (gethash "status" response) :test #'equal)
+          :finally (progn
+                     (unless new-session
+                       (editor-error "nREPL clone-session completed without a new-session id"))
+                     (return new-session)))))
 
 (defun nrepl-connect (host port)
   "Connect to an nREPL server at HOST:PORT."
@@ -211,9 +211,8 @@ reply with a status \"done\" message before the deadline elapses."
                    :for remaining := (/ (- deadline (get-internal-real-time))
                                         internal-time-units-per-second)
                    :do (when (<= remaining 0)
-                         (error 'editor-error
-                                :message (format nil "nREPL request ~A timed out after ~A seconds"
-                                                 (gethash "op" message) timeout)))
+                         (editor-error "nREPL request ~A timed out after ~A seconds"
+                                       (gethash "op" message) timeout))
                        (bt:condition-wait cv lock :timeout remaining)))
            (nreverse responses))
       ;; Drop the handler so a late response does not push onto a

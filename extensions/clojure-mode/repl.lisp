@@ -43,11 +43,18 @@
      :mode-hook *clojure-repl-mode-hook*)
   ;; The parent clojure-mode activation runs *clojure-mode-hook*, which
   ;; auto-enables lsp-mode via enable-lsp-mode (registered by
-  ;; define-language-spec).  But no LSP language spec is registered for
-  ;; clojure-repl-mode itself, so once the workspace connects and tries
-  ;; text-document/did-open, get-language-spec asserts.  Turn lsp-mode
-  ;; off on REPL buffers -- clojure-lsp is for source files, not the
-  ;; interactive REPL transcript.
+  ;; define-language-spec in lsp-config.lisp).  No LSP language spec is
+  ;; registered for clojure-repl-mode itself, so once the workspace
+  ;; connects and tries text-document/did-open, get-language-spec
+  ;; asserts.  Turn lsp-mode off on REPL buffers -- clojure-lsp is for
+  ;; source files, not the interactive REPL transcript.
+  ;;
+  ;; The call goes through find-package + uiop:symbol-call (rather than
+  ;; a direct (lem-lsp-mode:lsp-mode nil) call) because lem-lsp-mode is
+  ;; an optional sibling extension: lem-clojure-mode.asd does not
+  ;; depend on it, so the symbol may not exist at load time in builds
+  ;; that exclude lsp-mode.  Importing it would turn the optional
+  ;; dependency into a required one for everyone running clojure-mode.
   (when (find-package :lem-lsp-mode)
     (ignore-errors (uiop:symbol-call :lem-lsp-mode :lsp-mode nil)))
   (setf (variable-value 'enable-syntax-highlight) t)

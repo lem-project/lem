@@ -51,6 +51,12 @@
   session
   (pending-responses (make-hash-table :test 'equal))
   (response-handlers (make-hash-table :test 'equal))
+  ;; Handlers registered here are invoked directly on the reader thread,
+  ;; bypassing send-event.  This is required for synchronous callers like
+  ;; nrepl-send-sync that block the main thread waiting on a condition
+  ;; variable -- routing their handler through send-event would deadlock
+  ;; because the main thread can never pump its event queue while blocked.
+  (sync-response-handlers (make-hash-table :test 'equal))
   reader-thread)
 
 ;;;; Connection Management
@@ -58,6 +64,34 @@
 (defun generate-message-id ()
   "Generate a unique message ID."
   (format nil "msg-~D-~D" (get-universal-time) (incf *message-id-counter*)))
+
+(defun nrepl-bootstrap-session (connection)
+  "Send a `clone' op on CONNECTION and synchronously read responses on
+the current thread until one with status \"done\" arrives.  Returns
+the new session id, or signals an `editor-error' on protocol failure.
+
+Called only at connect time, before the reader thread is started, so
+the request/response handshake does not depend on cross-thread
+condition-variable signalling -- which has proven fragile inside
+Lem's event loop (the reader thread can observe only the first byte
+of the reply before the next `read-byte' blocks indefinitely)."
+  (let* ((id (generate-message-id))
+         (message (make-nrepl-message :op "clone"))
+         (stream (nrepl-connection-stream connection))
+         (new-session nil))
+    (setf (gethash "id" message) id)
+    (let ((octets (babel:string-to-octets (bencode-encode message)
+                                          :encoding :utf-8)))
+      (write-sequence octets stream)
+      (force-output stream))
+    (loop :for response := (read-bencode-message stream)
+          :do (alexandria:when-let ((s (gethash "new-session" response)))
+                (setf new-session s))
+          :until (member "done" (gethash "status" response) :test #'equal)
+          :finally (progn
+                     (unless new-session
+                       (editor-error "nREPL clone-session completed without a new-session id"))
+                     (return new-session)))))
 
 (defun nrepl-connect (host port)
   "Connect to an nREPL server at HOST:PORT."
@@ -72,10 +106,15 @@
                           :port port
                           :socket socket
                           :stream stream)))
-        ;; Clone a session
-        (let ((session-id (nrepl-clone-session-sync connection)))
-          (setf (nrepl-connection-session connection) session-id))
-        ;; Start reader thread
+        ;; Bootstrap the session inline (single-threaded write+read on
+        ;; this socket) before any reader thread exists.  Using
+        ;; nrepl-send-sync here would require the reader thread to be
+        ;; running, and we have observed that the cross-thread handoff
+        ;; can stall after a single byte under Lem's event loop.
+        (setf (nrepl-connection-session connection)
+              (nrepl-bootstrap-session connection))
+        ;; Session established -- hand the socket over to the reader
+        ;; thread for ongoing asynchronous response delivery.
         (setf (nrepl-connection-reader-thread connection)
               (bt:make-thread
                (lambda () (nrepl-reader-loop connection))
@@ -146,25 +185,39 @@
     id))
 
 (defun nrepl-send-sync (connection message &key (timeout 30))
-  "Send MESSAGE synchronously and wait for response."
+  "Send MESSAGE synchronously and wait up to TIMEOUT seconds for the
+matching response.  Signals an `editor-error' if the server does not
+reply with a status \"done\" message before the deadline elapses."
   (let* ((id (generate-message-id))
          (responses nil)
          (done nil)
          (lock (bt:make-lock))
-         (cv (bt:make-condition-variable)))
+         (cv (bt:make-condition-variable))
+         (deadline (+ (get-internal-real-time)
+                      (* timeout internal-time-units-per-second))))
     (setf (gethash "id" message) id)
-    (setf (gethash id (nrepl-connection-response-handlers connection))
+    (setf (gethash id (nrepl-connection-sync-response-handlers connection))
           (lambda (response)
             (bt:with-lock-held (lock)
               (push response responses)
               (when (member "done" (gethash "status" response) :test #'equal)
                 (setf done t)
                 (bt:condition-notify cv)))))
-    (nrepl-send connection message)
-    (bt:with-lock-held (lock)
-      (loop :until done
-            :do (bt:condition-wait cv lock :timeout timeout)))
-    (nreverse responses)))
+    (unwind-protect
+         (progn
+           (nrepl-send connection message)
+           (bt:with-lock-held (lock)
+             (loop :until done
+                   :for remaining := (/ (- deadline (get-internal-real-time))
+                                        internal-time-units-per-second)
+                   :do (when (<= remaining 0)
+                         (editor-error "nREPL request ~A timed out after ~A seconds"
+                                       (gethash "op" message) timeout))
+                       (bt:condition-wait cv lock :timeout remaining)))
+           (nreverse responses))
+      ;; Drop the handler so a late response does not push onto a
+      ;; stale closure and so the table does not grow unbounded.
+      (remhash id (nrepl-connection-sync-response-handlers connection)))))
 
 ;;;; Reader Loop
 
@@ -172,14 +225,23 @@
   "Read responses from the nREPL server."
   (handler-case
       (let ((stream (nrepl-connection-stream connection)))
-        (loop
+        (loop :do
           (let* ((response (read-bencode-message stream))
                  (id (gethash "id" response))
-                 (handler (gethash id (nrepl-connection-response-handlers connection))))
-            (when handler
-              (send-event (lambda () (funcall handler response))))
-            ;; Clean up handler if done
-            (when (member "done" (gethash "status" response) :test #'equal)
+                 (sync-handler (gethash id (nrepl-connection-sync-response-handlers connection)))
+                 (async-handler (gethash id (nrepl-connection-response-handlers connection)))
+                 (done-p (member "done" (gethash "status" response) :test #'equal)))
+            ;; Sync handlers run on this thread so synchronous callers
+            ;; blocked on a condition variable can be notified without
+            ;; depending on the main thread's event loop.
+            (when sync-handler
+              (funcall sync-handler response))
+            ;; Async handlers may touch buffers/UI -- they must run on
+            ;; the main thread.
+            (when async-handler
+              (send-event (lambda () (funcall async-handler response))))
+            (when done-p
+              (remhash id (nrepl-connection-sync-response-handlers connection))
               (remhash id (nrepl-connection-response-handlers connection))))))
     (end-of-file ()
       (send-event (lambda () (message "nREPL connection closed"))))
@@ -187,18 +249,25 @@
       (send-event (lambda () (message "nREPL reader error: ~A" e))))))
 
 (defun read-bencode-message (stream)
-  "Read a complete bencode message from STREAM."
+  "Read a complete bencode message from STREAM, one byte at a time.
+
+The bencode decoder signals `end-of-file' (peek-char on an exhausted
+string stream) when its input is truncated, and `bencode-error' on
+malformed input.  Both mean \"keep reading\" in this streaming
+context, so they are caught and the read loop continues."
   (let ((buffer (make-array 4096 :element-type '(unsigned-byte 8)
                                  :adjustable t :fill-pointer 0)))
-    ;; Read bytes until we have a complete message
-    (loop
+    (loop :do
       (let ((byte (read-byte stream)))
         (vector-push-extend byte buffer)
         (handler-case
             (let ((string (babel:octets-to-string buffer :encoding :utf-8)))
               (return (bencode-decode string)))
+          (end-of-file ()
+            ;; Decoder ran out of input mid-message -- need more bytes.
+            nil)
           (lem-clojure-mode/bencode:bencode-error ()
-            ;; Not complete yet, continue reading
+            ;; Buffer not yet a complete bencode value -- keep reading.
             nil))))))
 
 ;;;; nREPL Operations

@@ -41,6 +41,15 @@
     (:name "Clojure REPL"
      :keymap *clojure-repl-mode-keymap*
      :mode-hook *clojure-repl-mode-hook*)
+  ;; The parent clojure-mode activation runs *clojure-mode-hook*, which
+  ;; auto-enables lsp-mode via enable-lsp-mode (registered by
+  ;; define-language-spec).  But no LSP language spec is registered for
+  ;; clojure-repl-mode itself, so once the workspace connects and tries
+  ;; text-document/did-open, get-language-spec asserts.  Turn lsp-mode
+  ;; off on REPL buffers -- clojure-lsp is for source files, not the
+  ;; interactive REPL transcript.
+  (when (find-package :lem-lsp-mode)
+    (ignore-errors (uiop:symbol-call :lem-lsp-mode :lsp-mode nil)))
   (setf (variable-value 'enable-syntax-highlight) t)
   (lem/listener-mode:start-listener-mode
    (merge-pathnames "history/clojure-repl" (lem-home)))

@@ -84,7 +84,7 @@ of the reply before the next `read-byte' blocks indefinitely)."
                                           :encoding :utf-8)))
       (write-sequence octets stream)
       (force-output stream))
-    (loop
+    (loop :do
       (let ((response (read-bencode-message stream)))
         (alexandria:when-let ((s (gethash "new-session" response)))
           (setf new-session s))
@@ -226,7 +226,7 @@ reply with a status \"done\" message before the deadline elapses."
   "Read responses from the nREPL server."
   (handler-case
       (let ((stream (nrepl-connection-stream connection)))
-        (loop
+        (loop :do
           (let* ((response (read-bencode-message stream))
                  (id (gethash "id" response))
                  (sync-handler (gethash id (nrepl-connection-sync-response-handlers connection)))
@@ -258,7 +258,7 @@ malformed input.  Both mean \"keep reading\" in this streaming
 context, so they are caught and the read loop continues."
   (let ((buffer (make-array 4096 :element-type '(unsigned-byte 8)
                                  :adjustable t :fill-pointer 0)))
-    (loop
+    (loop :do
       (let ((byte (read-byte stream)))
         (vector-push-extend byte buffer)
         (handler-case

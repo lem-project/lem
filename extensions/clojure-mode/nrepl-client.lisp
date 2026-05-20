@@ -250,18 +250,25 @@ reply with a status \"done\" message before the deadline elapses."
       (send-event (lambda () (message "nREPL reader error: ~A" e))))))
 
 (defun read-bencode-message (stream)
-  "Read a complete bencode message from STREAM."
+  "Read a complete bencode message from STREAM, one byte at a time.
+
+The bencode decoder signals `end-of-file' (peek-char on an exhausted
+string stream) when its input is truncated, and `bencode-error' on
+malformed input.  Both mean \"keep reading\" in this streaming
+context, so they are caught and the read loop continues."
   (let ((buffer (make-array 4096 :element-type '(unsigned-byte 8)
                                  :adjustable t :fill-pointer 0)))
-    ;; Read bytes until we have a complete message
     (loop
       (let ((byte (read-byte stream)))
         (vector-push-extend byte buffer)
         (handler-case
             (let ((string (babel:octets-to-string buffer :encoding :utf-8)))
               (return (bencode-decode string)))
+          (end-of-file ()
+            ;; Decoder ran out of input mid-message -- need more bytes.
+            nil)
           (lem-clojure-mode/bencode:bencode-error ()
-            ;; Not complete yet, continue reading
+            ;; Buffer not yet a complete bencode value -- keep reading.
             nil))))))
 
 ;;;; nREPL Operations

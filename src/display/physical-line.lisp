@@ -417,15 +417,32 @@ no longer reflect the current layout."
   (alexandria:when-let ((cache (window-parameter window 'line-fingerprint-cache)))
     (clrhash cache)))
 
+
+(defun djb2 (hash item)
+  (logand most-positive-fixnum
+          (+ (* hash 33)
+             (sxhash item))))
+
+(defun mix-hashes (&rest items)
+  "Mixes multiple hashes using a DJB2-style algorithm to prevent logxor collisions."
+  (let ((hash 5381))
+    (dolist (item items)
+      (if (listp item)
+          (setf hash (djb2 hash (apply #'mix-hashes item)))
+          (setf hash (djb2 hash item))))
+    hash))
+
+
 (defun compute-line-fingerprint (logical-line scroll-start left-side-width)
   "Compute a cheap fingerprint for a logical line's display state."
-  (logxor (sxhash (logical-line-string logical-line))
-          (sxhash (logical-line-attributes logical-line))
-          (sxhash (logical-line-end-of-line-cursor-attribute logical-line))
-          (sxhash (logical-line-extend-to-end logical-line))
-          (sxhash (logical-line-line-end-overlay logical-line))
-          (sxhash scroll-start)
-          (sxhash left-side-width)))
+    (mix-hashes
+     (logical-line-string logical-line)
+     (logical-line-attributes logical-line)
+     (logical-line-end-of-line-cursor-attribute logical-line)
+     (logical-line-extend-to-end logical-line)
+     (logical-line-line-end-overlay logical-line)
+     scroll-start
+     left-side-width))
 
 (defun check-line-fingerprint (window y fingerprint)
   "Check if the fingerprint for line at Y matches. Returns cached height or NIL."

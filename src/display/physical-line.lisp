@@ -419,6 +419,7 @@ no longer reflect the current layout."
 
 
 (defun djb2 (hash item)
+  "Hash with seed and item using djb2 hash algorithm"
   (logand most-positive-fixnum
           (+ (* hash 33)
              (sxhash item))))

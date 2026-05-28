@@ -44,14 +44,17 @@
 
 (defmethod lem/listener-mode:clear-listener-using-mode ((mode run-shell-mode) buffer)
   ;; FIXME: It is assumed that PS1 is a single line.
-  (with-point ((end (buffer-end-point buffer)))
-    (skip-whitespace-backward end)
-    (line-start end)
-    (unless (= 1 (line-number-at-point end))
-      (let ((*inhibit-read-only* t))
-        (delete-between-points (buffer-start-point buffer)
-                               end))))
-  (lem/listener-mode:refresh-prompt buffer nil))
+  ;; Clearing removes accumulated output, which (like the output itself) should
+  ;; not land on the undo stack.
+  (with-inhibit-undo ()
+    (with-point ((end (buffer-end-point buffer)))
+      (skip-whitespace-backward end)
+      (line-start end)
+      (unless (= 1 (line-number-at-point end))
+        (let ((*inhibit-read-only* t))
+          (delete-between-points (buffer-start-point buffer)
+                                 end))))
+    (lem/listener-mode:refresh-prompt buffer nil)))
 
 (defun execute-input (point string)
   (setf string (concatenate 'string string (string #\newline)))
@@ -68,7 +71,7 @@
           (async-process::process-pid (lem-process::process-pointer process))))
 
 (defun create-shell-buffer (process)
-  (let ((buffer (make-buffer (shell-buffer-name process) :enable-undo-p nil)))
+  (let ((buffer (make-buffer (shell-buffer-name process))))
     (unless (eq (buffer-major-mode buffer) 'run-shell-mode)
       (change-buffer-mode buffer 'run-shell-mode))
     (add-hook (variable-value 'kill-buffer-hook :buffer buffer)
@@ -96,13 +99,18 @@
 (defun output-callback (process string)
   (when-let* ((buffer (process-buffer process))
               (point (buffer-point buffer)))
-    (buffer-end point)
-    (with-point ((start point))
-      ;; TODO: 
-      ;; This shouldn't depend on `lisp-mode`. Provide a general-purpose package.
-      (lem-lisp-mode/internal::insert-escape-sequence-string point string)
-      (lem/link::scan-link start point :set-attribute-function 'set-link-attribute))
-    (lem/listener-mode:refresh-prompt buffer nil)))
+    ;; Command output is a transcript the user can't author, so keep it out
+    ;; of the undo history. Undo stays enabled for the buffer so the user can
+    ;; still undo edits to the current input line; inhibiting only the output
+    ;; insertion is also what keeps the undo stack from growing unbounded.
+    (with-inhibit-undo ()
+      (buffer-end point)
+      (with-point ((start point))
+        ;; TODO:
+        ;; This shouldn't depend on `lisp-mode`. Provide a general-purpose package.
+        (lem-lisp-mode/internal::insert-escape-sequence-string point string)
+        (lem/link::scan-link start point :set-attribute-function 'set-link-attribute))
+      (lem/listener-mode:refresh-prompt buffer nil))))
 
 (defmethod execute ((mode run-shell-mode) (command lem/listener-mode:listener-return) argument)
   (if (lem/link::link-at (current-point))

@@ -420,7 +420,6 @@ no longer reflect the current layout."
 (defun djb2 (hash item)
   "Hash with seed and item using djb2 hash algorithm"
   (declare (type fixnum hash))
-
   (logand most-positive-fixnum
           (+ (* hash 33)
              (sxhash item))))
@@ -431,12 +430,11 @@ over the top-level spine and tolerant of improper (dotted) lists."
   (declare (dynamic-extent items))
   (let ((hash 5381))
     (labels ((mix-list (x)
-               (loop while (consp x)
-                     do (setf hash (djb2 hash (car x)))
-                        (setf x (cdr x)))
+               (loop :while (consp x)
+                     :do (setf hash (djb2 hash (car x)))
+                         (setf x (cdr x)))
                (when x
                  (setf hash (djb2 hash x)))))
-      
       (dolist (item items)
         (if (consp item)
             (mix-list item)

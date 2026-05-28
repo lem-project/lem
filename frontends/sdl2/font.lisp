@@ -106,6 +106,8 @@
   (let* ((surface (sdl2-ttf:render-text-solid font " " 0 0 0 0))
          (width (sdl2:surface-width surface))
          (height (sdl2:surface-height surface)))
+    (trivial-garbage:cancel-finalization surface)
+    (sdl2:free-surface surface)
     (list width height)))
 
 (defun open-font (&optional font-config)

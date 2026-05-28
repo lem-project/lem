@@ -6,6 +6,10 @@
 ;;; widget
 
 (defgeneric render (widget))
+(defgeneric destroy-widget (widget)
+  (:documentation "Release native GPU resources (textures) held by WIDGET.
+Called from kill-buffer-hook so the color picker's textures are freed
+instead of leaking when its buffer is killed."))
 (defgeneric handle-mouse-button-down (widget x y button))
 (defgeneric handle-mouse-button-up (widget))
 
@@ -35,13 +39,21 @@
   (let ((instance (call-next-method)))
     (sdl2:in-main-thread ()
       (setf (widget-texture instance)
-            ;; TODO: sdl2:destroy-texture
             (sdl2:create-texture (lem-sdl2:current-renderer)
                                  sdl2-ffi:+sdl-pixelformat-rgba8888+
                                  sdl2-ffi:+sdl-textureaccess-target+
                                  (widget-width instance)
                                  (widget-height instance))))
     instance))
+
+(defmethod destroy-widget ((widget widget))
+  "Destroy WIDGET's GPU texture and clear the slot so it is not freed twice."
+  (when (slot-boundp widget 'texture)
+    (let ((texture (widget-texture widget)))
+      (when texture
+        (handler-case (sdl2:destroy-texture texture)
+          (error () nil))
+        (setf (widget-texture widget) nil)))))
 
 (defmethod modify ((widget widget))
   (when (widget-parent widget)
@@ -299,6 +311,11 @@
   (render (color-picker-slider widget))
   (render (color-picker-square widget)))
 
+(defmethod destroy-widget ((widget color-picker))
+  (destroy-widget (color-picker-slider widget))
+  (destroy-widget (color-picker-square widget))
+  (call-next-method))
+
 (defmethod handle-mouse-button-down ((widget color-picker) x y button)
   (handle-mouse-button-down (color-picker-slider widget) x y button)
   (handle-mouse-button-down (color-picker-square widget) x y button))
@@ -351,10 +368,16 @@
   (lem:quit-window (lem:current-window) :kill-buffer t))
 
 (defun make-color-picker-buffer (buffer-name &key callback)
-  (let ((buffer (lem:make-buffer buffer-name)))
+  (let* ((color-picker (make-instance 'color-picker :x 0 :y 0 :callback callback))
+         (buffer (lem:make-buffer buffer-name)))
     (change-class buffer 'color-picker-buffer
-                  :color-picker (make-instance 'color-picker :x 0 :y 0 :callback callback))
+                  :color-picker color-picker)
     (lem:change-buffer-mode buffer 'color-picker-mode)
+    (lem:add-hook (lem:variable-value 'lem:kill-buffer-hook :buffer buffer)
+                  (lambda (buf)
+                    (declare (ignore buf))
+                    (sdl2:in-main-thread ()
+                      (destroy-widget color-picker))))
     buffer))
 
 (defmethod lem-color-preview:invoke-color-picker ((frontend lem-sdl2/sdl2:sdl2) callback)

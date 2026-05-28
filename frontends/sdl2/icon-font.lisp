@@ -7,6 +7,11 @@
 (defvar *icon-font-cache* (make-hash-table :test 'eql))
 
 (defun clear-icon-font-cache ()
+  (maphash (lambda (key font)
+             (declare (ignore key))
+             (handler-case (sdl2-ttf:close-font font)
+               (error () nil)))
+           *icon-font-cache*)
   (clrhash *icon-font-cache*))
 
 (defun icon-font (character font-size)

@@ -109,28 +109,20 @@
     (lem-sdl2/display::set-render-color lem-sdl2/display::*display* color)
     (sdl2:render-draw-point (lem-sdl2:current-renderer) x y)))
 
-(defun convert-to-points (x-y-seq)
-  (let ((num-points (length x-y-seq)))
-    (plus-c:c-let ((c-points sdl2-ffi:sdl-point :count num-points))
-      (etypecase x-y-seq
-        (vector
-         (loop :for i :from 0
-               :for (x . y) :across x-y-seq
-               :do (let ((dest-point (c-points i)))
-                     (sdl2::c-point (dest-point)
-                       (setf (dest-point :x) x
-                             (dest-point :y) y))))))
-      (values (c-points plus-c:&)
-              num-points))))
-
 (defun draw-points (target x-y-seq &key color)
-  (multiple-value-bind (points num-points)
-      (convert-to-points x-y-seq)
+  (let ((num-points (length x-y-seq)))
     (with-drawable (target)
-      (lem-sdl2/display::set-render-color lem-sdl2/display::*display* color)
-      (sdl2:render-draw-points (lem-sdl2:current-renderer)
-                               points
-                               num-points))))
+      (plus-c:c-let ((c-points sdl2-ffi:sdl-point :count num-points))
+        (etypecase x-y-seq
+          (vector
+           (loop :for i :from 0
+                 :for (x . y) :across x-y-seq
+                 :do (setf (c-points i :x) x
+                           (c-points i :y) y))))
+        (lem-sdl2/display::set-render-color lem-sdl2/display::*display* color)
+        (sdl2:render-draw-points (lem-sdl2:current-renderer)
+                                 (c-points plus-c:&)
+                                 num-points)))))
 
 (defun draw-string (target string x y
                     &key (font (lem-sdl2/font:font-latin-normal-font
@@ -172,7 +164,11 @@
                    :surface image)))
 
 (defun delete-image (image)
-  (declare (ignore image))
+  (when image
+    (let ((surface (image-surface image)))
+      (when surface
+        (trivial-garbage:cancel-finalization surface)
+        (sdl2:free-surface surface))))
   (values))
 
 (defun draw-image (target image

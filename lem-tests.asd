@@ -78,6 +78,7 @@
                (:file "legit")
                (:file "filer")
                (:file "listener-mode")
-               (:file "interface"))
+               (:file "interface")
+               (:file "display-cache"))
   :perform (test-op (o c)
                     (symbol-call :rove :run c)))

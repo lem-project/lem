@@ -422,15 +422,40 @@ no longer reflect the current layout."
   (alexandria:when-let ((cache (window-parameter window 'line-fingerprint-cache)))
     (clrhash cache)))
 
+(defun djb2 (hash item)
+  "Hash with seed and item using djb2 hash algorithm"
+  (declare (type fixnum hash))
+  (logand most-positive-fixnum
+          (+ (* hash 33)
+             (sxhash item))))
+
+(defun mix-hashes (&rest items)
+  "Fold ITEMS into one fixnum hash, descending into nested lists. Iterative
+over the top-level spine and tolerant of improper (dotted) lists."
+  (declare (dynamic-extent items))
+  (let ((hash 5381))
+    (labels ((mix-list (x)
+               (loop :while (consp x)
+                     :do (setf hash (djb2 hash (car x)))
+                         (setf x (cdr x)))
+               (when x
+                 (setf hash (djb2 hash x)))))
+      (dolist (item items)
+        (if (consp item)
+            (mix-list item)
+            (setf hash (djb2 hash item))))
+      hash)))
+
 (defun compute-line-fingerprint (logical-line scroll-start left-side-width)
   "Compute a cheap fingerprint for a logical line's display state."
-  (logxor (sxhash (logical-line-string logical-line))
-          (sxhash (logical-line-attributes logical-line))
-          (sxhash (logical-line-end-of-line-cursor-attribute logical-line))
-          (sxhash (logical-line-extend-to-end logical-line))
-          (sxhash (logical-line-line-end-overlay logical-line))
-          (sxhash scroll-start)
-          (sxhash left-side-width)))
+  (mix-hashes
+   (logical-line-string logical-line)
+   (logical-line-attributes logical-line)
+   (logical-line-end-of-line-cursor-attribute logical-line)
+   (logical-line-extend-to-end logical-line)
+   (logical-line-line-end-overlay logical-line)
+   scroll-start
+   left-side-width))
 
 (defun check-line-fingerprint (window y fingerprint)
   "Check if the fingerprint for line at Y matches. Returns cached height or NIL."
@@ -556,8 +581,8 @@ creating zero temporary letter-objects."
                                                    left-side-width)
   (let* ((scroll-before (horizontal-scroll-start window))
          (fingerprint (compute-line-fingerprint logical-line
-                                                 scroll-before
-                                                 left-side-width)))
+                                                scroll-before
+                                                left-side-width)))
     ;; Early exit if line content unchanged
     (alexandria:when-let ((cached-height (check-line-fingerprint window y fingerprint)))
       (return-from redraw-logical-line-when-horizontal-scroll cached-height))
@@ -591,8 +616,8 @@ creating zero temporary letter-objects."
        (if (eql scroll-before (horizontal-scroll-start window))
            fingerprint
            (compute-line-fingerprint logical-line
-                                      (horizontal-scroll-start window)
-                                      left-side-width))
+                                     (horizontal-scroll-start window)
+                                     left-side-width))
        height)
       height)))
 

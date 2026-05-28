@@ -13,7 +13,7 @@
               (lem-core::mix-hashes 0))))
   
   ;; 3. Type Safety Check (Does it always evaluate to a raw machine integer?)
-  (ok (typep (lem-core::mix-hashes "string" 100 'lem-symbol '(:keyword 5))
+  (ok (typep (lem-core::mix-hashes "string" 100 'some-symbol '(:keyword 5))
              'integer)))
 
 (deftest test-compute-line-fingerprint

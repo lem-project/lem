@@ -188,11 +188,11 @@ Supported modes include: c-mode with clang-format, go-mode with gofmt, js-mode a
 | Command                                                                                      | Key bindings | Documentation                                                                |
 |----------------------------------------------------------------------------------------------|--------------|------------------------------------------------------------------------------|
 | [describe-key](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L15)      | C-x ?        | Tell what is the command associated to a keybinding.                         |
-| [describe-bindings](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L43) |              | Describe the bindings of the buffer's current major mode.                    |
-| [list-modes](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L65)        |              | Output all available major and minor modes.                                  |
-| [describe-mode](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L86)     |              | Show information about current major mode and enabled minor modes.           |
-| [apropos-command](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L112)  |              | Find all symbols in the running Lisp image whose names match a given string. |
-| [lem-version](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L123)      |              | Display Lem's version.                                                       |
+| [describe-bindings](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L44) |              | Describe the bindings of the buffer's current major mode.                    |
+| [list-modes](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L66)        |              | Output all available major and minor modes.                                  |
+| [describe-mode](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L87)     |              | Show information about current major mode and enabled minor modes.           |
+| [apropos-command](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L113)  |              | Find all symbols in the running Lisp image whose names match a given string. |
+| [lem-version](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L124)      |              | Display Lem's version.                                                       |
 
 ## Font
 | Command                                                                                       | Key bindings | Documentation                                                        |

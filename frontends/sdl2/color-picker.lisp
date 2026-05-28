@@ -47,6 +47,7 @@ instead of leaking when its buffer is killed."))
     instance))
 
 (defmethod destroy-widget ((widget widget))
+  "Destroy WIDGET's GPU texture and clear the slot so it is not freed twice."
   (when (slot-boundp widget 'texture)
     (let ((texture (widget-texture widget)))
       (when texture

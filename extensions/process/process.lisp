@@ -72,16 +72,20 @@
   (get-output-stream-string (process-buffer-stream process)))
 
 (defun write-to-buffer (process string)
-  (let ((buffer-stream (process-buffer-stream process))
-        (output-callback (process-output-callback process))
+  (let ((output-callback (process-output-callback process))
         (output-callback-type (process-output-callback-type process)))
-    (write-string string buffer-stream)
-    (when output-callback
-      (case output-callback-type
-        (:process-input
-         (funcall output-callback process string))
-        (otherwise
-         (funcall output-callback string))))))
+    (if output-callback
+        ;; When a callback is present, dispatch directly to it.
+        ;; Skip writing to buffer-stream to avoid duplicating all
+        ;; output in an ever-growing string stream.
+        (case output-callback-type
+          (:process-input
+           (funcall output-callback process string))
+          (otherwise
+           (funcall output-callback string)))
+        ;; No callback — accumulate in buffer-stream so callers can
+        ;; retrieve output via get-process-output-string.
+        (write-string string (process-buffer-stream process)))))
 
 (defun delete-process (process)
   (when (bt2:thread-alive-p (process-read-thread process))

@@ -68,7 +68,7 @@
           (async-process::process-pid (lem-process::process-pointer process))))
 
 (defun create-shell-buffer (process)
-  (let ((buffer (make-buffer (shell-buffer-name process))))
+  (let ((buffer (make-buffer (shell-buffer-name process) :enable-undo-p nil)))
     (unless (eq (buffer-major-mode buffer) 'run-shell-mode)
       (change-buffer-mode buffer 'run-shell-mode))
     (add-hook (variable-value 'kill-buffer-hook :buffer buffer)

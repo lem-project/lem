@@ -43,8 +43,24 @@ during transitional frames).")
            *texture-cache*)
   (clrhash *texture-cache*))
 
+(defun free-all-surfaces ()
+  "Explicitly free all SDL surfaces in the surface cache.
+Cancels autocollect finalizers first to prevent double-free."
+  (maphash (lambda (key entries)
+             (declare (ignore key))
+             (dolist (entry entries)
+               (let ((surface (cache-entry-surface entry)))
+                 (when surface
+                   (handler-case
+                       (progn
+                         (trivial-garbage:cancel-finalization surface)
+                         (sdl2:free-surface surface))
+                     (error () nil))))))
+           *text-surface-cache*))
+
 (defun clear-text-surface-cache ()
   (clear-texture-cache)
+  (free-all-surfaces)
   (clrhash *text-surface-cache*))
 
 (defun get-or-create-texture (renderer surface)

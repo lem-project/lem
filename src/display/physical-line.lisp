@@ -154,8 +154,12 @@
   (setf (slot-value drawing-object-1 'string)
         (str:concat (text-object-string drawing-object-1)
                     (text-object-string drawing-object-2)))
-  ;; Reset cached width since string changed
+  ;; Reset cached width and surface since string changed.  The surface is the
+  ;; frontend-rendered glyph bitmap; leaving the pre-merge surface in place
+  ;; makes draw-time render only the original (shorter) string and drop the
+  ;; rest of the merged run.
   (setf (drawing-object-width drawing-object-1) nil)
+  (setf (text-object-surface drawing-object-1) nil)
   drawing-object-1)
 
 (defmethod drawing-object-merge ((drawing-object-1 eol-cursor-object) (drawing-object-2 eol-cursor-object))
@@ -170,6 +174,7 @@
         (str:concat (text-object-string drawing-object-1)
                     (text-object-string drawing-object-2)))
   (setf (drawing-object-width drawing-object-1) nil)
+  (setf (text-object-surface drawing-object-1) nil)
   drawing-object-1)
 
 (defmethod drawing-object-merge ((drawing-object-1 image-object) (drawing-object-2 image-object))

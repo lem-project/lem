@@ -6,7 +6,10 @@
 ;;; widget
 
 (defgeneric render (widget))
-(defgeneric destroy-widget (widget))
+(defgeneric destroy-widget (widget)
+  (:documentation "Release native GPU resources (textures) held by WIDGET.
+Called from kill-buffer-hook so the color picker's textures are freed
+instead of leaking when its buffer is killed."))
 (defgeneric handle-mouse-button-down (widget x y button))
 (defgeneric handle-mouse-button-up (widget))
 

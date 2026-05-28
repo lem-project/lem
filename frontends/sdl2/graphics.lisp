@@ -117,10 +117,8 @@
           (vector
            (loop :for i :from 0
                  :for (x . y) :across x-y-seq
-                 :do (let ((dest-point (c-points i)))
-                       (sdl2::c-point (dest-point)
-                         (setf (dest-point :x) x
-                               (dest-point :y) y))))))
+                 :do (setf (c-points i :x) x
+                           (c-points i :y) y))))
         (lem-sdl2/display::set-render-color lem-sdl2/display::*display* color)
         (sdl2:render-draw-points (lem-sdl2:current-renderer)
                                  (c-points plus-c:&)

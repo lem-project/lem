@@ -4,7 +4,7 @@ INTRODUCTION
 
 You are reading lem-tutor, an interactive tutorial for the Lem editor.
 This is your working copy. Practice commands directly in this buffer.
-For an on-line overview of lems usage look at:
+For an on-line overview of Lem's usage look at:
 https://lem-project.github.io/usage/usage/
 
 NOTATION
@@ -12,10 +12,6 @@ NOTATION
   C-x      Hold Control, press x
   Alt-x    Hold Alt, press x
   C-x C-c  Hold Control, press x; then hold Control, press c
-
-"C-" means Control. "M-" means Alt.
-Lem uses "M-" notation internally - a remnant of the Meta key.
-They mean the same thing.
 
 Key sequences like C-x C-c mean: first C-x, then C-c.
 
@@ -31,12 +27,12 @@ NAVIGATION
 
 Two keys that are useful right now:
 
-  C-v   Scroll down one screen
-  M-v   Scroll up one screen
+  C-v     Scroll down one screen
+  Alt-v   Scroll up one screen
 
 ----- Quick exercises
 >> Press C-v to scroll down.
->> Press M-v to scroll back up here.
+>> Press Alt-v to scroll back up here.
 -----
 
 COMMANDS
@@ -79,8 +75,8 @@ LESSON 1: MOVEMENT
 
 You have already used two movement commands:
 
-  C-v   Scroll down one screen
-  M-v   Scroll up one screen
+  C-v     Scroll down one screen
+  Alt-v   Scroll up one screen
 
 This lesson covers the rest.
 
@@ -113,30 +109,30 @@ WORD MOVEMENT
 One character at a time is slow across long lines.
 Move by word is available.
 
-  M-f          forward-word          C-Right also works
-  M-b          previous-word         C-Left also works
-  M-d          delete-word           delete word from cursor to end of word
-  M-Backspace  backward-delete-word  delete word from cursor to beginning of word
+  Alt-f          forward-word          C-Right also works
+  Alt-b          previous-word         C-Left also works
+  Alt-d          delete-word           delete word from cursor to end of word
+  Alt-Backspace  backward-delete-word  delete word from cursor to beginning of word
 -----
->> Use M-f to move through the words in this sentence, then M-b to return.
+>> Use Alt-f to move through the words in this sentence, then Alt-b to return.
 -----
 
 PARAGRAPH MOVEMENT
 
-  M-}   forward-paragraph
-  M-{   backward-paragraph
+  Alt-}   forward-paragraph
+  Alt-{   backward-paragraph
 
-Note: { and } require Shift. So M-} is Alt+Shift+] and M-{ is Alt+Shift+[.
+Note: { and } require Shift. So Alt-} is Alt+Shift+] and Alt-{ is Alt+Shift+[.
 
 Here is the first practice paragraph. It exists so you can feel what
 paragraph movement does. The cursor lands on the blank line between
 paragraphs.
 
-Here is the second practice paragraph. From here, M-{ jumps back to
-the paragraph above. M-} moves forward again.
+Here is the second practice paragraph. From here, Alt-{ jumps back to
+the paragraph above. Alt-} moves forward again.
 
 -----
->> Use M-} and M-{ to move between the two paragraphs above.
+>> Use Alt-} and Alt-{ to move between the two paragraphs above.
 -----
 
 BUFFER MOVEMENT
@@ -144,13 +140,13 @@ BUFFER MOVEMENT
 A buffer holds your text in memory. It may or may not be saved to a file -
 but for navigation purposes they feel the same.
 
-  M-<   move-to-beginning-of-buffer
-  M->   move-to-end-of-buffer
+  Alt-<   move-to-beginning-of-buffer
+  Alt->   move-to-end-of-buffer
 
-Note: < and > require Shift. So M-< is Alt+Shift+, and M-> is Alt+Shift+.
+Note: < and > require Shift. So Alt-< is Alt+Shift+, and Alt-> is Alt+Shift+.
 
 -----
->> Press M-> to jump to the end of this file. Press M-< to return.
+>> Press Alt-> to jump to the end of this file. Press Alt-< to return.
 -----
 
 SEARCH
@@ -171,14 +167,14 @@ GOTO LINE
 
 Jump to a specific line number.
 
-  M-g   goto-line
+  Alt-g   goto-line
 
 Lem will prompt you for a line number. Type it and press Enter.
 Knowing your current line number helps here - see LINE NUMBERS at the
 end of this file.
 
 -----
->> Press M-g, enter 1, press Enter. Use M-< or M-> and C-v or M-v
+>> Press Alt-g, enter 1, press Enter. Use Alt-< or Alt-> and C-v or Alt-v
    to orient yourself.
 -----
 
@@ -193,26 +189,26 @@ RECENTERING
 
 SUMMARY
 
-  C-f          forward-char                 Move forward one character
-  C-b          backward-char                Move backward one character
-  C-n          next-line                    Move to next line
-  C-p          previous-line                Move to previous line
-  C-a          move-to-beginning-of-line    Move to beginning of line
-  C-e          move-to-end-of-line          Move to end of line
-  M-f          forward-word                 Move forward one word
-  M-b          previous-word                Move backward one word
-  M-d          delete-word                  del word from cursor to end of word
-  M-Backspace  backward-delete-word         del word from cursor to beginning of word
-  M-}          forward-paragraph            Move forward one paragraph
-  M-{          backward-paragraph           Move backward one paragraph
-  C-v          next-page                    Scroll down one screen
-  M-v          previous-page                Scroll up one screen
-  C-s          isearch-forward              Search forward
-  C-r          isearch-backward             Search backward
-  M-<          move-to-beginning-of-buffer  Move to beginning of buffer
-  M->          move-to-end-of-buffer        Move to end of buffer
-  M-g          goto-line                    Go to line number
-  C-l          recenter                     Recenter view on cursor
+  C-f            forward-char                 Move forward one character
+  C-b            backward-char                Move backward one character
+  C-n            next-line                    Move to next line
+  C-p            previous-line                Move to previous line
+  C-a            move-to-beginning-of-line    Move to beginning of line
+  C-e            move-to-end-of-line          Move to end of line
+  Alt-f          forward-word                 Move forward one word
+  Alt-b          previous-word                Move backward one word
+  Alt-d          delete-word                  del word from cursor to end of word
+  Alt-Backspace  backward-delete-word         del word from cursor to beginning of word
+  Alt-}          forward-paragraph            Move forward one paragraph
+  Alt-{          backward-paragraph           Move backward one paragraph
+  C-v            next-page                    Scroll down one screen
+  Alt-v          previous-page                Scroll up one screen
+  C-s            isearch-forward              Search forward
+  C-r            isearch-backward             Search backward
+  Alt-<          move-to-beginning-of-buffer  Move to beginning of buffer
+  Alt->          move-to-end-of-buffer        Move to end of buffer
+  Alt-g          goto-line                    Go to line number
+  C-l            recenter                     Recenter view on cursor
 
 ------------------------------------------------------------------------
 
@@ -287,7 +283,7 @@ For example, a command to open your init file quickly:
       (merge-pathnames "init.lisp" (lem:lem-home))))
 
   (define-keys *global-keymap*
-    ("M-C-e" 'open-init-file))
+    ("Alt-C-e" 'open-init-file))
 
 Here we've defined a command open-init-file and bound it to a combination of keys.
 You can call it with Alt-x open-init-file or press Control+Alt+e.
@@ -348,11 +344,11 @@ Shows all open buffers with their file paths. Buffers marked with a
 lock icon are read-only. Special buffers like *dashboard* and *tmp*
 appear here too - these start and end with * and are not tied to files.
 
-  Space        Mark a buffer
-  M-Space      Mark a buffer (cursor moves up)
-  C-k          Kill all marked buffers
-  Return       Open the buffer at point
-  C-g / Esc    Close the list
+  Space          Mark a buffer
+  Alt-Space      Mark a buffer (cursor moves up)
+  C-k            Kill all marked buffers
+  Return         Open the buffer at point
+  C-g / Esc      Close the list
 
 -----
 >> Press C-x C-b. Browse the list, mark a buffer with Space,
@@ -383,11 +379,11 @@ keeping a file on the left and a reference or REPL on the right.
 
 SWITCHING WINDOWS
 
-  C-x o   next-window
-  M-o     next-window  faster, one key
+  C-x o     next-window
+  Alt-o     next-window  faster, one key
 
 -----
->> Split with C-x 3. Use M-o to move between the two windows.
+>> Split with C-x 3. Use Alt-o to move between the two windows.
 -----
 
 AUTOMATIC SPLITS
@@ -397,13 +393,13 @@ start a REPL with Alt-x start-lisp-repl, it opens in a new window.
 The debugger does the same when an error occurs.
 
 For now, know that C-x 1 always gets you back to a single window,
-and M-o moves you between whatever windows are open.
+and Alt-o moves you between whatever windows are open.
 
 OTHER BUFFER COMMANDS
 
   Alt-x revert-buffer   Reload the file from disk, discarding changes
   Alt-x rename-buffer   Rename the current buffer
-  M-~   unmark-buffer   Mark the buffer as unmodified without saving.
+  Alt-~ unmark-buffer   Mark the buffer as unmodified without saving.
                         Useful when you've made exploratory edits you want to discard.
 
 WORKSPACES (FRAME MULTIPLEXER)
@@ -434,13 +430,13 @@ SUMMARY
   C-x Right     next-buffer                                 Next buffer
   C-x k         kill-buffer                                 Kill current buffer
   C-x 4 b       select-buffer-next-window                   Select buffer in other window
-  M-~           unmark-buffer                               Clear the modified marker
+  Alt-~         unmark-buffer                               Clear the modified marker
   C-x 2         split-active-window-vertically              Windows appear above and below
   C-x 3         split-active-window-horizontally            Windows appear side by side
   C-x 1         delete-other-windows                        Close other windows
   C-x 0         delete-active-window                        Close current window
   C-x o         next-window                                 Switch to next window
-  M-o           next-window                                 Switch to next window
+  Alt-o         next-window                                 Switch to next window
   C-z c         frame-multiplexer-create-with-new-buffer-list   Create new workspace
   C-z n         frame-multiplexer-next                      Next workspace
   C-z p         frame-multiplexer-prev                      Previous workspace
@@ -451,7 +447,7 @@ SUMMARY
 
   In buffer list (C-x C-b):
   Space         Mark buffer
-  M-Space       Mark buffer (cursor up)
+  Alt-Space     Mark buffer (cursor up)
   C-k           Kill marked buffers
   Return        Open buffer at point
 
@@ -490,9 +486,9 @@ onto the kill ring — a clipboard that remembers multiple entries.
 
   C-k     kill-line       Kill from cursor to end of line
   C-w     kill-region     Kill the active region
-  M-w     copy-region     Copy the region without killing it
+  Alt-w   copy-region     Copy the region without killing it
   C-y     yank            Paste the most recently killed text
-  M-y     yank-pop        Cycle through earlier kill ring entries
+  Alt-y   yank-pop        Cycle through earlier kill ring entries
 
 C-k on an empty line kills the newline itself. Press it twice on a
 normal line to kill the line and its newline together.
@@ -500,9 +496,9 @@ normal line to kill the line and its newline together.
 -----
 >> Move to the kill line below. Press C-k to kill it.
    Move down a few lines. Press C-y to yank it back.
->> Press C-Space, select a word, then M-w to copy it.
+>> Press C-Space, select a word, then Alt-w to copy it.
    Move elsewhere and C-y to paste.
->> Press C-y again, then M-y to cycle to an earlier kill.
+>> Press C-y again, then Alt-y to cycle to an earlier kill.
 
 Kill this:  one   two   three   four   five
 -----
@@ -524,26 +520,27 @@ Undo test: delete or change the words on this line, then undo.
 
 WHITESPACE
 
-  M-Space  just-one-space      Collapse surrounding whitespace to one space
-  M-^      delete-indentation  Join current line to the line above
+  Alt-Space  just-one-space      Collapse surrounding whitespace to one space
+  Alt-^      delete-indentation  Join current line to the line above
 
   Alt-x delete-trailing-whitespace   Remove trailing whitespace from the buffer
   Alt-x format-current-buffer        Reformat the whole buffer according to its mode rules
 
 -----
 >> Put the cursor between two words in the whitespace line below.
-   Press M-Space to collapse the spaces to one.
->> Move to the indented line and press M-^ to join it to the line above.
+   Press Alt-Space to collapse the spaces to one.
+>> Move to the indented line and press Alt-^ to join it to the line above.
 
 Whitespace test: collapse    these    extra    spaces    to    one.
 Joining test: 
 	this line should join to the one above it.
+
 -----
 LINE EDITING
 
-Two commands that comein handy are those that create and destroy a blanck line.
+Two commands that come in handy are those that create and destroy a blank line.
 
-  C-o     open-line           Creates a blank line above cursor and moves cursor to the start of that line
+  C-o     open-line           Inserts a newline after the cursor without moving it, pushing text from cursor to end of line down
   C-x C-o delete-blank-lines  Collapses all blank lines around cursor if on empty line, else only below cursor
 
 COMMENTS
@@ -555,11 +552,10 @@ syntax of the current mode.
 
 This command is mode-aware — it uses the correct comment syntax for
 the language you are editing. It has no effect in plain text buffers.
-See Lesson 6 for a practical exercise in a Lisp buffer.
 
 SEARCH AND REPLACE
 
-  M-%   query-replace
+  Alt-%   query-replace
 
 Lem prompts for a search string, then a replacement. For each match
 it asks what to do:
@@ -571,10 +567,10 @@ it asks what to do:
   C-g exit query-replace
 
 Query-replace searches forward from your current cursor or point position.
-Use M-< first to start from the beginning of buffer.
+Use Alt-< first to start from the beginning of buffer.
 
 -----
->> Press M-% and replace "cat" with "dog" in the line below.
+>> Press Alt-% and replace "cat" with "dog" in the line below.
    Try y to replace one at a time, or ! to replace all at once.
    Press q or Escape when done.
 
@@ -587,15 +583,15 @@ SUMMARY
   C-x h     mark-set-whole-buffer   Select the whole buffer
   C-k       kill-line               Kill line
   C-w       kill-region             Kill region
-  M-w       copy-region             Copy region
+  Alt-w     copy-region             Copy region
   C-y       yank                    Yank
-  M-y       yank-pop                Cycle kill ring
+  Alt-y     yank-pop                Cycle kill ring
   C-\       undo                    Undo
   C-/       redo                    Redo
-  M-Space   just-one-space          Collapse whitespace around cursor to one space
-  M-^       delete-indentation      Join line to line above
-  M-%       query-replace           Query-replace
-  C-o       open-line               Creates a blank line above cursor and moves cursor to the start of that line
+  Alt-Space just-one-space          Collapse whitespace around cursor to one space
+  Alt-^     delete-indentation      Join line to line above
+  Alt-%     query-replace           Query-replace
+  C-o       open-line               Inserts a newline after the cursor without moving it, pushing text from cursor to end of line down.
   C-x C-o   delete-blank-lines      Collapses all blank lines around cursor if on empty line, else only below cursor
   
   Alt-x delete-trailing-whitespace     Remove trailing whitespace from the buffer
@@ -619,7 +615,7 @@ Lem can display line numbers in the left margin.
 -----
 
 This toggles line numbers on and off for the current buffer. Useful
-when navigating with M-g or orienting yourself in a long file.
+when navigating with Alt-g or orienting yourself in a long file.
 
 For relative line numbers - showing the distance from the cursor rather
 than the absolute line number - add this to your init file:

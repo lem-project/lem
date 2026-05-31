@@ -283,10 +283,10 @@ For example, a command to open your init file quickly:
       (merge-pathnames "init.lisp" (lem:lem-home))))
 
   (define-keys *global-keymap*
-    ("Alt-C-e" 'open-init-file))
+    ("C-x i" 'open-init-file))
 
 Here we've defined a command open-init-file and bound it to a combination of keys.
-You can call it with Alt-x open-init-file or press Control+Alt+e.
+You can call it with Alt-x open-init-file or press Control+x then i.
 
 -----
 >> Add both forms to your init file. Save it with C-x C-s.

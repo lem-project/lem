@@ -1,13 +1,14 @@
 (defpackage :lem-tutor
   (:use :cl :lem)
-  (:export #:tutorial :tutorial-rescan))
+  (:export #:tutorial ))
 
 (in-package :lem-tutor)
- 
-(defun tutorial-text ()
-  "Set correct paths to core and save files"
-  (merge-pathnames "tutorial-basics.txt" (asdf:system-source-directory :lem-tutor)))
 
+(defvar *tutorial-source-directory*
+  (asdf:system-source-directory :lem-tutor))
+
+(defun tutorial-text ()
+  (merge-pathnames "tutorial-basics.txt" *tutorial-source-directory*))
 (defun tutorial-save-file ()
   (merge-pathnames "lem-tutor-saves/lem-tutor-save.txt" (lem-home)))
 
@@ -61,12 +62,12 @@
     "Save progress when tutorial mode is disabled."
   (tutorial-save-progress (find-file-buffer (tutorial-save-file))))
 
-(define-command tutorial-rescan () ()
-  "Force a syntax rescan of the tutorial buffer"
-  (let ((buffer (find-file-buffer (tutorial-save-file))))
-    (lem-tutor/syntax-parser:scan-region 
-     (buffer-start-point buffer)
-     (buffer-end-point buffer))))
+;; (define-command tutorial-rescan () ()
+  ;; "Force a syntax rescan of the tutorial buffer"
+  ;; (let ((buffer (find-file-buffer (tutorial-save-file))))
+    ;; (lem-tutor/syntax-parser:scan-region 
+     ;; (buffer-start-point buffer)
+     ;; (buffer-end-point buffer))))
 
 (define-minor-mode tutorial-mode
     (:name "Lem-tutor"

@@ -4,11 +4,10 @@
 
 (in-package :lem-tutor)
 
-(defvar *tutorial-source-directory*
-  (asdf:system-source-directory :lem-tutor))
-
 (defun tutorial-text ()
-  (merge-pathnames "tutorial-basics.txt" *tutorial-source-directory*))
+  (merge-pathnames "tutorial-basics.txt" 
+                   (asdf:system-source-directory :lem-tutor)))
+
 (defun tutorial-save-file ()
   (merge-pathnames "lem-tutor-saves/lem-tutor-save.txt" (lem-home)))
 

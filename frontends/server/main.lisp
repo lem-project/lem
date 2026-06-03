@@ -115,8 +115,14 @@
 (defun view-id-hash (view)
   "Return a minimal hash table containing only the view ID.
 Used for hot-path messages (put, clear-eol, etc.) where the JS frontend
-only needs viewInfo.id. Avoids serializing the full VIEW object (14+ fields)."
-  (hash "id" (view-id view)))
+only needs viewInfo.id. Avoids serializing the full VIEW object (14+ fields).
+
+The hash is memoized on the view: it is called once per drawing object
+per frame, but its content is constant, so we allocate it once and reuse
+the same immutable instance for every subsequent message."
+  (or (view-cached-id-hash view)
+      (setf (view-cached-id-hash view)
+            (hash "id" (view-id view)))))
 
 (defun get-all-views ()
   (if (null (lem:current-frame))

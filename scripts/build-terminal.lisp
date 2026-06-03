@@ -96,6 +96,20 @@ user gets that the terminal extension is unavailable."
   (finish-output *error-output*)
   (uiop:quit 1))
 
+(defun build-failed (format-control &rest format-arguments)
+  "Report a build failure on stderr and exit non-zero so callers (make,
+CI) can detect it. lem-terminal silently disables itself at runtime when
+the shared library is missing, so the hint below is the only feedback a
+user gets that the terminal extension is unavailable."
+  (format *error-output* "~&Failed to build terminal.so: ")
+  (apply #'format *error-output* format-control format-arguments)
+  (format *error-output*
+          "~&The lem-terminal extension will silently disable itself at~%~
+           runtime when the shared library is missing. Install libvterm~%~
+           (and a C toolchain) to enable it.~%")
+  (finish-output *error-output*)
+  (uiop:quit 1))
+
 (defun build-terminal ()
   (let* ((source (terminal-source))
          (lib (terminal-lib))

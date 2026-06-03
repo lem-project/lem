@@ -4,16 +4,19 @@ VARIANT ?= webview
 
 ncurses:
 	qlot install
+	-$(MAKE) terminal-lib
 	$(LISP) --load .qlot/setup.lisp \
 		--load scripts/build-ncurses.lisp
 
 sdl2:
 	qlot install
+	-$(MAKE) terminal-lib
 	$(LISP) --load .qlot/setup.lisp \
 		--load scripts/build-sdl2.lisp
 
 sdl2-ncurses:
 	qlot install
+	-$(MAKE) terminal-lib
 	$(LISP) --load .qlot/setup.lisp \
 		--load scripts/build-sdl2-ncurses.lisp
 
@@ -29,11 +32,13 @@ client:
 
 webview:
 	qlot install
+	-$(MAKE) terminal-lib
 	$(LISP) --load .qlot/setup.lisp \
 		--load scripts/build-webview.lisp
 
 webview-ncurses:
 	qlot install
+	-$(MAKE) terminal-lib
 	$(LISP) --load .qlot/setup.lisp \
 		--load scripts/build-webview-ncurses.lisp
 
@@ -47,7 +52,9 @@ legit:
 		--load scripts/build-legit.lisp
 
 # Build the lem-terminal native helper (terminal.so) for the current
-# platform. Requires libvterm and a C toolchain. Optional: lem-terminal
+# platform. Requires libvterm and a C toolchain. The editor build targets
+# (ncurses, sdl2, webview, ...) invoke this best-effort via `-$(MAKE)
+# terminal-lib`, so a missing libvterm/compiler is non-fatal: lem-terminal
 # silently disables itself at runtime when the library is missing.
 terminal-lib:
 	$(LISP) --load scripts/build-terminal.lisp

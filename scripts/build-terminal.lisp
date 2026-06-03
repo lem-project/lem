@@ -40,34 +40,86 @@ when uiop:architecture returns NIL (older bundled UIOP on Apple Silicon)."
            (uiop:operating-system)
            (detect-architecture))))
 
+(defun static-p ()
+  "True when LEM_TERMINAL_STATIC requests a self-contained terminal.so with
+libvterm linked statically. Used by the release bundles (AppImage, macOS app)
+so the shared library carries no external libvterm dependency. Source installs
+leave this unset and dynamic-link against the system libvterm."
+  (let ((v (uiop:getenv "LEM_TERMINAL_STATIC")))
+    (and v (plusp (length v))
+         (not (member v '("0" "no" "false") :test #'string-equal)))))
+
+(defun libvterm-prefix ()
+  "Resolve the libvterm install prefix for static linking on macOS, where the
+archive must be passed by path. Honors LIBVTERM_PREFIX, then `brew --prefix
+libvterm`, then the default Homebrew location."
+  (or (uiop:getenv "LIBVTERM_PREFIX")
+      (ignore-errors
+       (let ((p (string-trim '(#\Space #\Tab #\Newline #\Return)
+                             (uiop:run-program '("brew" "--prefix" "libvterm")
+                                               :output :string))))
+         (when (plusp (length p)) p)))
+      "/opt/homebrew/opt/libvterm"))
+
+;; libvterm linker fragment, selected by platform and static/dynamic mode.
+;; macOS dynamic uses Homebrew's include/lib; macOS static links the archive
+;; directly (no -L/-lvterm, which would re-introduce a dynamic dependency).
+;; Linux static wraps -lvterm in -Bstatic so only libvterm is static while
+;; libutil/libc stay dynamic.
+(defun vterm-flags ()
+  (if (static-p)
+      #+darwin (let ((prefix (libvterm-prefix)))
+                 (format nil "-I~A/include ~A/lib/libvterm.a" prefix prefix))
+      #-darwin "-Wl,-Bstatic -lvterm -Wl,-Bdynamic -lutil"
+      #+darwin "-I/opt/homebrew/include -L/opt/homebrew/lib -lvterm"
+      #-darwin "-lvterm -lutil"))
+
 (defun build-command (source lib)
   (let ((cc (or (uiop:getenv "CC") "cc"))
         (cflags (or (uiop:getenv "CFLAGS") ""))
         (ldflags (or (uiop:getenv "LDFLAGS") "")))
-    (format nil
-            #+darwin "~A ~A ~A -I/opt/homebrew/include -L/opt/homebrew/lib -lvterm ~A -o ~A -shared -fPIC"
-            #-darwin "~A ~A ~A -lvterm -lutil ~A -o ~A -shared -fPIC"
-            cc cflags (namestring source) ldflags (namestring lib))))
+    (format nil "~A ~A ~A ~A ~A -o ~A -shared -fPIC"
+            cc cflags (namestring source) (vterm-flags) ldflags
+            (namestring lib))))
+
+(defun build-failed (format-control &rest format-arguments)
+  "Report a build failure on stderr and exit non-zero so callers (make,
+CI) can detect it. lem-terminal silently disables itself at runtime when
+the shared library is missing, so the hint below is the only feedback a
+user gets that the terminal extension is unavailable."
+  (format *error-output* "~&Failed to build terminal.so: ")
+  (apply #'format *error-output* format-control format-arguments)
+  (format *error-output*
+          "~&The lem-terminal extension will silently disable itself at~%~
+           runtime when the shared library is missing. Install libvterm~%~
+           (and a C toolchain) to enable it.~%")
+  (finish-output *error-output*)
+  (uiop:quit 1))
 
 (defun build-terminal ()
   (let* ((source (terminal-source))
          (lib (terminal-lib))
          (cmd (build-command source lib)))
     (unless (probe-file source)
-      (error "terminal.c not found at ~A" source))
+      (build-failed "terminal.c not found at ~A~%" source))
     (ensure-directories-exist lib)
+    ;; Drop any stale artifact so a compiler that exits 0 without writing
+    ;; the file can't masquerade as a successful build below.
+    (when (probe-file lib)
+      (delete-file lib))
     (format t "~&Building lem-terminal native helper:~%  ~A~%" cmd)
     (handler-case
-        (progn
-          (uiop:run-program cmd :output t :error-output t)
-          (format t "~&Wrote ~A~%" lib))
+        (uiop:run-program cmd :output t :error-output t)
       (uiop:subprocess-error (c)
-        (format *error-output*
-                "~&Failed to build terminal.so: ~A~%~
-                 The lem-terminal extension will silently disable itself at~%~
-                 runtime when the shared library is missing. Install libvterm~%~
-                 (and a C toolchain) to enable it.~%"
-                c)
-        (uiop:quit 1)))))
+        (build-failed "~A~%" c)))
+    (unless (probe-file lib)
+      (build-failed "compiler reported success but ~A was not produced.~%" lib))
+    (format t "~&Wrote ~A~%" lib)
+    (finish-output)
+    lib))
 
 (build-terminal)
+
+;; Exit explicitly so `sbcl --load` does not drop into the REPL (and block
+;; on stdin) after a successful build.
+(uiop:quit 0)

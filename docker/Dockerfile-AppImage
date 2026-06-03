@@ -1,6 +1,6 @@
 FROM ubuntu:22.04 AS build
 
-RUN apt-get update && apt-get install -y curl bzip2 git libzstd-dev file libncurses-dev build-essential
+RUN apt-get update && apt-get install -y curl bzip2 git libzstd-dev file libncurses-dev build-essential libvterm-dev
 
 # Build tree-sitter from main branch (tree-sitter-cl requires 0.27+ which is unreleased)
 WORKDIR /tmp
@@ -33,8 +33,12 @@ RUN curl -L -O https://github.com/AppImage/appimagetool/releases/download/contin
 RUN chmod u+x linuxdeploy-x86_64.AppImage appimagetool-x86_64.AppImage
 
 WORKDIR /app
-COPY . . 
+COPY . .
 RUN qlot install
+# Build the lem-terminal native helper with libvterm statically linked, before
+# asdf:make so lem-terminal/ffi.lisp loads it at build time and the deploy
+# library bundles the self-contained terminal.so next to the executable.
+RUN LEM_TERMINAL_STATIC=1 make terminal-lib
 RUN qlot exec sbcl --eval '(ql:quickload :lem)' --eval '(asdf:make :lem)'
 RUN bash -ex docker/make_appdir.sh
 

@@ -161,6 +161,29 @@
               '';
           };
 
+          # lem-terminal native helper (terminal.so), compiled from
+          # extensions/terminal/terminal.c against libvterm. Dynamically linked:
+          # the Nix stdenv records an RPATH to the libvterm store path, so it
+          # resolves at runtime without any bundling or relinking. lem-terminal/
+          # ffi.lisp loads it by the literal name "terminal.so" (even on macOS),
+          # so the output keeps the .so suffix on both platforms.
+          terminal-so = pkgs.stdenv.mkDerivation {
+            pname = "lem-terminal-so";
+            version = "0.1.0";
+            src = ./extensions/terminal;
+            buildInputs = [ pkgs.libvterm ];
+            buildPhase = ''
+              $CC -shared -fPIC -o terminal.so terminal.c \
+                -I${pkgs.libvterm}/include \
+                -L${pkgs.libvterm}/lib \
+                -lvterm ${pkgs.lib.optionalString pkgs.stdenv.isLinux "-lutil"}
+            '';
+            installPhase = ''
+              mkdir -p $out/lib
+              cp terminal.so $out/lib/
+            '';
+          };
+
           # tree-sitter-cl Lisp bindings (from github.com/lem-project/tree-sitter-cl)
           tree-sitter-cl = lisp.buildASDFSystem {
             pname = "tree-sitter-cl";
@@ -330,6 +353,7 @@
               pkgs.ncurses
               pkgs.tree-sitter
               ts-wrapper
+              terminal-so
             ];
             # Add tree-sitter grammar paths (grammars don't have lib/ subdir)
             installPhase = ''
@@ -362,6 +386,7 @@
               SDL2_image
               tree-sitter
               ts-wrapper
+              terminal-so
             ];
             installPhase = ''
               runHook preInstall
@@ -401,6 +426,7 @@
                   c-webview
                   pkgs.tree-sitter
                   ts-wrapper
+                  terminal-so
                 ]
               else
                 [
@@ -408,6 +434,7 @@
                   c-webview
                   pkgs.tree-sitter
                   ts-wrapper
+                  terminal-so
                 ];
 
             postPatch =

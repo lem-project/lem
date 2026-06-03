@@ -4,6 +4,7 @@
            :make-view
            :view-window
            :view-id
+           :view-cached-id-hash
            :view-x
            :view-y
            :view-width
@@ -25,6 +26,10 @@
 
 (defstruct (view (:constructor %make-view))
   (id (incf *view-id-counter*))
+  ;; Memoized {"id": id} hash for hot-path messages (put, clear-eol).
+  ;; Immutable once built — id never changes — so it is safe to reuse the
+  ;; same instance across every message in a frame.  See VIEW-ID-HASH.
+  (cached-id-hash nil)
   window
   x
   y

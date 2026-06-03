@@ -161,6 +161,35 @@
               '';
           };
 
+          # lem-terminal native helper (terminal.so), compiled from
+          # extensions/terminal/terminal.c against libvterm. Dynamically linked:
+          # the Nix stdenv records an RPATH to the libvterm store path, so it
+          # resolves at runtime without any bundling or relinking. lem-terminal/
+          # ffi.lisp loads it by the literal name "terminal.so" (even on macOS),
+          # so the output keeps the .so suffix on both platforms.
+          #
+          # Uses libvterm-neovim, which is Leonerd's modern libvterm that
+          # terminal.c targets. Plain pkgs.libvterm is a different, abandoned
+          # glib/curses-based library with an incompatible API. libvterm-neovim
+          # is Linux-only in nixpkgs, hence the Linux gate at the use sites, so
+          # -lutil (forkpty) is unconditional here.
+          terminal-so = pkgs.stdenv.mkDerivation {
+            pname = "lem-terminal-so";
+            version = "0.1.0";
+            src = ./extensions/terminal;
+            buildInputs = [ pkgs.libvterm-neovim ];
+            buildPhase = ''
+              $CC -shared -fPIC -o terminal.so terminal.c \
+                -I${pkgs.libvterm-neovim}/include \
+                -L${pkgs.libvterm-neovim}/lib -lvterm \
+                -lutil
+            '';
+            installPhase = ''
+              mkdir -p $out/lib
+              cp terminal.so $out/lib/
+            '';
+          };
+
           # tree-sitter-cl Lisp bindings (from github.com/lem-project/tree-sitter-cl)
           tree-sitter-cl = lisp.buildASDFSystem {
             pname = "tree-sitter-cl";
@@ -330,7 +359,10 @@
               pkgs.ncurses
               pkgs.tree-sitter
               ts-wrapper
-            ];
+            ]
+            # libvterm is Linux-only in nixpkgs, so terminal-so (and thus the
+            # terminal extension) is only available on Linux Nix builds.
+            ++ pkgs.lib.optionals pkgs.stdenv.isLinux [ terminal-so ];
             # Add tree-sitter grammar paths (grammars don't have lib/ subdir)
             installPhase = ''
               runHook preInstall
@@ -356,13 +388,15 @@
                 sdl2-image
                 trivial-main-thread
               ]);
-            nativeLibs = with pkgs; [
+            nativeLibs = (with pkgs; [
               SDL2
               SDL2_ttf
               SDL2_image
               tree-sitter
               ts-wrapper
-            ];
+            ])
+            # libvterm is Linux-only in nixpkgs (see lem-ncurses).
+            ++ pkgs.lib.optionals pkgs.stdenv.isLinux [ terminal-so ];
             installPhase = ''
               runHook preInstall
               mkdir -p $out/bin
@@ -401,6 +435,7 @@
                   c-webview
                   pkgs.tree-sitter
                   ts-wrapper
+                  terminal-so
                 ]
               else
                 [

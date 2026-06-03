@@ -353,8 +353,10 @@
               pkgs.ncurses
               pkgs.tree-sitter
               ts-wrapper
-              terminal-so
-            ];
+            ]
+            # libvterm is Linux-only in nixpkgs, so terminal-so (and thus the
+            # terminal extension) is only available on Linux Nix builds.
+            ++ pkgs.lib.optionals pkgs.stdenv.isLinux [ terminal-so ];
             # Add tree-sitter grammar paths (grammars don't have lib/ subdir)
             installPhase = ''
               runHook preInstall
@@ -380,14 +382,15 @@
                 sdl2-image
                 trivial-main-thread
               ]);
-            nativeLibs = with pkgs; [
+            nativeLibs = (with pkgs; [
               SDL2
               SDL2_ttf
               SDL2_image
               tree-sitter
               ts-wrapper
-              terminal-so
-            ];
+            ])
+            # libvterm is Linux-only in nixpkgs (see lem-ncurses).
+            ++ pkgs.lib.optionals pkgs.stdenv.isLinux [ terminal-so ];
             installPhase = ''
               runHook preInstall
               mkdir -p $out/bin
@@ -434,7 +437,6 @@
                   c-webview
                   pkgs.tree-sitter
                   ts-wrapper
-                  terminal-so
                 ];
 
             postPatch =

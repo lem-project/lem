@@ -35,7 +35,14 @@
 
 (defparameter *write-timeout-ms* 12
   "Max milliseconds to spend parsing PTY data per update tick (xterm.js pattern).
-Prevents UI freeze by yielding to the renderer after this budget.")
+Prevents UI freeze by yielding to the renderer after this budget.  Used when
+the editor is otherwise idle, so a focused terminal gets good throughput.")
+
+(defparameter *write-timeout-busy-ms* 2
+  "Drain budget used when other events (key input, etc.) are already queued.
+A short slice keeps the editor's command loop responsive in other buffers
+under heavy terminal output; PTY backpressure throttles the producer until
+the editor is idle enough to drain at the full `*write-timeout-ms*' budget.")
 
 (defparameter *attribute-cache-limit* 4096
   "Maximum entries in a terminal's attribute cache.  When exceeded the cache
@@ -158,27 +165,32 @@ Avoids an O(rows) scan in the hot update loop.")
   (terminal-dirty-any-p terminal))
 
 (defun update (terminal)
-  (process-input terminal)
-  (when (and (not (terminal-copy-mode terminal))
-             (any-rows-dirty-p terminal))
-    (cond
-      ;; Other events pending — defer render to avoid starving key handling.
-      ;; Schedule a retry event so dirty rows are rendered even if no more
-      ;; PTY data arrives (fixes missing prompt after command finishes).
-      ((> (event-queue-length) 0)
-       (unless (terminal-render-deferred terminal)
-         (setf (terminal-render-deferred terminal) t)
-         (send-event (lambda ()
-                       (setf (terminal-render-deferred terminal) nil)
-                       (ignore-errors (update terminal))))))
-      (t
-       ;; Render immediately.  Previous versions skipped frames when the
-       ;; throttle interval hadn't elapsed, but that caused the final frame
-       ;; (e.g. shell prompt) to be lost when no more PTY data followed.
-       (setf (terminal-last-render-time terminal) (get-internal-real-time)
-             (terminal-render-skips terminal) 0)
-       (render terminal)
-       (redraw-display)))))
+  ;; When other events (key input, etc.) are already queued the editor is
+  ;; "busy": drain only a short slice and defer the render, so terminal
+  ;; output can't monopolise the command-loop thread and starve editing in
+  ;; other buffers.  When idle, drain the full budget and render now.
+  (let ((busy (> (event-queue-length) 0)))
+    (process-input terminal (if busy *write-timeout-busy-ms* *write-timeout-ms*))
+    (when (and (not (terminal-copy-mode terminal))
+               (any-rows-dirty-p terminal))
+      (cond
+        ;; Other events pending — defer render to avoid starving key handling.
+        ;; Schedule a retry event so dirty rows are rendered even if no more
+        ;; PTY data arrives (fixes missing prompt after command finishes).
+        (busy
+         (unless (terminal-render-deferred terminal)
+           (setf (terminal-render-deferred terminal) t)
+           (send-event (lambda ()
+                         (setf (terminal-render-deferred terminal) nil)
+                         (ignore-errors (update terminal))))))
+        (t
+         ;; Render immediately.  Previous versions skipped frames when the
+         ;; throttle interval hadn't elapsed, but that caused the final frame
+         ;; (e.g. shell prompt) to be lost when no more PTY data followed.
+         (setf (terminal-last-render-time terminal) (get-internal-real-time)
+               (terminal-render-skips terminal) 0)
+         (render terminal)
+         (redraw-display))))))
 
 (defun create (&key (rows (alexandria:required-argument :rows))
                     (cols (alexandria:required-argument :cols))
@@ -202,30 +214,38 @@ Avoids an O(rows) scan in the hot update loop.")
     ;; if one isn't already pending.  select() returns immediately while
     ;; the PTY buffer holds unread data (it isn't drained until the editor
     ;; thread runs process-input), so without gating the thread would
-    ;; hot-spin.  When an event is already pending we block on a condition
-    ;; variable until the editor thread consumes it and signals us — this
-    ;; avoids both the spin and holding the lock across a sleep, which used
-    ;; to serialize the I/O and editor threads on the lock.
+    ;; hot-spin.  When an event is already pending we sleep briefly before
+    ;; re-checking; this 1ms cadence also throttles the event rate so the
+    ;; editor thread isn't flooded with back-to-back terminal updates and
+    ;; can still service key input and other buffers under heavy output.
+    ;;
+    ;; The lock guards ONLY the event-pending flag.  Both the sleep and
+    ;; send-event run outside it — holding the lock across the sleep used
+    ;; to serialize the I/O and editor threads (the editor blocked behind
+    ;; this thread's nap to clear the flag).
     (let ((event-pending nil)
-          (lock (bt2:make-lock :name "terminal-wakeup"))
-          (cv (bt2:make-condition-variable :name "terminal-wakeup")))
+          (lock (bt2:make-lock :name "terminal-wakeup")))
       (setf (terminal-thread terminal)
             (bt2:make-thread
              (lambda ()
                (loop
                  (ffi::terminal-process-input-wait (terminal-viscus terminal))
-                 ;; Only the event-pending flag is guarded by the lock.  The
-                 ;; sleep is gone; send-event runs outside the lock.
-                 (bt2:with-lock-held (lock)
-                   (loop :while event-pending
-                         :do (bt2:condition-wait cv lock))
-                   (setf event-pending t))
-                 (send-event
-                  (lambda ()
-                    (ignore-errors (update terminal))
-                    (bt2:with-lock-held (lock)
-                      (setf event-pending nil)
-                      (bt2:condition-notify cv))))))
+                 (let ((post nil))
+                   (bt2:with-lock-held (lock)
+                     (unless event-pending
+                       (setf event-pending t
+                             post t)))
+                   (cond
+                     (post
+                      (send-event
+                       (lambda ()
+                         (ignore-errors (update terminal))
+                         (bt2:with-lock-held (lock)
+                           (setf event-pending nil)))))
+                     (t
+                      ;; Previous event not yet consumed — sleep (outside the
+                      ;; lock) to avoid hot-spinning and to throttle the rate.
+                      (sleep 0.001))))))
              :name (format nil "Terminal ~D" id))))
     (add-terminal terminal)
     terminal))
@@ -443,10 +463,10 @@ Called when transitioning from scrollback-active to normal view."
     (move-to-line point (1+ (ffi::terminal-cursor-row viscus)))
     (move-to-column point (ffi::terminal-cursor-col viscus))))
 
-(defmethod process-input ((terminal terminal))
-  "Drain PTY data with a time budget to avoid blocking the UI thread."
+(defmethod process-input ((terminal terminal) &optional (budget-ms *write-timeout-ms*))
+  "Drain PTY data with a time budget (BUDGET-MS) to avoid blocking the UI thread."
   (ffi::terminal-process-input-timed (terminal-viscus terminal)
-                                     *write-timeout-ms*))
+                                     budget-ms))
 
 (defmethod input-character ((terminal terminal) character &key (mod 0))
   (ffi::terminal-input-char (terminal-viscus terminal)

@@ -48,6 +48,10 @@ jobs:
     name: builds ${{ matrix.backend }} on ${{ matrix.os }}
     # The 'runs-on' key also uses the dynamic matrix
     runs-on: ${{ matrix.os }}
+    # FlakeHub Cache authenticates via GitHub OIDC, which needs id-token: write.
+    permissions:
+      id-token: write
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -62,8 +66,11 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v16
 
-      - name: Setup Magic Nix Cache
-        uses: DeterminateSystems/magic-nix-cache-action@v8
+      # magic-nix-cache-action was sunset 2025-02-01 and now rate-limits /
+      # 418s, causing intermittent "no substituter" failures. FlakeHub Cache
+      # is its supported successor (auth via the OIDC token above).
+      - name: Setup FlakeHub Cache
+        uses: DeterminateSystems/flakehub-cache-action@main
 
       - name: Check flake
         run: nix flake check --all-systems --no-build

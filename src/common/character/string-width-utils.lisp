@@ -75,11 +75,14 @@
          (+ width 1))))
 
 (defun string-width (string &key (start 0) end (tab-size +default-tab-size+))
-  (loop :with width := 0
-        :for index :from start :below (or end (length string))
-        :for char := (aref string index)
-        :do (setq width (char-width char width :tab-size tab-size))
-        :finally (return width)))
+  (let* ((len (length string))
+        (safe-end (min (or end len)
+                       len)))
+    (loop :with width := 0
+          :for index :from start :below safe-end
+          :for char := (aref string index)
+          :do (setq width (char-width char width :tab-size tab-size))
+          :finally (return width))))
 
 (defun wide-index (string goal &key (start 0) (tab-size +default-tab-size+))
   (loop :with width := 0

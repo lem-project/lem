@@ -49,25 +49,44 @@ when uiop:architecture returns NIL (older bundled UIOP on Apple Silicon)."
             #-darwin "~A ~A ~A -lvterm -lutil ~A -o ~A -shared -fPIC"
             cc cflags (namestring source) ldflags (namestring lib))))
 
+(defun build-failed (format-control &rest format-arguments)
+  "Report a build failure on stderr and exit non-zero so callers (make,
+CI) can detect it. lem-terminal silently disables itself at runtime when
+the shared library is missing, so the hint below is the only feedback a
+user gets that the terminal extension is unavailable."
+  (format *error-output* "~&Failed to build terminal.so: ")
+  (apply #'format *error-output* format-control format-arguments)
+  (format *error-output*
+          "~&The lem-terminal extension will silently disable itself at~%~
+           runtime when the shared library is missing. Install libvterm~%~
+           (and a C toolchain) to enable it.~%")
+  (finish-output *error-output*)
+  (uiop:quit 1))
+
 (defun build-terminal ()
   (let* ((source (terminal-source))
          (lib (terminal-lib))
          (cmd (build-command source lib)))
     (unless (probe-file source)
-      (error "terminal.c not found at ~A" source))
+      (build-failed "terminal.c not found at ~A~%" source))
     (ensure-directories-exist lib)
+    ;; Drop any stale artifact so a compiler that exits 0 without writing
+    ;; the file can't masquerade as a successful build below.
+    (when (probe-file lib)
+      (delete-file lib))
     (format t "~&Building lem-terminal native helper:~%  ~A~%" cmd)
     (handler-case
-        (progn
-          (uiop:run-program cmd :output t :error-output t)
-          (format t "~&Wrote ~A~%" lib))
+        (uiop:run-program cmd :output t :error-output t)
       (uiop:subprocess-error (c)
-        (format *error-output*
-                "~&Failed to build terminal.so: ~A~%~
-                 The lem-terminal extension will silently disable itself at~%~
-                 runtime when the shared library is missing. Install libvterm~%~
-                 (and a C toolchain) to enable it.~%"
-                c)
-        (uiop:quit 1)))))
+        (build-failed "~A~%" c)))
+    (unless (probe-file lib)
+      (build-failed "compiler reported success but ~A was not produced.~%" lib))
+    (format t "~&Wrote ~A~%" lib)
+    (finish-output)
+    lib))
 
 (build-terminal)
+
+;; Exit explicitly so `sbcl --load` does not drop into the REPL (and block
+;; on stdin) after a successful build.
+(uiop:quit 0)

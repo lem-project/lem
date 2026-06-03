@@ -9,7 +9,22 @@ cd "$parent_dir"
 
 # ===== 1) ビルド =====
 qlot install
+
+# Build the lem-terminal native helper with libvterm statically linked so the
+# bundled terminal.so has no external libvterm dependency. It must exist before
+# `asdf:make :lem` so that lem-terminal/ffi.lisp loads it at build time and the
+# deploy library bundles it into Lem.app/Contents/MacOS and reloads it at boot.
+LEM_TERMINAL_STATIC=1 make terminal-lib
+
 qlot exec sbcl --eval '(ql:quickload :lem)' --eval '(asdf:make :lem)'
+
+# Confirm the deploy library actually bundled terminal.so into the app; a
+# missing helper means the terminal extension would silently disable itself.
+if ! find bin/lem.app -name 'terminal.so' -print -quit | grep -q .; then
+  echo "error: terminal.so was not bundled into the app by deploy." >&2
+  echo "       Ensure libvterm is installed so it loads at build time." >&2
+  exit 1
+fi
 
 # Rename the deploy output (lem.app) to use the user-facing name (Lem.app).
 # The asdf system is named "lem" so the deploy library produces lem.app; we

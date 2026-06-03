@@ -168,24 +168,20 @@
           # ffi.lisp loads it by the literal name "terminal.so" (even on macOS),
           # so the output keeps the .so suffix on both platforms.
           #
-          # nixpkgs' libvterm is the Neovim fork, whose vterm.h #includes
-          # <glib.h>, so GLib's compile flags are pulled in via pkg-config.
-          # Only built on Linux (libvterm is Linux-only in nixpkgs), so -lutil
-          # (forkpty) is unconditional here.
+          # Uses libvterm-neovim, which is Leonerd's modern libvterm that
+          # terminal.c targets. Plain pkgs.libvterm is a different, abandoned
+          # glib/curses-based library with an incompatible API. libvterm-neovim
+          # is Linux-only in nixpkgs, hence the Linux gate at the use sites, so
+          # -lutil (forkpty) is unconditional here.
           terminal-so = pkgs.stdenv.mkDerivation {
             pname = "lem-terminal-so";
             version = "0.1.0";
             src = ./extensions/terminal;
-            nativeBuildInputs = [ pkgs.pkg-config ];
-            buildInputs = [
-              pkgs.libvterm
-              pkgs.glib
-            ];
+            buildInputs = [ pkgs.libvterm-neovim ];
             buildPhase = ''
               $CC -shared -fPIC -o terminal.so terminal.c \
-                -I${pkgs.libvterm}/include \
-                -L${pkgs.libvterm}/lib -lvterm \
-                $(pkg-config --cflags --libs glib-2.0) \
+                -I${pkgs.libvterm-neovim}/include \
+                -L${pkgs.libvterm-neovim}/lib -lvterm \
                 -lutil
             '';
             installPhase = ''

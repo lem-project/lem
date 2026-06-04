@@ -606,7 +606,16 @@ so only the final Lisp string is allocated here."
           (let* ((c-str (ffi::terminal-sb-line-extract
                          (terminal-viscus terminal) cols cells len-ptr))
                  (len (cffi:mem-ref len-ptr :int))
-                 (text (cffi:foreign-string-to-lisp c-str :count len :encoding :utf-8)))
+                 ;; This runs on the I/O thread inside vterm-input-write, so the
+                 ;; decode must never signal out of the callback (it would unwind
+                 ;; through C and kill the thread).  A scrollback line can hold
+                 ;; bytes that aren't valid UTF-8 — e.g. a non-UTF-8 filename
+                 ;; from `find /' — so fall back to a lossless latin-1 decode,
+                 ;; which never errors, instead of dropping the line.
+                 (text (handler-case
+                           (cffi:foreign-string-to-lisp c-str :count len :encoding :utf-8)
+                         (error ()
+                           (cffi:foreign-string-to-lisp c-str :count len :encoding :iso-8859-1)))))
             (setf (aref ring head) text)))
         (setf (terminal-scrollback-head terminal) (mod (1+ head) limit))
         (when (< (scrollback-count terminal) limit)

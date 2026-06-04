@@ -63,6 +63,8 @@
     (setf (gethash 0 cache) (cons 111 10))
     (setf (gethash 10 cache) (cons 222 10))
     (setf (gethash 20 cache) (cons 333 10))
+    ;; `lem-core::` reaches an unexported internal on purpose: this helper
+    ;; has no public equivalent and is exercised directly as a white-box test.
     (lem-core::evict-line-fingerprints-from cache 10)
     ;; Rows at or below the cleared y are gone; rows above are kept.
     (ok (nth-value 1 (gethash 0 cache)))
@@ -79,6 +81,8 @@
   ;; is an unexported display-layer internal, accessed here for a white-box
   ;; unit test over the (y height objects) entry list.
   (let ((entries (list (list 0 10 nil) (list 10 10 nil) (list 20 10 nil))))
+    ;; `lem-core::` reaches an unexported internal on purpose: this helper
+    ;; has no public equivalent and is exercised directly as a white-box test.
     ;; Only the row above the cleared y survives.
     (ok (equal (lem-core::remove-drawing-cache-entries-from entries 10)
                (list (list 0 10 nil))))

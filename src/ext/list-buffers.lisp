@@ -19,6 +19,7 @@
     (delete-checked-items multi-column-list)))
 
 (defun save-buffers (window)
+  "Save all buffers from the current multi-column-list window."
   (let ((multi-column-list (multi-column-list-of-window window)))
     (mapc #'save-buffer (collect-checked-items multi-column-list))
     (update multi-column-list)))
@@ -48,6 +49,9 @@
                   :delete-callback (lambda (component buffer)
                                      (declare (ignore component))
                                      (kill-buffer buffer))
+                  :save-callback (lambda (component buffer)
+                                   (declare (ignore component))
+                                   (save-buffer buffer))
                   :use-check t
                   :context-menu (make-instance
                                  'lem/context-menu:context-menu

@@ -32,6 +32,7 @@
 (define-key *multi-column-list-mode-keymap* "Space" 'multi-column-list/check-and-down)
 (define-key *multi-column-list-mode-keymap* "M-Space" 'multi-column-list/up-and-check)
 (define-key *multi-column-list-mode-keymap* "C-k" 'multi-column-list/delete-items)
+(define-key *multi-column-list-mode-keymap* "C-s" 'multi-column-list/save-items)
 (define-key *multi-column-list-mode-keymap* 'show-context-menu 'show-context-menu)
 (define-key *multi-column-list-mode-keymap* 'delete-previous-char 'multi-column-list/delete-previous-char)
 (define-key *multi-column-list-mode-keymap* "Backspace" 'multi-column-list/delete-previous-char)
@@ -82,10 +83,14 @@
 (define-command multi-column-list/delete-items () ()
   (delete-checked-items (current-multi-column-list)))
 
+(define-command multi-column-list/save-items () ()
+  (save-checked-items (current-multi-column-list)))
+
 ;;
 (defgeneric select-item (component item))
 (defgeneric delete-item (component item))
 (defgeneric map-columns (component item))
+(defgeneric save-item (component item))
 
 (defclass multi-column-list-item ()
   ((checked :initform nil
@@ -111,6 +116,9 @@
 (defmethod delete-item :around (component (item default-multi-column-list-item))
   (call-next-method component (unwrap item)))
 
+(defmethod save-item :around (component (item default-multi-column-list-item))
+  (call-next-method component (unwrap item)))
+
 (defmethod map-columns :around (component (item default-multi-column-list-item))
   (call-next-method component (unwrap item)))
 
@@ -129,6 +137,9 @@
    (delete-callback :initarg :delete-callback
                     :initform nil
                     :accessor multi-column-list-delete-callback)
+   (save-callback :initarg :save-callback
+                  :initform nil
+                  :accessor multi-column-list-save-callback)
    (column-function :initarg :column-function
                     :initform nil
                     :accessor multi-column-list-column-function)
@@ -164,6 +175,10 @@
 (defmethod delete-item ((component multi-column-list) item)
   (when (multi-column-list-delete-callback component)
     (funcall (multi-column-list-delete-callback component) component item)))
+
+(defmethod save-item ((component multi-column-list) item)
+  (when (multi-column-list-save-callback component)
+    (funcall (multi-column-list-save-callback component) component item)))
 
 (defmethod map-columns ((component multi-column-list) item)
   (if (multi-column-list-column-function component)
@@ -372,10 +387,22 @@
   (mapcar #'unwrap (checked-items multi-column-list)))
 
 (defun delete-checked-items (multi-column-list)
+  "Delete all items from this multi-column list.
+
+  Typically used in M-x list-buffers."
   (let ((whole-items (multi-column-list-items multi-column-list)))
     (dolist (item (checked-items multi-column-list))
       (delete-item multi-column-list item)
       (setf whole-items
             (delete item whole-items)))
     (setf (multi-column-list-items multi-column-list) whole-items)
+    (update multi-column-list)))
+
+(defun save-checked-items (multi-column-list)
+  "Save all items from this multi-column list.
+
+  Typically used in M-x list-buffers."
+  (let ((whole-items (multi-column-list-items multi-column-list)))
+    (dolist (item (checked-items multi-column-list))
+      (save-item multi-column-list item))
     (update multi-column-list)))

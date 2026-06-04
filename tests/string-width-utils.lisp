@@ -387,6 +387,8 @@
     (ok (eql 0 (char-width #\newline 0)))))
 
 (deftest string-width
+  (ok (eql 0 (string-width nil)))
+  (ok (eql 0 (string-width "")))
   (ok (eql 1 (string-width "a")))
   (ok (eql 2 (string-width "ab")))
   (ok (eql 3 (string-width "abc")))

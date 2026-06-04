@@ -90,3 +90,35 @@
     (ok (= 3 (length (lem-core::remove-drawing-cache-entries-from entries 30))))
     ;; A y of 0 removes everything.
     (ok (null (lem-core::remove-drawing-cache-entries-from entries 0)))))
+
+(deftest test-fingerprint-detects-attribute-mutation
+  ;; An attribute mutated in place (e.g. recoloring the shared `cursor`
+  ;; attribute via SET-ATTRIBUTE, as vi-mode/skk-mode do) keeps the same
+  ;; object identity while its content changes.  Because SXHASH on a
+  ;; standard-object is identity-based in SBCL, the fingerprint would not
+  ;; change and the line would be skipped on redraw, leaving stale pixels on
+  ;; persistent textures (SDL2 ghosting).  The fingerprint must change.
+
+  ;; Mutation referenced through the attributes list.
+  (let* ((attribute (lem-core::make-attribute :foreground "#FF0000"))
+         (line (lem-core::make-logical-line
+                :string "foo"
+                :attributes (list (list 0 3 attribute))
+                :end-of-line-cursor-attribute nil
+                :extend-to-end nil
+                :line-end-overlay nil))
+         (before (lem-core::compute-line-fingerprint line 0 0)))
+    (lem-core::set-attribute attribute :background "#00FF00")
+    (ok (not (= before (lem-core::compute-line-fingerprint line 0 0)))))
+
+  ;; Mutation referenced through the end-of-line cursor attribute.
+  (let* ((cursor (lem-core::make-attribute :background "#FFFFFF"))
+         (line (lem-core::make-logical-line
+                :string "foo"
+                :attributes nil
+                :end-of-line-cursor-attribute cursor
+                :extend-to-end nil
+                :line-end-overlay nil))
+         (before (lem-core::compute-line-fingerprint line 0 0)))
+    (lem-core::set-attribute cursor :background "#000000")
+    (ok (not (= before (lem-core::compute-line-fingerprint line 0 0))))))

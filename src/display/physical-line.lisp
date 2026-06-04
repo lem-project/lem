@@ -461,12 +461,55 @@ frontends such as SDL2."
   (alexandria:when-let ((cache (window-parameter window 'line-fingerprint-cache)))
     (evict-line-fingerprints-from cache y)))
 
+(defun item-content-hash (item)
+  "Return a content-based hash for ITEM.
+
+SXHASH on STANDARD-OBJECTs and STRUCTURE-OBJECTs is identity-based in
+SBCL, so an attribute mutated in place (e.g. recoloring the shared CURSOR
+attribute via SET-ATTRIBUTE) keeps the same SXHASH even though its visible
+content changed.  Hashing attribute/color content keeps the line
+fingerprint consistent with ATTRIBUTE-EQUAL and avoids stale glyphs
+(ghosting) when an attribute is mutated rather than replaced."
+  (typecase item
+    (attribute
+     (let ((hash 5381))
+       (declare (type fixnum hash))
+       (flet ((mix (x)
+                (setf hash (logand most-positive-fixnum
+                                   (+ (* hash 33) (item-content-hash x))))))
+         (mix (attribute-foreground item))
+         (mix (attribute-background item))
+         (mix (attribute-reverse item))
+         (mix (attribute-bold item))
+         (mix (attribute-underline item)))
+       hash))
+    (lem/common/color:color
+     (logand most-positive-fixnum
+             (+ (* 33 (+ (* 33 (lem/common/color:color-red item))
+                         (lem/common/color:color-green item)))
+                (lem/common/color:color-blue item))))
+    (cons
+     ;; Descend so attributes nested inside sublists (the (start end
+     ;; attribute) entries of LOGICAL-LINE-ATTRIBUTES) are content-hashed
+     ;; rather than caught by the identity-based SXHASH of the sublist.
+     (let ((hash 5381))
+       (declare (type fixnum hash))
+       (loop :for x := item :then (cdr x)
+             :while (consp x)
+             :do (setf hash (logand most-positive-fixnum
+                                    (+ (* hash 33) (item-content-hash (car x)))))
+             :finally (when x
+                        (setf hash (logand most-positive-fixnum
+                                           (+ (* hash 33) (item-content-hash x))))))
+       hash))
+    (t (sxhash item))))
+
 (defun djb2 (hash item)
   "Hash with seed and item using djb2 hash algorithm"
   (declare (type fixnum hash))
   (logand most-positive-fixnum
           (+ (* hash 33)
-             (sxhash item))))
+             (item-content-hash item))))
 
 (defun mix-hashes (&rest items)
   "Fold ITEMS into one fixnum hash, descending into nested lists. Iterative

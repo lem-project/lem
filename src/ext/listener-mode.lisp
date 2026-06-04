@@ -185,50 +185,62 @@
 
 
 
-(defun %search-history-startwith (step-fn &key rollback-on-fail)
+(defun %search-history-startwith (direction)
   "Internal helper for history next and previous"
-  (block nil
-    (let* ((buffer (current-buffer))
-           (point (buffer-point buffer))
-           (charpos (point-charpos point))
-           (prefix (points-to-string (input-start-point buffer) point))
-           (prefix-len (length prefix)))
-      (backup-edit-string (current-buffer))
-      (flet ((commit (str)
-               ;; Move to safe position before changing the underlying buffer
-               (lem-core:move-point point (input-start-point buffer))
+  (multiple-value-bind (step-fn rewind-fn)
+      (ecase direction
+        (:previous (values #'lem/common/history:previous-history
+                           #'lem/common/history:next-history))
+        (:next (values #'lem/common/history:next-history
+                       #'lem/common/history:previous-history)))
+  
+    (block nil
+      (let* ((buffer (current-buffer))
+             (point (buffer-point buffer))
+             (prefix (points-to-string (input-start-point buffer) point))
+             (prefix-len (length prefix)))
+        (backup-edit-string (current-buffer))
+        (flet ((commit (str)
+                 ;; Move to safe position before changing the underlying buffer
+                 (lem-core:move-point point (input-start-point buffer))
                
-               (replace-textarea buffer str)
+                 (replace-textarea buffer str)
                
-               ;; Restore the cursor to beginning of line + prefix offset.
-               (lem-core:move-point point (input-start-point buffer))
-               (lem-core:character-offset point prefix-len)
+                 ;; Restore the cursor to beginning of line + prefix offset.
+                 (lem-core:move-point point (input-start-point buffer))
+                 (lem-core:character-offset point prefix-len)
                
-               (return)))
+                 (return)))
              
-        (loop
-          (multiple-value-bind (str win)
-              (funcall step-fn (current-listener-history))
-            (if win
-                (when (eql 0 (search prefix str :test #'string=))
-                  (commit str))
-                (progn 
-                  (when rollback-on-fail
-                    (restore-edit-string buffer))
-                  (return)))))))))
+        
+          (loop :for steps :from 0
+                :do (multiple-value-bind (str win)
+                        (funcall step-fn (current-listener-history))
+                      (if win
+                          (when (eql 0 (search prefix str :test #'string=))
+                            (commit str))
+                          (progn 
+                            (dotimes (i steps)
+                              (funcall rewind-fn (current-listener-history)))
+                      
+                            (when (eq direction :next)
+                              (restore-edit-string buffer)
+                              (lem-core:move-point point (input-start-point buffer))
+                              (lem-core:character-offset point prefix-len))
+                            (return))))))))))
 
 
 (define-command listener-previous-startswith-input () ()
   "Find the previous prompt starting with the current input.
 
   See also `listener-previous-input`."
-  (%search-history-startwith #'lem/common/history:previous-history))
+  (%search-history-startwith :previous))
 
 (define-command listener-next-startswith-input () ()
   "Find the next prompt starting with the current input.
 
   See also `listener-next-input`."
-  (%search-history-startwith #'lem/common/history:next-history :rollback-on-fail t))
+  (%search-history-startwith :next))
 
 (define-command listener-previous-input () ()
   "Get and insert the previous REPL input."

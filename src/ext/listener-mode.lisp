@@ -191,15 +191,19 @@
     (let* ((buffer (current-buffer))
            (point (buffer-point buffer))
            (charpos (point-charpos point))
-           (prefix (points-to-string (input-start-point buffer) point)))
+           (prefix (points-to-string (input-start-point buffer) point))
+           (prefix-len (length prefix)))
       (backup-edit-string (current-buffer))
       (flet ((commit (str)
                ;; Move to safe position before changing the underlying buffer
                (lem-core:move-point point (input-start-point buffer))
                
                (replace-textarea buffer str)
-               (setf (point-charpos point) 
-                     (min charpos (length (line-string point))))
+               
+               ;; Restore the cursor to beginning of line + prefix offset.
+               (lem-core:move-point point (input-start-point buffer))
+               (lem-core:character-offset point prefix-len)
+               
                (return)))
              
         (loop
@@ -212,8 +216,6 @@
                   (when rollback-on-fail
                     (restore-edit-string buffer))
                   (return)))))))))
-
-
 
 
 (define-command listener-previous-startswith-input () ()

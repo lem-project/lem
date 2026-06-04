@@ -90,3 +90,41 @@
     (ok (= 3 (length (lem-core::remove-drawing-cache-entries-from entries 30))))
     ;; A y of 0 removes everything.
     (ok (null (lem-core::remove-drawing-cache-entries-from entries 0)))))
+
+(deftest test-fingerprint-detects-attribute-mutation
+  ;; An attribute mutated in place (e.g. recoloring the shared `cursor`
+  ;; attribute via SET-ATTRIBUTE, as vi-mode/skk-mode do) keeps the same
+  ;; object identity while its content changes.  Because SXHASH on a
+  ;; standard-object is identity-based in SBCL, the fingerprint would not
+  ;; change and the line would be skipped on redraw, leaving stale pixels on
+  ;; persistent textures (SDL2 ghosting).  The fingerprint must change.
+
+  ;; `make-logical-line` and `compute-line-fingerprint` are unexported
+  ;; lem-core internals: this is a white-box unit test of the display
+  ;; layer's fingerprint cache, so internal access is necessary to build a
+  ;; logical-line and hash it directly.  `make-attribute`/`set-attribute`
+  ;; are exported and used through the package's :use of :lem-core.
+
+  ;; Mutation referenced through the attributes list.
+  (let* ((attribute (make-attribute :foreground "#FF0000"))
+         (line (lem-core::make-logical-line
+                :string "foo"
+                :attributes (list (list 0 3 attribute))
+                :end-of-line-cursor-attribute nil
+                :extend-to-end nil
+                :line-end-overlay nil))
+         (before (lem-core::compute-line-fingerprint line 0 0)))
+    (set-attribute attribute :background "#00FF00")
+    (ok (not (= before (lem-core::compute-line-fingerprint line 0 0)))))
+
+  ;; Mutation referenced through the end-of-line cursor attribute.
+  (let* ((cursor (make-attribute :background "#FFFFFF"))
+         (line (lem-core::make-logical-line
+                :string "foo"
+                :attributes nil
+                :end-of-line-cursor-attribute cursor
+                :extend-to-end nil
+                :line-end-overlay nil))
+         (before (lem-core::compute-line-fingerprint line 0 0)))
+    (set-attribute cursor :background "#000000")
+    (ok (not (= before (lem-core::compute-line-fingerprint line 0 0))))))

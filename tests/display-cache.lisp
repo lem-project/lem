@@ -51,3 +51,38 @@
     ;; 4. Parameter Cancellation Check: Matching coordinate variables don't zero out
     (ok (not (= (lem-core::compute-line-fingerprint line-a 15 15)
                 (lem-core::compute-line-fingerprint line-a 30 30))))))
+
+(deftest test-evict-line-fingerprints-from
+  ;; When the tail of a window is blanked by clear-to-end-of-window (e.g. after
+  ;; deleting a large region), the fingerprint entries for those rows must be
+  ;; dropped.  Otherwise undoing the deletion restores content whose fingerprint
+  ;; matches the stale entry, the render is skipped, and the row stays blank on
+  ;; persistent-texture frontends (SDL2).  `evict-line-fingerprints-from` is an
+  ;; unexported display-layer internal, accessed here for a white-box unit test.
+  (let ((cache (make-hash-table :test 'eql)))
+    (setf (gethash 0 cache) (cons 111 10))
+    (setf (gethash 10 cache) (cons 222 10))
+    (setf (gethash 20 cache) (cons 333 10))
+    (lem-core::evict-line-fingerprints-from cache 10)
+    ;; Rows at or below the cleared y are gone; rows above are kept.
+    (ok (nth-value 1 (gethash 0 cache)))
+    (ng (nth-value 1 (gethash 10 cache)))
+    (ng (nth-value 1 (gethash 20 cache)))
+    (ok (= 1 (hash-table-count cache)))))
+
+(deftest test-remove-drawing-cache-entries-from
+  ;; The drawing-object cache (keyed by screen y) has the same stale-tail
+  ;; hazard as the fingerprint cache: rows blanked by clear-to-end-of-window
+  ;; must be dropped so a later frame whose restored objects match a stale
+  ;; entry does not pass validate-cache-p and skip the render (SDL2 invisible
+  ;; text after undoing a large deletion).  `remove-drawing-cache-entries-from`
+  ;; is an unexported display-layer internal, accessed here for a white-box
+  ;; unit test over the (y height objects) entry list.
+  (let ((entries (list (list 0 10 nil) (list 10 10 nil) (list 20 10 nil))))
+    ;; Only the row above the cleared y survives.
+    (ok (equal (lem-core::remove-drawing-cache-entries-from entries 10)
+               (list (list 0 10 nil))))
+    ;; A y past all entries removes nothing.
+    (ok (= 3 (length (lem-core::remove-drawing-cache-entries-from entries 30))))
+    ;; A y of 0 removes everything.
+    (ok (null (lem-core::remove-drawing-cache-entries-from entries 0)))))

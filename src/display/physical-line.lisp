@@ -386,6 +386,25 @@ Assumes inputs are already reduced (no adjacent mergeable objects)."
                             (<= (+ y height) (+ cache-y cache-height)))))
                    (drawing-cache window))))
 
+(defun remove-drawing-cache-entries-from (entries y)
+  "Return ENTRIES with drawing-cache rows at or below Y removed.
+Pure helper over the entry list so the eviction can be unit tested without
+a window."
+  (remove-if (lambda (elt)
+               (>= (first elt) y))
+             entries))
+
+(defun invalidate-drawing-cache-from (window y)
+  "Drop drawing-cache entries for screen rows at or below Y.
+Counterpart to CLEAR-LINE-FINGERPRINT-CACHE-FROM for the drawing-object
+cache: when the area from Y down is blanked by CLEAR-TO-END-OF-WINDOW
+those rows no longer hold the objects their cache entries describe.  A
+later frame whose restored content matches a stale entry (e.g. undoing a
+large deletion) would otherwise pass VALIDATE-CACHE-P and skip the render,
+leaving the row blank on persistent-texture frontends such as SDL2."
+  (setf (drawing-cache window)
+        (remove-drawing-cache-entries-from (drawing-cache window) y)))
+
 (defun update-and-validate-cache-p (window y height objects)
   "Check cache validity, reducing objects once before storing.
 Returns T if the cached entry matches (render can be skipped)."
@@ -421,6 +440,26 @@ is force-redrawn or marked as needing redraw, since cached heights may
 no longer reflect the current layout."
   (alexandria:when-let ((cache (window-parameter window 'line-fingerprint-cache)))
     (clrhash cache)))
+
+(defun evict-line-fingerprints-from (cache y)
+  "Remove fingerprint entries in CACHE for screen rows at or below Y.
+Pure helper over the hash table so it can be unit tested without a window."
+  (loop :for key :being :the :hash-keys :of cache
+        :when (>= key y)
+        :collect key :into stale
+        :finally (dolist (key stale)
+                   (remhash key cache))))
+
+(defun clear-line-fingerprint-cache-from (window y)
+  "Drop cached line fingerprints for screen rows at or below Y on WINDOW.
+Called when the area from Y down is about to be blanked by
+CLEAR-TO-END-OF-WINDOW: those rows no longer hold the content their cached
+fingerprints describe.  Leaving them would let a later frame whose restored
+content happens to match a stale fingerprint (e.g. undoing a large
+deletion) skip the render, leaving the row blank on persistent-texture
+frontends such as SDL2."
+  (alexandria:when-let ((cache (window-parameter window 'line-fingerprint-cache)))
+    (evict-line-fingerprints-from cache y)))
 
 (defun djb2 (hash item)
   "Hash with seed and item using djb2 hash algorithm"
@@ -645,6 +684,8 @@ creating zero temporary letter-objects."
             (unless (< y height)
               (return-from outer)))))
       (when (< y height)
+        (clear-line-fingerprint-cache-from window y)
+        (invalidate-drawing-cache-from window y)
         (lem-if:clear-to-end-of-window (implementation) (window-view window) y))
       (setf (window-left-width window)
             (floor left-side-width (lem-if:get-char-width (implementation)))))))

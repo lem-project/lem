@@ -194,9 +194,14 @@
            (prefix (points-to-string (input-start-point buffer) point)))
       (backup-edit-string (current-buffer))
       (flet ((commit (str)
+               (lem-core:move-point point (input-start-point buffer))
+               
                (replace-textarea buffer str)
-               (setf (point-charpos point) charpos)
+               (setf (point-charpos point) 
+                     (min charpos (length (line-string point))))
+                     
                (return)))
+             
         (loop
           (multiple-value-bind (str win)
               (lem/common/history:previous-history (current-listener-history))
@@ -217,7 +222,8 @@
       (backup-edit-string (current-buffer))
       (flet ((commit (str)
                (replace-textarea buffer str)
-               (setf (point-charpos point) charpos)
+               (setf (point-charpos point) 
+                     (min charpos (length (line-string point))))
                (return))
              (rollback ()
                (restore-edit-string buffer)

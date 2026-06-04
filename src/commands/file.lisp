@@ -329,7 +329,9 @@
     (when arg (insert-string (current-point) "\""))))
 
 (define-command save-some-buffers (&optional save-silently-p) (:universal-nil)
-  "Save some files in the open buffer."
+  "For all modified files, interactively ask to save it.
+
+  With a prefix argument, don't ask interactively."
   (let ((prev-buffer (current-buffer)))
     (dolist (buffer (buffer-list))
       (when (and (buffer-modified-p buffer)

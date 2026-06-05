@@ -116,7 +116,7 @@
     (when (input-start-point buffer)
       (delete-point (input-start-point buffer)))
     (set-input-start-point buffer
-                          (copy-point point :right-inserting))))
+                           (copy-point point :right-inserting))))
 
 (defun write-prompt (point)
   (let ((buffer (point-buffer point)))
@@ -183,52 +183,48 @@
     (when win
       (replace-textarea buffer str))))
 
+(defun %search-history-startswith-input (direction)
+  "Internal helper for history next and previous history navigation."
+  (let* ((buffer (current-buffer))
+         (point (buffer-point buffer))
+         (start (input-start-point buffer))
+         (prefix (points-to-string (input-start-point buffer) point))
+         (prefix-len (length prefix))
+         (step-fn (case direction 
+                    (:previous #'lem/common/history:previous-history)
+                    (:next #'lem/common/history:next-history))))
+    (backup-edit-string (current-buffer))
+    (loop :for steps :from 0
+          :do (multiple-value-bind (str found)
+                  (funcall step-fn (current-listener-history))
+                (cond
+                  ((and found (eql 0 (search prefix str :test #'string=)))
+                   (replace-textarea buffer str)
+                   (move-point point start)
+                   (character-offset point prefix-len)
+                   (return))
+                  ((not found)
+                   (ecase direction
+                     (:previous 
+                      (dotimes (i steps)
+                        (lem/common/history:next-history (current-listener-history))))
+                     (:next 
+                      (restore-edit-string buffer)
+                      (move-point point start)
+                      (character-offset point prefix-len)))
+                   (return)))))))
+
 (define-command listener-previous-startswith-input () ()
   "Find the previous prompt starting with the current input.
 
   See also `listener-previous-input`."
-  (block nil
-    (let* ((buffer (current-buffer))
-           (point (buffer-point buffer))
-           (charpos (point-charpos point))
-           (prefix (points-to-string (input-start-point buffer) point)))
-      (backup-edit-string (current-buffer))
-      (flet ((commit (str)
-               (replace-textarea buffer str)
-               (setf (point-charpos point) charpos)
-               (return)))
-        (loop
-          (multiple-value-bind (str win)
-              (lem/common/history:previous-history (current-listener-history))
-            (if win
-                (when (eql 0 (search prefix str :test #'string=))
-                  (commit str))
-                (return))))))))
+  (%search-history-startswith-input :previous))
 
 (define-command listener-next-startswith-input () ()
   "Find the next prompt starting with the current input.
 
   See also `listener-next-input`."
-  (block nil
-    (let* ((buffer (current-buffer))
-           (point (buffer-point buffer))
-           (charpos (point-charpos point))
-           (prefix (points-to-string (input-start-point buffer) point)))
-      (backup-edit-string (current-buffer))
-      (flet ((commit (str)
-               (replace-textarea buffer str)
-               (setf (point-charpos point) charpos)
-               (return))
-             (rollback ()
-               (restore-edit-string buffer)
-               (return)))
-        (loop
-          (multiple-value-bind (str win)
-              (lem/common/history:next-history (current-listener-history))
-            (if win
-                (when (eql 0 (search prefix str :test #'string=))
-                  (commit str))
-                (rollback))))))))
+  (%search-history-startswith-input :next))
 
 (define-command listener-previous-input () ()
   "Get and insert the previous REPL input."

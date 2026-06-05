@@ -214,6 +214,10 @@
   (with-killring-context (:options (case type
                                      (:line :vi-line)
                                      (:block :vi-block)))
+    (unless (and (lem:point-buffer start)
+                 (lem:point-buffer end))
+      (return-from yank-region))
+    
     (copy-to-clipboard-with-killring
      (case type
        (:block

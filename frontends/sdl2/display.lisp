@@ -52,6 +52,17 @@
 
 (defvar *display*)
 
+(defvar *post-display-change-hooks* '()
+  "Hook variable (analogous to Lem's other `*...-hooks*' registries): a list
+of one-argument functions (DISPLAY) called after a DPI-driven font/char-metrics
+change has been applied, before `update-on-display-resized'.
+`lem-sdl2/view' registers a hook here to recreate per-view textures
+whose pixel sizes depend on `display-char-width' / `display-char-height';
+without it, the old view textures — sized at the *old* char metrics —
+leak through as scaled/clipped artifacts (most visibly the buffer
+occupying only the upper-left quarter of the window when moving from
+Retina to a 1x display).")
+
 (defun current-display ()
   *display*)
 
@@ -257,16 +268,6 @@ e.g. -3 for NotoSansMono at 12pt). |descent| pixels sit below the baseline."
                    (font:change-size font-config
                                      (* ratio (lem:config :sdl2-font-size (font:default-font-size))))
                    nil))))
-
-(defvar *post-display-change-hooks* '()
-  "Functions of one argument (DISPLAY) called after a DPI-driven
-font/char-metrics change has been applied, before `update-on-display-resized'.
-`lem-sdl2/view' registers a hook here to recreate per-view textures
-whose pixel sizes depend on `display-char-width' / `display-char-height';
-without it, the old view textures \u2014 sized at the *old* char metrics \u2014
-leak through as scaled/clipped artifacts (most visibly the buffer
-occupying only the upper-left quarter of the window when moving from
-Retina to a 1x display).")
 
 (defun add-post-display-change-hook (function)
   "Register FUNCTION (a one-arg fn of DISPLAY) on `*post-display-change-hooks*'.

@@ -280,7 +280,7 @@ is not erased by the next glyph's background fill."
 widths, for the multi-character text run DRAWING-OBJECT."
   (let ((attribute (text-object-attribute drawing-object)))
     (loop :for c :across (text-object-string drawing-object)
-          :for letter := (lem-core::make-letter-object c attribute)
+          :for letter := (make-letter-object c attribute)
           :collect letter :into letters
           :collect (object-width letter display) :into widths
           :finally (return (values letters widths)))))
@@ -427,7 +427,7 @@ rather than the row-wide two-pass)."
                     (loop :with current-x := obj-x
                           :for c :across (text-object-string object)
                           :while (< current-x display-width)
-                          :for letter := (lem-core::make-letter-object
+                          :for letter := (make-letter-object
                                           c (text-object-attribute object))
                           :for letter-width := (object-width letter display)
                           :do (draw-text-glyph-surface letter current-x bottom-y

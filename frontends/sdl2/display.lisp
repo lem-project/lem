@@ -16,6 +16,8 @@
            :display-window
            :display-char-width
            :display-char-height
+           :display-font-ascent
+           :display-font-descent
            :display-focus-p
            :create-view-texture
            :display-renderer
@@ -37,6 +39,9 @@
            :display-height
            :display-window-width
            :adapt-high-dpi-font-size
+           :handle-display-changed
+           :*post-display-change-hooks*
+           :add-post-display-change-hook
            :change-font
            :with-renderer
            :with-display-render-target
@@ -136,6 +141,16 @@ over `call-with-scratch-rect'."
 
 (defmethod display-braille-font ((display display))
   (font:font-braille-font (display-font display)))
+
+(defmethod display-font-ascent ((display display))
+  "Latin-normal-font ascent in pixels (always positive). Defines the row's
+target baseline relative to the cell top."
+  (font:font-ascent (display-font display)))
+
+(defmethod display-font-descent ((display display))
+  "Latin-normal-font descent in pixels (SDL_ttf convention: negative number,
+e.g. -3 for NotoSansMono at 12pt). |descent| pixels sit below the baseline."
+  (font:font-descent (display-font display)))
 
 (defmethod display-background-color ((display display))
   (or (lem:parse-color lem-if:*background-color-of-drawing-window*)
@@ -243,6 +258,25 @@ over `call-with-scratch-rect'."
                                      (* ratio (lem:config :sdl2-font-size (font:default-font-size))))
                    nil))))
 
+(defvar *post-display-change-hooks* '()
+  "Functions of one argument (DISPLAY) called after a DPI-driven
+font/char-metrics change has been applied, before `update-on-display-resized'.
+`lem-sdl2/view' registers a hook here to recreate per-view textures
+whose pixel sizes depend on `display-char-width' / `display-char-height';
+without it, the old view textures \u2014 sized at the *old* char metrics \u2014
+leak through as scaled/clipped artifacts (most visibly the buffer
+occupying only the upper-left quarter of the window when moving from
+Retina to a 1x display).")
+
+(defun add-post-display-change-hook (function)
+  "Register FUNCTION (a one-arg fn of DISPLAY) on `*post-display-change-hooks*'.
+Idempotent."
+  (pushnew function *post-display-change-hooks*))
+
+(defun run-post-display-change-hooks (display)
+  (dolist (hook *post-display-change-hooks*)
+    (funcall hook display)))
+
 (defmethod notify-required-redisplay ((display display))
   (with-renderer (display)
     (when (display-redraw-at-least-once-p display)
@@ -254,7 +288,32 @@ over `call-with-scratch-rect'."
       (adapt-high-dpi-display-scale display)
       #+darwin
       (adapt-high-dpi-font-size display)
+      (run-post-display-change-hooks display)
       (lem:update-on-display-resized))))
+
+(defun handle-display-changed (display)
+  "Handle a backing-size or display change for DISPLAY.
+Re-creates the texture at the new drawable size, re-derives the
+high-DPI scale, re-opens the font at the new scale, runs
+`*post-display-change-hooks*' (which refresh per-view textures), and
+relayouts windows.  Called when SDL fires `:size-changed' or
+`:display-changed' for the window \u2014 i.e. the window moved to a
+monitor with a different backing scale (Retina \u2194 standard DPI).
+Unlike `notify-required-redisplay' this runs the DPI adaptation
+unconditionally, since by the time the event fires the window has
+already been rendered at least once on the previous display.
+
+`update-texture' grabs the display mutex non-recursively, so it must
+be called outside the `with-renderer' block (matching the `:resized'
+event handler pattern in `on-windowevent')."
+  (update-texture display)
+  (with-renderer (display)
+    #+darwin
+    (adapt-high-dpi-display-scale display)
+    #+darwin
+    (adapt-high-dpi-font-size display)
+    (run-post-display-change-hooks display)
+    (lem:update-on-display-resized)))
 
 (defmethod render-fill-rect ((display display) x y width height &key color)
   (let ((x (* x (display-char-width display)))

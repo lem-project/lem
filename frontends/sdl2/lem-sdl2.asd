@@ -25,7 +25,16 @@
                (:file "graphics")
                (:file "image-buffer")
                (:file "tree")
-               (:file "color-picker")))
+               (:file "color-picker"))
+  :in-order-to ((test-op (test-op "lem-sdl2/tests"))))
+
+(defsystem "lem-sdl2/tests"
+  :depends-on ("lem-sdl2"
+               "rove")
+  :components ((:module "tests"
+                :components ((:file "font")
+                             (:file "drawing"))))
+  :perform (test-op (op c) (symbol-call :rove '#:run c)))
 
 (defsystem "lem-sdl2/executable"
   :build-operation program-op

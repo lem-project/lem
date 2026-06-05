@@ -97,6 +97,17 @@
     (sdl2-ffi:+sdl-windowevent-resized+
      (display:update-texture display)
      (display:notify-required-redisplay display))
+    ;; SDL fires :size-changed on backing-pixel-size changes that do not
+    ;; correspond to a user resize — most notably when the window moves
+    ;; between displays with different DPI (Retina ↔ standard).  Re-derive
+    ;; the high-DPI scale, re-open the font, and resize the backing texture.
+    (sdl2-ffi:+sdl-windowevent-size-changed+
+     (display:handle-display-changed display))
+    ;; SDL ≥ 2.0.18 fires :display-changed when the window is dragged onto
+    ;; a different monitor.  On older SDL builds this constant is still
+    ;; defined by the FFI binding but the event simply never fires.
+    (sdl2-ffi:+sdl-windowevent-display-changed+
+     (display:handle-display-changed display))
     (sdl2-ffi:+sdl-windowevent-focus-gained+
      (setf (display:display-focus-p display) t))
     (sdl2-ffi:+sdl-windowevent-focus-lost+

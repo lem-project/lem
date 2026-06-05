@@ -185,35 +185,34 @@
 
 (defun %search-history-startswith-input (direction)
   "Internal helper for history next and previous history navigation."
-  (multiple-value-bind (step-fn rewind-fn)
-      (ecase direction
-        (:previous (values #'lem/common/history:previous-history
-                           #'lem/common/history:next-history))
-        (:next (values #'lem/common/history:next-history
-                       #'lem/common/history:previous-history)))
-    (let* ((buffer (current-buffer))
-           (point (buffer-point buffer))
-           (start (input-start-point buffer))
-           (prefix (points-to-string (input-start-point buffer) point))
-           (prefix-len (length prefix)))
-      (backup-edit-string (current-buffer))
-      (loop :for steps :from 0
-            :do (multiple-value-bind (str win)
-                    (funcall step-fn (current-listener-history))
-                  (if win
-                      (when (eql 0 (search prefix str :test #'string=))
-                        (replace-textarea buffer str)
-                        (lem-core:move-point point start)
-                        (lem-core:character-offset point prefix-len)
-                        (return))
-                      (progn 
-                        (dotimes (i steps)
-                          (funcall rewind-fn (current-listener-history)))
-                        (when (eq direction :next)
-                          (restore-edit-string buffer)
-                          (lem-core:move-point point start)
-                          (lem-core:character-offset point prefix-len))
-                        (return))))))))
+  (let* ((buffer (current-buffer))
+         (point (buffer-point buffer))
+         (start (input-start-point buffer))
+         (prefix (points-to-string (input-start-point buffer) point))
+         (prefix-len (length prefix))
+         (step-fn (case direction 
+                    (:previous #'lem/common/history:previous-history)
+                    (:next #'lem/common/history:next-history))))
+    (backup-edit-string (current-buffer))
+    (loop :for steps :from 0
+          :do (multiple-value-bind (str found)
+                  (funcall step-fn (current-listener-history))
+                (cond
+                  ((and found (eql 0 (search prefix str :test #'string=)))
+                   (replace-textarea buffer str)
+                   (move-point point start)
+                   (character-offset point prefix-len)
+                   (return))
+                  ((not found)
+                   (ecase direction
+                     (:previous 
+                      (dotimes (i steps)
+                        (lem/common/history:next-history (current-listener-history))))
+                     (:next 
+                      (restore-edit-string buffer)
+                      (move-point point start)
+                      (character-offset point prefix-len)))
+                   (return)))))))
 
 (define-command listener-previous-startswith-input () ()
   "Find the previous prompt starting with the current input.

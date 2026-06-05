@@ -183,7 +183,7 @@
     (when win
       (replace-textarea buffer str))))
 
-(defun %search-history-startwith (direction)
+(defun %search-history-startswith-input (direction)
   "Internal helper for history next and previous history navigation."
   (multiple-value-bind (step-fn rewind-fn)
       (ecase direction
@@ -219,13 +219,13 @@
   "Find the previous prompt starting with the current input.
 
   See also `listener-previous-input`."
-  (%search-history-startwith :previous))
+  (%search-history-startswith-input :previous))
 
 (define-command listener-next-startswith-input () ()
   "Find the next prompt starting with the current input.
 
   See also `listener-next-input`."
-  (%search-history-startwith :next))
+  (%search-history-startswith-input :next))
 
 (define-command listener-previous-input () ()
   "Get and insert the previous REPL input."

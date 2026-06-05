@@ -248,10 +248,15 @@
   (rows :int)
   (cols :int))
 
+;; Field order must match libvterm's VTermRect exactly: start_row, end_row,
+;; start_col, end_col.  A previous definition swapped end-row and start-col,
+;; so cb-damage/cb-moverect read a column value as the end row and marked an
+;; empty/garbage row range -- erases and scrolls the cursor didn't visit
+;; (clear, completion listings) were never re-rendered, leaving ghosting.
 (cffi:defcstruct vterm-rect
   (start-row :int)
-  (start-col :int)
   (end-row :int)
+  (start-col :int)
   (end-col :int))
 
 (cffi:defcstruct vterm-pos

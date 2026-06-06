@@ -25,6 +25,7 @@
    :text-object-surface
    :text-object-type
    :void-object
+   :make-letter-object
    :text-object))
 
 (uiop:define-package :lem-core

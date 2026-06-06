@@ -100,6 +100,7 @@ test:
 		--eval '(asdf:test-system "lem-tests")' \
 		--eval '(asdf:test-system "lem-vi-mode")' \
 		--eval '(asdf:test-system "lem-transient")' \
+		--eval '(asdf:test-system "lem-sdl2/tests")' \
 		--quit
 
 doc:

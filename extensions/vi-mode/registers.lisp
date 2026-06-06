@@ -211,13 +211,17 @@
                 (return (format nil "~{~A~^~%~}" results))))))))
 
 (defun yank-region (start end &key type append)
+  ;; A motion that mutates the buffer (e.g. `k` in the REPL, which swaps in a
+  ;; history item and deletes the old input) can leave START or END on a line
+  ;; that no longer exists. Such a point still reports a non-nil POINT-BUFFER,
+  ;; so check ALIVE-POINT-P instead before reading the region; otherwise
+  ;; POINTS-TO-STRING walks a dead line and crashes the editor.
+  (unless (and (lem:alive-point-p start)
+               (lem:alive-point-p end))
+    (return-from yank-region))
   (with-killring-context (:options (case type
                                      (:line :vi-line)
                                      (:block :vi-block)))
-    (unless (and (lem:point-buffer start)
-                 (lem:point-buffer end))
-      (return-from yank-region))
-    
     (copy-to-clipboard-with-killring
      (case type
        (:block

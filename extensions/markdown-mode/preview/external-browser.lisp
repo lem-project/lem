@@ -94,7 +94,7 @@ The WS connection is closed when the markdown file is closed."))
     (trivial-ws:stop handler)))
 
 (defmethod lem-markdown-mode/internal:on-change (buffer (view-type (eql :external-browser)))
-  )
+  (refresh buffer))
 
 (defmethod lem-markdown-mode/internal:preview (buffer (view-type (eql :external-browser)))
   "Render the markdown of the current buffer to a browser window. The preview is refreshed when the file is saved.

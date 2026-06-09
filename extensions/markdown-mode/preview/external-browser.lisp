@@ -71,7 +71,7 @@ The WS connection is closed when the markdown file is closed."))
 (defun generate-html-and-preview (buffer)
   (let* ((port (setup-server buffer))
          (html-file (generate-html buffer port)))
-    (uiop:run-program
+    (uiop:launch-program
       (list #+(or win32 mswindows windows) "explorer"
             #+(or macos darwin) "open"
             #-(or win32 mswindows macos darwin windows) "xdg-open"

@@ -433,7 +433,9 @@
            (when method
              (return-from find-indent-method method))))
     (f (get-indentation name))
-    (let ((name1 (ppcre:scan-to-strings "(?<=:)[^:]+" name)))
+    (let ((name1 (let ((registers (nth-value 1 (ppcre:scan-to-strings "^[^:]+:{1,2}([^:].*)$" name))))
+                   (when (and registers (plusp (length registers)))
+                     (aref registers 0)))))
       (when name1
         (f (get-indentation name1)))
       (f (and *get-method-function*

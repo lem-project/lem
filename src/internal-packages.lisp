@@ -580,7 +580,9 @@
    :overlay-put
    :overlay-get
    :clear-overlays
-   :point-overlays)
+   :point-overlays
+   :buffer-overlays
+   :overlay-within-point-p)
   ;; streams.lisp
   (:export
    :buffer-input-stream
@@ -659,7 +661,8 @@
    :compute-wrap-left-area-content)
   ;; display/logical-line.lisp
   (:export
-   :make-region-overlays-using-global-mode)
+   :make-region-overlays-using-global-mode
+   :line-fully-invisible-p)
   ;; interface.lisp
   (:export
    :with-implementation

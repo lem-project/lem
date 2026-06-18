@@ -45,6 +45,46 @@
 (define-key *global-keymap* "C-x [" 'previous-page-char)
 (define-key *global-keymap* "M-g" 'goto-line)
 
+(defun line-invisible-p (point)
+  "T if POINT's line is fully hidden by an :invisible overlay."
+  (let ((overlays (remove-if-not
+                   (lambda (ov)
+                     (overlay-within-point-p ov point))
+                   (buffer-overlays (point-buffer point)))))
+    (line-fully-invisible-p point overlays)))
+
+(defun skip-invisible-lines (point direction)
+  "move POINT past any fully invisible lines in DIRECTION (1 or -1).
+returns POINT on success, or NIL if a buffer boundary is reached."
+  (loop :while (line-invisible-p point)
+        :do (unless (line-offset point direction)
+              (return-from skip-invisible-lines nil)))
+  point)
+
+(defun move-to-next-visible-virtual-line (point n)
+  "like `move-to-next-virtual-line' but skips fully invisible lines."
+  (let ((dir (if (plusp n) 1 -1))
+        (steps (abs n)))
+    (loop :repeat steps
+          :do (unless (move-to-next-virtual-line point dir)
+                (return-from move-to-next-visible-virtual-line nil))
+              (when (line-invisible-p point)
+                (unless (skip-invisible-lines point dir)
+                  (return-from move-to-next-visible-virtual-line nil))))
+    point))
+
+(defun visible-line-offset (point n)
+  "like `line-offset' but skips fully invisible lines."
+  (let ((dir (if (plusp n) 1 -1))
+        (steps (abs n)))
+    (loop :repeat steps
+          :do (unless (line-offset point dir)
+                (return-from visible-line-offset nil))
+              (when (line-invisible-p point)
+                (unless (skip-invisible-lines point dir)
+                  (return-from visible-line-offset nil))))
+    point))
+
 (defun next-line-aux (n
                       point-column-fn
                       forward-line-fn
@@ -67,14 +107,14 @@
   "Move the cursor to next line."
   (next-line-aux n
                  #'point-virtual-line-column
-                 #'move-to-next-virtual-line
+                 #'move-to-next-visible-virtual-line
                  #'move-to-virtual-line-column))
 
 (define-command (next-logical-line (:advice-classes movable-advice)) (&optional n) (:universal)
   "Move the cursor to the next logical line."
   (next-line-aux n
                  #'point-column
-                 #'line-offset
+                 #'visible-line-offset
                  #'move-to-column))
 
 (define-command (previous-line (:advice-classes movable-advice)) (&optional (n 1)) (:universal)

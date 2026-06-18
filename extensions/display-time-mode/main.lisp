@@ -4,18 +4,26 @@
            :disable))
 (in-package :lem-display-time-mode)
 
+(define-attribute modeline-time-attribute
+  (t :foreground "white" :background "#A0A0A0"))
+
 (defun display-time (window)
   (declare (ignore window))
-  (multiple-value-bind (second minute hour)
+  (multiple-value-bind (second minute hour-24)
       (decode-universal-time (get-universal-time))
     (declare (ignore second))
-    (values (format nil "Clock: ~a:~a" minute hour))))
+    (let* ((hour (mod hour-24 12))
+           (am/pm (if (= hour hour-24) "AM" "PM")))
+    (values (format nil " ~a:~a~a " hour minute am/pm)
+            'modeline-time-attribute))))
 
 (defun enable ()
-  (modeline-add-status-list 'display-time))
+  (setf (variable-value 'lem:modeline-format) 
+        (cons 'display-time (variable-value 'lem:modeline-format))))
 
 (defun disable ()
-   (modeline-remove-status-list 'display-time))
+  (setf (variable-value 'lem:modeline-format)
+        (remove 'display-time (variable-value 'lem:modeline-format))))
 
 (lem:define-minor-mode display-time-mode
     (:name "Display Time Mode"

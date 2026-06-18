@@ -329,7 +329,7 @@ With prefix argument ARG, unmark all those files."
       ((mode-active-p (current-buffer) 'directory-mode)
        (directory-mode-up-directory))
       ((null fullpath)
-       (message "No file at point"))
+       (switch-to-buffer (find-file-buffer (uiop:getcwd))))
       (t
        (switch-to-buffer
         (find-file-buffer (lem-core/commands/file::directory-for-file-or-lose (buffer-directory))))

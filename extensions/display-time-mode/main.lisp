@@ -18,10 +18,12 @@
             'modeline-time-attribute))))
 
 (defun enable ()
+  "Adds the display time function to the modeline format"
   (setf (variable-value 'lem:modeline-format) 
         (cons 'display-time (variable-value 'lem:modeline-format))))
 
 (defun disable ()
+  "Removes the display time function from the modeline format"
   (setf (variable-value 'lem:modeline-format)
         (remove 'display-time (variable-value 'lem:modeline-format))))
 

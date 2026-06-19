@@ -7,14 +7,15 @@
 (in-package :lem-display-time-mode)
 
 (defun display-time (window)
-  (declare (ignore window))
   (multiple-value-bind (second minute hour-24)
       (decode-universal-time (get-universal-time))
     (declare (ignore second))
     (let* ((hour (if (> hour-24 12) (- hour-24 12) hour-24))
            (am/pm (if (= hour hour-24) "AM" "PM")))
     (values (format nil " ~d:~2,'0d~a " hour minute am/pm)
-            'lem-core:modeline))))
+            (if (eq (lem:current-window) window)
+                'lem-core:modeline
+                'lem-core:modeline-inactive)))))
 
 (defun enable ()
   "Adds the display time function to the modeline format"

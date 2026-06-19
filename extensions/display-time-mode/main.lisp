@@ -4,32 +4,36 @@
            :disable))
 (in-package :lem-display-time-mode)
 
-(define-attribute modeline-time-attribute
-  (t :foreground "white" :background "#A0A0A0"))
-
 (defun display-time (window)
   (declare (ignore window))
   (multiple-value-bind (second minute hour-24)
       (decode-universal-time (get-universal-time))
     (declare (ignore second))
-    (let* ((hour (mod hour-24 12))
+    (let* ((hour (if (> hour-24 12) (- hour-24 12) hour-24))
            (am/pm (if (= hour hour-24) "AM" "PM")))
-    (values (format nil " ~a:~a~a " hour minute am/pm)
-            'modeline-time-attribute))))
+    (values (format nil " ~2,'0d:~2,'0d~a " hour minute am/pm)
+            'lem-core:modeline))))
 
 (defun enable ()
   "Adds the display time function to the modeline format"
-  (setf (variable-value 'lem:modeline-format) 
-        (cons 'display-time (variable-value 'lem:modeline-format))))
+  (symbol-macrolet ((fmt (variable-value 'lem:modeline-format :global)))
+    (let* ((new-fmt (append fmt (list '(display-time nil :right)))))
+      (setf fmt new-fmt))))
 
 (defun disable ()
   "Removes the display time function from the modeline format"
-  (setf (variable-value 'lem:modeline-format)
-        (remove 'display-time (variable-value 'lem:modeline-format))))
+  (setf (variable-value 'lem:modeline-format :global)
+        (remove 'display-time
+                (variable-value 'lem:modeline-format :global)
+                :key (lambda (obj)
+                       (if (listp obj)
+                           (first obj)
+                           obj)))))
 
 (lem:define-minor-mode display-time-mode
-    (:name "Display Time Mode"
+    (:name "Time"
      :description "Displays the time in the modeline."
      :global t
      :enable-hook 'enable
-     :disable-hook 'disable))
+     :disable-hook 'disable
+     :hide-from-modeline t))

@@ -1,7 +1,9 @@
 (defpackage :lem-display-time-mode
   (:use :cl :lem)
   (:export :enable
-           :disable))
+           :disable
+           :display-time
+           :display-time-mode))
 (in-package :lem-display-time-mode)
 
 (defun display-time (window)

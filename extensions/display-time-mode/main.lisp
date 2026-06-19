@@ -11,7 +11,7 @@
     (declare (ignore second))
     (let* ((hour (if (> hour-24 12) (- hour-24 12) hour-24))
            (am/pm (if (= hour hour-24) "AM" "PM")))
-    (values (format nil " ~2,'0d:~2,'0d~a " hour minute am/pm)
+    (values (format nil " ~d:~2,'0d~a " hour minute am/pm)
             'lem-core:modeline))))
 
 (defun enable ()

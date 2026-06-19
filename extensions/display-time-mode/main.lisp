@@ -31,7 +31,7 @@
                            obj)))))
 
 (lem:define-minor-mode display-time-mode
-    (:name "Time"
+    (:name "Display Time Mode"
      :description "Displays the time in the modeline."
      :global t
      :enable-hook 'enable

@@ -303,7 +303,8 @@
                "lem-living-canvas"
                "lem-tree-sitter"
                "lem-git-gutter"
-               "lem-skk-mode"))
+               "lem-skk-mode"
+               "lem-emacs-help-mode"))
 
 (defsystem "lem"
   :version "2.3.0"

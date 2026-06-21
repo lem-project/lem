@@ -35,7 +35,7 @@
           (unwind-protect
                (progn
                  ,@body)
-            (let ((,output-buffer (lem:make-buffer ,buffer-name)))
+            (let ((,output-buffer (make-buffer ,buffer-name)))
               (erase-buffer ,output-buffer)
               (insert-string (buffer-point ,output-buffer) (get-output-stream-string ,var))
               (pop-to-buffer ,output-buffer))))))))
@@ -114,7 +114,8 @@
         (print-modes "Minor modes" minor-modes)))))
 
 (define-command describe-all-modes () ()
-  (lem:call-command 'list-modes nil))
+  "Alias for list-modes"
+  (call-command 'list-modes nil))
 
 (define-command describe-mode () ()
   "Show information about current major mode and enabled minor modes."
@@ -152,6 +153,10 @@
       (dolist (name (all-command-names))
         (when (search str name)
           (describe (command-name (find-command name)) out))))))
+
+(define-command describe-command () ()
+  "Alias for apropos-command"
+  (call-command 'apropos-command nil))
 
 (define-command lem-version () ()
   "Display Lem's version."

@@ -12,15 +12,44 @@
 
 (define-key *global-keymap* "C-x ?" 'describe-key)
 
+(declaim (type (member nil :buffer :popup :message) *describe-output-override*))
+(defvar *describe-output-type-override* nil
+  "When non nil, describe commands will always
+   send their information to this type of output")
+
+(defmacro with-describe-output-stream
+    ((var requested-output-type &optional (buffer-name "*Description*")) &body body)
+  (alexandria:with-gensyms (output-buffer)
+    `(ecase (or *describe-output-type-override* ,requested-output-type)
+       ((:message)
+        (let ((,var (make-string-output-stream)))
+          (unwind-protect
+               (progn
+                 ,@body)
+            (show-message (get-output-stream-string ,var)))))
+       ((:popup)
+        (with-pop-up-typeout-window (,var (make-buffer ,buffer-name) :erase t)
+          ,@body))
+       ((:buffer)
+        (let ((,var (make-string-output-stream)))
+          (unwind-protect
+               (progn
+                 ,@body)
+            (let ((,output-buffer (lem:make-buffer ,buffer-name)))
+              (erase-buffer ,output-buffer)
+              (insert-string (buffer-point ,output-buffer) (get-output-stream-string ,var))
+              (pop-to-buffer ,output-buffer))))))))
+  
 (define-command describe-key () ()
   "Tell what is the command associated to a keybinding."
   (show-message "describe-key: ")
   (redraw-display)
   (let* ((kseq (read-key-sequence))
          (cmd (find-keybind kseq)))
-    (show-message (format nil "describe-key: ~a ~(~a~)"
-                          (keyseq-to-string kseq)
-                          cmd))))
+    (with-describe-output-stream (s :message)
+      (format s "describe-key: ~a ~(~a~)"
+              (keyseq-to-string kseq)
+              cmd))))
 
 (defun describe-bindings-internal (s name keymap &optional first-p)
   (unless first-p
@@ -45,7 +74,7 @@
   "Describe the bindings of the buffer's current major mode."
   (let ((buffer (current-buffer))
         (firstp t))
-    (with-pop-up-typeout-window (s (make-buffer "*bindings*") :erase t)
+    (with-describe-output-stream (s :popup "*bindings*")
       (describe-bindings-internal s
                                   (mode-name (buffer-major-mode buffer))
                                   (setf firstp (mode-keymap (buffer-major-mode buffer)))
@@ -65,7 +94,7 @@
 
 (define-command list-modes () ()
   "Output all available major and minor modes."
-  (with-pop-up-typeout-window (s (make-buffer "*all-modes*") :erase t)
+  (with-describe-output-stream (s :popup "*all-modes*")
     (let ((major-modes (major-modes))
           (minor-modes (minor-modes)))
       (labels ((is-technical-mode (mode)
@@ -84,6 +113,9 @@
         (print-modes "Major modes" major-modes)
         (print-modes "Minor modes" minor-modes)))))
 
+(define-command describe-all-modes () ()
+  (lem:call-command 'list-modes nil))
+
 (define-command describe-mode () ()
   "Show information about current major mode and enabled minor modes."
   (let* ((buffer (current-buffer))
@@ -93,7 +125,7 @@
                                    :when (and (mode-active-p buffer mode)
                                               (not (find mode minor-modes)))
                                    :collect mode)))
-    (with-pop-up-typeout-window (s (make-buffer "*modes*") :erase t)
+    (with-describe-output-stream (s :popup "*modes*")
       (format s "Major mode is: ~A~@[ – ~A~]~%"
               (mode-name major-mode)
               (mode-description major-mode))
@@ -116,7 +148,7 @@
               "Apropos: "
               :completion-function
               (lambda (str) (completion str (all-command-names))))))
-    (with-pop-up-typeout-window (out (make-buffer "*Apropos*") :erase t)
+    (with-describe-output-stream (out :popup "*Apropos*")
       (dolist (name (all-command-names))
         (when (search str name)
           (describe (command-name (find-command name)) out))))))
@@ -124,11 +156,12 @@
 (define-command lem-version () ()
   "Display Lem's version."
   (let ((version (get-version-string)))
-    (show-message (princ-to-string version))))
+    (with-describe-output-stream (s :message "*Version*")
+      (format s "~a" version))))
 
 (define-command help () ()
   "Show some help."
-  (with-pop-up-typeout-window (s (make-buffer "*Help*") :erase t)
+  (with-describe-output-stream (s :popup "*Help*")
     (format s "Welcome to Lem.~&")
     (format s "You are running ~a.~&" (get-version-string))
     (format s "~%")

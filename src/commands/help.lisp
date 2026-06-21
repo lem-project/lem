@@ -5,14 +5,16 @@
            :describe-mode
            :apropos-command
            :lem-version
-           :list-modes)
+           :list-modes
+           :*describe-output-type-override*)
   #+sbcl
   (:lock t))
 (in-package :lem-core/commands/help)
 
 (define-key *global-keymap* "C-x ?" 'describe-key)
 
-(declaim (type (member nil :buffer :popup :message) *describe-output-override*))
+(declaim (type (member nil :buffer :popup :message)
+               *describe-output-type-override*))
 (defvar *describe-output-type-override* nil
   "When non nil, describe commands will always
    send their information to this type of output")

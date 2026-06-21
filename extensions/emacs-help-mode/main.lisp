@@ -3,6 +3,7 @@
 (in-package #:lem-emacs-help-mode)
 
 (defvar *previous-ctrl-h-suffix* nil)
+(defvar *previous-describe-output-override* nil)
 (defvar *ctrl-h-keymap* (make-keymap))
 
 (define-key *ctrl-h-keymap* "k" 'describe-key)
@@ -22,7 +23,10 @@
     (cond
       (index
        (setf *previous-ctrl-h-suffix* (prefix-suffix (nth index prefixes)))
-       (setf (prefix-suffix (nth index prefixes)) *ctrl-h-keymap*))
+       (setf (prefix-suffix (nth index prefixes)) *ctrl-h-keymap*)
+       (setf *previous-describe-output-override*
+             lem-core/commands/help:*describe-output-type-override*)
+       (setf lem-core/commands/help:*describe-output-type-override* :buffer))
       (recursed-p
        (error "Infinite loop"))
       (t
@@ -37,7 +41,10 @@
                           :test #'lem-core:key-equal)))
     (assert index)
     (setf (prefix-suffix (nth index prefixes)) *previous-ctrl-h-suffix*)
-    (setf *previous-ctrl-h-suffix* nil)))
+    (setf *previous-ctrl-h-suffix* nil)
+    (setf lem-core/commands/help:*describe-output-type-override*
+          *previous-describe-output-override*)
+    (setf *previous-describe-output-override* nil)))
 
 (define-minor-mode emacs-help-mode
     (:name "EHelp"

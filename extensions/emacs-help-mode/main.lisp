@@ -15,7 +15,7 @@
 
 (define-key *emacs-help-mode-keymap* "C-h" *ctrl-h-keymap*)
 
-(defun enable (&optional recursed-p)
+(defun enable ()
   "Enables emacs help mode"
 
   ;; TODO, figure out a more functional way to overwrite this

@@ -23,29 +23,37 @@
   "When non nil, describe commands will always
    send their information to this type of output")
 
+(defun call-with-describe-output-stream (requested-output-type buffer-name function)
+  (ecase (or *describe-output-type-override* requested-output-type)
+    ((:message)
+     (let ((stream (make-string-output-stream)))
+       (unwind-protect
+            (funcall function stream)
+         (show-message (get-output-stream-string stream)))))
+    ((:popup)
+     (with-pop-up-typeout-window (stream (make-buffer buffer-name) :erase t)
+       (funcall function stream)))
+    ((:buffer)
+     (let ((stream (make-string-output-stream)))
+       (unwind-protect
+            (funcall function stream)
+         (let ((output-buffer (make-buffer buffer-name)))
+           (erase-buffer output-buffer)
+           (insert-string (buffer-point output-buffer) (get-output-stream-string stream))
+           (pop-to-buffer output-buffer)))))))
+
 (defmacro with-describe-output-stream
     ((var requested-output-type &optional (buffer-name "*Description*"))
      &body body)
-  (alexandria:with-gensyms (output-buffer)
-    `(ecase (or *describe-output-type-override* ,requested-output-type)
-       ((:message)
-        (let ((,var (make-string-output-stream)))
-          (unwind-protect
-               (progn
-                 ,@body)
-            (show-message (get-output-stream-string ,var)))))
-       ((:popup)
-        (with-pop-up-typeout-window (,var (make-buffer ,buffer-name) :erase t)
-          ,@body))
-       ((:buffer)
-        (let ((,var (make-string-output-stream)))
-          (unwind-protect
-               (progn
-                 ,@body)
-            (let ((,output-buffer (make-buffer ,buffer-name)))
-              (erase-buffer ,output-buffer)
-              (insert-string (buffer-point ,output-buffer) (get-output-stream-string ,var))
-              (pop-to-buffer ,output-buffer))))))))
+  "Executes body in a lexical context where a documentation output stream called
+   'var' has been established. The documentation output stream type will be either
+   a :message, a :popup, or a :buffer. If *describe-output-type-override* is set,
+   then its value will override the requested-output-type, allowing the user to,
+   for example, always output documentation descriptions to a full buffer, rather
+   then just a temporary message or popup"
+  `(call-with-describe-output-stream ,requested-output-type ,buffer-name
+                                     (lambda (,var)
+                                       ,@body)))
   
 (define-command describe-key () ()
   "Tell what is the command associated to a keybinding."

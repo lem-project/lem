@@ -36,7 +36,8 @@ NIL to append it to the key sequence normally.")
 
 (defmethod print-object ((object prefix) stream)
   (print-unreadable-object (object stream :type t)
-    (format stream ":KEY \"~a\"" (slot-value object 'key))))
+    (when (slot-boundp object 'key)
+      (format stream ":KEY \"~a\"" (slot-value object 'key)))))
 
 (defgeneric prefix-key (prefix)
   (:method ((prefix prefix))

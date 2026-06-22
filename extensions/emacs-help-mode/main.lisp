@@ -2,53 +2,38 @@
   (:use #:cl #:lem))
 (in-package #:lem-emacs-help-mode)
 
-(defvar *previous-ctrl-h-suffix* nil)
-(defvar *previous-describe-output-override* nil)
+(defvar *emacs-help-mode-keymap* (make-keymap))
 (defvar *ctrl-h-keymap* (make-keymap))
+(defvar *previous-describe-output-override* nil)
 
 (define-key *ctrl-h-keymap* "k" 'describe-key)
 (define-key *ctrl-h-keymap* "b" 'describe-bindings)
 (define-key *ctrl-h-keymap* "m" 'describe-mode)
 (define-key *ctrl-h-keymap* "a" 'apropos-command)
 (define-key *ctrl-h-keymap* "v" 'apropos-variable)
-
 ;; TODO add describe-function command for "f"
+
+(define-key *emacs-help-mode-keymap* "C-h" *ctrl-h-keymap*)
 
 (defun enable (&optional recursed-p)
   "Enables emacs help mode"
-  (let* ((prefixes (keymap-prefixes *global-keymap*))
-         (ctrl-h (first (parse-keyspec "C-h")))
-         (index (position ctrl-h prefixes :key #'prefix-key :test #'key-equal)))
 
-    (cond
-      (index
-       (setf *previous-ctrl-h-suffix* (prefix-suffix (nth index prefixes)))
-       (setf (prefix-suffix (nth index prefixes)) *ctrl-h-keymap*)
-       (setf *previous-describe-output-override*
-             lem-core/commands/help:*describe-output-type-override*)
-       (setf lem-core/commands/help:*describe-output-type-override* :buffer))
-      (recursed-p
-       (error "Infinite loop"))
-      (t
-       (push (make-prefix :key ctrl-h) (keymap-prefixes *global-keymap*))
-       (enable t)))))
+  ;; TODO, figure out a more functional way to overwrite this
+  ;; variable which does not cause mutable global state
+  (setf *previous-describe-output-override*
+        lem-core/commands/help:*describe-output-type-override*)
+  (setf lem-core/commands/help:*describe-output-type-override* :buffer))
 
 (defun disable ()
   "Disables emacs help mode"
-  (let* ((prefixes (keymap-prefixes *global-keymap*))
-         (ctrl-h (first (parse-keyspec "C-h")))
-         (index (position ctrl-h prefixes :key #'prefix-key
-                          :test #'lem-core:key-equal)))
-    (assert index)
-    (setf (prefix-suffix (nth index prefixes)) *previous-ctrl-h-suffix*)
-    (setf *previous-ctrl-h-suffix* nil)
-    (setf lem-core/commands/help:*describe-output-type-override*
-          *previous-describe-output-override*)
-    (setf *previous-describe-output-override* nil)))
+  (setf lem-core/commands/help:*describe-output-type-override*
+        *previous-describe-output-override*)
+  (setf *previous-describe-output-override* nil))
 
 (define-minor-mode emacs-help-mode
     (:name "EHelp"
      :description "Adds Emacs Style C-h Bindings."
      :global t
+     :keymap *emacs-help-mode-keymap*
      :enable-hook 'enable
      :disable-hook 'disable))

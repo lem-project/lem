@@ -10,9 +10,9 @@
 (define-key *ctrl-h-keymap* "b" 'describe-bindings)
 (define-key *ctrl-h-keymap* "m" 'describe-mode)
 (define-key *ctrl-h-keymap* "a" 'apropos-command)
+(define-key *ctrl-h-keymap* "v" 'apropos-variable)
 
-;; TODO add describe-variable command for "v" and
-;; add describe-function command for "f"
+;; TODO add describe-function command for "f"
 
 (defun enable (&optional recursed-p)
   "Enables emacs help mode"

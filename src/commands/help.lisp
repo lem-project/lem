@@ -4,6 +4,9 @@
            :describe-bindings
            :describe-mode
            :apropos-command
+           :describe-command
+           :apropos-variable
+           :describe-variable
            :lem-version
            :list-modes
            :*describe-output-type-override*)
@@ -20,7 +23,8 @@
    send their information to this type of output")
 
 (defmacro with-describe-output-stream
-    ((var requested-output-type &optional (buffer-name "*Description*")) &body body)
+    ((var requested-output-type &optional (buffer-name "*Description*"))
+     &body body)
   (alexandria:with-gensyms (output-buffer)
     `(ecase (or *describe-output-type-override* ,requested-output-type)
        ((:message)
@@ -146,7 +150,7 @@
                   (mode-description mode)))))))
 
 (define-command apropos-command () ()
-  "Find all symbols in the running Lisp image whose names match a given string."
+  "Find all commands in the running Lisp image whose names match a given string."
   (let ((str (prompt-for-string
               "Apropos: "
               :completion-function
@@ -159,6 +163,56 @@
 (define-command describe-command () ()
   "Alias for apropos-command"
   (call-command 'apropos-command nil))
+
+(defun lem-symbol-p (symbol)
+  (let* ((pkg (symbol-package symbol))
+         (name (package-name pkg)))
+    (string-equal "LEM" (subseq name 0 3))))
+
+(defun is-variable-p (symbol)
+  "Returns true if the symbol is a lem variable or an editor variable"
+  (or (lem/common/var:editor-variable-p (get symbol 'editor-variable))
+      (and (lem-symbol-p symbol)
+           (boundp symbol)
+           (not (constantp symbol)))))
+
+(defparameter *all-variables-cache* nil
+  "Cached list of all strings that represent variables")
+(defun all-variables ()
+  (unless *all-variables-cache*
+    (loop
+      :for pkg :in (list-all-packages)
+      :appending 
+         (loop
+           :for sym :being :the external-symbols :of (find-package pkg)
+           :when (is-variable-p sym)
+           :collect (string-downcase
+                     (format nil "~a:~a"
+                            (package-name (find-package pkg))
+                            (symbol-name sym))))
+      :into syms
+      :finally (setf *all-variables-cache* syms)))
+  *all-variables-cache*)
+
+(define-command apropos-variable () ()
+  (let* ((str (prompt-for-string 
+              "Enter Variable: "
+              :completion-function
+              (lambda (str) (completion str (all-variables))))))
+    (with-describe-output-stream (out :popup "*variable-description*")
+      ;; TODO get a better description than just describe
+      (let* ((sym (read-from-string str))
+             (editor-variable (get sym 'editor-variable)))
+        (cond
+          ((lem/common/var:editor-variable-p editor-variable)
+           (format
+            out
+            "~a is an EDITOR VARIABLE bound to the following value: ~%~%" sym)
+           (describe editor-variable out))
+          ((is-variable-p sym)
+           (describe sym out))
+          (t 
+           (format out "~a does not describe any variable" sym)))))))
 
 (define-command lem-version () ()
   "Display Lem's version."

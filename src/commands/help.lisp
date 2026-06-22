@@ -9,6 +9,7 @@
            :describe-variable
            :lem-version
            :list-modes
+           :describe-all-modes
            :*describe-output-type-override*)
   #+sbcl
   (:lock t))
@@ -213,6 +214,10 @@
            (describe sym out))
           (t 
            (format out "~a does not describe any variable" sym)))))))
+
+(define-command describe-variable () ()
+  "Alias for apropos-variable"
+  (call-command 'apropos-variable nil))
 
 (define-command lem-version () ()
   "Display Lem's version."

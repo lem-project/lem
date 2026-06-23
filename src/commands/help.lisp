@@ -1,4 +1,4 @@
-(uiop:define-package :lem-core/commands/help
+(defpackage :lem-core/commands/help
   (:use :cl :lem-core)
   (:export :describe-key
            :describe-bindings
@@ -185,31 +185,30 @@
            (boundp symbol)
            (not (constantp symbol)))))
 
-(defparameter *all-lem-variables-list-cache* nil
-  "Cached list of all strings that represent lem variables")
 (defun list-all-lem-variables ()
   "Returns a list of all strings that represent lem variables"
-  (unless *all-variables-cache*
-    (loop
-      :for pkg :in (list-all-packages)
-      :appending 
-         (loop
-           :for sym :being :the external-symbols :of (find-package pkg)
-           :when (lem-variable-p sym)
-           :collect (string-downcase
-                     (format nil "~a:~a"
-                            (package-name (find-package pkg))
-                            (symbol-name sym))))
-      :into syms
-      :finally (setf *all-lem-variables-list-cache* syms)))
-  *all-lem-variables-list-cache*)
+  (loop
+    :for pkg :in (list-all-packages)
+    :appending 
+       (loop
+         :for sym :being :the external-symbols :of (find-package pkg)
+         :when (lem-variable-p sym)
+         :collect (string-downcase
+                   (format nil "~a:~a"
+                           (package-name (find-package pkg))
+                           (symbol-name sym))))
+    :into syms
+    :finally (return syms)))
+  
+
 
 (define-command describe-variable () ()
   "Describe a lem variable who's name matches a given string."
-  (let* ((str (prompt-for-string 
+  (let* ((all-lem-variables (list-all-lem-variables))
+         (str (prompt-for-string
               "Enter Variable: "
               :completion-function
-              (lambda (str) (completion str (list-all-lem-variables))))))
+              (lambda (str) (completion str all-lem-variables)))))
     (with-describe-output-stream (out :popup "*variable-description*")
       ;; TODO get a better description than just describe
       (let* ((sym (read-from-string str))

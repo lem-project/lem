@@ -99,7 +99,6 @@
    :key-shift
    :key-sym
    :match-key
-   :key-equal
    :insertion-key-sym-p
    :named-key-sym-p
    :define-named-key

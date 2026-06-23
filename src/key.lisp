@@ -86,17 +86,6 @@
        (eq (key-shift key) shift)
        (equal (key-sym key) sym)))
 
-(defun key-equal (key-one key-two)
-  "Returns t if key-one == key-two, nil otherwise"
-  (match-key key-one
-             :ctrl (key-ctrl key-two)
-             :meta (key-meta key-two)
-             :super (key-super key-two)
-             :hyper (key-hyper key-two)
-             :shift (key-shift key-two)
-             :sym (key-sym key-two)))
-  
-
 (defun insertion-key-sym-p (sym)
   (= 1 (length sym)))
 

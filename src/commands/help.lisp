@@ -43,7 +43,7 @@
              (insert-string (buffer-point output-buffer) (get-output-stream-string stream))
              (pop-to-buffer output-buffer)))))
       (otherwise
-       (lem:editor-error "Invalid describe-output-type: ~a" chosen-output-type)))))
+       (editor-error "Invalid describe-output-type: ~a" chosen-output-type)))))
 
 (defmacro with-describe-output-stream
     ((var requested-output-type &optional (buffer-name "*Description*"))

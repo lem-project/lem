@@ -645,3 +645,4 @@ for KEYMAP, populating and reusing the keymap's binding-cache slot."
 (defmacro with-special-keymap ((keymap) &body body)
   `(let ((*special-keymap* (or ,keymap *special-keymap*)))
      ,@body))
+

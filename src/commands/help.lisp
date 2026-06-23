@@ -1,11 +1,10 @@
-(defpackage :lem-core/commands/help
+(uiop:define-package :lem-core/commands/help
   (:use :cl :lem-core)
   (:export :describe-key
            :describe-bindings
            :describe-mode
            :apropos-command
            :describe-command
-           :apropos-variable
            :describe-variable
            :lem-version
            :list-modes
@@ -21,7 +20,8 @@
                *describe-output-type-override*))
 (defvar *describe-output-type-override* nil
   "When non nil, describe commands will always
-   send their information to this type of output")
+   send their information to this type of output.
+   Acceptable values: (nil :buffer :popup :message) ")
 
 (defun call-with-describe-output-stream (requested-output-type buffer-name function)
   (ecase (or *describe-output-type-override* requested-output-type)
@@ -178,36 +178,38 @@
          (name (package-name pkg)))
     (string-equal "LEM" (subseq name 0 3))))
 
-(defun is-variable-p (symbol)
+(defun lem-variable-p (symbol)
   "Returns true if the symbol is a lem variable or an editor variable"
   (or (lem/common/var:editor-variable-p (get symbol 'editor-variable))
       (and (lem-symbol-p symbol)
            (boundp symbol)
            (not (constantp symbol)))))
 
-(defparameter *all-variables-cache* nil
-  "Cached list of all strings that represent variables")
-(defun all-variables ()
+(defparameter *all-lem-variables-list-cache* nil
+  "Cached list of all strings that represent lem variables")
+(defun list-all-lem-variables ()
+  "Returns a list of all strings that represent lem variables"
   (unless *all-variables-cache*
     (loop
       :for pkg :in (list-all-packages)
       :appending 
          (loop
            :for sym :being :the external-symbols :of (find-package pkg)
-           :when (is-variable-p sym)
+           :when (lem-variable-p sym)
            :collect (string-downcase
                      (format nil "~a:~a"
                             (package-name (find-package pkg))
                             (symbol-name sym))))
       :into syms
-      :finally (setf *all-variables-cache* syms)))
-  *all-variables-cache*)
+      :finally (setf *all-lem-variables-list-cache* syms)))
+  *all-lem-variables-list-cache*)
 
-(define-command apropos-variable () ()
+(define-command describe-variable () ()
+  "Describe a lem variable who's name matches a given string."
   (let* ((str (prompt-for-string 
               "Enter Variable: "
               :completion-function
-              (lambda (str) (completion str (all-variables))))))
+              (lambda (str) (completion str (list-all-lem-variables))))))
     (with-describe-output-stream (out :popup "*variable-description*")
       ;; TODO get a better description than just describe
       (let* ((sym (read-from-string str))
@@ -218,14 +220,10 @@
             out
             "~a is an EDITOR VARIABLE bound to the following value: ~%~%" sym)
            (describe editor-variable out))
-          ((is-variable-p sym)
+          ((lem-variable-p sym)
            (describe sym out))
           (t 
            (format out "~a does not describe any variable" sym)))))))
-
-(define-command describe-variable () ()
-  "Alias for apropos-variable"
-  (call-command 'apropos-variable nil))
 
 (define-command lem-version () ()
   "Display Lem's version."

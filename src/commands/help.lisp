@@ -24,23 +24,26 @@
    Acceptable values: (nil :buffer :popup :message) ")
 
 (defun call-with-describe-output-stream (requested-output-type buffer-name function)
-  (ecase (or *describe-output-type-override* requested-output-type)
-    ((:message)
-     (let ((stream (make-string-output-stream)))
-       (unwind-protect
-            (funcall function stream)
-         (show-message (get-output-stream-string stream)))))
-    ((:popup)
-     (with-pop-up-typeout-window (stream (make-buffer buffer-name) :erase t)
-       (funcall function stream)))
-    ((:buffer)
-     (let ((stream (make-string-output-stream)))
-       (unwind-protect
-            (funcall function stream)
-         (let ((output-buffer (make-buffer buffer-name)))
-           (erase-buffer output-buffer)
-           (insert-string (buffer-point output-buffer) (get-output-stream-string stream))
-           (pop-to-buffer output-buffer)))))))
+  (let ((chosen-output-type (or *describe-output-type-override* requested-output-type)))
+    (case chosen-output-type
+      ((:message)
+       (let ((stream (make-string-output-stream)))
+         (unwind-protect
+              (funcall function stream)
+           (show-message (get-output-stream-string stream)))))
+      ((:popup)
+       (with-pop-up-typeout-window (stream (make-buffer buffer-name) :erase t)
+         (funcall function stream)))
+      ((:buffer)
+       (let ((stream (make-string-output-stream)))
+         (unwind-protect
+              (funcall function stream)
+           (let ((output-buffer (make-buffer buffer-name)))
+             (erase-buffer output-buffer)
+             (insert-string (buffer-point output-buffer) (get-output-stream-string stream))
+             (pop-to-buffer output-buffer)))))
+      (otherwise
+       (lem:editor-error "Invalid describe-output-type: ~a" chosen-output-type)))))
 
 (defmacro with-describe-output-stream
     ((var requested-output-type &optional (buffer-name "*Description*"))

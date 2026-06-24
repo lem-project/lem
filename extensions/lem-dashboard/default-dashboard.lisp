@@ -28,7 +28,12 @@
                                     "Common Lisp: Standardized Since 1994!"
                                     "(hackable-p 'lem) -> t"
                                     "Written in the Programmable Programming Language!"
-                                    "As Seen On IRC!"))
+                                    "As Seen On IRC!"
+                                    "There are 10 kinds of people, those who understand binary and those who don't."
+                                    "Turing Complete!"
+                                    "Free your Mallocs!"
+                                    "#include <stdio.h>"
+                                    "(print \"Hello World\")"))
 
 (defvar *default-splash* '("
  ----------------------- 

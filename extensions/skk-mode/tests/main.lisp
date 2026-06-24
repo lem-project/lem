@@ -1362,3 +1362,93 @@ Uppercase starts henkan, Space would trigger conversion (simulated as henkan bou
             (delete-point (skk-henkan-start state))))
 
         (kill-buffer buf)))))
+
+(deftest test-delete-cancels-initial-okurigana
+  (testing "KiR then delete keeps henkan-key and cancels okurigana-start"
+    (with-fake-interface ()
+      (let ((buf (make-buffer "*skk-delete-okurigana-test*" :temporary t)))
+        (switch-to-buffer buf)
+        (erase-buffer buf)
+        (let ((state (make-instance 'skk-state)))
+          (setf (buffer-value buf 'lem-skk-mode/state::skk-state) state)
+
+          ;; KiR -> henkan-key: "き", okurigana starts with consonant "r".
+          (lem-skk-mode/conversion::process-skk-char #\K)
+          (lem-skk-mode/conversion::process-skk-char #\i)
+          (lem-skk-mode/conversion::process-skk-char #\R)
+          (ok (equal (skk-henkan-key state) "き"))
+          (ok (equal (skk-okurigana-consonant state) "r"))
+          (ok (equal (skk-preedit state) "r"))
+
+          ;; DEL should cancel initial okurigana start and keep only henkan reading.
+          (lem-skk-mode::skk-delete-backward)
+          (ok (equal (skk-henkan-key state) "き")
+              "henkan-key should stay as 'き'")
+          (ok (null (skk-okurigana-consonant state))
+              "okurigana start should be canceled")
+          (ok (equal (skk-okurigana-kana state) "")
+              "okurigana-kana should be empty")
+          (ok (equal (skk-preedit state) "")
+              "preedit should be empty after delete")
+          (ok (equal (lem-skk-mode/display::build-preedit-display state) "▽き")
+              "display should be plain henkan key without okurigana marker"))
+        (kill-buffer buf)))))
+
+(deftest test-uppercase-vowel-does-not-start-okurigana
+  (testing "KI should stay normal henkan input, not okurigana-only conversion"
+    (with-fake-interface ()
+      (let ((buf (make-buffer "*skk-uppercase-vowel-test*" :temporary t)))
+        (switch-to-buffer buf)
+        (erase-buffer buf)
+        (let ((state (make-instance 'skk-state)))
+          (setf (buffer-value buf 'lem-skk-mode/state::skk-state) state)
+
+          (lem-skk-mode/conversion::process-skk-char #\K)
+          (lem-skk-mode/conversion::process-skk-char #\I)
+
+          (ok (equal (skk-henkan-key state) "き")
+              "KI should produce reading 'き'")
+          (ok (null (skk-okurigana-consonant state))
+              "uppercase vowel must not start okurigana")
+          (ok (equal (skk-okurigana-kana state) "")
+              "okurigana-kana should remain empty")
+          (ok (equal (skk-preedit state) "")
+              "preedit should be empty after KI conversion")
+          (ok (equal (lem-skk-mode/display::build-preedit-display state) "▽き")
+              "display should be normal henkan display"))
+        (kill-buffer buf)))))
+
+(deftest test-kii-equivalent-to-kii-mixed
+  (testing "KII should be handled the same as KiI"
+    (with-fake-interface ()
+      (let ((buf1 (make-buffer "*skk-kii-upper*" :temporary t))
+            (buf2 (make-buffer "*skk-kii-mixed*" :temporary t)))
+        (unwind-protect
+             (let ((state1 (make-instance 'skk-state))
+                   (state2 (make-instance 'skk-state)))
+               (switch-to-buffer buf1)
+               (erase-buffer buf1)
+               (setf (buffer-value buf1 'lem-skk-mode/state::skk-state) state1)
+               (lem-skk-mode/conversion::process-skk-char #\K)
+               (lem-skk-mode/conversion::process-skk-char #\I)
+               (lem-skk-mode/conversion::process-skk-char #\I)
+
+               (switch-to-buffer buf2)
+               (erase-buffer buf2)
+               (setf (buffer-value buf2 'lem-skk-mode/state::skk-state) state2)
+               (lem-skk-mode/conversion::process-skk-char #\K)
+               (lem-skk-mode/conversion::process-skk-char #\i)
+               (lem-skk-mode/conversion::process-skk-char #\I)
+
+               (ok (equal (skk-henkan-key state1) "き"))
+               (ok (equal (skk-henkan-key state2) "き"))
+               (ok (equal (skk-henkan-key state1) (skk-henkan-key state2))
+                   "KII and KiI should produce the same reading")
+               (ok (equal (skk-okurigana-consonant state1) "i"))
+               (ok (equal (skk-okurigana-consonant state2) "i"))
+               (ok (equal (skk-preedit state1) "i"))
+               (ok (equal (skk-preedit state2) "i"))
+               (ok (equal (lem-skk-mode/display::build-preedit-display state1) "▽き*i"))
+               (ok (equal (lem-skk-mode/display::build-preedit-display state2) "▽き*i")))
+          (kill-buffer buf1)
+          (kill-buffer buf2))))))

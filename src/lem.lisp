@@ -7,6 +7,9 @@
 
 (defvar *in-the-editor* nil)
 
+(defparameter *init-file-name* "init.lisp"
+  "The name of the init file found within (lem-home)")
+
 (defun setup-first-frame ()
   (let ((frame (make-frame nil)))
     (map-frame (implementation) frame)
@@ -33,6 +36,10 @@
 (defun teardown ()
   (teardown-frames))
 
+(defun get-preferred-init-file-path ()
+  "Returns the full path to the preferred init file"
+  (merge-pathnames *init-file-name* (lem-home)))
+
 (defun load-init-file ()
   (flet ((maybe-load (path)
            (when (probe-file path)
@@ -42,7 +49,7 @@
     (let ((home (user-homedir-pathname))
           (current-dir (probe-file "."))
           (*package* (find-package :lem-user)))
-      (or (maybe-load (merge-pathnames "init.lisp" (lem-home)))
+      (or (maybe-load (get-preferred-init-file-path))
           (maybe-load (merge-pathnames ".lemrc" home)))
       (unless (uiop:pathname-equal current-dir (user-homedir-pathname))
         (maybe-load (merge-pathnames ".lemrc" current-dir))))))

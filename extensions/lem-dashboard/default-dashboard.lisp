@@ -23,11 +23,12 @@
                                     "Help poor children in Uganda! kuwasha.net"
                                     "Licensed under MIT"
                                     "Also Try Vim!"
-                                    "ED IS THE STANDARD TEXT EDITOR"
+                                    "ED IS THE STANDARD UNIX TEXT EDITOR"
                                     "(uiop:shell-command '(\"cowsay\" \"Hello\"))"
                                     "Common Lisp: Standardized Since 1994!"
                                     "(hackable-p 'lem) -> t"
-                                    "Written in the Programmable Programming Language!"))
+                                    "Written in the Programmable Programming Language!"
+                                    "As Seen On IRC!"))
 
 (defvar *default-splash* '("
  ----------------------- 

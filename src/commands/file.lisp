@@ -4,6 +4,7 @@
            :find-file-executor
            :execute-find-file
            :find-file
+           :open-init-file
            :find-file-recursively
            :read-file
            :add-newline-at-eof-on-writing-file

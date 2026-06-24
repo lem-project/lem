@@ -7,6 +7,9 @@
 
 (defvar *in-the-editor* nil)
 
+(defparameter *init-file-name* "init.lisp"
+  "The name of the init file found within (lem-home)")
+
 (defun setup-first-frame ()
   (let ((frame (make-frame nil)))
     (map-frame (implementation) frame)
@@ -33,8 +36,6 @@
 (defun teardown ()
   (teardown-frames))
 
-(defvar *init-file-name* "init.lisp"
-  "The name of the init file within (lem-home)")
 (defun get-preferred-init-file-path ()
   "Returns the full path to the preferred init file"
   (merge-pathnames *init-file-name* (lem-home)))

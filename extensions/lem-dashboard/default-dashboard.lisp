@@ -8,7 +8,18 @@
                                     "(setf productivity 'high)"
                                     "<M-x> load-library <RET> tetris"
                                     "Lem Editor Modules? Lisp EMacs? Lem's Not Emacs?"
-                                    "(cons 'fun 'programming)"))
+                                    "(cons 'fun 'programming)"
+                                    "Update Instance for Redefined Class"
+                                    "Also try Interlisp!"
+                                    "[L]ots of [I]rritating [S]uperfluous [P]arenthesis"
+                                    "(♡ (I) (Lisp))"
+                                    "Made with secret alien technology!"
+                                    "A monad is just a monoid in the category of endofunctors."
+                                    "Rest in Peace Dr. John McCarthy, 1927-2011"
+                                    "(> (SExpr) (XML)) -> t"
+                                    "[G]nu's [N]ot [U]nix!"
+                                    "I’d just like to interject for a moment"
+                                    "Ed, man! !man ed"))
 
 (defvar *default-splash* '("
  ----------------------- 

@@ -19,7 +19,15 @@
                                     "(> (SExpr) (XML)) -> t"
                                     "[G]nu's [N]ot [U]nix!"
                                     "I’d just like to interject for a moment"
-                                    "Ed, man! !man ed"))
+                                    "Ed, man! !man ed"
+                                    "Help poor children in Uganda! kuwasha.net"
+                                    "Licensed under MIT"
+                                    "Also Try Vim!"
+                                    "ED IS THE STANDARD TEXT EDITOR"
+                                    "(uiop:shell-command '(\"cowsay\" \"Hello\"))"
+                                    "Common Lisp: Standardized Since 1994!"
+                                    "(hackable-p 'lem) -> t"
+                                    "Written in the Programmable Programming Language!"))
 
 (defvar *default-splash* '("
  ----------------------- 

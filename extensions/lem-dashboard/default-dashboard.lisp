@@ -33,7 +33,17 @@
                                     "Turing Complete!"
                                     "Free your Mallocs!"
                                     "#include <stdio.h>"
-                                    "(print \"Hello World\")"))
+                                    "(print \"Hello World\")"
+                                    "The parenthesis ate my homework."
+                                    "Fat Free!"
+                                    "Gluten Free!"
+                                    "Fully Definitely 100% Bug Free"
+                                    "Price Cut: 100% Off"
+                                    "Technically Correct!"
+                                    "(eq 'p 'np) ?"
+                                    "NP Complete!"
+                                    "Contains no High Fructose Corn Syrup"
+                                    "GDPR Compliant"))
 
 (defvar *default-splash* '("
  ----------------------- 

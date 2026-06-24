@@ -106,6 +106,10 @@
         (when (bufferp buffer)
           (switch-to-buffer buffer t nil))))))
 
+(define-command open-init-file () ()
+  "Opens the lem init file"
+  (find-file (lem-core:get-preferred-init-file-path)))
+
 (defmethod execute-find-file :before (executor mode pathname)
   (directory-for-file-or-lose pathname))
 

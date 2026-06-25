@@ -37,13 +37,16 @@
                                     "The parenthesis ate my homework."
                                     "Fat Free!"
                                     "Gluten Free!"
-                                    "Fully Definitely 100% Bug Free"
                                     "Price Cut: 100% Off"
                                     "Technically Correct!"
                                     "(eq 'p 'np) ?"
                                     "NP Complete!"
                                     "Contains no High Fructose Corn Syrup"
-                                    "GDPR Compliant"))
+                                    "GDPR Compliant"
+                                    "(tagbody 10 (print :hello) (sleep 1) 20 (go 10))"
+                                    "Over 120 Contributors!"
+                                    "Made in Japan!"
+                                    "Symbolic!"))
 
 (defvar *default-splash* '("
  ----------------------- 

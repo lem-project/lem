@@ -10,6 +10,9 @@
 (defvar *common-lisp-hyperspec-symbol-table* (make-hash-table :test 'equal)
   "Hash table mapping CL symbols to hyperspec urls")
 
+(define-key lem-lisp-mode/internal:*lisp-mode-keymap* "C-c C-d h" 'lisp-hyperspec-lookup-at-point)
+(define-key lem-lisp-mode/internal:*lisp-repl-mode-keymap* "C-c C-d h" 'lisp-hyperspec-lookup-at-point)
+
 (define-command lisp-hyperspec-lookup-at-point () ()
   "Opens the hyperspec page for the common lisp symbol at point."
   (let* ((symbol-at-point
@@ -23,9 +26,6 @@
        (message "Page Opened in Browser"))
       (t
        (message "\"~a\" could not be found in the hyperspec" symbol-at-point)))))
-
-(define-key lem-lisp-mode/internal:*lisp-mode-keymap* "C-c C-d h" 'lisp-hyperspec-lookup-at-point)
-(define-key lem-lisp-mode/internal:*lisp-repl-mode-keymap* "C-c C-d h" 'lisp-hyperspec-lookup-at-point)
 
 (mapcar (lambda (form)
           (setf (gethash (first form) *common-lisp-hyperspec-symbol-table*)

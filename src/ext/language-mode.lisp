@@ -469,16 +469,26 @@
     (lem/completion-mode:run-completion completion)))
 
 (define-command indent-line-and-complete-symbol () ()
-  (if (variable-value 'calc-indent-function :buffer)
-      (let* ((p (current-point))
-             (old (point-charpos p)))
-        (let ((charpos (point-charpos p)))
-          (handler-case (indent-line p)
-            (editor-condition ()
-              (line-offset p 0 charpos))))
-        (when (= old (point-charpos p))
-          (complete-symbol)))
-      (complete-symbol)))
+  (cond
+    ;; If no ident function is defined then just complete-symbol
+    ((null (variable-value 'calc-indent-function :buffer))
+     (complete-symbol))
+
+    ;; Else if there is a highlighted region indent the region
+    ((buffer-mark-p (current-buffer))
+     (with-point ((start (region-beginning (current-buffer)))
+                  (end (region-end (current-buffer))))
+       (indent-points start end)))
+
+    ;; Else indent the line and complete-symbol if the cursor doesn't move
+    (t (let* ((p (current-point))
+              (old (point-charpos p))
+              (charpos (point-charpos p)))
+         (handler-case (indent-line p)
+           (editor-condition ()
+             (line-offset p 0 charpos)))
+         (when (= old (point-charpos p))
+           (complete-symbol))))))
 
 (define-command (insert-\(\)-or-wrap (:advice-classes editable-advice)) () ()
   (if (mark-active-p (cursor-mark (current-point)))

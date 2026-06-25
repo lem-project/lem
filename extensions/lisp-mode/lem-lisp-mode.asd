@@ -1,6 +1,7 @@
 (defsystem "lem-lisp-mode"
   :depends-on ("alexandria"
                "trivial-types"
+               "trivial-open-browser"
                "usocket"
                "micros"
                "trivia"
@@ -33,6 +34,7 @@
                (:file "message-definitions")
                (:file "repl")
                (:file "apropos-mode")
+               (:file "documentation-lookup")
 
                (:file "ext/exporter")
                (:file "ext/inspector")

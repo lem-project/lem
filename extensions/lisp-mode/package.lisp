@@ -5,5 +5,4 @@
   (:use-reexport :lem-lisp-mode/sldb)
   (:use-reexport :lem-lisp-mode/inspector)
   (:use-reexport :lem-lisp-mode/eval)
-  (:use-reexport :lem-lisp-mode/paren-coloring)
-  (:use-reexport :lem-lisp-mode/documentation-lookup))
+  (:use-reexport :lem-lisp-mode/paren-coloring))

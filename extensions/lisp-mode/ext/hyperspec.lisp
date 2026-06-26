@@ -1011,14 +1011,16 @@ It can also be a path to load it locally:
                '("http" "https")
                :test #'equal)))
 
-(define-command hyperspec-at-point (point) ((current-point))
+(define-command lisp-hyperspec-at-point (point) ((current-point))
+  "Open the HyperSpec page for the Common Lisp symbol at point."
   (let* ((symbol (symbol-string-at-point point))
          (url (hlookup symbol)))
     (if (valid-url-p url)
         (open-external-file url)
         (message "This symbol isn't referenced in the HyperSpec."))))
 
-(define-command hyperspec-lookup () ()
+(define-command lisp-hyperspec-lookup () ()
+  "Open the HyperSpec page for a Common Lisp symbol, to choose with auto-completion."
   (let* ((symbol-list (mapcar #'car *symbols-list*))
          (symbol (prompt-for-string
                   "Symbol: "

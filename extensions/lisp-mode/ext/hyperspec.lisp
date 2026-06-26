@@ -992,6 +992,9 @@ It can also be a path to load it locally:
 (defparameter *symbols* (make-hash-table :test 'equal)
   "Maps symbol names to relative urls in the hyperspec.")
 
+(define-key lem-lisp-mode:*lisp-mode-keymap* "C-c C-d h" 'lisp-hyperspec-at-point)
+(define-key lem-lisp-mode:*lisp-repl-mode-keymap* "C-c C-d h" 'lisp-hyperspec-at-point)
+
 (defun hlookup (symbol)
   (unless (> (hash-table-count *symbols*) 0)
     (hload-symbols))

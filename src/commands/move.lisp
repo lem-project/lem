@@ -12,6 +12,8 @@
            :move-to-beginning-of-logical-line
            :move-to-end-of-line
            :move-to-end-of-logical-line
+           :visual-line-beginning
+           :visual-line-end
            :next-page
            :previous-page
            :next-page-char
@@ -45,18 +47,64 @@
 (define-key *global-keymap* "C-x [" 'previous-page-char)
 (define-key *global-keymap* "M-g" 'goto-line)
 
-(defun line-invisible-p (point)
-  "T if POINT's line is fully hidden by an :invisible overlay."
-  (let ((overlays (remove-if-not
-                   (lambda (ov)
-                     (overlay-within-point-p ov point))
-                   (buffer-overlays (point-buffer point)))))
-    (line-fully-invisible-p point overlays)))
+(defvar *cursor-positions-before-command*
+  (make-hash-table :test 'eq)
+  "maps each cursor point to its absolute buffer position before the running
+command, so `snap-cursors-out-of-invisible' can tell which direction it moved.")
+
+(add-hook *pre-command-hook* 'record-cursor-positions)
+(add-hook *post-command-hook* 'snap-cursors-out-of-invisible)
+
+(defun record-cursor-positions ()
+  "snapshot every cursor's position so a later snap can pick the visible edge on the far side
+of a fold the cursor moves into."
+  (clrhash *cursor-positions-before-command*)
+  (dolist (point (buffer-cursors (current-buffer)))
+    (setf (gethash point *cursor-positions-before-command*)
+          (position-at-point point))))
+
+(defun snap-cursors-out-of-invisible ()
+  "a fold collapses its range, so no cursor may rest within it or at its start. move any such
+cursor to the nearest visible position in its direction of travel, so the cursor never appears
+stuck on hidden text."
+  (dolist (point (buffer-cursors (current-buffer)))
+    (let ((overlay (invisible-overlay-covering point)))
+      (when overlay
+        (let ((forwardp (let ((before (gethash point *cursor-positions-before-command*)))
+                          (or (null before)
+                              (<= before (position-at-point (overlay-start overlay)))))))
+          (loop :for ov := (invisible-overlay-covering point)
+                :while ov
+                :do (if forwardp
+                        (move-point point (overlay-end ov))
+                        (progn
+                          (move-point point (overlay-start ov))
+                          ;; dont continue looping if we are at the beginning of the buffer.
+                          ;; it could cause an endless loop.
+                          (unless (character-offset point -1)
+                            (return))))))))))
+
+(defun visual-line-end (point)
+  "move POINT to the end of its visual line. returns POINT."
+  (line-end point)
+  (loop :until (last-line-p point)
+        :while (invisible-overlay-covering point)
+        :do (line-offset point 1)
+            (line-end point))
+  point)
+
+(defun visual-line-beginning (point)
+  "move POINT to the start of its visual line. returns POINT."
+  (line-start point)
+  (loop :while (line-continuation-p point)
+        :do (line-offset point -1)
+            (line-start point))
+  point)
 
 (defun skip-invisible-lines (point direction)
   "move POINT past any fully invisible lines in DIRECTION (1 or -1).
 returns POINT on success, or NIL if a buffer boundary is reached."
-  (loop :while (line-invisible-p point)
+  (loop :while (line-continuation-p point)
         :do (unless (line-offset point direction)
               (return-from skip-invisible-lines nil)))
   point)
@@ -68,7 +116,7 @@ returns POINT on success, or NIL if a buffer boundary is reached."
     (loop :repeat steps
           :do (unless (move-to-next-virtual-line point dir)
                 (return-from move-to-next-visible-virtual-line nil))
-              (when (line-invisible-p point)
+              (when (line-continuation-p point)
                 (unless (skip-invisible-lines point dir)
                   (return-from move-to-next-visible-virtual-line nil))))
     point))
@@ -80,7 +128,7 @@ returns POINT on success, or NIL if a buffer boundary is reached."
     (loop :repeat steps
           :do (unless (line-offset point dir)
                 (return-from visible-line-offset nil))
-              (when (line-invisible-p point)
+              (when (line-continuation-p point)
                 (unless (skip-invisible-lines point dir)
                   (return-from visible-line-offset nil))))
     point))

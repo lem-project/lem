@@ -104,6 +104,20 @@
                     shifted)))
     (values new-string final)))
 
+(defun adjust-charpos-for-splices (charpos splice-ops)
+  "map a raw-string CHARPOS to its position after SPLICE-OPS are applied.
+SPLICE-OPS is a list of (START END REPLACEMENT . _) covering disjoint ranges, as collected
+in `create-logical-line'. used to keep virtual-item markers anchored when several folds on one
+visual line each splice text out."
+  (+ charpos
+     (loop :for (start end replacement) :in splice-ops
+           :sum (cond ((<= charpos start)
+                       0)
+                      ((>= charpos end)
+                       (- (length replacement) (- end start)))
+                      (t
+                       (- start charpos))))))
+
 (defun line-fully-invisible-p (point overlays)
   "T if an :invisible overlay spans POINT's line without either endpoint on it."
   (loop :for overlay :in overlays
@@ -111,157 +125,232 @@
                       (not (same-line-p (overlay-start overlay) point))
                       (not (same-line-p (overlay-end overlay) point)))))
 
+(defun invisible-overlay-covering (point &optional (overlays (buffer-overlays (point-buffer point))))
+  "return the :invisible overlay covering POINT."
+  (loop :for overlay :in overlays
+        :thereis (and (overlay-get overlay :invisible)
+                      (point<= (overlay-start overlay) point)
+                      (point< point (overlay-end overlay))
+                      overlay)))
+
+(defun line-continuation-p (point)
+  "whether POINT's line continues a previous visual line. meaning the newline preceding it is
+hidden by an :invisible overlay, so the line is not a visual line of its own.
+a folded region may hide arbitrary character ranges, including the newlines that join several
+buffer lines into one displayed line."
+  (and (not (first-line-p point))
+       (with-point ((p point))
+         (line-start p)
+         (character-offset p -1)
+         (invisible-overlay-covering p))))
+
+(defun collect-visual-line-string-and-attributes (vstart vend)
+  (with-point ((p vstart))
+    (let ((out (make-string-output-stream))
+          (attributes)
+          (base 0))
+      (loop
+        (destructuring-bind (string . attrs) (get-string-and-attributes-at-point p)
+          (write-string string out)
+          (loop :for (s e attr) :in attrs
+                :do (push (list (+ base s) (+ base e) attr) attributes))
+          (incf base (length string))
+          (when (same-line-p p vend)
+            (return))
+          (write-char #\newline out)
+          (incf base)
+          (line-offset p 1)))
+      (values (get-output-stream-string out)
+              (nreverse attributes)))))
+
 (defun create-logical-line (point overlays active-modes)
-  "build a logical-line for POINT's line, or NIL if the line is entirely invisible."
-  (flet ((overlay-start-charpos (overlay point)
-           (if (same-line-p point (overlay-start overlay))
-               (point-charpos (overlay-start overlay))
-               0))
-         (overlay-end-charpos (overlay point)
-           (when (same-line-p point (overlay-end overlay))
-             (point-charpos (overlay-end overlay)))))
-    (let ((overlays (remove-if-not (lambda (ov) (overlay-within-point-p ov point))
-                                   overlays)))
-      (when (line-fully-invisible-p point overlays)
-        (return-from create-logical-line nil))
-      (let* ((end-of-line-cursor-attribute nil)
-             (extend-to-end-attribute nil)
-             (line-end-overlay nil)
-             (virtual-items)
-             (left-content
-               (compute-left-display-area-content active-modes
-                                                  (point-buffer point)
-                                                  point))
-             (tab-width (variable-value 'tab-width :default point)))
-        (destructuring-bind (string . attributes)
-            (get-string-and-attributes-at-point point)
-          ;; collect string-splice operations from :invisible/:display overlays.
-          (let ((splice-ops))
-            (loop :for overlay :in overlays
-                  :for invisible := (overlay-get overlay :invisible)
-                  :for display := (overlay-get overlay :display)
-                  :do (when (or invisible display)
-                        (let* ((ov-start (overlay-start-charpos overlay point))
-                               (ov-end (or (overlay-end-charpos overlay point)
-                                           (length string)))
-                               (replacement
-                                 (cond
-                                   (display
-                                    (let ((d (alexandria:ensure-list display)))
-                                      (if (stringp (first d)) (first d) "")))
-                                   ((eq invisible :ellipsis) "...")
-                                   (t "")))
-                               (repl-attr
-                                 (when (listp display) (second display))))
-                          (when (< ov-start ov-end)
-                            (push (list ov-start ov-end replacement repl-attr) splice-ops)))))
-            ;; apply splices right-to-left for position stability
-            (when splice-ops
-              (dolist (op (sort splice-ops #'> :key #'first))
-                (destructuring-bind (ov-start ov-end replacement repl-attr) op
-                  (setf (values string attributes)
-                        (splice-string string
-                                       attributes
-                                       ov-start
-                                       ov-end
-                                       replacement
-                                       repl-attr))))))
-          ;; process all overlays for attributes (virtual text handled separately below).
-          (loop :for overlay :in overlays
-                :do (cond
-                      ((typep overlay 'line-endings-overlay)
-                       (when (same-line-p (overlay-end overlay) point)
-                         (setf line-end-overlay overlay)))
-                      ((typep overlay 'line-overlay)
-                       (let ((attribute (overlay-attribute overlay)))
-                         (setf attributes
-                               (overlay-attributes attributes
-                                                   0
-                                                   (length string)
-                                                   attribute))
-                         (setf extend-to-end-attribute attribute)))
-                      ((typep overlay 'cursor-overlay)
-                       (let* ((ov-start (overlay-start-charpos overlay point))
-                              (ov-end (1+ ov-start))
-                              (ov-attr (overlay-attribute overlay)))
-                         (unless (cursor-overlay-fake-p overlay)
-                           (set-cursor-attribute ov-attr))
-                         (if (<= (length string) ov-start)
-                             (setf end-of-line-cursor-attribute ov-attr)
+  "build a logical-line for the visual line starting at POINT, joining any following buffer lines
+whose preceding newline is hidden by an :invisible overlay. a single displayed line may contain
+several folds that each hide arbitrary character ranges across multiple buffer lines."
+  (let ((invisible-overlays
+          (remove-if-not (lambda (ov) (overlay-get ov :invisible)) overlays)))
+    (with-point ((vstart point)
+                 (vend point))
+      (line-start vstart)
+      (line-end vend)
+      ;; extend VEND across every newline hidden by an invisible overlay so the
+      ;; visual line reaches the next *visible* newline (or the buffer end).
+      (loop :until (last-line-p vend)
+            :while (invisible-overlay-covering vend invisible-overlays)
+            :do (line-offset vend 1)
+                (line-end vend))
+      (let ((overlays (remove-if-not
+                       (lambda (ov)
+                         (and (point<= (overlay-start ov) vend)
+                              (point<= vstart (overlay-end ov))))
+                       overlays)))
+        (flet ((overlay-start-charpos (overlay)
+                 ;; column where the overlay starts on this visual line, clamped to
+                 ;; 0 when it begins before VSTART.
+                 (let ((s (overlay-start overlay)))
+                   (if (point<= vstart s)
+                       (count-characters vstart s)
+                       0)))
+               (overlay-end-charpos (overlay)
+                 ;; column where the overlay ends, or NIL when it extends past VEND.
+                 (let ((e (overlay-end overlay)))
+                   (when (point<= e vend)
+                     (count-characters vstart e))))
+               (start-in-line-p (overlay)
+                 ;; true when the overlay's start falls within this visual line.
+                 (point<= vstart (overlay-start overlay)))
+               (end-in-line-p (overlay)
+                 ;; true when the overlay's end falls within this visual line.
+                 (point<= (overlay-end overlay) vend)))
+          (let* ((end-of-line-cursor-attribute nil)
+                 (extend-to-end-attribute nil)
+                 (line-end-overlay nil)
+                 (virtual-items)
+                 (splice-ops)
+                 (left-content
+                   (compute-left-display-area-content active-modes
+                                                      (point-buffer point)
+                                                      point))
+                 (tab-width (variable-value 'tab-width :default point)))
+            (multiple-value-bind (string attributes)
+                (collect-visual-line-string-and-attributes vstart vend)
+              ;; collect string-splice operations from :invisible/:display overlays.
+              (loop :for overlay :in overlays
+                    :for invisible := (overlay-get overlay :invisible)
+                    :for display := (overlay-get overlay :display)
+                    :do (when (or invisible display)
+                          (let* ((ov-start (overlay-start-charpos overlay))
+                                 (ov-end (or (overlay-end-charpos overlay)
+                                             (length string)))
+                                 (replacement
+                                   (cond
+                                     (display
+                                      (let ((d (alexandria:ensure-list display)))
+                                        (if (stringp (first d)) (first d) "")))
+                                     ((eq invisible :ellipsis) "...")
+                                     (t "")))
+                                 (repl-attr
+                                   (when (listp display) (second display))))
+                            (when (< ov-start ov-end)
+                              (push (list ov-start ov-end replacement repl-attr) splice-ops)))))
+              ;; apply splices right-to-left for position stability
+              (when splice-ops
+                (dolist (op (sort (copy-list splice-ops) #'> :key #'first))
+                  (destructuring-bind (ov-start ov-end replacement repl-attr) op
+                    (setf (values string attributes)
+                          (splice-string string
+                                         attributes
+                                         ov-start
+                                         ov-end
+                                         replacement
+                                         repl-attr)))))
+              ;; process all overlays for attributes (virtual text handled separately below).
+              (loop :for overlay :in overlays
+                    :do (cond
+                          ((typep overlay 'line-endings-overlay)
+                           (when (end-in-line-p overlay)
+                             (setf line-end-overlay overlay)))
+                          ((typep overlay 'line-overlay)
+                           (let ((attribute (overlay-attribute overlay)))
                              (setf attributes
-                                   (overlay-attributes attributes ov-start ov-end ov-attr)))))
-                      (t
-                       (let ((ov-start (overlay-start-charpos overlay point))
-                             (ov-end (overlay-end-charpos overlay point))
-                             (ov-attr (overlay-attribute overlay))
-                             (invisible (overlay-get overlay :invisible))
-                             (display (overlay-get overlay :display)))
-                         ;; plain attribute (only when not replaced by invisible/display)
-                         (when (and ov-attr (not invisible) (not display))
-                           (unless ov-end
-                             (setf extend-to-end-attribute ov-attr))
-                           (setf attributes
-                                 (overlay-attributes attributes
-                                                     ov-start
-                                                     (or ov-end (length string))
-                                                     ov-attr)))))))
-          ;; virtual text from :before-string/:after-string overlays. emit each overlay's
-          ;; :before then :after, visiting overlays in (end, start) order: at any shared
-          ;; charpos an overlay closing there (smaller end) is emitted before one opening
-          ;; there, so trailing :after-strings precede leading :before-strings, but a
-          ;; zero-length overlay's own pair stays adjacent. a final stable sort by charpos
-          ;; groups them without affecting this order.
-          (loop :for overlay :in (stable-sort
-                                  (loop :for overlay :in overlays
-                                        :when (or (overlay-get overlay :before-string)
-                                                  (overlay-get overlay :after-string))
-                                          :collect overlay)
-                                  (lambda (a b)
-                                    (let ((a-end (or (overlay-end-charpos a point) (length string)))
-                                          (b-end (or (overlay-end-charpos b point) (length string))))
-                                      (if (= a-end b-end)
-                                          (< (overlay-start-charpos a point)
-                                             (overlay-start-charpos b point))
-                                          (< a-end b-end)))))
-                :for before-str := (overlay-get overlay :before-string)
-                :for after-str := (overlay-get overlay :after-string)
-                :do (when (and before-str (same-line-p (overlay-start overlay) point))
-                      (let ((bs (alexandria:ensure-list before-str)))
-                        (push (make-virtual-item :charpos (overlay-start-charpos overlay point)
-                                                 :string (first bs)
-                                                 :attribute (second bs))
-                              virtual-items)))
-                    (when (and after-str (same-line-p (overlay-end overlay) point))
-                      (let ((as (alexandria:ensure-list after-str)))
-                        (push (make-virtual-item :charpos (or (overlay-end-charpos overlay point)
-                                                              (length string))
-                                                 :string (first as)
-                                                 :attribute (second as))
-                              virtual-items))))
-          (setf virtual-items
-                (stable-sort (nreverse virtual-items) #'< :key #'virtual-item-charpos))
-          (setf (values string attributes) (expand-tab string attributes tab-width))
-          (let ((charpos (point-charpos point)))
-            (when (< 0 charpos)
-              (psetf string (subseq string charpos)
-                     attributes (lem/buffer/line:subseq-elements
-                                 attributes charpos (length string)))
-              ;; adjust virtual-item positions for the charpos clip (order preserved)
+                                   (overlay-attributes attributes
+                                                       0
+                                                       (length string)
+                                                       attribute))
+                             (setf extend-to-end-attribute attribute)))
+                          ((typep overlay 'cursor-overlay)
+                           ;; remap the cursor into the spliced string so it lands on the right
+                           ;; column past any folds on this visual line.
+                           (let* ((ov-start (adjust-charpos-for-splices
+                                             (overlay-start-charpos overlay) splice-ops))
+                                  (ov-end (1+ ov-start))
+                                  (ov-attr (overlay-attribute overlay)))
+                             (unless (cursor-overlay-fake-p overlay)
+                               (set-cursor-attribute ov-attr))
+                             (if (<= (length string) ov-start)
+                                 (setf end-of-line-cursor-attribute ov-attr)
+                                 (setf attributes
+                                       (overlay-attributes attributes ov-start ov-end ov-attr)))))
+                          (t
+                           (let ((ov-start (adjust-charpos-for-splices
+                                            (overlay-start-charpos overlay) splice-ops))
+                                 (ov-end (let ((e (overlay-end-charpos overlay)))
+                                           (when e
+                                             (adjust-charpos-for-splices e splice-ops))))
+                                 (ov-attr (overlay-attribute overlay))
+                                 (invisible (overlay-get overlay :invisible))
+                                 (display (overlay-get overlay :display)))
+                             ;; plain attribute (only when not replaced by invisible/display)
+                             (when (and ov-attr (not invisible) (not display))
+                               (unless ov-end
+                                 (setf extend-to-end-attribute ov-attr))
+                               (setf attributes
+                                     (overlay-attributes attributes
+                                                         ov-start
+                                                         (or ov-end (length string))
+                                                         ov-attr)))))))
+              ;; virtual text from :before-string/:after-string overlays. emit each overlay's
+              ;; :before then :after, visiting overlays in (end, start) order: at any shared
+              ;; charpos an overlay closing there (smaller end) is emitted before one opening
+              ;; there, so trailing :after-strings precede leading :before-strings, but a
+              ;; zero-length overlay's own pair stays adjacent. a final stable sort by charpos
+              ;; groups them without affecting this order.
+              (loop :for overlay :in (stable-sort
+                                      (loop :for overlay :in overlays
+                                            :when (or (overlay-get overlay :before-string)
+                                                      (overlay-get overlay :after-string))
+                                              :collect overlay)
+                                      (lambda (a b)
+                                        (let ((a-end (or (overlay-end-charpos a) (length string)))
+                                              (b-end (or (overlay-end-charpos b) (length string))))
+                                          (if (= a-end b-end)
+                                              (< (overlay-start-charpos a)
+                                                 (overlay-start-charpos b))
+                                              (< a-end b-end)))))
+                    :for before-str := (overlay-get overlay :before-string)
+                    :for after-str := (overlay-get overlay :after-string)
+                    :do (when (and before-str (start-in-line-p overlay))
+                          (let ((bs (alexandria:ensure-list before-str)))
+                            (push (make-virtual-item :charpos (overlay-start-charpos overlay)
+                                                     :string (first bs)
+                                                     :attribute (second bs))
+                                  virtual-items)))
+                        (when (and after-str (end-in-line-p overlay))
+                          (let ((as (alexandria:ensure-list after-str)))
+                            (push (make-virtual-item :charpos (or (overlay-end-charpos overlay)
+                                                                  (length string))
+                                                     :string (first as)
+                                                     :attribute (second as))
+                                  virtual-items))))
+              ;; markers were positioned in raw coordinates; remap them into the
+              ;; spliced string so several folds on one visual line stay anchored.
+              (dolist (vi virtual-items)
+                (setf (virtual-item-charpos vi)
+                      (adjust-charpos-for-splices (virtual-item-charpos vi) splice-ops)))
               (setf virtual-items
-                    (loop :for vi :in virtual-items
-                          :when (>= (virtual-item-charpos vi) charpos)
-                            :collect (make-virtual-item
-                                      :charpos (- (virtual-item-charpos vi) charpos)
-                                      :string (virtual-item-string vi)
-                                      :attribute (virtual-item-attribute vi))))))
-          (make-logical-line
-           :string string
-           :attributes attributes
-           :virtual-items virtual-items
-           :left-content left-content
-           :extend-to-end extend-to-end-attribute
-           :end-of-line-cursor-attribute end-of-line-cursor-attribute
-           :line-end-overlay line-end-overlay))))))
+                    (stable-sort (nreverse virtual-items) #'< :key #'virtual-item-charpos))
+              (setf (values string attributes) (expand-tab string attributes tab-width))
+              (let ((charpos (point-charpos point)))
+                (when (< 0 charpos)
+                  (psetf string (subseq string charpos)
+                         attributes (lem/buffer/line:subseq-elements
+                                     attributes charpos (length string)))
+                  ;; adjust virtual-item positions for the charpos clip (order preserved)
+                  (setf virtual-items
+                        (loop :for vi :in virtual-items
+                              :when (>= (virtual-item-charpos vi) charpos)
+                                :collect (make-virtual-item
+                                          :charpos (- (virtual-item-charpos vi) charpos)
+                                          :string (virtual-item-string vi)
+                                          :attribute (virtual-item-attribute vi))))))
+              (make-logical-line
+               :string string
+               :attributes attributes
+               :virtual-items virtual-items
+               :left-content left-content
+               :extend-to-end extend-to-end-attribute
+               :end-of-line-cursor-attribute end-of-line-cursor-attribute
+               :line-end-overlay line-end-overlay))))))))
 
 (defstruct string-with-attribute-item
   string
@@ -462,8 +551,11 @@ VIRTUAL-ITEMS arrive in draw order (from `create-logical-line')."
       (loop :for logical-line := (create-logical-line point overlays active-modes)
             :do (when logical-line
                   (funcall function logical-line))
-                (unless (line-offset point 1)
-                  (return))))))
+                (loop
+                  (unless (line-offset point 1)
+                    (return-from call-do-logical-line))
+                  (unless (line-continuation-p point)
+                    (return)))))))
 
 (defmacro do-logical-line ((logical-line window) &body body)
   `(call-do-logical-line ,window (lambda (,logical-line) ,@body)))

@@ -662,7 +662,8 @@
   ;; display/logical-line.lisp
   (:export
    :make-region-overlays-using-global-mode
-   :line-fully-invisible-p)
+   :line-continuation-p
+   :invisible-overlay-covering)
   ;; interface.lisp
   (:export
    :with-implementation

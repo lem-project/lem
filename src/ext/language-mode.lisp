@@ -139,9 +139,14 @@
 (defun fold-region (start end &optional (fold-marker "..."))
   "hide the lines of the region [START, END), leaving START's line visible with a fold marker.
 returns the fold overlay."
-  (with-point ((s start))
+  (with-point ((s start)
+               (e end))
     (line-end s)
-    (let ((overlay (make-overlay s end 'fold-attribute)))
+    ;; dont hide the newline that terminates the folded region's last line, or the line after
+    ;; the fold gets merged onto the header's visual line.
+    (when (start-line-p e)
+      (character-offset e -1))
+    (let ((overlay (make-overlay s e 'fold-attribute)))
       (overlay-put overlay :invisible t)
       (overlay-put overlay :fold t)
       (overlay-put overlay :before-string (list fold-marker 'fold-attribute))

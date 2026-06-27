@@ -134,6 +134,7 @@
    :define-attribute
    :cursor
    :region
+   :fold-attribute
    :modeline
    :modeline-inactive
    :truncate-attribute
@@ -663,7 +664,8 @@
   (:export
    :make-region-overlays-using-global-mode
    :line-continuation-p
-   :invisible-overlay-covering)
+   :invisible-overlay-covering
+   :fold-region)
   ;; interface.lisp
   (:export
    :with-implementation

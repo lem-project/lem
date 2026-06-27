@@ -66,9 +66,6 @@
 (define-editor-variable root-uri-patterns '())
 (define-editor-variable detective-search nil)
 
-(define-attribute fold-attribute
-  (t :foreground :base04))
-
 (defun prompt-for-symbol (prompt history-name)
   (prompt-for-string prompt :history-symbol history-name))
 
@@ -135,22 +132,6 @@
         (funcall defun-begin start 1)
         (when (point< start end)
           (values start end))))))
-
-(defun fold-region (start end &optional (fold-marker "..."))
-  "hide the lines of the region [START, END), leaving START's line visible with a fold marker.
-returns the fold overlay."
-  (with-point ((s start)
-               (e end))
-    (line-end s)
-    ;; dont hide the newline that terminates the folded region's last line, or the line after
-    ;; the fold gets merged onto the header's visual line.
-    (when (start-line-p e)
-      (character-offset e -1))
-    (let ((overlay (make-overlay s e 'fold-attribute)))
-      (overlay-put overlay :invisible t)
-      (overlay-put overlay :fold t)
-      (overlay-put overlay :before-string (list fold-marker 'fold-attribute))
-      overlay)))
 
 (defun fold-overlay-at (point)
   "the fold overlay whose header line is POINT's line, or NIL."

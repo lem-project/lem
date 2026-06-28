@@ -212,15 +212,3 @@ Returns three values: prefix, main-text, suffix."
                             (lambda ()
                               (find-file f))))))
                      (insert-character point #\Newline))))))))
-
-(defclass dashboard-init-file (dashboard-item)
-  ()
-  (:documentation "Lets the user open their init file.")
-  (:default-initargs
-   :item-attribute 'document-header4-attribute
-   :action (lambda ()
-             (lem:call-command 'lem-core/commands/file:open-init-file nil))))
-
-(defmethod draw-dashboard-item ((item dashboard-init-file) point)
-    (insert-string point (create-centered-string "Open Init File") :attribute 'document-header4-attribute)
-    (insert-character point #\Newline))

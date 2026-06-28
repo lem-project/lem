@@ -54,6 +54,11 @@
                                :file-count file-count
                                :bottom-margin 1)
                 (make-instance 'dashboard-command
+                               :display-text "⚒ Tutorial (t)"
+                               :action-command 'lem-tutor:tutorial
+                               :item-attribute 'document-header2-attribute
+                               :bottom-margin 1)
+                (make-instance 'dashboard-command
                                :display-text " New Lisp Scratch Buffer (l)"
                                :action-command 'lem-lisp-mode:lisp-scratch
                                :item-attribute 'document-header2-attribute
@@ -87,6 +92,7 @@
 (define-key *dashboard-mode-keymap* "r" 'dashboard-move-to-recent-projects)
 (define-key *dashboard-mode-keymap* "f" 'dashboard-move-to-recent-files)
 (define-key *dashboard-mode-keymap* "l" 'lem-lisp-mode/internal:lisp-scratch)
+(define-key *dashboard-mode-keymap* "t" 'lem-tutor:tutorial)
 (define-key *dashboard-mode-keymap* "i" 'lem-core/commands/file:open-init-file)
 
 (set-default-dashboard)

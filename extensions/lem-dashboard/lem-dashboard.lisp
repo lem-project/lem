@@ -11,7 +11,12 @@
   (:local-nicknames (:button :lem/button)
                     (:history :lem/common/history)
                     (:project :lem-core/commands/project)
-                    (:file :lem-core/commands/file)))
+                    (:file :lem-core/commands/file))
+  (:documentation "The dashboard is composed of multiple DASHBOARD-ITEM of different kinds (a list of files, a URL, a clickable link… see them in dashboard-items.lisp).
+
+   The default dashboard is defined in default-dashboard.lisp.
+
+   To change the layout, pass SET-DASHBOARD a list of items (which eventually sets *dashboard-layout*). See also REDRAW-DASHBOARD."))
 
 (in-package :lem-dashboard)
 

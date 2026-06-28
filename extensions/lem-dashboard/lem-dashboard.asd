@@ -1,5 +1,6 @@
 (defsystem "lem-dashboard"
-  :depends-on (:lem/core)
+  :depends-on (:lem/core
+               :lem-tutor)
   :serial t
   :components ((:file "lem-dashboard")
                (:file "dashboard-items")

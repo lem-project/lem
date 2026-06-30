@@ -133,20 +133,71 @@ visual line each splice text out."
                       (point< point (overlay-end overlay))
                       overlay)))
 
-(defun fold-region (start end &optional (fold-marker "..."))
+(defun move-point-out-of-overlay (point overlay direction)
+  "move POINT to the nearest edge of OVERLAY in DIRECTION (:forward or :backward), so it does not
+rest inside. usable directly as a :cursor-enter-functions handler; `fold-region' installs it by
+default so a cursor never appears stuck on the hidden text of a fold."
+  (if (eq direction :backward)
+      (progn
+        (move-point point (overlay-start overlay))
+        ;; step onto the last visible position before the overlay, unless that is the buffer
+        ;; start, where there is nowhere further to go.
+        (character-offset point -1))
+      (move-point point (overlay-end overlay))))
+
+(defun reveal-overlay-on-cursor-enter (point overlay direction)
+  (overlay-put overlay :invisible nil)
+  (overlay-put overlay :show-virtual-text nil))
+
+(defun hide-overlay-on-cursor-leave (point overlay direction)
+  (overlay-put overlay :invisible t)
+  (overlay-put overlay :show-virtual-text t))
+
+(defun overlay-show-virtual-text-p (overlay)
+  "whether OVERLAY's :before-string/:after-string should render. defaults to T."
+  (let ((value (getf (overlay-plist overlay) :show-virtual-text :unset)))
+    (if (eq value :unset) t value)))
+
+(defun overlay-has-cursor-hooks-p (overlay)
+  (or (overlay-get overlay :cursor-enter-functions)
+      (overlay-get overlay :cursor-leave-functions)))
+
+(defun overlays-with-cursor-hooks-covering (point)
+  "the overlays covering POINT that take part in cursor enter/leave tracking."
+  (loop :for overlay :in (buffer-overlays (point-buffer point))
+        :when (and (overlay-has-cursor-hooks-p overlay)
+                   (point<= (overlay-start overlay) point)
+                   (point< point (overlay-end overlay)))
+          :collect overlay))
+
+;; but reveal behavior isnt relevant for line folding
+(defun place-region-placeholder-overlay (start end &key (placeholder "...") (cursor-behavior :move-out) (is-line-fold t))
   "hide the lines of the region [START, END), leaving START's line visible with a fold marker.
-returns the fold overlay."
+returns the fold overlay. CURSOR-BEHAVIOR decides how the cursor is kept off the hidden text:
+- :move-out :: move the cursor to the nearest visible edge (see `move-point-out-of-overlay').
+- :reveal   :: open the fold while the cursor is inside it and close it again on leave (see
+               `reveal-overlay-on-cursor-enter' / `hide-overlay-on-cursor-leave').
+- nil       :: install nothing; the cursor may rest on the hidden text.
+callers can also set the overlay's :cursor-enter-functions / :cursor-leave-functions directly."
   (with-point ((s start)
                (e end))
-    (line-end s)
-    ;; dont hide the newline that terminates the folded region's last line, or the line after
-    ;; the fold gets merged onto the header's visual line.
-    (when (start-line-p e)
-      (character-offset e -1))
+    (when is-line-fold
+      (line-end s)
+      ;; dont hide the newline that terminates the folded region's last line, or the line after
+      ;; the fold gets merged onto the header's visual line.
+      (when (start-line-p e)
+        (character-offset e -1)))
     (let ((overlay (make-overlay s e 'fold-attribute)))
       (overlay-put overlay :invisible t)
       (overlay-put overlay :fold t)
-      (overlay-put overlay :before-string (list fold-marker 'fold-attribute))
+      (overlay-put overlay :before-string (list placeholder 'fold-attribute))
+      (ecase cursor-behavior
+        (:move-out
+         (overlay-put overlay :cursor-enter-functions (list 'move-point-out-of-overlay)))
+        (:reveal
+         (overlay-put overlay :cursor-enter-functions (list 'reveal-overlay-on-cursor-enter))
+         (overlay-put overlay :cursor-leave-functions (list 'hide-overlay-on-cursor-leave)))
+        ((nil)))
       overlay)))
 
 (defun line-continuation-p (point)
@@ -313,8 +364,9 @@ several folds that each hide arbitrary character ranges across multiple buffer l
               ;; groups them without affecting this order.
               (loop :for overlay :in (stable-sort
                                       (loop :for overlay :in overlays
-                                            :when (or (overlay-get overlay :before-string)
-                                                      (overlay-get overlay :after-string))
+                                            :when (and (overlay-show-virtual-text-p overlay)
+                                                       (or (overlay-get overlay :before-string)
+                                                           (overlay-get overlay :after-string)))
                                               :collect overlay)
                                       (lambda (a b)
                                         (let ((a-end (or (overlay-end-charpos a) (length string)))

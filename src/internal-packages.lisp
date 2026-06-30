@@ -665,7 +665,11 @@
    :make-region-overlays-using-global-mode
    :line-continuation-p
    :invisible-overlay-covering
-   :fold-region)
+   :move-point-out-of-overlay
+   :reveal-overlay-on-cursor-enter
+   :hide-overlay-on-cursor-leave
+   :overlays-with-cursor-hooks-covering
+   :place-region-placeholder-overlay)
   ;; interface.lisp
   (:export
    :with-implementation

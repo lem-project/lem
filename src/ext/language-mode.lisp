@@ -145,7 +145,9 @@
   "fold the defun at POINT. Returns T when something was folded."
   (let ((fn (variable-value 'fold-region-function :default point)))
     (multiple-value-bind (start end) (funcall fn point)
-      (when (and start end (not (same-line-p start end)))
+      (when (and start end
+                 (not (same-line-p start end))
+                 (same-line-p start point))
         (let ((overlay (place-region-placeholder-overlay start end :is-line-fold t)))
           (move-point point start)
           (overlay-put overlay :fold t)

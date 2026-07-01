@@ -61,7 +61,10 @@
             (1- len)))))
 
 (defun fall-within-line (point)
-  (when (eolp point)
+  "clamps the given point to the character before the newline at the end of the line its in."
+  ;; a buffer-line end whose newline is hidden by a fold is mid-visual-line, so we dont clamp.
+  (when (and (eolp point)
+             (not (invisible-overlay-covering point)))
     (line-end point)
     (unless (bolp point)
       (character-offset point *cursor-offset*))))

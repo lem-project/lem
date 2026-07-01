@@ -6,6 +6,9 @@
    :idle-function
    :beginning-of-defun-function
    :end-of-defun-function
+   :fold-region-function
+   :fold-toggle-at-point
+   :unfold-all
    :comment-region
    :uncomment-region
    :comment-or-uncomment-region
@@ -51,6 +54,8 @@
 (define-editor-variable idle-function nil)
 (define-editor-variable beginning-of-defun-function nil)
 (define-editor-variable end-of-defun-function nil)
+(define-editor-variable fold-region-function 'fold-region-default
+  "function of one point returning (values start end) for the foldable region at point, or NIL.")
 (define-editor-variable line-comment nil)
 (define-editor-variable insertion-line-comment nil)
 (define-editor-variable find-definitions-function nil)
@@ -86,7 +91,7 @@
 
 (define-key *language-mode-keymap* "C-M-a" 'beginning-of-defun)
 (define-key *language-mode-keymap* "C-M-e" 'end-of-defun)
-(define-key *language-mode-keymap* "Tab" 'indent-line-and-complete-symbol)
+(define-key *language-mode-keymap* "Tab" 'fold-or-indent-or-complete)
 (define-key *global-keymap* "C-j" 'newline-and-indent)
 (define-key *global-keymap* "M-j" 'newline-and-indent)
 (define-key *language-mode-keymap* "C-M-\\" 'indent-region)
@@ -114,6 +119,58 @@
       (alexandria:if-let ((fn (variable-value 'end-of-defun-function :buffer)))
         (funcall fn (current-point) n)
         (beginning-of-defun-1 (- n)))))
+
+(defun fold-region-default (point)
+  "return (values start end) spanning the defun at POINT, or NIL."
+  (let ((defun-begin (variable-value 'beginning-of-defun-function :buffer point))
+        (defun-end (variable-value 'end-of-defun-function :buffer point)))
+    (when (and defun-begin defun-end)
+      (let ((start (copy-point point :temporary))
+            (end (copy-point point :temporary)))
+        (funcall defun-end end 1)
+        (move-point start end)
+        (funcall defun-begin start 1)
+        (when (point< start end)
+          (values start end))))))
+
+(defun fold-overlay-at (point)
+  "the fold overlay whose header line is POINT's line, or NIL."
+  (find-if
+   (lambda (overlay)
+     (and (overlay-get overlay :fold)
+          (same-line-p (overlay-start overlay) point)))
+   (buffer-overlays (point-buffer point))))
+
+(defun fold-defun-at (point)
+  "fold the defun at POINT. Returns T when something was folded."
+  (let ((fn (variable-value 'fold-region-function :default point)))
+    (multiple-value-bind (start end) (funcall fn point)
+      (when (and start end
+                 (not (same-line-p start end))
+                 (same-line-p start point))
+        (let ((overlay (place-region-placeholder-overlay start end :is-line-fold t)))
+          (move-point point start)
+          (overlay-put overlay :fold t)
+          overlay)))))
+
+(defun fold-toggle-at-point (&optional (point (current-point)))
+  "toggle the fold at POINT. returns T when a fold was added or removed, and NIL when there was
+nothing to fold."
+  (let ((fold (fold-overlay-at point)))
+    (cond (fold (delete-overlay fold) t)
+          ((fold-defun-at point) t)
+          (t nil))))
+
+(define-command fold-or-indent-or-complete () ()
+  "fold or unfold the defun at point. otherwise indent and complete the symbol."
+  (unless (fold-toggle-at-point)
+    (indent-line-and-complete-symbol)))
+
+(define-command unfold-all () ()
+  "remove every fold in the current buffer."
+  (dolist (overlay (copy-list (buffer-overlays)))
+    (when (overlay-get overlay :fold)
+      (delete-overlay overlay))))
 
 (define-command (indent (:advice-classes editable-advice)) (&optional (n 1)) (:universal)
   (if (variable-value 'calc-indent-function)

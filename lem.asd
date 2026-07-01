@@ -149,6 +149,13 @@
 
                (:file "color-theme")
 
+               (:module "display"
+                :serial t
+                :components ((:file "base")
+                             (:file "char-type")
+                             (:file "logical-line")
+                             (:file "physical-line")))
+
                (:module "commands"
                 :serial t
                 :components ((:file "move")
@@ -167,13 +174,6 @@
                              (:file "other" :depends-on ("file"))
                              (:file "frame")
                              #+sbcl (:file "sprof")))
-
-               (:module "display"
-                :serial t
-                :components ((:file "base")
-                             (:file "char-type")
-                             (:file "logical-line")
-                             (:file "physical-line")))
 
                (:file "external-packages")
 

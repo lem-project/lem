@@ -79,6 +79,7 @@
                (:file "filer")
                (:file "listener-mode")
                (:file "interface")
-               (:file "display-cache"))
+               (:file "display-cache")
+               (:file "visual-line"))
   :perform (test-op (o c)
                     (symbol-call :rove :run c)))

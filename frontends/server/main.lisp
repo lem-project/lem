@@ -10,10 +10,18 @@
            :run-tcp-server
            :run-stdio-server
            :run-websocket-server
+           :*exit-function*
            :main))
 (in-package :lem-server)
 
 (defvar *server-runner*)
+
+(defvar *exit-function* (lambda () (uiop:quit 0))
+  "Function called from *exit-editor-hook* after notifying clients of exit.
+The default quits the process. The webview frontend replaces it because
+uiop:quit cannot unwind the main thread while it is blocked in the native
+webview event loop; it terminates that loop instead and the main thread
+quits by itself afterwards.")
 
 (defclass server-runner ()
   ())
@@ -232,7 +240,7 @@ the same immutable instance for every subsequent message."
     (lem:add-hook lem:*exit-editor-hook*
                   (lambda ()
                     (notify jsonrpc "exit" nil)
-                    (uiop:quit 0)))
+                    (funcall *exit-function*)))
 
     (server-listen *server-runner* (jsonrpc-server jsonrpc))))
 

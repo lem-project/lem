@@ -318,4 +318,5 @@
                #+(and os-unix (not os-macosx)) ; workaround: because (adf:make :lem) fails
                "lem-ncurses")
   :pathname "src"
-  :components ((:file "macosx" :if-feature :os-macosx)))
+  :components ((:file "macosx" :if-feature :os-macosx)
+               (:file "windows" :if-feature :os-windows)))

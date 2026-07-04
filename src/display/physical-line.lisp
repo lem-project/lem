@@ -103,9 +103,9 @@
               (line-end-object-offset drawing-object-2))))
 
 (defmethod drawing-object-equal ((drawing-object-1 image-object) (drawing-object-2 image-object))
-  (and (eq (image-object-image drawing-object-1) (image-object-image drawing-object-1))
-       (equal (image-object-width drawing-object-1) (image-object-width drawing-object-1))
-       (equal (image-object-height drawing-object-1) (image-object-height drawing-object-1))))
+  (and (eq (image-object-image drawing-object-1) (image-object-image drawing-object-2))
+       (equal (image-object-width drawing-object-1) (image-object-width drawing-object-2))
+       (equal (image-object-height drawing-object-1) (image-object-height drawing-object-2))))
 
 
 (defgeneric drawing-object-mergable-p (drawing-object-1 drawing-object-2))
@@ -137,12 +137,6 @@
        (equal (line-end-object-offset drawing-object-1)
               (line-end-object-offset drawing-object-2))))
 
-(defmethod drawing-object-mergable-p ((drawing-object-1 image-object) (drawing-object-2 image-object))
-  (and (eq (image-object-image drawing-object-1) (image-object-image drawing-object-1))
-       (equal (image-object-width drawing-object-1) (image-object-width drawing-object-1))
-       (equal (image-object-height drawing-object-1) (image-object-height drawing-object-1))))
-
-
 (defgeneric drawing-object-merge (drawing-object-1 drawing-object-2))
 
 (defmethod drawing-object-merge ((drawing-object-1 void-object) (drawing-object-2 void-object))

@@ -101,7 +101,12 @@
    (message-queue :initform (queue:make-queue)
                   :reader jsonrpc-message-queue)
    (editor-thread :initform nil
-                  :accessor jsonrpc-editor-thread))
+                  :accessor jsonrpc-editor-thread)
+   ;; pixel size of one character cell, reported by the client.
+   (cell-width :initform nil
+               :accessor jsonrpc-cell-width)
+   (cell-height :initform nil
+                :accessor jsonrpc-cell-height))
   (:default-initargs
    :name :jsonrpc
    :redraw-after-modifying-floating-window t
@@ -162,6 +167,10 @@ the same immutable instance for every subsequent message."
         (let ((width (gethash "width" size))
               (height (gethash "height" size)))
           (resize-display jsonrpc width height)))
+      (alexandria:when-let ((fw (gethash "fontWidth" params)))
+        (when (plusp fw) (setf (jsonrpc-cell-width jsonrpc) fw)))
+      (alexandria:when-let ((fh (gethash "fontHeight" params)))
+        (when (plusp fh) (setf (jsonrpc-cell-height jsonrpc) fh)))
       (when background
         (alexandria:when-let (color (lem:parse-color background))
           (setf (jsonrpc-background-color jsonrpc) color)))
@@ -584,7 +593,34 @@ the same immutable instance for every subsequent message."
   (lem-core:string-width (lem-core/display:text-object-string drawing-object)))
 
 (defmethod object-width ((drawing-object display:image-object))
-  0)
+  ;; width in character cells. when :pixel-width is given (and the client's cell size is known),
+  ;; round it up to whole cells so the column reserves enough grid space. otherwise use :width
+  ;; (a cell count) from the attribute.
+  (let ((pw (image-pixel-dimension drawing-object :pixel-width))
+        (cw (jsonrpc-cell-width (lem-core:implementation))))
+    (if (and pw cw)
+        (ceiling pw cw)
+        (or (display:image-object-width drawing-object) 1))))
+
+(defgeneric object-height (drawing-object)
+  (:documentation "height of DRAWING-OBJECT in character cells.
+we advance the vertical position of the next line by the tallest object's height (see
+`max-height-of-objects'), so returning more than 1 for an image makes its line grow to fit."))
+
+(defmethod object-height (drawing-object)
+  1)
+
+(defmethod object-height ((drawing-object display:image-object))
+  (let ((ph (image-pixel-dimension drawing-object :pixel-height))
+        (ch (jsonrpc-cell-height (lem-core:implementation))))
+    (if (and ph ch)
+        (ceiling ph ch)
+        (or (display:image-object-height drawing-object) 1))))
+
+(defun image-pixel-dimension (object key)
+  "pixel value of KEY (:pixel-width / :pixel-height) on OBJECT's attribute, or NIL."
+  (let ((attribute (display:image-object-attribute object)))
+    (and attribute (lem:attribute-value attribute key))))
 
 (defgeneric draw-object (jsonrpc object x y view))
 
@@ -703,8 +739,42 @@ same hash."
          attribute
          :text-width width)))
 
+(defun image-object-url (object)
+  "return a URL the JS client can load for OBJECT's image, or NIL.
+a pathname or plain-string path is served through the existing /local static route.
+a string already carrying a data:/https: URL is passed through unchanged."
+  (let ((image (display:image-object-image object)))
+    (typecase image
+      (pathname (format nil "/local~A" (namestring image)))
+      (string (if (or (alexandria:starts-with-subseq "data:" image)
+                      (alexandria:starts-with-subseq "http:" image)
+                      (alexandria:starts-with-subseq "https:" image))
+                  image
+                  (format nil "/local~A" image)))
+      (t nil))))
+
 (defmethod draw-object (jsonrpc (object display:image-object) x y view)
-  (values))
+  (let ((url (image-object-url object)))
+    (when url
+      (with-error-handler ()
+        ;; use the attribute's :pixel-width/:pixel-height if given, else the reserved cell box
+        ;; (cells * cell pixel size) when the cell size is known.
+        (let ((pw (or (image-pixel-dimension object :pixel-width)
+                      (alexandria:when-let ((cw (jsonrpc-cell-width jsonrpc)))
+                        (* (object-width object) cw))))
+              (ph (or (image-pixel-dimension object :pixel-height)
+                      (alexandria:when-let ((ch (jsonrpc-cell-height jsonrpc)))
+                        (* (object-height object) ch)))))
+          (notify* jsonrpc
+                   "put-image"
+                   (hash "viewInfo" (view-id-hash view)
+                         "x" x
+                         "y" y
+                         "width" (object-width object)
+                         "height" (object-height object)
+                         "pixelWidth" pw
+                         "pixelHeight" ph
+                         "url" url)))))))
 
 (defun render-line (jsonrpc view x y objects)
   (loop :for object :in objects
@@ -719,11 +789,14 @@ same hash."
 
 (defmethod lem-if:render-line ((jsonrpc jsonrpc) view x y objects height)
   (with-error-handler ()
+    ;; clear the line's full height (not just one row) since a tall object such as an image may
+    ;; occupy several rows.
     (notify* jsonrpc
              "clear-eol"
              (hash "viewInfo" (view-id-hash view)
                    "x" x
-                   "y" y))
+                   "y" y
+                   "height" height))
     (render-line jsonrpc view x y objects)))
 
 (defmethod lem-if:render-line-on-modeline ((jsonrpc jsonrpc) view left-objects right-objects
@@ -745,7 +818,7 @@ same hash."
   (object-width drawing-object))
 
 (defmethod lem-if:object-height ((jsonrpc jsonrpc) drawing-object)
-  1)
+  (object-height drawing-object))
 
 (defmethod lem-if:clear-to-end-of-window ((jsonrpc jsonrpc) view y)
   (notify* jsonrpc

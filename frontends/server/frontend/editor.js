@@ -352,6 +352,10 @@ class BaseSurface {
 
   drawBlock(x, y, width, height, color) { }
   drawText(x, y, text, textWidth, attribute) { }
+  drawImage(x, y, widthCells, heightCells, pixelWidth, pixelHeight, url) { }
+
+  clearImages(yStart, yEnd) { }
+  clearAllImages() { }
 
   touch() {
     return;
@@ -392,6 +396,18 @@ class CanvasSurface extends BaseSurface {
     const ratio = window.devicePixelRatio || 1;
     const ctx = this.mainDOM.getContext('2d');
     ctx.scale(ratio, ratio);
+  }
+
+  move(x, y, pixelX, pixelY) {
+    super.move(x, y, pixelX, pixelY);
+    if (this.imageEls) {
+      for (const [, entry] of this.imageEls) this.positionImage(entry);
+    }
+  }
+
+  delete() {
+    this.clearAllImages();
+    super.delete();
   }
 
   drawBlock(x, y, width, height, color) {
@@ -479,6 +495,69 @@ class CanvasSurface extends BaseSurface {
         }
       }
     });
+  }
+
+  // images are rendered as DOM <img> elements on a layer above the canvas rather than into it.
+  imageBaseLeft() { return parseFloat(this.mainDOM.style.left) || 0; }
+  imageBaseTop() { return parseFloat(this.mainDOM.style.top) || 0; }
+
+  drawImage(x, y, widthCells, heightCells, pixelWidth, pixelHeight, url) {
+    if (!this.imageEls)
+      // mapping "x,y" to { el, url, x, y, widthCells, heightCells, pixelWidth, pixelHeight }
+      this.imageEls = new Map();
+    const key = x + ',' + y;
+    let entry = this.imageEls.get(key);
+    if (entry && entry.url !== url) {
+      entry.el.remove();
+      this.imageEls.delete(key);
+      entry = null;
+    }
+    if (!entry) {
+      const el = document.createElement('img');
+      el.style.position = 'absolute';
+      el.style.pointerEvents = 'none';
+      // above the surface's own canvas but below the modeline/floating windows.
+      el.style.zIndex = '1';
+      el.src = url;
+      this.mainDOM.parentNode.appendChild(el);
+      entry = { el, url };
+      this.imageEls.set(key, entry);
+    }
+    entry.x = x;
+    entry.y = y;
+    entry.widthCells = widthCells;
+    entry.heightCells = heightCells;
+    entry.pixelWidth = pixelWidth;
+    entry.pixelHeight = pixelHeight;
+    this.positionImage(entry);
+  }
+
+  positionImage(entry) {
+    const option = this.editor.option;
+    // we reserved widthCells x heightCells cells for this image.
+    const boxWidth = entry.widthCells * option.fontWidth;
+    const boxHeight = entry.heightCells * option.fontHeight;
+    entry.el.style.left = (this.imageBaseLeft() + entry.x * option.fontWidth) + 'px';
+    entry.el.style.top = (this.imageBaseTop() + entry.y * option.fontHeight) + 'px';
+    entry.el.style.width = (entry.pixelWidth != null ? Math.min(entry.pixelWidth, boxWidth) : boxWidth) + 'px';
+    entry.el.style.height = (entry.pixelHeight != null ? Math.min(entry.pixelHeight, boxHeight) : boxHeight) + 'px';
+  }
+
+  // remove image elements whose row span intersects [yStart, yEnd).
+  clearImages(yStart, yEnd) {
+    if (!this.imageEls) return;
+    for (const [key, entry] of this.imageEls) {
+      if (entry.y < yEnd && (entry.y + entry.heightCells) > yStart) {
+        entry.el.remove();
+        this.imageEls.delete(key);
+      }
+    }
+  }
+
+  clearAllImages() {
+    if (!this.imageEls) return;
+    for (const [, entry] of this.imageEls) entry.el.remove();
+    this.imageEls.clear();
   }
 
   touch() {
@@ -784,14 +863,15 @@ class View {
     );
   }
 
-  clearEol(x, y) {
+  clearEol(x, y, height=1) {
     this.mainSurface.drawBlock(
       x,
       y,
       this.width - x,
-      1,
+      height,
       this.option.background,
     );
+    this.mainSurface.clearImages(y, y + height);
   }
 
   clearEob(x, y) {
@@ -802,6 +882,7 @@ class View {
       this.height - y,
       this.option.background,
     );
+    this.mainSurface.clearImages(y, this.height);
   }
 
   print(x, y, text, textWidth, attribute, font) {
@@ -813,6 +894,10 @@ class View {
       attribute,
       font,
     );
+  }
+
+  printImage(x, y, width, height, pixelWidth, pixelHeight, url) {
+    this.mainSurface.drawImage(x, y, width, height, pixelWidth, pixelHeight, url);
   }
 
   printToModeline(x, y, text, textWidth, attribute) {
@@ -1174,6 +1259,7 @@ export class Editor {
       'clear-eol': this.clearEol.bind(this),
       'clear-eob': this.clearEob.bind(this),
       'put': this.put.bind(this),
+      'put-image': this.putImage.bind(this),
       'modeline-put': this.modelinePut.bind(this),
       'update-display': this.updateDisplay.bind(this),
       'move-cursor': this.moveCursor.bind(this),
@@ -1288,6 +1374,8 @@ export class Editor {
       size: this.getDisplaySize(),
       foreground: this.option.foreground,
       background: this.option.background,
+      fontWidth: this.option.fontWidth,
+      fontHeight: this.option.fontHeight,
     }, (response) => {
       this.updateForeground(response.foreground);
       this.updateBackground(response.background);
@@ -1372,9 +1460,9 @@ export class Editor {
     view.clear();
   }
 
-  clearEol({ viewInfo: { id }, x, y }) {
+  clearEol({ viewInfo: { id }, x, y, height }) {
     const view = this.findViewById(id);
-    view.clearEol(x, y);
+    view.clearEol(x, y, height);
   }
 
   clearEob({ viewInfo: { id }, x, y }) {
@@ -1385,6 +1473,11 @@ export class Editor {
   put({ viewInfo: { id }, x, y, text, textWidth, attribute, font }) {
     const view = this.findViewById(id);
     view.print(x, y, text, textWidth, attribute, font);
+  }
+
+  putImage({ viewInfo: { id }, x, y, width, height, pixelWidth, pixelHeight, url }) {
+    const view = this.findViewById(id);
+    view.printImage(x, y, width, height, pixelWidth, pixelHeight, url);
   }
 
   modelinePut({ viewInfo: { id }, x, y, text, textWidth, attribute }) {

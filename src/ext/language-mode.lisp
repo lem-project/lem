@@ -470,15 +470,13 @@
 
 (define-command indent-line-and-complete-symbol () ()
   (cond
-    ;; If no ident function is defined then just complete-symbol
+    ;; If no indent function is defined then just complete-symbol
     ((null (variable-value 'calc-indent-function :buffer))
      (complete-symbol))
 
     ;; Else if there is a highlighted region indent the region
     ((buffer-mark-p (current-buffer))
-     (with-point ((start (region-beginning (current-buffer)))
-                  (end (region-end (current-buffer))))
-       (indent-points start end)))
+     (call-command 'indent-region nil))
 
     ;; Else indent the line and complete-symbol if the cursor doesn't move
     (t (let* ((p (current-point))

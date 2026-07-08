@@ -9,7 +9,7 @@
 (in-package :lem-tests/visual-line)
 
 (defun point-at-line (buffer line-number)
-  "temporary point at the start of LINE-NUMBER (0-based) of BUFFER."
+  "Temporary point at the start of LINE-NUMBER (0-based) of BUFFER."
   (let ((point (copy-point (buffer-start-point buffer) :temporary)))
     (line-offset point line-number)
     (line-start point)
@@ -32,14 +32,14 @@
     (with-testing-buffer (buffer (make-text-buffer
                                   (lines "AAAA" "BBBB" "CCCC" "DDDD" "EEEE" "FFFF")))
       (labels ((fold-lines (first last)
-                 "fold buffer lines FIRST..LAST (inclusive) into a single visual line."
+                 "Fold buffer lines FIRST..LAST (inclusive) into a single visual line."
                  (place-region-placeholder-overlay
                   (point-at-line buffer first)
                   (point-at-line buffer (1+ last))))
                (expect-visual-line (containing-line first-line last-line)
                  (testing (format
                            nil
-                           "buffer line ~D belongs to the visual line spanning lines ~D..~D"
+                           "Buffer line ~D belongs to the visual line spanning lines ~D..~D"
                            containing-line
                            first-line
                            last-line)

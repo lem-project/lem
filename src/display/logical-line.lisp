@@ -105,7 +105,7 @@
     (values new-string final)))
 
 (defun adjust-charpos-for-splices (charpos splice-ops)
-  "map a raw-string CHARPOS to its position after SPLICE-OPS are applied.
+  "Map a raw-string CHARPOS to its position after SPLICE-OPS are applied.
 SPLICE-OPS is a list of (START END REPLACEMENT . _) covering disjoint ranges, as collected
 in `create-logical-line'. used to keep virtual-item markers anchored when several folds on one
 visual line each splice text out."
@@ -126,7 +126,7 @@ visual line each splice text out."
                       (not (same-line-p (overlay-end overlay) point)))))
 
 (defun invisible-overlay-covering (point &optional (overlays (buffer-overlays (point-buffer point))))
-  "return the :invisible overlay covering POINT."
+  "Return the :invisible overlay covering POINT."
   (loop :for overlay :in overlays
         :thereis (and (overlay-get overlay :invisible)
                       (point<= (overlay-start overlay) point)
@@ -134,7 +134,7 @@ visual line each splice text out."
                       overlay)))
 
 (defun move-point-out-of-overlay (point overlay direction)
-  "move POINT to the nearest edge of OVERLAY in DIRECTION (:forward or :backward), so it does not
+  "Move POINT to the nearest edge of OVERLAY in DIRECTION (:forward or :backward), so it does not
 rest inside. usable directly as a :cursor-enter-functions handler; `fold-region' installs it by
 default so a cursor never appears stuck on the hidden text of a fold."
   (if (eq direction :backward)
@@ -154,7 +154,7 @@ default so a cursor never appears stuck on the hidden text of a fold."
   (overlay-put overlay :show-virtual-text t))
 
 (defun overlay-show-virtual-text-p (overlay)
-  "whether OVERLAY's :before-string/:after-string should render. defaults to T."
+  "Whether OVERLAY's :before-string/:after-string should render. defaults to T."
   (let ((value (getf (overlay-plist overlay) :show-virtual-text :unset)))
     (if (eq value :unset) t value)))
 
@@ -163,7 +163,7 @@ default so a cursor never appears stuck on the hidden text of a fold."
       (overlay-get overlay :cursor-leave-functions)))
 
 (defun overlays-with-cursor-hooks-covering (point)
-  "the overlays covering POINT that take part in cursor enter/leave tracking."
+  "The overlays covering POINT that take part in cursor enter/leave tracking."
   (loop :for overlay :in (buffer-overlays (point-buffer point))
         :when (and (overlay-has-cursor-hooks-p overlay)
                    (point<= (overlay-start overlay) point)
@@ -172,7 +172,7 @@ default so a cursor never appears stuck on the hidden text of a fold."
 
 ;; but reveal behavior isnt relevant for line folding
 (defun place-region-placeholder-overlay (start end &key (placeholder "...") (cursor-behavior :move-out) (is-line-fold t))
-  "hide the lines of the region [START, END), leaving START's line visible with a fold marker.
+  "Hide the lines of the region [START, END), leaving START's line visible with a fold marker.
 returns the fold overlay. CURSOR-BEHAVIOR decides how the cursor is kept off the hidden text:
 - :move-out :: move the cursor to the nearest visible edge (see `move-point-out-of-overlay').
 - :reveal   :: open the fold while the cursor is inside it and close it again on leave (see
@@ -201,7 +201,7 @@ callers can also set the overlay's :cursor-enter-functions / :cursor-leave-funct
       overlay)))
 
 (defun line-continuation-p (point)
-  "whether POINT's line continues a previous visual line. meaning the newline preceding it is
+  "Whether POINT's line continues a previous visual line. meaning the newline preceding it is
 hidden by an :invisible overlay, so the line is not a visual line of its own.
 a folded region may hide arbitrary character ranges, including the newlines that join several
 buffer lines into one displayed line."
@@ -231,7 +231,7 @@ buffer lines into one displayed line."
               (nreverse attributes)))))
 
 (defun create-logical-line (point overlays active-modes)
-  "build a logical-line for the visual line starting at POINT, joining any following buffer lines
+  "Build a logical-line for the visual line starting at POINT, joining any following buffer lines
 whose preceding newline is hidden by an :invisible overlay. a single displayed line may contain
 several folds that each hide arbitrary character ranges across multiple buffer lines."
   (let ((invisible-overlays

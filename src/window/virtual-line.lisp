@@ -96,7 +96,7 @@ next line because it is at the end of width."
       offset)))
 
 (defun count-hidden-lines (start-point end-point)
-  "number of hidden buffer lines between START-POINT and END-POINT."
+  "Number of hidden buffer lines between START-POINT and END-POINT."
   (when (point< end-point start-point)
     (rotatef start-point end-point))
   (with-point ((p start-point)
@@ -112,7 +112,7 @@ next line because it is at the end of width."
           :finally (return count))))
 
 (defun window-cursor-y-not-wrapping (window)
-  "number of screen rows between the view point and the cursor.
+  "Number of screen rows between the view point and the cursor.
 excludes lines hidden by overlays with :invisible property because those lines dont occupy any
 vertical space."
   (let ((view-point (window-view-point window))

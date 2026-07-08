@@ -65,11 +65,11 @@
 (define-editor-variable detective-search nil)
 (define-editor-variable enable-tab-fold
   t
-  "when T, the Tab key attempts to fold/unfold defuns and falls back to
+  "When T, the Tab key attempts to fold/unfold defuns and falls back to
 `indent-line-and-complete-symbol', otherwise it just invokes the latter.")
 (define-editor-variable fold-region-function
   'fold-region-default
-  "function of one point returning (values start end) for the foldable region at point, or NIL.")
+  "Function of one point returning (values start end) for the foldable region at point, or NIL.")
 
 (defun prompt-for-symbol (prompt history-name)
   (prompt-for-string prompt :history-symbol history-name))
@@ -126,7 +126,7 @@
         (beginning-of-defun-1 (- n)))))
 
 (defun fold-region-default (point)
-  "return (values start end) spanning the defun at POINT, or NIL."
+  "Return (values start end) spanning the defun at POINT, or NIL."
   (let ((defun-begin (variable-value 'beginning-of-defun-function :buffer point))
         (defun-end (variable-value 'end-of-defun-function :buffer point)))
     (when (and defun-begin defun-end)
@@ -139,7 +139,7 @@
           (values start end))))))
 
 (defun fold-overlay-at (point)
-  "the fold overlay whose header line is POINT's line, or NIL."
+  "The fold overlay whose header line is POINT's line, or NIL."
   (find-if
    (lambda (overlay)
      (and (overlay-get overlay :fold)
@@ -147,7 +147,7 @@
    (buffer-overlays (point-buffer point))))
 
 (defun fold-defun-at (point)
-  "fold the defun at POINT. Returns T when something was folded."
+  "Fold the defun at POINT. Returns T when something was folded."
   (let ((fn (variable-value 'fold-region-function :default point)))
     (multiple-value-bind (start end) (funcall fn point)
       (when (and start end
@@ -159,7 +159,7 @@
           overlay)))))
 
 (defun fold-toggle-at-point (&optional (point (current-point)))
-  "toggle the fold at POINT. returns T when a fold was added or removed, and NIL when there was
+  "Toggle the fold at POINT. returns T when a fold was added or removed, and NIL when there was
 nothing to fold."
   (let ((fold (fold-overlay-at point)))
     (cond (fold (delete-overlay fold) t)
@@ -167,13 +167,13 @@ nothing to fold."
           (t nil))))
 
 (define-command fold-or-indent-or-complete () ()
-  "fold or unfold the defun at point. otherwise indent and complete the symbol."
+  "Fold or unfold the defun at point. otherwise indent and complete the symbol."
   (unless (and (variable-value 'enable-tab-fold)
                (fold-toggle-at-point))
     (indent-line-and-complete-symbol)))
 
 (define-command unfold-all () ()
-  "remove every fold in the current buffer."
+  "Remove every fold in the current buffer."
   (dolist (overlay (copy-list (buffer-overlays)))
     (when (overlay-get overlay :fold)
       (delete-overlay overlay))))

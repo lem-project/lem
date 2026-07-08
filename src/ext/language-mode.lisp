@@ -54,8 +54,6 @@
 (define-editor-variable idle-function nil)
 (define-editor-variable beginning-of-defun-function nil)
 (define-editor-variable end-of-defun-function nil)
-(define-editor-variable fold-region-function 'fold-region-default
-  "function of one point returning (values start end) for the foldable region at point, or NIL.")
 (define-editor-variable line-comment nil)
 (define-editor-variable insertion-line-comment nil)
 (define-editor-variable find-definitions-function nil)
@@ -65,6 +63,13 @@
 (define-editor-variable indent-size 2)
 (define-editor-variable root-uri-patterns '())
 (define-editor-variable detective-search nil)
+(define-editor-variable enable-tab-fold
+  t
+  "when T, the Tab key attempts to fold/unfold defuns and falls back to
+`indent-line-and-complete-symbol', otherwise it just invokes the latter.")
+(define-editor-variable fold-region-function
+  'fold-region-default
+  "function of one point returning (values start end) for the foldable region at point, or NIL.")
 
 (defun prompt-for-symbol (prompt history-name)
   (prompt-for-string prompt :history-symbol history-name))
@@ -163,7 +168,8 @@ nothing to fold."
 
 (define-command fold-or-indent-or-complete () ()
   "fold or unfold the defun at point. otherwise indent and complete the symbol."
-  (unless (fold-toggle-at-point)
+  (unless (and (variable-value 'enable-tab-fold)
+               (fold-toggle-at-point))
     (indent-line-and-complete-symbol)))
 
 (define-command unfold-all () ()

@@ -41,6 +41,9 @@ validation:
           4. Class/struct definitions
           5. Functions and commands
 
+          Only flag violations when elements appear OUT OF ORDER (e.g., key bindings AFTER functions, or defvar AFTER functions).
+          Key bindings appearing BEFORE functions is correct and expected.
+
       # === Style ===
       - name: loop_keywords_rule
         prompt: |

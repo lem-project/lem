@@ -123,3 +123,7 @@
                     (if not-lastp
                         (write-line string out)
                         (write-string string out))))))))
+
+(defmacro when-real-cursor (&body body)
+  `(unless (typep (current-point) 'fake-cursor)
+     ,@body))

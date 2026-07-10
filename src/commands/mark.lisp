@@ -12,13 +12,13 @@
 (define-key *global-keymap* "C-x C-x" 'exchange-point-mark)
 (define-key *global-keymap* "C-x h" 'mark-set-whole-buffer)
 
-(define-command (mark-set (:advice-classes editable-advice)) (p) (:universal-nil)
+(define-command mark-set (p) (:universal-nil)
   "Sets a mark at the current cursor position."
   (if p
       (move-point (current-point) (pop-buffer-point))
       (progn
         (set-cursor-mark (current-point) (current-point))
-        (message "Mark set"))))
+        (when-real-cursor (message "Mark set")))))
 
 (define-command exchange-point-mark () ()
   "Exchange the current cursor position with the marked position."

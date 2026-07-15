@@ -213,16 +213,16 @@ the same immutable instance for every subsequent message."
              args)))
 
 (defmethod lem-if:invoke ((jsonrpc jsonrpc) function)
-  (let ((ready nil))
+  (let ((ready (bt2:make-semaphore :name "lem-server ready")))
     (setf (jsonrpc-editor-thread jsonrpc)
           (funcall function
                    (lambda ()
-                     (loop :until ready))))
+                     (bt2:wait-on-semaphore ready))))
     (jsonrpc:expose (jsonrpc-server jsonrpc)
                     "login"
                     (login jsonrpc
                            (lambda ()
-                             (setf ready t))))
+                             (bt2:signal-semaphore ready))))
     (jsonrpc:expose (jsonrpc-server jsonrpc)
                     "input"
                     (lambda (args)

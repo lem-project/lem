@@ -125,5 +125,7 @@
                         (write-string string out))))))))
 
 (defmacro when-real-cursor (&body body)
+  "Execute BODY only if the current cursor is a real one (i.e. not a fake-cursor)."
   `(unless (typep (current-point) 'fake-cursor)
      ,@body))
+

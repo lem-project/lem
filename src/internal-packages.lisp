@@ -14,6 +14,7 @@
    :folder-object
    :icon-object
    :image-object
+   :image-object-attribute
    :image-object-height
    :image-object-image
    :image-object-width
@@ -134,6 +135,7 @@
    :define-attribute
    :cursor
    :region
+   :fold-attribute
    :modeline
    :modeline-inactive
    :truncate-attribute
@@ -580,7 +582,9 @@
    :overlay-put
    :overlay-get
    :clear-overlays
-   :point-overlays)
+   :point-overlays
+   :buffer-overlays
+   :overlay-within-point-p)
   ;; streams.lisp
   (:export
    :buffer-input-stream
@@ -660,7 +664,14 @@
    :compute-wrap-left-area-content)
   ;; display/logical-line.lisp
   (:export
-   :make-region-overlays-using-global-mode)
+   :make-region-overlays-using-global-mode
+   :line-continuation-p
+   :invisible-overlay-covering
+   :move-point-out-of-overlay
+   :reveal-overlay-on-cursor-enter
+   :hide-overlay-on-cursor-leave
+   :overlays-with-cursor-hooks-covering
+   :place-region-placeholder-overlay)
   ;; interface.lisp
   (:export
    :with-implementation

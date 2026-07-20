@@ -289,6 +289,8 @@
                "lem-terraform-mode"
                "lem-nix-mode"
                "lem-markdown-mode"
+               "lem-latex-mode"
+               "lem-bibtex-mode"
                "lem-color-preview"
                "lem-lua-mode"
                #-os-windows "lem-terminal"

@@ -354,6 +354,12 @@ Returns (values exit-code stdout-string)."
                   (%sudo-run user host args password)
                 (unless (eql 0 exit-code)
                   (editor-error "Failed to read remote file ~A (exit ~D)" path exit-code))
+                ;; Guard: strip password if it leaked into stdout due to
+                ;; a lem-webview prompt overlay cleanup race.
+                (when (and password (plusp (length password)))
+                  (when (str:starts-with-p password stdout)
+                    (setf stdout (subseq stdout (length password)))
+                    (setf stdout (string-left-trim '(#\newline #\return) stdout))))
                 stdout))))
     (editor-error (e)
       (error e))
@@ -532,10 +538,18 @@ Uses cache; fetches all metadata in a single stat call."
 
 (defun tramp-expand-file-name-handler (filename directory)
   "Handler for *virtual-expand-file-name-functions*.
-For TRAMP paths, skip local path merging and return the path as-is."
+For TRAMP paths, skip local path merging and return the path as-is.
+For :sudo, pre-fetches the password here (before any buffer is created)
+to prevent keystrokes from leaking into the file buffer."
   (declare (ignore directory))
   (when (tramp-path-p filename)
-    filename))
+    (multiple-value-bind (method user host remote-path) (parse-tramp-path filename)
+      (declare (ignore remote-path))
+      (when (eq method :sudo)
+        ;; Prompt early, while the UI is clean — no buffer exists yet,
+        ;; and the find-file minibuffer just closed.
+        (tramp-ensure-password method user host))
+      filename)))
 
 ;;; ------------------------------------------------------------------
 ;;; External Format Detection Override

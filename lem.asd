@@ -305,7 +305,8 @@
                "lem-tree-sitter"
                "lem-git-gutter"
                "lem-skk-mode"
-               "lem-display-time-mode"))
+               "lem-display-time-mode"
+               "lem-tramp"))
 
 (defsystem "lem"
   :version "2.3.0"

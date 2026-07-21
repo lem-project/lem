@@ -66,7 +66,7 @@
 
 (defun directory-for-file-or-lose (filename)
   (let ((directory (directory-namestring filename)))
-    (unless (or (uiop:directory-exists-p directory)
+    (unless (or (virtual-directory-exists-p directory)
                 (maybe-create-directory directory))
       (error 'editor-abort))
     directory))

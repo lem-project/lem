@@ -207,18 +207,20 @@ Marks connection as needing password and prompts."
            (cmd-args (if (listp command) command (list command)))
            (control-opts (ssh-control-options)))
        (if password
-           `("sshpass" "-p" ,password
-             "ssh" "-T"
-             "-o" "StrictHostKeyChecking=accept-new"
-             "-o" "ConnectTimeout=3"
-             ,@control-opts
-             ,target ,@cmd-args)
-           `("ssh" "-T"
-             "-o" "BatchMode=yes"
-             "-o" "StrictHostKeyChecking=accept-new"
-             "-o" "ConnectTimeout=3"
-             ,@control-opts
-             ,target ,@cmd-args))))
+           (append (list "sshpass" "-p" password
+                         "ssh" "-T"
+                         "-o" "StrictHostKeyChecking=accept-new"
+                         "-o" "ConnectTimeout=3")
+                   control-opts
+                   (list target)
+                   cmd-args)
+           (append (list "ssh" "-T"
+                         "-o" "BatchMode=yes"
+                         "-o" "StrictHostKeyChecking=accept-new"
+                         "-o" "ConnectTimeout=3")
+                   control-opts
+                   (list target)
+                   cmd-args))))
     (:sudo
      (let ((args (list "sudo")))
        (when use-sudo-s
@@ -284,9 +286,9 @@ Returns (values exit-code stdout-string)."
         (close in)
         (let ((stdout
                 (with-output-to-string (s)
-                  (loop for line = (read-line out nil nil)
-                        while line
-                        do (write-line line s)))))
+                  (loop :for line := (read-line out nil nil)
+                        :while line
+                        :do (write-line line s)))))
           (ignore-errors (close out))
           (let ((exit-code (uiop:wait-process process)))
             (values exit-code stdout))))
@@ -342,7 +344,7 @@ Returns (values exit-code stdout-string)."
 (defun %read-remote-file (method user host path)
   "Read a remote file via cat. Returns the content as a string."
   (handler-case
-      (let ((cmd `("cat" ,path)))
+      (let ((cmd (list "cat" path)))
         (if (eq method :ssh)
             (multiple-value-bind (exit-code stdout)
                 (%ssh-run-with-auth-retry user host cmd)
@@ -576,7 +578,8 @@ For TRAMP paths, skip local path merging and return the path as-is."
 ;;; File Completion (bypasses list-directory which lacks virtual hooks)
 ;;; ------------------------------------------------------------------
 
-(defvar *tramp-original-completion-function* nil)
+(defvar *tramp-original-completion-function* nil
+  "Saved original value of *prompt-file-completion-function*.")
 
 (defun tramp-file-completion (string directory &key directory-only)
   "Completion function for TRAMP paths.

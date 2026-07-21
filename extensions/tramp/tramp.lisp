@@ -31,7 +31,7 @@ Returns (values method user host remote-path)."
   (when (pathnamep filename)
     (setf filename (namestring filename)))
   (ppcre:register-groups-bind (method user-host remote-path)
-      ("^/(\\w+):([^:]*):(.+)" filename)
+      ("^/(\\w+):([^:]*):(.*)" filename)
     (unless method
       (editor-error "Invalid TRAMP path: ~A" filename))
     (let ((user nil)
@@ -45,6 +45,8 @@ Returns (values method user host remote-path)."
             (setf host user-host)))
       (when (null host)
         (setf host "localhost"))
+      (when (or (null remote-path) (string= remote-path ""))
+        (setf remote-path "/"))
       (values (intern (string-upcase method) :keyword)
               user
               host
@@ -176,10 +178,10 @@ Marks connection as needing password and prompts."
       (ecase method
         (:sudo
          (if (eql 0 (nth-value 2
-                       (uiop:run-program '("sudo" "-n" "true")
-                                         :output nil
-                                         :error-output nil
-                                         :ignore-error-status t)))
+                               (uiop:run-program '("sudo" "-n" "true")
+                                                 :output nil
+                                                 :error-output nil
+                                                 :ignore-error-status t)))
              nil  ;; passwordless sudo
              (or (tramp-prompt-password method user host)
                  (error 'editor-abort))))
@@ -281,10 +283,10 @@ Returns (values exit-code stdout-string)."
           (finish-output in))
         (close in)
         (let ((stdout
-               (with-output-to-string (s)
-                 (loop for line = (read-line out nil nil)
-                       while line
-                       do (write-line line s)))))
+                (with-output-to-string (s)
+                  (loop for line = (read-line out nil nil)
+                        while line
+                        do (write-line line s)))))
           (ignore-errors (close out))
           (let ((exit-code (uiop:wait-process process)))
             (values exit-code stdout))))
@@ -431,7 +433,7 @@ Returns (values exit-code stdout-string)."
            (if (equal element-type '(unsigned-byte 8))
                (list raw-stream closer)
                (list (flexi-streams:make-flexi-stream raw-stream
-                        :external-format (or external-format :utf-8))
+                                                      :external-format (or external-format :utf-8))
                      closer))))
         (:output
          (multiple-value-bind (raw-stream closer)
@@ -439,7 +441,7 @@ Returns (values exit-code stdout-string)."
            (if (equal element-type '(unsigned-byte 8))
                (list raw-stream closer)
                (list (flexi-streams:make-flexi-stream raw-stream
-                        :external-format (or external-format :utf-8))
+                                                      :external-format (or external-format :utf-8))
                      closer))))))))
 
 ;;; ------------------------------------------------------------------
@@ -476,15 +478,20 @@ Returns (values exit-code stdout-string)."
 
 (defun tramp-directory-files-handler (pathspec)
   "Handler for *virtual-directory-files-functions*.
-Caches directory check and listings for 5 seconds."
+Caches directory check and listings for 5 seconds.
+For :sudo, delegates to local filesystem (no remote calls) so
+completion works without triggering a password prompt."
   (when (tramp-path-p pathspec)
     (multiple-value-bind (method user host remote-path) (parse-tramp-path pathspec)
+      (when (eq method :sudo)
+        (return-from tramp-directory-files-handler
+          (tramp-sudo-directory-files pathspec remote-path)))
       ;; Use cached directory check
       (let ((cached (tramp-fs-cache-get method user host remote-path :dir-exists)))
         (if (eq cached :not-found)
             ;; Check and cache
             (let ((is-dir (eql 0 (run-remote-exit-code method user host
-                                                        (list "test" "-d" remote-path)))))
+                                                       (list "test" "-d" remote-path)))))
               (tramp-fs-cache-set method user host remote-path :dir-exists is-dir)
               (if is-dir
                   (tramp-list-directory-1 method user host pathspec remote-path)
@@ -493,8 +500,30 @@ Caches directory check and listings for 5 seconds."
                 (tramp-list-directory-1 method user host pathspec remote-path)
                 (list pathspec)))))))
 
+(defun tramp-sudo-directory-files (pathspec remote-path)
+  "List local directory contents for a :sudo path.
+Uses local filesystem, not sudo — this is for completion only;
+file open still goes through sudo for access."
+  (when (pathnamep pathspec)
+    (setf pathspec (namestring pathspec)))
+  (let* ((local-dir (uiop:ensure-directory-pathname remote-path))
+         (files (ignore-errors
+                  (or (append (uiop:subdirectories local-dir)
+                              (uiop:directory-files local-dir))
+                      (directory (make-pathname :defaults local-dir
+                                                :name :wild :type :wild))))))
+    (when files
+      (let ((prefix (if (char= (char pathspec (1- (length pathspec))) #\/)
+                        pathspec
+                        (concatenate 'string pathspec "/"))))
+        (mapcar (lambda (f) (concatenate 'string prefix
+                                         (namestring (enough-namestring f local-dir))))
+                files)))))
+
 (defun tramp-list-directory-1 (method user host pathspec remote-path)
   "List contents of a remote directory. Uses cache."
+  (when (pathnamep pathspec)
+    (setf pathspec (namestring pathspec)))
   (let ((cached (tramp-fs-cache-get method user host remote-path :dir-files)))
     (unless (eq cached :not-found)
       (return-from tramp-list-directory-1 cached)))
@@ -538,18 +567,38 @@ Uses cache; fetches all metadata in a single stat call."
 
 (defun tramp-expand-file-name-handler (filename directory)
   "Handler for *virtual-expand-file-name-functions*.
-For TRAMP paths, skip local path merging and return the path as-is.
-For :sudo, pre-fetches the password here (before any buffer is created)
-to prevent keystrokes from leaking into the file buffer."
+For TRAMP paths, skip local path merging and return the path as-is."
   (declare (ignore directory))
   (when (tramp-path-p filename)
-    (multiple-value-bind (method user host remote-path) (parse-tramp-path filename)
-      (declare (ignore remote-path))
-      (when (eq method :sudo)
-        ;; Prompt early, while the UI is clean — no buffer exists yet,
-        ;; and the find-file minibuffer just closed.
-        (tramp-ensure-password method user host))
-      filename)))
+    filename))
+
+;;; ------------------------------------------------------------------
+;;; File Completion (bypasses list-directory which lacks virtual hooks)
+;;; ------------------------------------------------------------------
+
+(defvar *tramp-original-completion-function* nil)
+
+(defun tramp-file-completion (string directory &key directory-only)
+  "Completion function for TRAMP paths.
+Bypasses list-directory (no virtual hooks) by calling
+directory-files directly for the TRAMP directory listing."
+  (declare (ignore directory-only))
+  (let* ((expanded (expand-file-name string directory))
+         (input-dir (directory-namestring expanded)))
+    (if (tramp-path-p input-dir)
+        (let* ((files (directory-files expanded))
+               (prefix-len (length input-dir)))
+          (when files
+            (mapcar (lambda (f)
+                      (let* ((full (namestring f))
+                             (label (if (> (length full) prefix-len)
+                                        (subseq full prefix-len)
+                                        full)))
+                        (lem/completion-mode:make-completion-item
+                         :label label)))
+                    files)))
+        (funcall *tramp-original-completion-function*
+                 string directory :directory-only directory-only))))
 
 ;;; ------------------------------------------------------------------
 ;;; External Format Detection Override
@@ -589,7 +638,13 @@ so we return a safe default (:utf-8 :lf) for remote files."
     (setf *tramp-original-external-format-function*
           lem/buffer/file:*external-format-function*)
     (setf lem/buffer/file:*external-format-function*
-          'tramp-external-format-function-wrapper)))
+          'tramp-external-format-function-wrapper))
+  ;; Override completion to handle TRAMP paths
+  (unless *tramp-original-completion-function*
+    (setf *tramp-original-completion-function*
+          lem-core::*prompt-file-completion-function*)
+    (setf lem-core::*prompt-file-completion-function*
+          'tramp-file-completion)))
 
 (defun tramp-disable ()
   "Disable TRAMP remote file support."
@@ -608,7 +663,11 @@ so we return a safe default (:utf-8 :lf) for remote files."
   (when *tramp-original-external-format-function*
     (setf lem/buffer/file:*external-format-function*
           *tramp-original-external-format-function*)
-    (setf *tramp-original-external-format-function* nil)))
+    (setf *tramp-original-external-format-function* nil))
+  (when *tramp-original-completion-function*
+    (setf lem-core::*prompt-file-completion-function*
+          *tramp-original-completion-function*)
+    (setf *tramp-original-completion-function* nil)))
 
 ;; Auto-enable at load time
 (tramp-enable)

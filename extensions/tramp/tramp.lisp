@@ -589,17 +589,28 @@ directory-files directly for the TRAMP directory listing."
   (let* ((expanded (expand-file-name string directory))
          (input-dir (directory-namestring expanded)))
     (if (tramp-path-p input-dir)
-        (let* ((files (directory-files expanded))
-               (prefix-len (length input-dir)))
+        (let* ((files (directory-files input-dir))
+               ;; Partial filename the user is typing (after the last "/")
+               (partial (enough-namestring expanded input-dir)))
           (when files
-            (mapcar (lambda (f)
-                      (let* ((full (namestring f))
-                             (label (if (> (length full) prefix-len)
-                                        (subseq full prefix-len)
-                                        full)))
-                        (lem/completion-mode:make-completion-item
-                         :label label)))
-                    files)))
+            (let ((filtered
+                    (if (and partial (not (string= partial "")))
+                        (remove-if-not
+                         (lambda (f)
+                           (let ((name (enough-namestring (namestring f) input-dir)))
+                             (and name
+                                  (> (length name) 0)
+                                  (eql 0 (search (string-downcase partial)
+                                                 (string-downcase name))))))
+                         files)
+                        files)))
+              (unless filtered
+                (return-from tramp-file-completion nil))
+              (mapcar (lambda (f)
+                        (let ((label (enough-namestring (namestring f) input-dir)))
+                          (lem/completion-mode:make-completion-item
+                           :label (or label (namestring f)))))
+                      filtered))))
         (funcall *tramp-original-completion-function*
                  string directory :directory-only directory-only))))
 

@@ -175,8 +175,14 @@ Marks connection as needing password and prompts."
   (or (tramp-get-password method user host)
       (ecase method
         (:sudo
-         (or (tramp-prompt-password method user host)
-             (error 'editor-abort)))
+         (if (eql 0 (nth-value 2
+                       (uiop:run-program '("sudo" "-n" "true")
+                                         :output nil
+                                         :error-output nil
+                                         :ignore-error-status t)))
+             nil  ;; passwordless sudo
+             (or (tramp-prompt-password method user host)
+                 (error 'editor-abort))))
         (:ssh
          ;; Lazy auth: authenticated on first actual command, not here
          nil))))

@@ -253,42 +253,34 @@ Exit code 5   = sshpass incorrect password."
   "Run an SSH command with automatic auth handling.
 Tries key auth first; on auth failure, clears cached password and retries.
 Signals editor-error if authentication ultimately fails."
-  (flet ((run-with-password (pwd)
-           (let ((args (build-ssh-args :ssh user host command :password pwd)))
-             (%ssh-run user host args))))
+  (labels ((run-with-password (pwd)
+             (let ((args (build-ssh-args :ssh user host command :password pwd)))
+               (%ssh-run user host args)))
+           (run-with-retry (pwd)
+             (multiple-value-bind (ec out) (run-with-password pwd)
+               (if (ssh-auth-failure-p ec)
+                   (let ((new-pwd (progn (clear-password :ssh user host)
+                                         (prompt-password :ssh user host))))
+                     (if new-pwd
+                         (multiple-value-bind (ec2 out2) (run-with-password new-pwd)
+                           (if (ssh-auth-failure-p ec2)
+                               (editor-error "Authentication failed for /ssh:~@[~A@~]~A"
+                                             (or user "") host)
+                               (values ec2 out2)))
+                         (error 'editor-abort)))
+                   (values ec out)))))
     (multiple-value-bind (password auth-tried) (ssh-ensure-auth :ssh user host)
       (if auth-tried
-          ;; Auth method known — run directly
-          (multiple-value-bind (exit-code stdout) (run-with-password password)
-            (if (ssh-auth-failure-p exit-code)
-                ;; Cached password is wrong — re-prompt and retry once
-                (let ((new-pwd (progn (clear-password :ssh user host)
-                                      (prompt-password :ssh user host))))
-                  (if new-pwd
-                      (multiple-value-bind (ec2 out2) (run-with-password new-pwd)
-                        (if (ssh-auth-failure-p ec2)
-                            (editor-error "Authentication failed for /ssh:~@[~A@~]~A"
-                                          (or user "") host)
-                            (values ec2 out2)))
-                      (error 'editor-abort)))
-                (values exit-code stdout)))
-          ;; Auth method unknown — try key auth first
-          (multiple-value-bind (exit-code stdout)
-              (run-with-password nil)
-            (if (ssh-auth-failure-p exit-code)
-                ;; Auth failure → prompt password and retry
+          (run-with-retry password)
+          (multiple-value-bind (ec out) (run-with-password nil)
+            (if (ssh-auth-failure-p ec)
                 (let ((pwd (ssh-remember-auth-failure user host)))
                   (if pwd
-                      (multiple-value-bind (ec2 out2) (run-with-password pwd)
-                        (if (ssh-auth-failure-p ec2)
-                            (editor-error "Authentication failed for /ssh:~@[~A@~]~A"
-                                          (or user "") host)
-                            (values ec2 out2)))
-                      (values exit-code stdout)))
-                ;; Key auth succeeded or command failed for other reasons
+                      (run-with-retry pwd)
+                      (values ec out)))
                 (progn
                   (ssh-remember-auth-success user host)
-                  (values exit-code stdout))))))))
+                  (values ec out))))))))
 
 ;;; Sudo command execution (pipe-based, no temp files)
 

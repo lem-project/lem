@@ -163,6 +163,29 @@
                       (uiop:copy-file from to)))))
       (rec from to))))
 
+;;; ------------------------------------------------------------------
+;;; Virtual File System Hooks
+;;; ------------------------------------------------------------------
+;;;
+;;; These hook lists allow extensions (like lem-tramp) to intercept file
+;;; operations for non-local paths (e.g. /ssh:host:/path or /sudo::/path).
+;;;
+;;; Each hook is a list of functions.  When the core needs to operate on a
+;;; file, it walks the corresponding list; each function checks whether it
+;;; can handle the given path and either returns a result (short-circuiting
+;;; the chain) or returns nil (passing to the next handler).  If no handler
+;;; matches, the operation falls through to the local filesystem.
+;;;
+;;; Handler contracts:
+;;;   file-open          → (values stream closer) or nil
+;;;   probe-file         → truename or nil
+;;;   directory-exists-p → directory path or nil
+;;;   directory-files    → list of pathnames or nil
+;;;   file-metadata      → integer (size / mtime / write-date) or nil
+;;;   expand-file-name   → expanded path string or nil
+;;;
+;;; Example consumer: extensions/tramp/tramp.lisp
+
 (defparameter *virtual-file-open* nil)
 
 (defparameter *virtual-probe-file-functions* nil

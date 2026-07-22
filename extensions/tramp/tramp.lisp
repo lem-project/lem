@@ -1,6 +1,5 @@
 (defpackage :lem-tramp
-  (:use :cl :lem)
-  (:export :tramp-mode))
+  (:use :cl :lem))
 (in-package :lem-tramp)
 
 (setf (documentation *package* t)
@@ -15,7 +14,7 @@ C-x C-f /sudo::/etc/hostname")
 ;;; Path Parsing
 ;;; ------------------------------------------------------------------
 
-(defun tramp-path-p (filename)
+(defun path-p (filename)
   "Return T if FILENAME is a TRAMP-style path (/method:user@host:/path)."
   (when (pathnamep filename)
     (setf filename (namestring filename)))
@@ -25,7 +24,7 @@ C-x C-f /sudo::/etc/hostname")
        (ppcre:scan "^\\w+:" (subseq filename 1))
        t))
 
-(defun parse-tramp-path (filename)
+(defun parse-path (filename)
   "Parse FILENAME like /ssh:user@host:/remote/path or /sudo::/path.
 Returns (values method user host remote-path)."
   (when (pathnamep filename)
@@ -56,22 +55,22 @@ Returns (values method user host remote-path)."
 ;;; Password Management
 ;;; ------------------------------------------------------------------
 
-(defvar *tramp-passwords* (make-hash-table :test 'equal)
+(defvar *passwords* (make-hash-table :test 'equal)
   "Cache of passwords keyed by connection key (e.g. \"sudo:root@localhost\").")
 
-(defun tramp-connection-key (method user host)
+(defun connection-key (method user host)
   "Make a cache key for a TRAMP connection."
   (format nil "~A:~A@~A" method (or user "") host))
 
-(defun tramp-get-password (method user host)
+(defun get-password (method user host)
   "Get the cached password for a connection, or nil."
-  (values (gethash (tramp-connection-key method user host) *tramp-passwords*)))
+  (values (gethash (connection-key method user host) *passwords*)))
 
-(defun tramp-clear-password (method user host)
+(defun clear-password (method user host)
   "Clear the cached password for a connection (on auth failure)."
-  (remhash (tramp-connection-key method user host) *tramp-passwords*))
+  (remhash (connection-key method user host) *passwords*))
 
-(defun tramp-prompt-password (method user host)
+(defun prompt-password (method user host)
   "Prompt the user for a password and cache it.
 Returns the password string, or nil if cancelled/empty."
   (let ((prompt (format nil "TRAMP password for /~A:~@[~A@~]~A: "
@@ -79,39 +78,39 @@ Returns the password string, or nil if cancelled/empty."
     (let ((password (prompt-for-string prompt)))
       (if (and password (plusp (length password)))
           (progn
-            (setf (gethash (tramp-connection-key method user host) *tramp-passwords*)
+            (setf (gethash (connection-key method user host) *passwords*)
                   password)
             password)
           (progn
-            (tramp-clear-password method user host)
+            (clear-password method user host)
             nil)))))
 
 ;;; ------------------------------------------------------------------
 ;;; FS Cache (5-second TTL — eliminates duplicate SSH calls)
 ;;; ------------------------------------------------------------------
 
-(defvar *tramp-fs-cache* (make-hash-table :test 'equal)
+(defvar *fs-cache* (make-hash-table :test 'equal)
   "Cache for filesystem operations. Keys are (method user host path op),
 values are cons of (timestamp . result).")
 
-(defvar *tramp-fs-cache-ttl* 5
+(defvar *fs-cache-ttl* 5
   "Time-to-live in seconds for filesystem cache entries.")
 
-(defun tramp-fs-cache-key (method user host path op)
+(defun fs-cache-key (method user host path op)
   "Make a cache key for a filesystem operation."
   (format nil "~A:~A@~A:~A:~A" method (or user "") host path op))
 
-(defun tramp-fs-cache-get (method user host path op)
+(defun fs-cache-get (method user host path op)
   "Get a cached value, or :not-found."
-  (let* ((key (tramp-fs-cache-key method user host path op))
-         (entry (gethash key *tramp-fs-cache*)))
-    (if (and entry (< (- (get-universal-time) (car entry)) *tramp-fs-cache-ttl*))
+  (let* ((key (fs-cache-key method user host path op))
+         (entry (gethash key *fs-cache*)))
+    (if (and entry (< (- (get-universal-time) (car entry)) *fs-cache-ttl*))
         (cdr entry)
-        (progn (remhash key *tramp-fs-cache*) :not-found))))
+        (progn (remhash key *fs-cache*) :not-found))))
 
-(defun tramp-fs-cache-set (method user host path op value)
+(defun fs-cache-set (method user host path op value)
   "Cache a value with current timestamp."
-  (setf (gethash (tramp-fs-cache-key method user host path op) *tramp-fs-cache*)
+  (setf (gethash (fs-cache-key method user host path op) *fs-cache*)
         (cons (get-universal-time) value)))
 
 ;;; ------------------------------------------------------------------
@@ -140,7 +139,7 @@ Returns (values password auth-tried-p):
   - unknown → (values nil nil) — caller should try BatchMode first"
   (declare (ignore method))
   (let ((conn-key (format nil "~A@~A" (or user "") host)))
-    (or (let ((pwd (tramp-get-password :ssh user host)))
+    (or (let ((pwd (get-password :ssh user host)))
           (when pwd (return-from ssh-ensure-auth (values pwd t))))
         (let ((auth-method (gethash conn-key *ssh-auth-method-cache*)))
           (ecase auth-method
@@ -148,7 +147,7 @@ Returns (values password auth-tried-p):
             (:key (values nil t))             ;; key works, no password needed
             (:password                        ;; need password
              (if (sshpass-available-p)
-                 (let ((pwd (tramp-prompt-password :ssh user host)))
+                 (let ((pwd (prompt-password :ssh user host)))
                    (values pwd t))
                  (editor-error
                   "SSH key auth failed for ~A@~A. Install sshpass for password auth."
@@ -159,9 +158,9 @@ Returns (values password auth-tried-p):
 Marks connection as needing password and prompts."
   (let ((conn-key (format nil "~A@~A" (or user "") host)))
     (setf (gethash conn-key *ssh-auth-method-cache*) :password)
-    (tramp-clear-password :ssh user host)
+    (clear-password :ssh user host)
     (if (sshpass-available-p)
-        (tramp-prompt-password :ssh user host)
+        (prompt-password :ssh user host)
         (editor-error
          "SSH key auth failed for ~A@~A. Install sshpass for password auth."
          (or user "") host))))
@@ -171,10 +170,10 @@ Marks connection as needing password and prompts."
   (let ((conn-key (format nil "~A@~A" (or user "") host)))
     (setf (gethash conn-key *ssh-auth-method-cache*) :key)))
 
-(defun tramp-ensure-password (method user host)
+(defun ensure-password (method user host)
   "Get cached password or prompt the user. For :ssh returns nil
 (lazy auth — the actual command will trigger auth handling)."
-  (or (tramp-get-password method user host)
+  (or (get-password method user host)
       (ecase method
         (:sudo
          (if (eql 0 (nth-value 2
@@ -183,7 +182,7 @@ Marks connection as needing password and prompts."
                                                  :error-output nil
                                                  :ignore-error-status t)))
              nil  ;; passwordless sudo
-             (or (tramp-prompt-password method user host)
+             (or (prompt-password method user host)
                  (error 'editor-abort))))
         (:ssh
          ;; Lazy auth: authenticated on first actual command, not here
@@ -317,7 +316,7 @@ Returns (values exit-code stdout-string)."
   "Run a command on a remote host. Returns its exit code (0 = success)."
   (if (eq method :ssh)
       (%ssh-run-with-auth-retry user host command)
-      (let* ((password (tramp-ensure-password method user host))
+      (let* ((password (ensure-password method user host))
              (use-sudo-s (and (eq method :sudo) password))
              (args (build-ssh-args method user host command :use-sudo-s use-sudo-s)))
         (%sudo-run-exit-code user host args password))))
@@ -329,7 +328,7 @@ Returns (values exit-code stdout-string)."
           (%ssh-run-with-auth-retry user host command)
         (declare (ignore exit-code))
         (string-trim '(#\newline #\return) stdout))
-      (let* ((password (tramp-ensure-password method user host))
+      (let* ((password (ensure-password method user host))
              (use-sudo-s (and (eq method :sudo) password))
              (args (build-ssh-args method user host command :use-sudo-s use-sudo-s)))
         (multiple-value-bind (exit-code stdout)
@@ -351,7 +350,7 @@ Returns (values exit-code stdout-string)."
               (unless (eql 0 exit-code)
                 (editor-error "Failed to read remote file ~A (exit ~D)" path exit-code))
               stdout)
-            (let* ((password (tramp-ensure-password method user host))
+            (let* ((password (ensure-password method user host))
                    (use-sudo-s (and (eq method :sudo) password))
                    (args (build-ssh-args method user host cmd :use-sudo-s use-sudo-s)))
               (multiple-value-bind (exit-code stdout)
@@ -368,7 +367,7 @@ Returns (values exit-code stdout-string)."
     (editor-error (e)
       (error e))
     (error (e)
-      (tramp-clear-password method user host)
+      (clear-password method user host)
       (editor-error "Failed to read remote file ~A: ~A" path e))))
 
 (defun %make-ssh-output-stream (method user host path)
@@ -387,8 +386,8 @@ Returns (values exit-code stdout-string)."
                 (:sudo (list "/bin/sh" "-c"
                              (format nil "cat > ~A" (escape-shell-arg path))))))
          (use-sudo-s (eq method :sudo))
-         (password (or (tramp-get-password method user host)
-                       (tramp-ensure-password method user host)))
+         (password (or (get-password method user host)
+                       (ensure-password method user host)))
          (args (build-ssh-args method user host cmd
                                :use-sudo-s use-sudo-s
                                :password (when (eq method :ssh) password))))
@@ -410,7 +409,7 @@ Returns (values exit-code stdout-string)."
       (editor-error (e)
         (error e))
       (error (e)
-        (tramp-clear-password method user host)
+        (clear-password method user host)
         (editor-error "Failed to write remote file ~A: ~A" path e)))))
 
 (defun escape-shell-arg (arg)
@@ -422,12 +421,12 @@ Returns (values exit-code stdout-string)."
 ;;; Virtual File Open Handler
 ;;; ------------------------------------------------------------------
 
-(defun tramp-file-open-handler (filename &key direction element-type external-format)
+(defun file-open-handler (filename &key direction element-type external-format)
   "Handler for *virtual-file-open* that intercepts TRAMP paths."
   (when (pathnamep filename)
     (setf filename (namestring filename)))
-  (when (tramp-path-p filename)
-    (multiple-value-bind (method user host remote-path) (parse-tramp-path filename)
+  (when (path-p filename)
+    (multiple-value-bind (method user host remote-path) (parse-path filename)
       (ecase direction
         (:input
          (multiple-value-bind (raw-stream closer)
@@ -450,59 +449,59 @@ Returns (values exit-code stdout-string)."
 ;;; Filesystem Hooks (with 5-second FS cache)
 ;;; ------------------------------------------------------------------
 
-(defun tramp-probe-file-handler (pathspec &optional base-dir)
+(defun probe-file-handler (pathspec &optional base-dir)
   "Handler for *virtual-probe-file-functions*. Uses cache to avoid duplicate SSH calls."
   (declare (ignore base-dir))
-  (when (tramp-path-p pathspec)
-    (multiple-value-bind (method user host remote-path) (parse-tramp-path pathspec)
-      (let ((cached (tramp-fs-cache-get method user host remote-path :probe-file)))
+  (when (path-p pathspec)
+    (multiple-value-bind (method user host remote-path) (parse-path pathspec)
+      (let ((cached (fs-cache-get method user host remote-path :probe-file)))
         (unless (eq cached :not-found)
-          (return-from tramp-probe-file-handler cached)))
+          (return-from probe-file-handler cached)))
       (let ((code (run-remote-exit-code method user host
                                         (list "test" "-f" remote-path))))
         (let ((result (when (eql 0 code) (namestring pathspec))))
-          (tramp-fs-cache-set method user host remote-path :probe-file result)
+          (fs-cache-set method user host remote-path :probe-file result)
           result)))))
 
-(defun tramp-directory-exists-handler (directory)
+(defun directory-exists-handler (directory)
   "Handler for *virtual-directory-exists-p-functions*. Uses cache."
-  (when (tramp-path-p directory)
-    (multiple-value-bind (method user host remote-path) (parse-tramp-path directory)
-      (let ((cached (tramp-fs-cache-get method user host remote-path :dir-exists)))
+  (when (path-p directory)
+    (multiple-value-bind (method user host remote-path) (parse-path directory)
+      (let ((cached (fs-cache-get method user host remote-path :dir-exists)))
         (unless (eq cached :not-found)
-          (return-from tramp-directory-exists-handler
+          (return-from directory-exists-handler
             (when cached directory))))
       (let ((code (run-remote-exit-code method user host
                                         (list "test" "-d" remote-path))))
-        (tramp-fs-cache-set method user host remote-path :dir-exists (eql 0 code))
+        (fs-cache-set method user host remote-path :dir-exists (eql 0 code))
         (when (eql 0 code)
           directory)))))
 
-(defun tramp-directory-files-handler (pathspec)
+(defun directory-files-handler (pathspec)
   "Handler for *virtual-directory-files-functions*.
 Caches directory check and listings for 5 seconds.
 For :sudo, delegates to local filesystem (no remote calls) so
 completion works without triggering a password prompt."
-  (when (tramp-path-p pathspec)
-    (multiple-value-bind (method user host remote-path) (parse-tramp-path pathspec)
+  (when (path-p pathspec)
+    (multiple-value-bind (method user host remote-path) (parse-path pathspec)
       (when (eq method :sudo)
-        (return-from tramp-directory-files-handler
-          (tramp-sudo-directory-files pathspec remote-path)))
+        (return-from directory-files-handler
+          (sudo-directory-files pathspec remote-path)))
       ;; Use cached directory check
-      (let ((cached (tramp-fs-cache-get method user host remote-path :dir-exists)))
+      (let ((cached (fs-cache-get method user host remote-path :dir-exists)))
         (if (eq cached :not-found)
             ;; Check and cache
             (let ((is-dir (eql 0 (run-remote-exit-code method user host
                                                        (list "test" "-d" remote-path)))))
-              (tramp-fs-cache-set method user host remote-path :dir-exists is-dir)
+              (fs-cache-set method user host remote-path :dir-exists is-dir)
               (if is-dir
-                  (tramp-list-directory-1 method user host pathspec remote-path)
+                  (list-directory-1 method user host pathspec remote-path)
                   (list pathspec)))
             (if cached
-                (tramp-list-directory-1 method user host pathspec remote-path)
+                (list-directory-1 method user host pathspec remote-path)
                 (list pathspec)))))))
 
-(defun tramp-sudo-directory-files (pathspec remote-path)
+(defun sudo-directory-files (pathspec remote-path)
   "List local directory contents for a :sudo path.
 Uses local filesystem, not sudo — this is for completion only;
 file open still goes through sudo for access."
@@ -522,13 +521,13 @@ file open still goes through sudo for access."
                                          (namestring (enough-namestring f local-dir))))
                 files)))))
 
-(defun tramp-list-directory-1 (method user host pathspec remote-path)
+(defun list-directory-1 (method user host pathspec remote-path)
   "List contents of a remote directory. Uses cache."
   (when (pathnamep pathspec)
     (setf pathspec (namestring pathspec)))
-  (let ((cached (tramp-fs-cache-get method user host remote-path :dir-files)))
+  (let ((cached (fs-cache-get method user host remote-path :dir-files)))
     (unless (eq cached :not-found)
-      (return-from tramp-list-directory-1 cached)))
+      (return-from list-directory-1 cached)))
   (let ((output (run-remote-string method user host
                                    (list "ls" "-1a" remote-path))))
     (when output
@@ -541,16 +540,16 @@ file open still goes through sudo for access."
             (unless (or (string= name "") (string= name ".") (string= name ".."))
               (push (concatenate 'string prefix name) result))))
         (setf result (nreverse result))
-        (tramp-fs-cache-set method user host remote-path :dir-files result)
+        (fs-cache-set method user host remote-path :dir-files result)
         result))))
 
-(defun tramp-file-metadata-handler (pathname op)
+(defun file-metadata-handler (pathname op)
   "Handler for *virtual-file-metadata-functions*.
 Uses cache; fetches all metadata in a single stat call."
-  (when (tramp-path-p pathname)
-    (multiple-value-bind (method user host remote-path) (parse-tramp-path pathname)
+  (when (path-p pathname)
+    (multiple-value-bind (method user host remote-path) (parse-path pathname)
       ;; Check cache for any metadata op
-      (let ((cached (tramp-fs-cache-get method user host remote-path :metadata)))
+      (let ((cached (fs-cache-get method user host remote-path :metadata)))
         (when (eq cached :not-found)
           ;; Fetch all metadata in one call: "stat -c '%s %Y'"
           (let ((output (run-remote-string method user host
@@ -561,34 +560,34 @@ Uses cache; fetches all metadata in a single stat call."
                       (when (= 2 (length parts))
                         (cons (ignore-errors (parse-integer (first parts)))
                               (ignore-errors (parse-integer (second parts))))))))
-            (tramp-fs-cache-set method user host remote-path :metadata cached)))
+            (fs-cache-set method user host remote-path :metadata cached)))
         (ecase op
           (:size (or (car cached) 0))
           (:mtime (or (cdr cached) 0))
           (:write-date (or (cdr cached) 0)))))))
 
-(defun tramp-expand-file-name-handler (filename directory)
+(defun expand-file-name-handler (filename directory)
   "Handler for *virtual-expand-file-name-functions*.
 For TRAMP paths, skip local path merging and return the path as-is."
   (declare (ignore directory))
-  (when (tramp-path-p filename)
+  (when (path-p filename)
     filename))
 
 ;;; ------------------------------------------------------------------
 ;;; File Completion (bypasses list-directory which lacks virtual hooks)
 ;;; ------------------------------------------------------------------
 
-(defvar *tramp-original-completion-function* nil
+(defvar *original-completion-function* nil
   "Saved original value of *prompt-file-completion-function*.")
 
-(defun tramp-file-completion (string directory &key directory-only)
+(defun file-completion (string directory &key directory-only)
   "Completion function for TRAMP paths.
 Bypasses list-directory (no virtual hooks) by calling
 directory-files directly for the TRAMP directory listing."
   (declare (ignore directory-only))
   (let* ((expanded (expand-file-name string directory))
          (input-dir (directory-namestring expanded)))
-    (if (tramp-path-p input-dir)
+    (if (path-p input-dir)
         (let* ((files (directory-files input-dir))
                ;; Partial filename the user is typing (after the last "/")
                (partial (enough-namestring expanded input-dir)))
@@ -605,84 +604,84 @@ directory-files directly for the TRAMP directory listing."
                          files)
                         files)))
               (unless filtered
-                (return-from tramp-file-completion nil))
+                (return-from file-completion nil))
               (mapcar (lambda (f)
                         (let ((label (enough-namestring (namestring f) input-dir)))
                           (lem/completion-mode:make-completion-item
                            :label (or label (namestring f)))))
                       filtered))))
-        (funcall *tramp-original-completion-function*
+        (funcall *original-completion-function*
                  string directory :directory-only directory-only))))
 
 ;;; ------------------------------------------------------------------
 ;;; External Format Detection Override
 ;;; ------------------------------------------------------------------
 
-(defvar *tramp-original-external-format-function* nil
+(defvar *original-external-format-function* nil
   "Saved original value of *external-format-function* before TRAMP overrides it.")
 
-(defun tramp-external-format-function-wrapper (filename)
+(defun external-format-function-wrapper (filename)
   "Wrapper for *external-format-function* that handles TRAMP paths.
 TRAMP files cannot be opened with CL's OPEN for encoding detection,
 so we return a safe default (:utf-8 :lf) for remote files."
-  (if (tramp-path-p filename)
+  (if (path-p filename)
       (values :utf-8 :lf)
-      (if *tramp-original-external-format-function*
-          (funcall *tramp-original-external-format-function* filename)
+      (if *original-external-format-function*
+          (funcall *original-external-format-function* filename)
           (values :utf-8 :lf))))
 
 ;;; ------------------------------------------------------------------
 ;;; Registration
 ;;; ------------------------------------------------------------------
 
-(defun tramp-enable ()
+(defun enable ()
   "Enable TRAMP remote file support."
-  (pushnew 'tramp-file-open-handler *virtual-file-open*)
-  (pushnew 'tramp-probe-file-handler
+  (pushnew 'file-open-handler *virtual-file-open*)
+  (pushnew 'probe-file-handler
            lem/buffer/file-utils:*virtual-probe-file-functions*)
-  (pushnew 'tramp-directory-exists-handler
+  (pushnew 'directory-exists-handler
            lem/buffer/file-utils:*virtual-directory-exists-p-functions*)
-  (pushnew 'tramp-directory-files-handler
+  (pushnew 'directory-files-handler
            lem/buffer/file-utils:*virtual-directory-files-functions*)
-  (pushnew 'tramp-file-metadata-handler
+  (pushnew 'file-metadata-handler
            lem/buffer/file-utils:*virtual-file-metadata-functions*)
-  (pushnew 'tramp-expand-file-name-handler
+  (pushnew 'expand-file-name-handler
            lem/buffer/file-utils:*virtual-expand-file-name-functions*)
-  (unless *tramp-original-external-format-function*
-    (setf *tramp-original-external-format-function*
+  (unless *original-external-format-function*
+    (setf *original-external-format-function*
           lem/buffer/file:*external-format-function*)
     (setf lem/buffer/file:*external-format-function*
-          'tramp-external-format-function-wrapper))
+          'external-format-function-wrapper))
   ;; Override completion to handle TRAMP paths
-  (unless *tramp-original-completion-function*
-    (setf *tramp-original-completion-function*
+  (unless *original-completion-function*
+    (setf *original-completion-function*
           lem-core::*prompt-file-completion-function*)
     (setf lem-core::*prompt-file-completion-function*
-          'tramp-file-completion)))
+          'file-completion)))
 
-(defun tramp-disable ()
+(defun disable ()
   "Disable TRAMP remote file support."
   (setf *virtual-file-open*
-        (remove 'tramp-file-open-handler *virtual-file-open*))
+        (remove 'file-open-handler *virtual-file-open*))
   (setf lem/buffer/file-utils:*virtual-probe-file-functions*
-        (remove 'tramp-probe-file-handler lem/buffer/file-utils:*virtual-probe-file-functions*))
+        (remove 'probe-file-handler lem/buffer/file-utils:*virtual-probe-file-functions*))
   (setf lem/buffer/file-utils:*virtual-directory-exists-p-functions*
-        (remove 'tramp-directory-exists-handler lem/buffer/file-utils:*virtual-directory-exists-p-functions*))
+        (remove 'directory-exists-handler lem/buffer/file-utils:*virtual-directory-exists-p-functions*))
   (setf lem/buffer/file-utils:*virtual-directory-files-functions*
-        (remove 'tramp-directory-files-handler lem/buffer/file-utils:*virtual-directory-files-functions*))
+        (remove 'directory-files-handler lem/buffer/file-utils:*virtual-directory-files-functions*))
   (setf lem/buffer/file-utils:*virtual-file-metadata-functions*
-        (remove 'tramp-file-metadata-handler lem/buffer/file-utils:*virtual-file-metadata-functions*))
+        (remove 'file-metadata-handler lem/buffer/file-utils:*virtual-file-metadata-functions*))
   (setf lem/buffer/file-utils:*virtual-expand-file-name-functions*
-        (remove 'tramp-expand-file-name-handler lem/buffer/file-utils:*virtual-expand-file-name-functions*))
-  (when *tramp-original-external-format-function*
+        (remove 'expand-file-name-handler lem/buffer/file-utils:*virtual-expand-file-name-functions*))
+  (when *original-external-format-function*
     (setf lem/buffer/file:*external-format-function*
-          *tramp-original-external-format-function*)
-    (setf *tramp-original-external-format-function* nil))
-  (when *tramp-original-completion-function*
+          *original-external-format-function*)
+    (setf *original-external-format-function* nil))
+  (when *original-completion-function*
     (setf lem-core::*prompt-file-completion-function*
-          *tramp-original-completion-function*)
-    (setf *tramp-original-completion-function* nil)))
+          *original-completion-function*)
+    (setf *original-completion-function* nil)))
 
 ;; Auto-enable at load time (Unix only)
-#+unix (tramp-enable)
+#+unix (enable)
 #-unix (warn "TRAMP is not supported on this platform; only Unix systems are supported.")

@@ -243,24 +243,47 @@ Marks connection as needing password and prompts."
     (error (c)
       (values 255 (princ-to-string c)))))
 
+(defun ssh-auth-failure-p (exit-code)
+  "Return T if EXIT-CODE indicates an SSH authentication failure.
+Exit code 255 = SSH BatchMode auth failure / connection refused.
+Exit code 5   = sshpass incorrect password."
+  (or (= exit-code 255) (= exit-code 5)))
+
 (defun %ssh-run-with-auth-retry (user host command)
   "Run an SSH command with automatic auth handling.
-Tries key auth first; on exit-255 failure, prompts for password and retries.
-Returns (values exit-code stdout-string)."
-  (multiple-value-bind (password auth-tried) (ssh-ensure-auth :ssh user host)
-    (if auth-tried
-        ;; Auth method known — run directly
-        (let ((args (build-ssh-args :ssh user host command :password password)))
-          (%ssh-run user host args))
-        ;; Auth method unknown — try key auth first
-        (let ((args (build-ssh-args :ssh user host command :password nil)))
-          (multiple-value-bind (exit-code stdout) (%ssh-run user host args)
-            (if (= exit-code 255)
+Tries key auth first; on auth failure, clears cached password and retries.
+Signals editor-error if authentication ultimately fails."
+  (flet ((run-with-password (pwd)
+           (let ((args (build-ssh-args :ssh user host command :password pwd)))
+             (%ssh-run user host args))))
+    (multiple-value-bind (password auth-tried) (ssh-ensure-auth :ssh user host)
+      (if auth-tried
+          ;; Auth method known — run directly
+          (multiple-value-bind (exit-code stdout) (run-with-password password)
+            (if (ssh-auth-failure-p exit-code)
+                ;; Cached password is wrong — re-prompt and retry once
+                (let ((new-pwd (progn (clear-password :ssh user host)
+                                      (prompt-password :ssh user host))))
+                  (if new-pwd
+                      (multiple-value-bind (ec2 out2) (run-with-password new-pwd)
+                        (if (ssh-auth-failure-p ec2)
+                            (editor-error "Authentication failed for /ssh:~@[~A@~]~A"
+                                          (or user "") host)
+                            (values ec2 out2)))
+                      (error 'editor-abort)))
+                (values exit-code stdout)))
+          ;; Auth method unknown — try key auth first
+          (multiple-value-bind (exit-code stdout)
+              (run-with-password nil)
+            (if (ssh-auth-failure-p exit-code)
                 ;; Auth failure → prompt password and retry
                 (let ((pwd (ssh-remember-auth-failure user host)))
                   (if pwd
-                      (let ((args2 (build-ssh-args :ssh user host command :password pwd)))
-                        (%ssh-run user host args2))
+                      (multiple-value-bind (ec2 out2) (run-with-password pwd)
+                        (if (ssh-auth-failure-p ec2)
+                            (editor-error "Authentication failed for /ssh:~@[~A@~]~A"
+                                          (or user "") host)
+                            (values ec2 out2)))
                       (values exit-code stdout)))
                 ;; Key auth succeeded or command failed for other reasons
                 (progn
@@ -269,46 +292,100 @@ Returns (values exit-code stdout-string)."
 
 ;;; Sudo command execution (pipe-based, no temp files)
 
+(defun sudo-auth-failure-p (stderr)
+  "Return T if STDERR indicates a sudo authentication failure."
+  (and (plusp (length stderr))
+       (or (search "incorrect password" stderr :test #'char-equal)
+           (search "try again" stderr :test #'char-equal)
+           (search "Sorry" stderr :test #'char-equal))))
+
 (defun %sudo-run (user host args password)
-  "Run a sudo command via pipe. Returns (values exit-code stdout-string)."
-  (handler-case
-      (let* ((process (uiop:launch-program args
-                                           :output :stream
-                                           :input :stream
-                                           :error-output :stream
-                                           :ignore-error-status t))
-             (in (uiop:process-info-input process))
-             (out (uiop:process-info-output process)))
-        (when password
-          (write-line password in)
-          (finish-output in))
-        (close in)
-        (let ((stdout
-                (with-output-to-string (s)
-                  (loop :for line := (read-line out nil nil)
-                        :while line
-                        :do (write-line line s)))))
-          (ignore-errors (close out))
-          (let ((exit-code (uiop:wait-process process)))
-            (values exit-code stdout))))
-    (error (c)
-      (values 1 (princ-to-string c)))))
+  "Run a sudo command via pipe. Returns (values exit-code stdout-string).
+On authentication failure, re-prompts for password and retries once."
+  (labels ((do-run (pwd)
+             (handler-case
+                 (let* ((process (uiop:launch-program args
+                                                      :output :stream
+                                                      :input :stream
+                                                      :error-output :stream
+                                                      :ignore-error-status t))
+                        (in (uiop:process-info-input process))
+                        (out (uiop:process-info-output process))
+                        (err (uiop:process-info-error-output process)))
+                   (when pwd
+                     (write-line pwd in)
+                     (finish-output in))
+                   (close in)
+                   (let ((stdout
+                           (with-output-to-string (s)
+                             (loop :for line := (read-line out nil nil)
+                                   :while line
+                                   :do (write-line line s))))
+                         (stderr
+                           (with-output-to-string (s)
+                             (loop :for line := (read-line err nil nil)
+                                   :while line
+                                   :do (write-line line s)))))
+                     (ignore-errors (close out))
+                     (ignore-errors (close err))
+                     (let ((exit-code (uiop:wait-process process)))
+                       (values exit-code stdout stderr))))
+               (editor-error (c) (error c))
+               (error (c)
+                 (values 1 (princ-to-string c) "")))))
+    (multiple-value-bind (exit-code stdout stderr) (do-run password)
+      (if (and password (not (eql 0 exit-code)) (sudo-auth-failure-p stderr))
+          ;; Auth failed — re-prompt and retry once
+          (let ((new-pwd (progn (clear-password :sudo user host)
+                                (prompt-password :sudo user host))))
+            (if new-pwd
+                (multiple-value-bind (ec2 out2 err2) (do-run new-pwd)
+                  (if (and (not (eql 0 ec2)) (sudo-auth-failure-p err2))
+                      (editor-error "Authentication failed for /sudo:~@[~A@~]~A"
+                                    user host)
+                      (values ec2 out2)))
+                (error 'editor-abort)))
+          (values exit-code stdout)))))
 
 (defun %sudo-run-exit-code (user host args password)
-  "Run a sudo command, returning just the exit code."
-  (handler-case
-      (let* ((process (uiop:launch-program args
-                                           :output nil
-                                           :input :stream
-                                           :error-output nil
-                                           :ignore-error-status t))
-             (in (uiop:process-info-input process)))
-        (when password
-          (write-line password in)
-          (finish-output in))
-        (close in)
-        (uiop:wait-process process))
-    (error () 1)))
+  "Run a sudo command, returning just the exit code.
+On authentication failure, re-prompts for password and retries once."
+  (labels ((do-run (pwd)
+             (handler-case
+                 (let* ((process (uiop:launch-program args
+                                                      :output nil
+                                                      :input :stream
+                                                      :error-output :stream
+                                                      :ignore-error-status t))
+                        (in (uiop:process-info-input process))
+                        (err (uiop:process-info-error-output process)))
+                   (when pwd
+                     (write-line pwd in)
+                     (finish-output in))
+                   (close in)
+                   (let ((exit-code (uiop:wait-process process)))
+                     (let ((stderr
+                             (with-output-to-string (s)
+                               (loop :for line := (read-line err nil nil)
+                                     :while line
+                                     :do (write-line line s)))))
+                       (ignore-errors (close err))
+                       (values exit-code stderr))))
+               (editor-error (c) (error c))
+               (error () (values 1 "")))))
+    (multiple-value-bind (exit-code stderr) (do-run password)
+      (if (and password (not (eql 0 exit-code)) (sudo-auth-failure-p stderr))
+          ;; Auth failed — re-prompt and retry once
+          (let ((new-pwd (progn (clear-password :sudo user host)
+                                (prompt-password :sudo user host))))
+            (if new-pwd
+                (multiple-value-bind (ec2 err2) (do-run new-pwd)
+                  (if (and (not (eql 0 ec2)) (sudo-auth-failure-p err2))
+                      (editor-error "Authentication failed for /sudo:~@[~A@~]~A"
+                                    user host)
+                      ec2))
+                (error 'editor-abort)))
+          exit-code))))
 
 ;;; Public API
 

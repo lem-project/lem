@@ -724,8 +724,8 @@ so we return a safe default (:utf-8 :lf) for remote files."
   ;; Override completion to handle TRAMP paths
   (unless *original-completion-function*
     (setf *original-completion-function*
-          lem-core::*prompt-file-completion-function*)
-    (setf lem-core::*prompt-file-completion-function*
+          lem-core:*prompt-file-completion-function*)
+    (setf lem-core:*prompt-file-completion-function*
           'file-completion)))
 
 (defun disable ()
@@ -747,7 +747,7 @@ so we return a safe default (:utf-8 :lf) for remote files."
           *original-external-format-function*)
     (setf *original-external-format-function* nil))
   (when *original-completion-function*
-    (setf lem-core::*prompt-file-completion-function*
+    (setf lem-core:*prompt-file-completion-function*
           *original-completion-function*)
     (setf *original-completion-function* nil)))
 

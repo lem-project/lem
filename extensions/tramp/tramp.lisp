@@ -204,7 +204,7 @@ Marks connection as needing password and prompts."
   (ecase method
     (:ssh
      (let ((target (if user (format nil "~A@~A" user host) host))
-           (cmd-args (if (listp command) command (list command)))
+           (cmd-args (uiop:ensure-list command))
            (control-opts (ssh-control-options)))
        (if password
            (append (list "sshpass" "-p" password
@@ -227,7 +227,7 @@ Marks connection as needing password and prompts."
          (push "-S" (cdr args)))
        (when user
          (setf args (append args (list "-u" user))))
-       (append args (if (listp command) command (list command)))))))
+       (append args (uiop:ensure-list command))))))
 
 ;;; Core SSH execution with lazy auth
 

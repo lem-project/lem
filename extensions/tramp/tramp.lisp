@@ -683,5 +683,6 @@ so we return a safe default (:utf-8 :lf) for remote files."
           *tramp-original-completion-function*)
     (setf *tramp-original-completion-function* nil)))
 
-;; Auto-enable at load time
-(tramp-enable)
+;; Auto-enable at load time (Unix only)
+#+unix (tramp-enable)
+#-unix (warn "TRAMP is not supported on this platform; only Unix systems are supported.")

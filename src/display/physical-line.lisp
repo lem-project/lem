@@ -371,14 +371,18 @@ Assumes inputs are already reduced (no adjacent mergeable objects)."
                    (drawing-objects-equal objects cache-objects))
         :return t))
 
+(defun remove-drawing-cache-entries-overlapping (entries y height)
+  "Return ENTRIES with every entry whose rows overlap [Y, Y+HEIGHT) removed."
+  (remove-if (lambda (elt)
+               (destructuring-bind (cache-y cache-height drawing-objects) elt
+                 (declare (ignore drawing-objects))
+                 (and (< cache-y (+ y height))
+                      (< y (+ cache-y cache-height)))))
+             entries))
+
 (defun invalidate-cache (window y height)
   (setf (drawing-cache window)
-        (remove-if (lambda (elt)
-                     (destructuring-bind (cache-y cache-height drawing-objects) elt
-                       (declare (ignore drawing-objects))
-                       (and (<= cache-y y)
-                            (<= (+ y height) (+ cache-y cache-height)))))
-                   (drawing-cache window))))
+        (remove-drawing-cache-entries-overlapping (drawing-cache window) y height)))
 
 (defun remove-drawing-cache-entries-from (entries y)
   "Return ENTRIES with drawing-cache rows at or below Y removed.

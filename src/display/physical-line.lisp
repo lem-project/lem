@@ -545,10 +545,16 @@ over the top-level spine and tolerant of improper (dotted) lists."
       (when (and found (eql (car entry) fingerprint))
         (cdr entry)))))
 
+(defun evict-line-fingerprint-shadow (cache y height)
+  "Remove entries in CACHE for the rows a HEIGHT-tall line at Y covers."
+  (loop :for row :from (1+ y) :below (+ y height)
+        :do (remhash row cache)))
+
 (defun update-line-fingerprint (window y fingerprint height)
-  "Store the fingerprint and height for line at Y."
-  (setf (gethash y (line-fingerprint-cache window))
-        (cons fingerprint height)))
+  "Store the fingerprint and height for line at Y, and drop the rows it covers."
+  (let ((cache (line-fingerprint-cache window)))
+    (setf (gethash y cache) (cons fingerprint height))
+    (evict-line-fingerprint-shadow cache y height)))
 
 (defun redraw-logical-line-when-line-wrapping (window
                                                y

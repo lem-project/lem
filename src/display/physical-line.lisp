@@ -98,6 +98,14 @@ frontend can report one (`lem-if:image-natural-size'), otherwise one cell wide."
 (defmethod lem-if:object-height (implementation (drawing-object image-object))
   (image-draw-height implementation drawing-object))
 
+(defmethod lem-if:object-ascent (implementation (drawing-object drawing-object))
+  ;; anything drawn in the editor's font shares that font's baseline, the cell ascent, when the
+  ;; frontend reports one.
+  (multiple-value-bind (cell-width cell-height cell-ascent)
+      (lem-if:cell-pixel-size implementation)
+    (declare (ignore cell-width cell-height))
+    (or cell-ascent (lem-if:object-height implementation drawing-object))))
+
 (defmethod cursor-object-p (drawing-object)
   nil)
 
@@ -219,6 +227,9 @@ frontend can report one (`lem-if:image-natural-size'), otherwise one cell wide."
 
 (defun object-height (drawing-object)
   (lem-if:object-height (implementation) drawing-object))
+
+(defun object-ascent (drawing-object)
+  (lem-if:object-ascent (implementation) drawing-object))
 
 (defun split-string-by-character-type (string)
   (loop :with pos := 0 :and items := '()
@@ -361,8 +372,8 @@ frontend can report one (`lem-if:image-natural-size'), otherwise one cell wide."
                        (push object physical-line-objects)))
             :finally (return (nreverse physical-line-objects))))))
 
-(defun render-line (view x y objects height)
-  (lem-if:render-line (implementation) view x y objects height))
+(defun render-row (view row)
+  (lem-if:render-row (implementation) view row))
 
 (defun reduce-list (list
                     &key (test (alexandria:required-argument :test))
@@ -440,23 +451,128 @@ leaving the row blank on persistent-texture frontends such as SDL2."
         (remove-drawing-cache-entries-from (drawing-cache window) y)))
 
 (defun update-and-validate-cache-p (window y height objects)
-  "Check cache validity, reducing objects once before storing.
+  "Check cache validity for the already-reduced OBJECTS, storing them when they differ.
 Returns T if the cached entry matches (render can be skipped)."
-  (let ((reduced (reduce-objects objects)))
-    (cond ((validate-cache-p window y height reduced) t)
-          (t
-           (invalidate-cache window y height)
-           (push (list y height reduced)
-                 (drawing-cache window))
-           nil))))
+  (cond ((validate-cache-p window y height objects) t)
+        (t
+         (invalidate-cache window y height)
+         (push (list y height objects)
+               (drawing-cache window))
+         nil)))
 
-(defun render-line-with-caching (window x y objects height)
-  (unless (update-and-validate-cache-p window y height objects)
-    (render-line (window-view window) x y objects height)))
+(defun render-row-with-caching (window y objects)
+  "Lay OBJECTS out as one screen row of WINDOW at Y and draw it, unless it is already on screen."
+  (let* ((reduced (reduce-objects objects))
+         (row (layout-row y reduced)))
+    (unless (update-and-validate-cache-p window y (row-height row) reduced)
+      (render-row (window-view window) row))
+    (row-height row)))
 
-(defun max-height-of-objects (objects)
-  (loop :for object :in objects
-        :maximize (object-height object)))
+(defun text-row-metrics ()
+  "The ascent and height of a row holding nothing but text, as (values ASCENT HEIGHT).
+A frontend that does not report a baseline is taken to put it at the bottom of the row."
+  (multiple-value-bind (cell-width cell-height cell-ascent)
+      (lem-if:cell-pixel-size (implementation))
+    (declare (ignore cell-width))
+    (let ((height (or cell-height (lem-if:cell-height (implementation)))))
+      (values (or cell-ascent height) height))))
+
+(defun row-metrics-of-objects (&rest object-lists)
+  "The ascent and height a row of all the objects in OBJECT-LISTS needs, as (values ASCENT HEIGHT).
+Everything shares one baseline, so the height is max ascent plus max descent, which can exceed any
+single object's own height: an object with a tall ascent and short descent and one with a short
+ascent and tall descent can each set one half of the row independently, so the row ends up taller
+than either. An empty row is still one row of text tall.
+The returned ASCENT is also the baseline's offset from the row's top, since the baseline sits
+exactly ASCENT below it. `layout-row' uses it that way to hang everything on the row from it."
+  (multiple-value-bind (ascent height) (text-row-metrics)
+    (let ((descent (- height ascent)))
+      (dolist (objects object-lists)
+        (dolist (object objects)
+          (let ((object-ascent (object-ascent object)))
+            (setf ascent (max ascent object-ascent))
+            (setf descent (max descent (- (object-height object) object-ascent))))))
+      (values ascent (+ ascent descent)))))
+
+(defstruct (placement (:constructor make-placement (object x top)))
+  "Where one drawing object goes, top-left corner at (X, TOP), in the frontend's units.
+TOP is the row's baseline minus this object's ascent, so objects of different heights hang from one
+baseline instead of sharing a top edge."
+  object
+  x
+  top)
+
+(defstruct row
+  "One screen row, laid out by `layout-row' and ready for a frontend to draw.
+TOP/HEIGHT already account for every object on the row, including one taller than a line of text.
+A frontend should size the row from these fields rather than re-deriving its extent from any
+single object's own height."
+  top
+  height
+  ;; needed by a frontend that draws a text-object letter by letter, to put each letter on it.
+  baseline
+  ;; where each object goes, its own x and top.
+  placements
+  ;; from an `extend-to-eol-object', if the row holds one. A frontend paints FILL-COLOR first,
+  ;; before any of the row's objects, over the rectangle from FILL-X to the right edge and down
+  ;; the row's full height. NIL FILL-COLOR means nothing to paint.
+  fill-x
+  fill-color)
+
+(defun layout-row (top objects
+                   &key
+                     right-objects
+                     (right-edge (and right-objects
+                                      (alexandria:required-argument :right-edge))))
+  "Lay OBJECTS out as one screen row with its top edge at TOP, as a `row'.
+RIGHT-OBJECTS are laid out leftwards from RIGHT-EDGE instead, for a row drawn from both ends (the
+modeline), so the left- and right-aligned objects share one baseline. Everything, including an
+image, is positioned by its own ascent measured from that one shared baseline (see
+`image-object-ascent'), so it stays correctly placed relative to the text beside it however tall
+the row is.
+An `extend-to-eol-object' is not placed. It draws nothing of its own and colors the row's full
+height, so it becomes ROW-FILL-X and ROW-FILL-COLOR."
+  (multiple-value-bind (ascent height) (row-metrics-of-objects objects right-objects)
+    (let ((baseline (+ top ascent))
+          (placements)
+          (fill-x)
+          (fill-color))
+      (flet ((place (object x)
+               (if (typep object 'extend-to-eol-object)
+                   ;; only the first can show, it colors everything from its x rightwards.
+                   (unless fill-color
+                     (setf fill-x x
+                           fill-color (extend-to-eol-object-color object)))
+                   (push (make-placement object x (- baseline (object-ascent object)))
+                         placements))))
+        (loop :with x := 0
+              :for object :in objects
+              :do (place object x)
+                  (incf x (object-width object)))
+        (loop :with x := right-edge
+              :for object :in right-objects
+              :do (decf x (object-width object))
+                  (place object x)))
+      (make-row :top top
+                :height height
+                :baseline baseline
+                :placements (nreverse placements)
+                :fill-x fill-x
+                :fill-color fill-color))))
+
+(defun translate-row (row dy)
+  "A copy of ROW moved DY down the view.
+For a frontend that draws a row elsewhere than where it was laid out, a modeline drawn into the
+bottom of the window's view rather than onto a surface of its own."
+  (let ((moved (copy-row row)))
+    (setf (row-top moved) (+ (row-top row) dy)
+          (row-baseline moved) (+ (row-baseline row) dy)
+          (row-placements moved)
+          (loop :for placement :in (row-placements row)
+                :collect (make-placement (placement-object placement)
+                                         (placement-x placement)
+                                         (+ (placement-top placement) dy))))
+    moved))
 
 ;;; Line fingerprint cache — avoids creating drawing objects for unchanged lines
 
@@ -615,8 +731,7 @@ over the top-level spine and tolerant of improper (dotted) lists."
           (loop
             (unless objects (return))
             (let* ((all-objects (append left-side-objects objects))
-                   (height (max-height-of-objects all-objects)))
-              (render-line-with-caching window 0 y all-objects height)
+                   (height (render-row-with-caching window y all-objects)))
               (incf y height)
               (setq left-side-objects wrapped-left-side-objects)
               (incf total-height height)
@@ -709,10 +824,8 @@ creating zero temporary letter-objects."
     ;; Early exit if line content unchanged
     (alexandria:when-let ((cached-height (check-line-fingerprint window y fingerprint)))
       (return-from redraw-logical-line-when-horizontal-scroll cached-height))
-    (let* ((objects (create-drawing-objects logical-line))
-           (height
-             (max (max-height-of-objects left-side-objects)
-                  (max-height-of-objects objects))))
+    (let ((objects (create-drawing-objects logical-line))
+          (height 0))
       (multiple-value-bind (cursor-object cursor-x)
           (find-cursor-object objects)
         (when cursor-object
@@ -726,13 +839,13 @@ creating zero temporary letter-objects."
                          (+ (- cursor-x width)
                             (object-width cursor-object)))))))
         (setf objects
-              (reduce-objects
-               (clip-objects-to-display-range
-                objects
-                (horizontal-scroll-start window)
-                (+ (horizontal-scroll-start window)
-                   (window-view-width window)))))
-        (render-line-with-caching window 0 y (append left-side-objects objects) height))
+              (clip-objects-to-display-range
+               objects
+               (horizontal-scroll-start window)
+               (+ (horizontal-scroll-start window)
+                  (window-view-width window))))
+        (setf height
+              (render-row-with-caching window y (append left-side-objects objects))))
       ;; Reuse fingerprint if scroll position didn't change; avoids redundant sxhash
       (update-line-fingerprint
        window y
@@ -819,13 +932,16 @@ creating zero temporary letter-objects."
                                    'modeline-inactive))))
       (multiple-value-bind (left-objects right-objects)
           (make-modeline-objects window default-attribute)
-        (lem-if:render-line-on-modeline (implementation)
-                                        view
-                                        left-objects
-                                        right-objects
-                                        default-attribute
-                                        (max (max-height-of-objects left-objects)
-                                             (max-height-of-objects right-objects)))))))
+        ;; top 0: only the frontend knows where the modeline actually goes on screen. see
+        ;; `lem-if:render-modeline-row'.
+        (lem-if:render-modeline-row (implementation)
+                                    view
+                                    (layout-row 0
+                                                left-objects
+                                                :right-objects right-objects
+                                                :right-edge (lem-if:view-width (implementation)
+                                                                               view))
+                                    default-attribute)))))
 
 (defun get-background-color-of-window (window)
   (cond ((typep window 'floating-window)

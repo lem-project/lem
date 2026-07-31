@@ -612,8 +612,8 @@ the same immutable instance for every subsequent message."
 
 (defgeneric object-height (drawing-object)
   (:documentation "height of DRAWING-OBJECT in character cells.
-we advance the vertical position of the next line by the tallest object's height (see
-`max-height-of-objects'), so returning more than 1 for an image makes its line grow to fit."))
+`lem-core/display:layout-row' grows the row to fit everything on it, so returning more than 1 for
+an image gives it the cells it needs."))
 
 (defmethod object-height (drawing-object)
   1)
@@ -724,17 +724,6 @@ same hash."
     (lem-core:set-cursor-attribute attr)
     (put jsonrpc view x y " " attr :text-width 1)))
 
-(defmethod draw-object (jsonrpc (object display:extend-to-eol-object) x y view)
-  (let ((width (lem-if:view-width (lem-core:implementation) view)))
-    (when (< x width)
-      (let ((fill-width (- width x)))
-        (put jsonrpc view x y
-             (make-string fill-width :initial-element #\space)
-             (lem:make-attribute
-              :background
-              (lem:color-to-hex-string (display:extend-to-eol-object-color object)))
-             :text-width fill-width)))))
-
 (defmethod draw-object (jsonrpc (object display:line-end-object) x y view)
   (let ((string (display:text-object-string object))
         (attribute (display:text-object-attribute object))
@@ -784,43 +773,55 @@ a string already carrying a data:/https: URL is passed through unchanged."
                          "pixelHeight" ph
                          "url" url)))))))
 
-(defun render-line (jsonrpc view x y objects)
-  (loop :for object :in objects
-        :do (draw-object jsonrpc object x y view)
-            (incf x (object-width object))))
+(defun draw-row (jsonrpc view row)
+  "draw ROW's background fill, then everything placed on it.
+`clear-eol'/`clear-eob' only ever paint the editor's plain background, so a fill in an arbitrary
+color (e.g. a highlighted row) goes out as spaces carrying that color via `put'."
+  (let ((width (view-width view)))
+    (when (and (display:row-fill-color row)
+               (< (display:row-fill-x row) width))
+      (let ((fill-width (- width (display:row-fill-x row))))
+        (put jsonrpc
+             view
+             (display:row-fill-x row)
+             (display:row-top row)
+             (make-string fill-width :initial-element #\space)
+             (lem:make-attribute
+              :background
+              (lem:color-to-hex-string (display:row-fill-color row)))
+             :text-width fill-width))))
+  (loop :for placement :in (display:row-placements row)
+        :do (draw-object jsonrpc
+                         (display:placement-object placement)
+                         (display:placement-x placement)
+                         (display:placement-top placement)
+                         view)))
 
-(defun render-line-from-behind (jsonrpc view y objects)
-  (loop :with current-x := (view-width view)
-        :for object :in objects
-        :do (decf current-x (object-width object))
-            (draw-object jsonrpc object current-x y view)))
-
-(defmethod lem-if:render-line ((jsonrpc jsonrpc) view x y objects height)
+(defmethod lem-if:render-row ((jsonrpc jsonrpc) view row)
   (with-error-handler ()
-    ;; clear the line's full height (not just one row) since a tall object such as an image may
-    ;; occupy several rows.
+    ;; clear the row's full height (not just one line of text) since a tall object such as an image
+    ;; may occupy several.
     (notify* jsonrpc
              "clear-eol"
              (hash "viewInfo" (view-id-hash view)
-                   "x" x
-                   "y" y
-                   "height" height))
-    (render-line jsonrpc view x y objects)))
+                   "x" 0
+                   "y" (display:row-top row)
+                   "height" (display:row-height row)))
+    (draw-row jsonrpc view row)))
 
-(defmethod lem-if:render-line-on-modeline ((jsonrpc jsonrpc) view left-objects right-objects
-                                           default-attribute height)
+(defmethod lem-if:render-modeline-row ((jsonrpc jsonrpc) view row default-attribute)
+  ;; the modeline has a surface of its own here, so the row is drawn where it was laid out.
   (let ((*put-target* :modeline))
     (with-error-handler ()
       (notify* jsonrpc
                "modeline-put"
                (hash "viewInfo" (view-id-hash view)
                      "x" 0
-                     "y" 0
+                     "y" (display:row-top row)
                      "text" (make-string (view-width view) :initial-element #\space)
                      "textWidth" (view-width view)
                      "attribute" (attribute-to-hash default-attribute)))
-      (render-line jsonrpc view 0 0 left-objects)
-      (render-line-from-behind jsonrpc view 0 right-objects))))
+      (draw-row jsonrpc view row))))
 
 (defmethod lem-if:object-width ((jsonrpc jsonrpc) drawing-object)
   (object-width drawing-object))

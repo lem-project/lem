@@ -20,7 +20,7 @@ Frontends subclass `implementation` and implement `lem-if:*` generics.
 (lem-if:set-view-pos impl view x y)
 
 ;; Rendering
-(lem-if:render-line impl view x y objects height)
+(lem-if:render-row impl view row)          ; ROW is a laid-out lem-core/display:row
 (lem-if:clear-to-end-of-window impl view y)
 ```
 

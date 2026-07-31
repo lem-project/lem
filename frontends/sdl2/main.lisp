@@ -478,6 +478,12 @@
   (display:with-display (display)
     (display:display-char-height display)))
 
+(defmethod lem-if:cell-pixel-size ((implementation sdl2))
+  (display:with-display (display)
+    (values (display:display-char-width display)
+            (display:display-char-height display)
+            (display:display-font-ascent display))))
+
 (defmethod lem-if:view-width ((implementation sdl2) view)
   (display:with-display (display)
     (* (display:display-char-width display)

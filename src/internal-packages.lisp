@@ -20,8 +20,23 @@
    :image-object-width
    :image-draw-width
    :image-draw-height
+   :object-ascent
    :object-height
    :object-width
+   :row-metrics-of-objects
+   :layout-row
+   :translate-row
+   :row
+   :row-top
+   :row-height
+   :row-baseline
+   :row-placements
+   :row-fill-x
+   :row-fill-color
+   :placement
+   :placement-object
+   :placement-x
+   :placement-top
    :line-end-object
    :line-end-object-offset
    :text-object
@@ -828,9 +843,11 @@
    :cell-height
    :clear-to-end-of-window
    :js-eval
-   :render-line
-   :render-line-on-modeline
+   :cell-pixel-size
+   :render-row
+   :render-modeline-row
    :object-width
    :object-height
+   :object-ascent
    :image-natural-size
    :set-frame-color))

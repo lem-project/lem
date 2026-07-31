@@ -64,10 +64,10 @@
         (y (mouse-event-pixel-y mouse-event)))
     (values (- x
                (* (window-x window)
-                  (lem-if:get-char-width (implementation))))
+                  (lem-if:cell-width (implementation))))
             (- y
                (* (window-y window)
-                  (lem-if:get-char-height (implementation)))))))
+                  (lem-if:cell-height (implementation)))))))
 
 (defun get-point-from-window-with-coordinates (window x y &optional (allow-overflow-column t))
   (with-point ((point (buffer-point (window-buffer window))))

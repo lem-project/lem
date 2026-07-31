@@ -470,11 +470,11 @@
           (values (display:scaled-char-width display x)
                   (display:scaled-char-height display y))))))
 
-(defmethod lem-if:get-char-width ((implementation sdl2))
+(defmethod lem-if:cell-width ((implementation sdl2))
   (display:with-display (display)
     (display:display-char-width display)))
 
-(defmethod lem-if:get-char-height ((implementation sdl2))
+(defmethod lem-if:cell-height ((implementation sdl2))
   (display:with-display (display)
     (display:display-char-height display)))
 

@@ -106,7 +106,10 @@
 (defmethod lem-if:clear-to-end-of-window ((implementation ncurses) view y)
   (lem-ncurses/render:clear-to-end-of-window view y))
 
-(defmethod lem-if:get-char-width ((implementation ncurses))
+(defmethod lem-if:cell-width ((implementation ncurses))
+  1)
+
+(defmethod lem-if:cell-height ((implementation ncurses))
   1)
 
 ;; for mouse control

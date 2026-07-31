@@ -1,8 +1,8 @@
 (defpackage :lem-ncurses/render
   (:use :cl
         :lem-core/display)
-  (:export :render-line
-           :render-line-on-modeline
+  (:export :render-row
+           :render-modeline-row
            :clear-to-end-of-window))
 (in-package :lem-ncurses/render)
 
@@ -37,17 +37,6 @@
    " "
    (lem:make-attribute :foreground (lem:color-to-hex-string (eol-cursor-object-color object)))))
 
-(defmethod draw-object ((object extend-to-eol-object) x y view scrwin)
-  (let ((width (lem-if:view-width (lem:implementation) view)))
-    (when (< x width)
-      (print-string
-       scrwin
-       x
-       y
-       (make-string (- width x) :initial-element #\space)
-       (lem:make-attribute :background
-                           (lem:color-to-hex-string (extend-to-eol-object-color object)))))))
-
 (defmethod draw-object ((object line-end-object) x y view scrwin)
   (let ((string (text-object-string object))
         (attribute (text-object-attribute object)))
@@ -61,40 +50,43 @@
 (defmethod draw-object ((object image-object) x y view scrwin)
   (values))
 
-(defun render-line-from-behind (view y objects scrwin)
-  (loop :with current-x := (lem-if:view-width (lem:implementation) view)
-        :for object :in objects
-        :do (decf current-x (lem-if:object-width (lem:implementation) object))
-            (draw-object object current-x y view scrwin)))
-
 (defun clear-line (view x y)
   (charms/ll:wmove (lem-ncurses/view:view-scrwin view) y x)
   (charms/ll:wclrtoeol (lem-ncurses/view:view-scrwin view)))
 
-(defun %render-line (view x y objects scrwin)
-  (loop :for object :in objects
-        :do (draw-object object x y view scrwin)
-            (incf x (lem-if:object-width (lem:implementation) object))))
+(defun draw-row (view row scrwin)
+  "Draw ROW's background fill, then everything placed on it.
+The fill is spaces carrying the background color, since a terminal cell only takes a color by
+having a character written into it."
+  (let ((width (lem-if:view-width (lem:implementation) view)))
+    (when (and (row-fill-color row)
+               (< (row-fill-x row) width))
+      (print-string scrwin
+                    (row-fill-x row)
+                    (row-top row)
+                    (make-string (- width (row-fill-x row)) :initial-element #\space)
+                    (lem:make-attribute :background
+                                        (lem:color-to-hex-string (row-fill-color row))))))
+  (loop :for placement :in (row-placements row)
+        :do (draw-object (placement-object placement)
+                         (placement-x placement)
+                         (placement-top placement)
+                         view
+                         scrwin)))
 
-(defun render-line (view x y objects)
-  (clear-line view x y)
-  (%render-line view x y objects (lem-ncurses/view:view-scrwin view)))
+(defun render-row (view row)
+  (clear-line view 0 (row-top row))
+  (draw-row view row (lem-ncurses/view:view-scrwin view)))
 
-(defun render-line-on-modeline (view
-                                left-objects
-                                right-objects
-                                default-attribute)
+(defun render-modeline-row (view row default-attribute)
+  ;; the modeline gets its own curses window, so its row (laid out at top 0) needs no translation.
   (print-string (lem-ncurses/view:view-modeline-scrwin view)
                 0
-                0
+                (row-top row)
                 (make-string (lem-ncurses/view:view-width view)
                              :initial-element #\space)
                 default-attribute)
-  (%render-line view 0 0 left-objects (lem-ncurses/view:view-modeline-scrwin view))
-  (render-line-from-behind view
-                           0
-                           right-objects
-                           (lem-ncurses/view:view-modeline-scrwin view)))
+  (draw-row view row (lem-ncurses/view:view-modeline-scrwin view)))
 
 (defun clear-to-end-of-window (view y)
   (let ((win (lem-ncurses/view:view-scrwin view)))

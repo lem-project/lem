@@ -65,100 +65,18 @@ Uses a sentinel key so it participates in the normal cache lifecycle
          "__folder_icon__" nil :folder surface)
         surface)))
 
-(defgeneric object-width (drawing-object display))
+(defmethod lem-if:image-natural-size ((implementation lem-sdl2/sdl2:sdl2) image)
+  (values (sdl2:surface-width image) (sdl2:surface-height image)))
 
-(defmethod object-width ((drawing-object void-object) display)
-  0)
-
-(defun text-cell-width (drawing-object display)
-  "Cell-aligned pixel width of a text-object: string-width × char-width.
-Mirrors lem-ncurses/drawing-object:object-width semantics (logical
-column width) so SDL2 text aligns on the character grid regardless of
-per-string SDL_ttf surface-width drift."
-  (* (lem-core:string-width (text-object-string drawing-object))
-     (display:display-char-width display)))
-
-(defmethod object-width ((drawing-object text-object) display)
-  (text-cell-width drawing-object display))
-
-(defmethod object-width ((drawing-object control-character-object) display)
-  (* 2 (display:display-char-width display)))
-
-(defmethod object-width ((drawing-object icon-object) display)
-  ;; Cell-aligned advance (typically 2 * char-width). The icon font's natural
-  ;; glyph surface is usually wider than this; draw-object scales it to fit.
-  (text-cell-width drawing-object display))
-
-(defmethod object-width ((drawing-object folder-object) display)
-  (* 2 (display:display-char-width display)))
-
-(defmethod object-width ((drawing-object emoji-object) display)
-  (* (display:display-char-width display) 2 (length (text-object-string drawing-object))))
-
-(defmethod object-width ((drawing-object eol-cursor-object) display)
-  0)
-
-(defmethod object-width ((drawing-object extend-to-eol-object) display)
-  0)
-
-(defmethod object-width ((drawing-object line-end-object) display)
-  (text-cell-width drawing-object display))
-
-(defmethod object-width ((drawing-object image-object) display)
-  (or (image-object-width drawing-object)
-      (sdl2:surface-width (image-object-image drawing-object))))
-
-
-(defgeneric object-height (drawing-object display))
-
-(defmethod object-height ((drawing-object void-object) display)
-  (display:display-char-height display))
-
-(defmethod object-height ((drawing-object text-object) display)
-  ;; Use the stable row cell-height (derived from font metrics at the
-  ;; display level) rather than the per-string SDL_ttf surface height.
-  ;; SDL_ttf can return slightly different surface heights for different
-  ;; strings (e.g. ones containing descenders like `p'/`g'/`y' versus
-  ;; ones without), which would otherwise leak into the background
-  ;; rectangle drawn by `draw-text-glyph-surface', producing the
-  ;; uneven-extent "padding around the problem letters" artefact at
-  ;; attribute boundaries on a highlighted row.  The natural surface
-  ;; height is still read inside `draw-text-glyph-surface' directly
-  ;; from the surface for baseline-anchored glyph blitting.
-  (display:display-char-height display))
-
-(defmethod object-height ((drawing-object icon-object) display)
-  (display:display-char-height display))
-
-(defmethod object-height ((drawing-object control-character-object) display)
-  (display:display-char-height display))
-
-(defmethod object-height ((drawing-object folder-object) display)
-  (display:display-char-height display))
-
-(defmethod object-height ((drawing-object emoji-object) display)
-  (display:display-char-height display))
-
-(defmethod object-height ((drawing-object eol-cursor-object) display)
-  (display:display-char-height display))
-
-(defmethod object-height ((drawing-object extend-to-eol-object) display)
-  (display:display-char-height display))
-
-(defmethod object-height ((drawing-object line-end-object) display)
-  (display:display-char-height display))
-
-(defmethod object-height ((drawing-object image-object) display)
-  (or (image-object-height drawing-object)
-      (sdl2:surface-height (image-object-image drawing-object))))
-
-(defmethod lem-if:object-width ((implementation lem-sdl2/sdl2:sdl2) drawing-object)
+(defmethod lem-if:object-width ((implementation lem-sdl2/sdl2:sdl2)
+                                (drawing-object folder-object))
   (display:with-display (display)
-    (object-width drawing-object display)))
+    (* 2 (display:display-char-width display))))
 
-(defmethod lem-if:object-height ((implementation lem-sdl2/sdl2:sdl2) drawing-object)
+(defmethod lem-if:object-width ((implementation lem-sdl2/sdl2:sdl2)
+                                (drawing-object emoji-object))
   (display:with-display (display)
-    (object-height drawing-object display)))
+    (* (display:display-char-width display) 2 (length (text-object-string drawing-object)))))
 
 (defmethod draw-object ((drawing-object void-object) x bottom-y display view)
   0)
@@ -208,7 +126,7 @@ is not erased by the next glyph's background fill."
   (let* ((surface (get-surface drawing-object display))
          (surface-width (sdl2:surface-width surface))
          (surface-height (sdl2:surface-height surface))
-         (cell-height (object-height drawing-object display))
+         (cell-height (object-height drawing-object))
          (attribute (text-object-attribute drawing-object))
          (background (lem-core:attribute-background-with-reverse attribute))
          (y (- bottom-y cell-height))
@@ -275,14 +193,14 @@ is not erased by the next glyph's background fill."
                                         (or (lem:parse-color underline)
                                             (lem-core:attribute-foreground-color attribute))))))))
 
-(defun text-object-letter-objects-and-widths (drawing-object display)
+(defun text-object-letter-objects-and-widths (drawing-object)
   "Return two parallel lists: per-character letter-objects and their cell
 widths, for the multi-character text run DRAWING-OBJECT."
   (let ((attribute (text-object-attribute drawing-object)))
     (loop :for c :across (text-object-string drawing-object)
           :for letter := (make-letter-object c attribute)
           :collect letter :into letters
-          :collect (object-width letter display) :into widths
+          :collect (object-width letter) :into widths
           :finally (return (values letters widths)))))
 
 (defun draw-text-object-phase (drawing-object x bottom-y display view phase)
@@ -293,11 +211,11 @@ width so the rasterizer's right-edge anti-aliasing tail is preserved."
   (let ((string (text-object-string drawing-object)))
     (cond ((<= (length string) 1)
            (draw-text-glyph-surface drawing-object x bottom-y display view
-                                    (object-width drawing-object display)
+                                    (object-width drawing-object)
                                     :clip t :phase phase))
           (t
            (multiple-value-bind (letter-objects letter-widths)
-               (text-object-letter-objects-and-widths drawing-object display)
+               (text-object-letter-objects-and-widths drawing-object)
              (loop :with current-x := x
                    :for letter-object :in letter-objects
                    :for letter-width :in letter-widths
@@ -319,7 +237,7 @@ width so the rasterizer's right-edge anti-aliasing tail is preserved."
   ;; The cross-text-object equivalent (an adjacent text-object's :bg erasing
   ;; the previous text-object's AA tail) is handled by `redraw-physical-line',
   ;; which lifts the two-pass to span the entire physical line.
-  (let ((total-width (object-width drawing-object display)))
+  (let ((total-width (object-width drawing-object)))
     (draw-text-object-phase drawing-object x bottom-y display view :bg)
     (draw-text-object-phase drawing-object x bottom-y display view :glyph)
     total-width))
@@ -327,14 +245,14 @@ width so the rasterizer's right-edge anti-aliasing tail is preserved."
 (defmethod draw-object ((drawing-object icon-object) x bottom-y display view)
   ;; Icon font glyphs typically render much wider than the 2-cell column the
   ;; layout reserves for them; draw-text-glyph-surface scales them down to fit.
-  (let ((cell-width (object-width drawing-object display)))
+  (let ((cell-width (object-width drawing-object)))
     (draw-text-glyph-surface drawing-object x bottom-y display view cell-width)
     cell-width))
 
 (defmethod draw-object ((drawing-object folder-object) x bottom-y display view)
   ;; Folder PNG surface is much wider than 2 cells; render once and scale to fit.
   ;; Overrides the text-object per-character loop so the icon stays atomic.
-  (let ((cell-width (object-width drawing-object display)))
+  (let ((cell-width (object-width drawing-object)))
     (draw-text-glyph-surface drawing-object x bottom-y display view cell-width)
     cell-width))
 
@@ -343,21 +261,21 @@ width so the rasterizer's right-edge anti-aliasing tail is preserved."
   ;; ZWJ sequences, ...) that must be rendered as one composed glyph. Use the
   ;; single-surface path with cell-aligned scaling so we neither split the
   ;; sequence per-codepoint nor let an oversized emoji surface spill over.
-  (let ((cell-width (object-width drawing-object display)))
+  (let ((cell-width (object-width drawing-object)))
     (draw-text-glyph-surface drawing-object x bottom-y display view cell-width)
     cell-width))
 
 (defmethod draw-object ((drawing-object eol-cursor-object) x bottom-y display view)
   (display:set-render-color display (eol-cursor-object-color drawing-object))
-  (let ((y (- bottom-y (object-height drawing-object display))))
+  (let ((y (- bottom-y (object-height drawing-object))))
     (lem-sdl2/view:set-cursor-position view x y)
     (draw-cursor display
                  x
                  y
                  (display:display-char-width display)
-                 (object-height drawing-object display)
+                 (object-height drawing-object)
                  (eol-cursor-object-color drawing-object)))
-  (object-width drawing-object display))
+  (object-width drawing-object))
 
 (defmethod draw-object ((drawing-object extend-to-eol-object) x bottom-y display view)
   (display:set-render-color display (extend-to-eol-object-color drawing-object))
@@ -367,7 +285,7 @@ width so the rasterizer's right-edge anti-aliasing tail is preserved."
                               (- (lem-if:view-width (lem-core:implementation) view) x)
                               (display:display-char-height display))
     (sdl2:render-fill-rect (display:display-renderer display) rect))
-  (object-width drawing-object display))
+  (object-width drawing-object))
 
 (defmethod draw-object ((drawing-object line-end-object) x bottom-y display view)
   (call-next-method drawing-object
@@ -379,8 +297,8 @@ width so the rasterizer's right-edge anti-aliasing tail is preserved."
                     view))
 
 (defmethod draw-object ((drawing-object image-object) x bottom-y display view)
-  (let* ((surface-width (object-width drawing-object display))
-         (surface-height (object-height drawing-object display))
+  (let* ((surface-width (object-width drawing-object))
+         (surface-height (object-height drawing-object))
          (texture (sdl2:create-texture-from-surface (display:display-renderer display)
                                                     (image-object-image drawing-object)))
          (y (- bottom-y surface-height)))
@@ -418,18 +336,18 @@ rather than the row-wide two-pass)."
                        :for object :in objects
                        :while (< current-x display-width)
                        :collect (cons object current-x)
-                       :do (incf current-x (object-width object display)))))
+                       :do (incf current-x (object-width object)))))
     (flet ((draw-text-pass (object obj-x phase)
              ;; Honour the wrap-to-letters branch the old code used when a
              ;; text-object would extend past the display width.
              (cond ((< display-width
-                       (+ obj-x (object-width object display)))
+                       (+ obj-x (object-width object)))
                     (loop :with current-x := obj-x
                           :for c :across (text-object-string object)
                           :while (< current-x display-width)
                           :for letter := (make-letter-object
                                           c (text-object-attribute object))
-                          :for letter-width := (object-width letter display)
+                          :for letter-width := (object-width letter)
                           :do (draw-text-glyph-surface letter current-x bottom-y
                                                        display view letter-width
                                                        :clip t :phase phase)
@@ -452,7 +370,7 @@ rather than the row-wide two-pass)."
   (loop :with current-x := (lem-if:view-width (lem-core:implementation) view)
         :and y := (lem-if:view-height (lem-core:implementation) view)
         :for object :in objects
-        :do (decf current-x (object-width object display))
+        :do (decf current-x (object-width object))
             (draw-object object current-x y display view)))
 
 (defun fill-to-end-of-line (display view x y height &optional default-attribute)

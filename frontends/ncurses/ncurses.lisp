@@ -97,11 +97,13 @@
                                            height)
   (lem-ncurses/render:render-line-on-modeline view left-objects right-objects default-attribute))
 
-(defmethod lem-if:object-width ((implementation ncurses) drawing-object)
-  (lem-ncurses/drawing-object:object-width drawing-object))
+(defmethod lem-if:object-width ((implementation ncurses)
+                                (drawing-object lem-core/display:image-object))
+  0)
 
-(defmethod lem-if:object-height ((implementation ncurses) drawing-object)
-  (lem-ncurses/drawing-object:object-height drawing-object))
+(defmethod lem-if:object-height ((implementation ncurses)
+                                 (drawing-object lem-core/display:image-object))
+  1)
 
 (defmethod lem-if:clear-to-end-of-window ((implementation ncurses) view y)
   (lem-ncurses/render:clear-to-end-of-window view y))

@@ -64,7 +64,7 @@
 (defun render-line-from-behind (view y objects scrwin)
   (loop :with current-x := (lem-if:view-width (lem:implementation) view)
         :for object :in objects
-        :do (decf current-x (lem-ncurses/drawing-object:object-width object))
+        :do (decf current-x (lem-if:object-width (lem:implementation) object))
             (draw-object object current-x y view scrwin)))
 
 (defun clear-line (view x y)
@@ -74,7 +74,7 @@
 (defun %render-line (view x y objects scrwin)
   (loop :for object :in objects
         :do (draw-object object x y view scrwin)
-            (incf x (lem-ncurses/drawing-object:object-width object))))
+            (incf x (lem-if:object-width (lem:implementation) object))))
 
 (defun render-line (view x y objects)
   (clear-line view x y)

@@ -103,10 +103,10 @@
 (defmethod lem-if:clear-to-end-of-window ((implementation fake-interface) view y)
   nil)
 
-(defmethod lem-if:get-char-width ((implementation fake-interface))
+(defmethod lem-if:cell-width ((implementation fake-interface))
   1)
 
-(defmethod lem-if:get-char-height ((implementation fake-interface))
+(defmethod lem-if:cell-height ((implementation fake-interface))
   1)
 
 (defmethod lem-if:render-line-on-modeline ((implementation fake-interface)

@@ -175,8 +175,14 @@ PIXEL-X, PIXEL-Y, PIXEL-WIDTH, PIXEL-HEIGHT are in pixels (may be nil for auto-c
   (:method (implementation)
     (values -1 -1)))
 
-(defgeneric lem-if:get-char-width (implementation))
-(defgeneric lem-if:get-char-height (implementation))
+(defgeneric lem-if:cell-width (implementation)
+  (:documentation "Width of one character cell in the frontend's native layout units.
+1 on a cell-based frontend (a terminal counts in cells), pixels on a pixel-based one. These are
+the units `object-width' / `object-height' are counted in."))
+
+(defgeneric lem-if:cell-height (implementation)
+  (:documentation "Height of one character cell in the frontend's native layout units.
+Unit-relative like `cell-width'."))
 
 (defgeneric lem-if:render-line (implementation view x y objects height))
 (defgeneric lem-if:render-line-on-modeline (implementation view left-objects right-objects

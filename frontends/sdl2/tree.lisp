@@ -29,7 +29,7 @@
 (defmethod tree-view-scroll-vertically ((buffer tree-view-buffer) window n)
   (incf (tree-view-buffer-scroll-y buffer) n)
   (let* ((height (* (1- (window-height window))
-                    (lem-if:get-char-height (implementation))))
+                    (lem-if:cell-height (implementation))))
          (last-y (max 0 (- (tree-view-buffer-height buffer) height))))
     (cond ((< last-y
               (tree-view-buffer-scroll-y buffer))

@@ -142,8 +142,8 @@ This updates the window's pixel dimensions and notifies the frontend."
 Returns (values pixel-x pixel-y pixel-width pixel-height).
 If pixel coordinates are not set, calculates from character coordinates."
   (check-type window floating-window)
-  (let ((char-width (lem-if:get-char-width (implementation)))
-        (char-height (lem-if:get-char-height (implementation))))
+  (let ((char-width (lem-if:cell-width (implementation)))
+        (char-height (lem-if:cell-height (implementation))))
     (values (or (floating-window-pixel-x window)
                 (* (window-x window) char-width))
             (or (floating-window-pixel-y window)

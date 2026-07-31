@@ -820,8 +820,8 @@
    :get-font-by-name-and-style
    :get-font
    :get-mouse-position
-   :get-char-width
-   :get-char-height
+   :cell-width
+   :cell-height
    :clear-to-end-of-window
    :js-eval
    :render-line

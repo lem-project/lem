@@ -736,7 +736,7 @@ creating zero temporary letter-objects."
         (invalidate-drawing-cache-from window y)
         (lem-if:clear-to-end-of-window (implementation) (window-view window) y))
       (setf (window-left-width window)
-            (floor left-side-width (lem-if:get-char-width (implementation)))))))
+            (floor left-side-width (lem-if:cell-width (implementation)))))))
 
 (defun call-with-display-error (function)
   (handler-bind ((error (lambda (e)

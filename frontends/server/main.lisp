@@ -478,10 +478,10 @@ the same immutable instance for every subsequent message."
 (defmethod lem-if:get-mouse-position ((jsonrpc jsonrpc))
   (mouse:get-position))
 
-(defmethod lem-if:get-char-width ((jsonrpc jsonrpc))
+(defmethod lem-if:cell-width ((jsonrpc jsonrpc))
   ;; TODO
   1)
-(defmethod lem-if:get-char-height ((jsonrpc jsonrpc))
+(defmethod lem-if:cell-height ((jsonrpc jsonrpc))
   ;; TODO
   1)
 

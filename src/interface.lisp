@@ -187,8 +187,28 @@ Unit-relative like `cell-width'."))
 (defgeneric lem-if:render-line (implementation view x y objects height))
 (defgeneric lem-if:render-line-on-modeline (implementation view left-objects right-objects
                                             default-attribute height))
-(defgeneric lem-if:object-width (implementation drawing-object))
-(defgeneric lem-if:object-height (implementation drawing-object))
+(defgeneric lem-if:object-width (implementation drawing-object)
+  (:documentation "Width DRAWING-OBJECT occupies, in the same units as `cell-width'.
+The default methods in src/display/physical-line.lisp derive this from `cell-width'. A
+`lem-core/display:text-object' (one run of characters sharing an attribute) is as wide as its
+string: `string-width' cells, counting a wide glyph as two. An image takes the pixel width it is
+drawn at (`lem-core/display:image-draw-width').
+Specialize this only for an object the frontend draws at some other size, as sdl2 does for its
+folder and emoji glyphs."))
+
+(defgeneric lem-if:object-height (implementation drawing-object)
+  (:documentation "Height DRAWING-OBJECT occupies, in the same units as `cell-height'.
+Defaults to one cell for every object but an image, which takes the pixel height it is drawn at
+(`lem-core/display:image-draw-height'). Specialize it as in `object-width'."))
+
+(defgeneric lem-if:image-natural-size (implementation image)
+  (:documentation "Fallback size for an image whose object requests no particular size.
+Returns (values WIDTH HEIGHT) in pixels, or NIL NIL if the frontend can't tell. IMAGE is the
+frontend's own loaded-image handle (an SDL surface, a path handed to a browser, ...), the value
+stored in an `lem-core/display:image-object' and obtained via `image-object-image'. See
+`lem-core/display:image-draw-width'.")
+  (:method (implementation image)
+    (values nil nil)))
 (defgeneric lem-if:clear-to-end-of-window (implementation view y))
 
 (defgeneric lem-if:js-eval (implementation view code &key wait)

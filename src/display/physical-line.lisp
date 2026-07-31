@@ -62,6 +62,42 @@
    (height :initarg :height :reader image-object-height)
    (attribute :initarg :attribute :reader image-object-attribute)))
 
+(defun image-draw-width (implementation object)
+  "Pixel width OBJECT's image is drawn at.
+:width on the object is a pixel count. An image carrying none is drawn at its natural size if the
+frontend can report one (`lem-if:image-natural-size'), otherwise one cell wide."
+  (or (image-object-width object)
+      (nth-value 0 (lem-if:image-natural-size implementation (image-object-image object)))
+      (lem-if:cell-width implementation)))
+
+(defun image-draw-height (implementation object)
+  "Pixel height OBJECT's image is drawn at, as `image-draw-width' on the other axis."
+  (or (image-object-height object)
+      (nth-value 1 (lem-if:image-natural-size implementation (image-object-image object)))
+      (lem-if:cell-height implementation)))
+
+(defmethod lem-if:object-width (implementation (drawing-object void-object))
+  0)
+
+(defmethod lem-if:object-width (implementation (drawing-object text-object))
+  (* (string-width (text-object-string drawing-object))
+     (lem-if:cell-width implementation)))
+
+(defmethod lem-if:object-width (implementation (drawing-object eol-cursor-object))
+  0)
+
+(defmethod lem-if:object-width (implementation (drawing-object extend-to-eol-object))
+  0)
+
+(defmethod lem-if:object-width (implementation (drawing-object image-object))
+  (image-draw-width implementation drawing-object))
+
+(defmethod lem-if:object-height (implementation (drawing-object drawing-object))
+  (lem-if:cell-height implementation))
+
+(defmethod lem-if:object-height (implementation (drawing-object image-object))
+  (image-draw-height implementation drawing-object))
+
 (defmethod cursor-object-p (drawing-object)
   nil)
 

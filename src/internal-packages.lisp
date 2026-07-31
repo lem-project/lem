@@ -18,6 +18,10 @@
    :image-object-height
    :image-object-image
    :image-object-width
+   :image-draw-width
+   :image-draw-height
+   :object-height
+   :object-width
    :line-end-object
    :line-end-object-offset
    :text-object
@@ -828,4 +832,5 @@
    :render-line-on-modeline
    :object-width
    :object-height
+   :image-natural-size
    :set-frame-color))

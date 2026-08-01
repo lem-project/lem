@@ -69,18 +69,44 @@
                (* (window-y window)
                   (lem-if:cell-height (implementation)))))))
 
+(defun mouse-event-screen-row (mouse-event window fallback-row)
+  "The screen row of WINDOW that MOUSE-EVENT points at, counted from the top of its view.
+Walks the heights recorded when the window was drawn, since rows are not all one height.
+FALLBACK-ROW, what dividing by a row height gives, is used when there is no pixel position to walk
+with or the window is undrawn."
+  (if (and (mouse-event-pixel-x mouse-event)
+           (mouse-event-pixel-y mouse-event))
+      (multiple-value-bind (relative-x relative-y)
+          (get-relative-mouse-coordinates-pixels mouse-event window)
+        (declare (ignore relative-x))
+        (or (window-screen-row-index-at-y window relative-y)
+            fallback-row))
+      fallback-row))
+
+(defun move-point-to-screen-row (point window row)
+  "Move POINT to the start of screen ROW of WINDOW, counting rows from the top of its view.
+Uses the line recorded when the row was drawn, since counting virtual lines down from the view top
+would miscount every row a newline inside virtual text added. Falls back to that count for a row
+that was not drawn, or whose line the buffer no longer has."
+  (flet ((count-from-view-top ()
+           (move-point point (window-view-point window))
+           (move-to-next-virtual-line point row window)))
+    (alexandria:if-let ((screen-row (window-screen-row-at-index window row)))
+      (if (move-to-line point (screen-row-line-number screen-row))
+          (move-to-next-virtual-line point (screen-row-wrap-index screen-row) window)
+          (count-from-view-top))
+      (count-from-view-top))))
+
 (defun get-point-from-window-with-coordinates (window x y &optional (allow-overflow-column t))
   (with-point ((point (buffer-point (window-buffer window))))
-    (move-point point (window-view-point window))
-    (move-to-next-virtual-line point y window)
+    (move-point-to-screen-row point window y)
     (let ((moved (move-to-virtual-line-column point x window)))
       (when (or moved allow-overflow-column)
         point))))
 
 (defun move-current-point-to-x-y-position (window x y)
   (switch-to-window window)
-  (move-point (current-point) (window-view-point window))
-  (move-to-next-virtual-line (current-point) y)
+  (move-point-to-screen-row (current-point) window y)
   (move-to-virtual-line-column (current-point) x))
 
 (defvar *last-mouse-event*)
@@ -194,7 +220,7 @@
                                      mouse-event
                                      :window window
                                      :x x
-                                     :y y)))))))
+                                     :y (mouse-event-screen-row mouse-event window y))))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-button-up))
   (setf *last-dragged-separator* nil)
@@ -260,7 +286,7 @@
                                  mouse-event
                                  :window window
                                  :x x
-                                 :y y))))
+                                 :y (mouse-event-screen-row mouse-event window y)))))
         ((typep *last-dragged-separator* 'window-vertical-separator)
          (let ((x (mouse-event-x mouse-event))
                (button (mouse-event-button mouse-event)))

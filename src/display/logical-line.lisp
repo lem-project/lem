@@ -629,12 +629,19 @@ VIRTUAL-ITEMS arrive in draw order (from `create-logical-line')."
            (*active-modes* active-modes))
       (loop :for logical-line := (create-logical-line point overlays active-modes)
             :do (when logical-line
-                  (funcall function logical-line))
+                  (funcall function logical-line point))
                 (loop
                   (unless (line-offset point 1)
                     (return-from call-do-logical-line))
                   (unless (line-continuation-p point)
                     (return)))))))
 
-(defmacro do-logical-line ((logical-line window) &body body)
-  `(call-do-logical-line ,window (lambda (,logical-line) ,@body)))
+(defmacro do-logical-line ((logical-line window &optional point) &body body)
+  "Run BODY for each logical line of WINDOW, in draw order.
+POINT, when named, is bound to the start of the line. It is one point reused for every line and
+moved on to the next once BODY returns, so BODY must `copy-point' it to hold on to it."
+  (let ((point-var (or point (gensym "POINT"))))
+    `(call-do-logical-line ,window
+                           (lambda (,logical-line ,point-var)
+                             (declare (ignorable ,point-var))
+                             ,@body))))

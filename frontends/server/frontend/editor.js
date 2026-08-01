@@ -352,7 +352,7 @@ class BaseSurface {
   // drawing coordinates are relative to the surface's own top-left corner.
   drawBlock(x, y, width, height, color) { }
   drawText(x, y, text, textWidth, attribute, font, height) { }
-  drawImage(x, y, width, height, url) { }
+  drawImage(x, y, width, height, clipWidth, clipHeight, url) { }
 
   clearImages(yStart, yEnd) { }
   clearAllImages() { }
@@ -496,9 +496,9 @@ class CanvasSurface extends BaseSurface {
   imageBaseLeft() { return parseFloat(this.mainDOM.style.left) || 0; }
   imageBaseTop() { return parseFloat(this.mainDOM.style.top) || 0; }
 
-  drawImage(x, y, width, height, url) {
+  drawImage(x, y, width, height, clipWidth, clipHeight, url) {
     if (!this.imageEls)
-      // mapping "x,y" to { el, url, x, y, width, height }
+      // mapping "x,y" to { el, url, x, y, width, height, clipWidth, clipHeight }
       this.imageEls = new Map();
     const key = x + ',' + y;
     let entry = this.imageEls.get(key);
@@ -522,6 +522,8 @@ class CanvasSurface extends BaseSurface {
     entry.y = y;
     entry.width = width;
     entry.height = height;
+    entry.clipWidth = clipWidth;
+    entry.clipHeight = clipHeight;
     this.positionImage(entry);
   }
 
@@ -530,6 +532,15 @@ class CanvasSurface extends BaseSurface {
     entry.el.style.top = (this.imageBaseTop() + entry.y) + 'px';
     entry.el.style.width = entry.width + 'px';
     entry.el.style.height = entry.height + 'px';
+    // show only the part the server said is visible. the element keeps its full size and
+    // clip-path hides the rest, since shrinking it would squash the picture.
+    const clipRight = entry.clipWidth == null
+          ? 0 : Math.max(0, entry.width - entry.clipWidth);
+    const clipBottom = entry.clipHeight == null
+          ? 0 : Math.max(0, entry.height - entry.clipHeight);
+    entry.el.style.clipPath = (clipRight > 0 || clipBottom > 0)
+      ? `inset(0px ${clipRight}px ${clipBottom}px 0px)`
+      : '';
   }
 
   // remove image elements whose vertical span intersects [yStart, yEnd).
@@ -875,8 +886,8 @@ class View {
     );
   }
 
-  printImage(x, y, pixelWidth, pixelHeight, url) {
-    this.mainSurface.drawImage(x, y, pixelWidth, pixelHeight, url);
+  printImage(x, y, pixelWidth, pixelHeight, clipWidth, clipHeight, url) {
+    this.mainSurface.drawImage(x, y, pixelWidth, pixelHeight, clipWidth, clipHeight, url);
   }
 
   printToModeline(x, y, text, textWidth, attribute, height) {
@@ -1463,9 +1474,9 @@ export class Editor {
     view.print(x, y, text, textWidth, attribute, font, height);
   }
 
-  putImage({ viewInfo: { id }, x, y, pixelWidth, pixelHeight, url }) {
+  putImage({ viewInfo: { id }, x, y, pixelWidth, pixelHeight, clipWidth, clipHeight, url }) {
     const view = this.findViewById(id);
-    view.printImage(x, y, pixelWidth, pixelHeight, url);
+    view.printImage(x, y, pixelWidth, pixelHeight, clipWidth, clipHeight, url);
   }
 
   modelinePut({ viewInfo: { id }, x, y, text, textWidth, attribute, height }) {

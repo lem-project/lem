@@ -60,7 +60,24 @@
   ((image :initarg :image :reader image-object-image)
    (width :initarg :width :reader image-object-width)
    (height :initarg :height :reader image-object-height)
-   (attribute :initarg :attribute :reader image-object-attribute)))
+   (attribute :initarg :attribute :reader image-object-attribute)
+   ;; how much of the width may be shown, or NIL for all of it. see `crop-image-object'.
+   (visible-width :initarg :visible-width
+                  :initform nil
+                  :reader image-object-visible-width)))
+
+(defun image-object-ascent (object height)
+  "How much of OBJECT's image, drawn HEIGHT tall, sits above the text baseline.
+Taken from the object's `:ascent' attribute: a percentage of HEIGHT, 50 by default. `:center'
+instead puts the middle of the image on the middle of a line of text."
+  ;; attribute-value* rather than attribute-value: an object's attribute may be a name, as
+  ;; `attribute-image' above it allows.
+  (let ((ascent (or (attribute-value* (image-object-attribute object) :ascent)
+                    50)))
+    (if (eq ascent :center)
+        (multiple-value-bind (text-ascent text-height) (text-row-metrics)
+          (round (+ (/ height 2) (- text-ascent (/ text-height 2)))))
+        (round (* height (/ (max 0 (min 100 ascent)) 100))))))
 
 (defun image-draw-width (implementation object)
   "Pixel width OBJECT's image is drawn at.
@@ -90,7 +107,11 @@ frontend can report one (`lem-if:image-natural-size'), otherwise one cell wide."
   0)
 
 (defmethod lem-if:object-width (implementation (drawing-object image-object))
-  (image-draw-width implementation drawing-object))
+  ;; a cropped image occupies only what it was cropped to, see `crop-image-object'.
+  (let ((width (image-draw-width implementation drawing-object)))
+    (alexandria:if-let ((visible (image-object-visible-width drawing-object)))
+      (min width visible)
+      width)))
 
 (defmethod lem-if:object-height (implementation (drawing-object drawing-object))
   (lem-if:cell-height implementation))
@@ -105,6 +126,20 @@ frontend can report one (`lem-if:image-natural-size'), otherwise one cell wide."
       (lem-if:cell-pixel-size implementation)
     (declare (ignore cell-width cell-height))
     (or cell-ascent (lem-if:object-height implementation drawing-object))))
+
+(defmethod lem-if:object-ascent (implementation (drawing-object image-object))
+  (image-object-ascent drawing-object (lem-if:object-height implementation drawing-object)))
+
+(defun crop-image-object (object width)
+  "A copy of OBJECT allowed to occupy only WIDTH, in the units `object-width' counts in."
+  (make-instance 'image-object
+                 :image (image-object-image object)
+                 :width (image-object-width object)
+                 :height (image-object-height object)
+                 :attribute (image-object-attribute object)
+                 :visible-width (alexandria:if-let ((visible (image-object-visible-width object)))
+                                  (min width visible)
+                                  width)))
 
 (defmethod cursor-object-p (drawing-object)
   nil)
@@ -149,7 +184,10 @@ frontend can report one (`lem-if:image-natural-size'), otherwise one cell wide."
 (defmethod drawing-object-equal ((drawing-object-1 image-object) (drawing-object-2 image-object))
   (and (eq (image-object-image drawing-object-1) (image-object-image drawing-object-2))
        (equal (image-object-width drawing-object-1) (image-object-width drawing-object-2))
-       (equal (image-object-height drawing-object-1) (image-object-height drawing-object-2))))
+       (equal (image-object-height drawing-object-1) (image-object-height drawing-object-2))
+       ;; a differently cropped image draws differently, so the cached row must not be reused
+       (equal (image-object-visible-width drawing-object-1)
+              (image-object-visible-width drawing-object-2))))
 
 
 (defgeneric drawing-object-mergable-p (drawing-object-1 drawing-object-2))
@@ -357,7 +395,16 @@ frontend can report one (`lem-if:image-natural-size'), otherwise one cell wide."
             :and physical-line-objects := '()
             :for object := (pop objects)
             :while object
-            :do (cond ((and (typep object 'text-object)
+            :do (cond ((and (typep object 'image-object)
+                            (< (- view-width total-width) (object-width object)))
+                       ;; an image cannot be broken in half the way a text run is, so it moves whole
+                       ;; to the next row. one that does not fit even a row of its own is cropped.
+                       (if (null physical-line-objects)
+                           (push (crop-image-object object (- view-width total-width))
+                                 physical-line-objects)
+                           (push object objects))
+                       (return (values (nreverse physical-line-objects) objects)))
+                      ((and (typep object 'text-object)
                             (<= view-width (+ total-width (object-width object))))
                        (cond ((< 1 (length (text-object-string object)))
                               (setf objects (nconc (explode-object object) objects)))
@@ -807,6 +854,10 @@ creating zero temporary letter-objects."
                       (text-object-attribute object)
                       (text-object-type object))
                      result))))
+          ;; an image crossing the right edge is cut down to what fits. the left edge is not, since
+          ;; that needs an offset into the image and an image-object carries only a visible width.
+          ((and (typep object 'image-object) (< x end-x) (< end-x obj-end))
+           (push (crop-image-object object (- end-x x)) result))
           ;; Non-text objects straddling boundary - include
           (t (push object result)))
         (incf x w)))

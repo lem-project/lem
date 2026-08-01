@@ -18,6 +18,8 @@
    :image-object-height
    :image-object-image
    :image-object-width
+   :image-object-visible-width
+   :image-object-ascent
    :image-draw-width
    :image-draw-height
    :object-ascent

@@ -747,8 +747,15 @@ a string already carrying a data:/https: URL is passed through unchanged."
   (let ((url (image-object-url object)))
     (when url
       (with-error-handler ()
-        (let ((pw (display:image-draw-width jsonrpc object))
-              (ph (display:image-draw-height jsonrpc object)))
+        (let* ((pw (display:image-draw-width jsonrpc object))
+               (ph (display:image-draw-height jsonrpc object))
+               ;; how much may appear: the crop the layout applied, and the room left in the view.
+               ;; an image is a DOM element over the view, not pixels in it, so nothing clips it
+               ;; for us.
+               (clip-width (min pw
+                                (max 0 (- (view-px-width view) x))
+                                (or (display:image-object-visible-width object) pw)))
+               (clip-height (min ph (max 0 (- (view-px-height view) y)))))
           (notify* jsonrpc
                    "put-image"
                    (hash "viewInfo" (view-id-hash view)
@@ -756,6 +763,9 @@ a string already carrying a data:/https: URL is passed through unchanged."
                          "y" y
                          "pixelWidth" pw
                          "pixelHeight" ph
+                         ;; the visible part, from the image's top-left
+                         "clipWidth" clip-width
+                         "clipHeight" clip-height
                          "url" url)))))))
 
 (defun draw-row (jsonrpc view row)

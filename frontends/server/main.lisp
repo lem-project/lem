@@ -110,11 +110,15 @@ quits by itself afterwards.")
                   :reader jsonrpc-message-queue)
    (editor-thread :initform nil
                   :accessor jsonrpc-editor-thread)
-   ;; pixel size of one character cell, reported by the client.
-   (cell-width :initform nil
+   ;; pixel size of one character cell. multiplied into every coordinate we send, so never NIL:
+   ;; we guess, and the client corrects at login.
+   (cell-width :initform 8
                :accessor jsonrpc-cell-width)
-   (cell-height :initform nil
-                :accessor jsonrpc-cell-height))
+   (cell-height :initform 16
+                :accessor jsonrpc-cell-height)
+   ;; how far below a cell's top the client puts the text baseline.
+   (cell-ascent :initform nil
+                :accessor jsonrpc-cell-ascent))
   (:default-initargs
    :name :jsonrpc
    :redraw-after-modifying-floating-window t
@@ -165,6 +169,21 @@ the same immutable instance for every subsequent message."
                           'vector)))
     (notify jsonrpc "bulk" argument)))
 
+(defun update-cell-metrics (jsonrpc params)
+  "take the client's font metrics out of PARAMS, if it sent any.
+returns true when one of them changed, since nothing already measured survives a new cell size."
+  (let ((changed))
+    (flet ((update (key accessor)
+             (alexandria:when-let ((value (gethash key params)))
+               (when (and (realp value) (plusp value)
+                          (not (eql value (funcall accessor jsonrpc))))
+                 (funcall (fdefinition `(setf ,accessor)) value jsonrpc)
+                 (setf changed t)))))
+      (update "fontWidth" 'jsonrpc-cell-width)
+      (update "fontHeight" 'jsonrpc-cell-height)
+      (update "fontAscent" 'jsonrpc-cell-ascent))
+    changed))
+
 (defun handle-login (jsonrpc logged-in-callback params)
   (with-error-handler ()
     (let* ((size (gethash "size" params))
@@ -175,10 +194,7 @@ the same immutable instance for every subsequent message."
         (let ((width (gethash "width" size))
               (height (gethash "height" size)))
           (resize-display jsonrpc width height)))
-      (alexandria:when-let ((fw (gethash "fontWidth" params)))
-        (when (plusp fw) (setf (jsonrpc-cell-width jsonrpc) fw)))
-      (alexandria:when-let ((fh (gethash "fontHeight" params)))
-        (when (plusp fh) (setf (jsonrpc-cell-height jsonrpc) fh)))
+      (update-cell-metrics jsonrpc params)
       (when background
         (alexandria:when-let (color (lem:parse-color background))
           (setf (jsonrpc-background-color jsonrpc) color)))
@@ -200,14 +216,22 @@ the same immutable instance for every subsequent message."
 
 (defun redraw (args)
   (with-error-handler ()
-    (let ((size (and args (gethash "size" args))))
+    (let ((size (and args (gethash "size" args)))
+          ;; the client re-sends its font metrics here, so a font change reaches us by the same
+          ;; path as a resize instead of needing one of its own.
+          (metrics-changed (and args (update-cell-metrics (lem:implementation) args))))
       (when size
         (let ((width (gethash "width" size))
               (height (gethash "height" size)))
           (resize-display (lem:implementation) width height)
           (notify (lem:implementation) "resize-display" size)))
       (lem:send-event (lambda ()
+                        (when metrics-changed
+                          ;; the scroll position was recorded in the old cell size
+                          (dolist (window (lem:window-list))
+                            (setf (lem-core::horizontal-scroll-start window) 0)))
                         (lem-core::adjust-all-window-size)
+                        ;; :force clears the caches, whose widths are stale after a cell-size change
                         (lem:redraw-display :force t))))))
 
 (defvar *invoke-method-table* (make-hash-table :test 'equal))
@@ -324,10 +348,10 @@ the same immutable instance for every subsequent message."
     view))
 
 (defmethod lem-if:view-width ((jsonrpc jsonrpc) view)
-  (view-width view))
+  (view-px-width view))
 
 (defmethod lem-if:view-height ((jsonrpc jsonrpc) view)
-  (view-height view))
+  (view-px-height view))
 
 (defmethod lem-if:delete-view ((jsonrpc jsonrpc) view)
   (with-error-handler ()
@@ -344,7 +368,9 @@ the same immutable instance for every subsequent message."
              "resize-view"
              (hash "viewInfo" (view-id-hash view)
                    "width" width
-                   "height" height))))
+                   "height" height
+                   "pixelWidth" (view-px-width view)
+                   "pixelHeight" (view-px-height view)))))
 
 (defmethod lem-if:set-view-pos ((jsonrpc jsonrpc) view x y)
   (with-error-handler ()
@@ -353,7 +379,9 @@ the same immutable instance for every subsequent message."
              "move-view"
              (hash "viewInfo" (view-id-hash view)
                    "x" x
-                   "y" y))))
+                   "y" y
+                   "pixelX" (view-px-x view)
+                   "pixelY" (view-px-y view)))))
 
 (defmethod lem-if:make-view-with-pixels ((jsonrpc jsonrpc) window x y width height
                                          pixel-x pixel-y pixel-width pixel-height
@@ -389,8 +417,8 @@ the same immutable instance for every subsequent message."
              (hash "viewInfo" (view-id-hash view)
                    "x" x
                    "y" y
-                   "pixelX" pixel-x
-                   "pixelY" pixel-y))))
+                   "pixelX" (view-px-x view)
+                   "pixelY" (view-px-y view)))))
 
 (defmethod lem-if:set-view-size-pixels ((jsonrpc jsonrpc) view width height pixel-width pixel-height)
   (with-error-handler ()
@@ -400,8 +428,8 @@ the same immutable instance for every subsequent message."
              (hash "viewInfo" (view-id-hash view)
                    "width" width
                    "height" height
-                   "pixelWidth" pixel-width
-                   "pixelHeight" pixel-height))))
+                   "pixelWidth" (view-px-width view)
+                   "pixelHeight" (view-px-height view)))))
 
 (defmethod lem-if:redraw-view-before ((jsonrpc jsonrpc) view)
   )
@@ -479,11 +507,15 @@ the same immutable instance for every subsequent message."
   (mouse:get-position))
 
 (defmethod lem-if:cell-width ((jsonrpc jsonrpc))
-  ;; TODO
-  1)
+  (jsonrpc-cell-width jsonrpc))
+
 (defmethod lem-if:cell-height ((jsonrpc jsonrpc))
-  ;; TODO
-  1)
+  (jsonrpc-cell-height jsonrpc))
+
+(defmethod lem-if:cell-pixel-size ((jsonrpc jsonrpc))
+  (values (jsonrpc-cell-width jsonrpc)
+          (jsonrpc-cell-height jsonrpc)
+          (jsonrpc-cell-ascent jsonrpc)))
 
 (defun call (method params)
   (let ((mailbox (sb-concurrency:make-mailbox :name "lem-server-call-async")))
@@ -583,54 +615,11 @@ the same immutable instance for every subsequent message."
 
 
 ;;; drawing
-(defgeneric object-width (drawing-object))
 
-(defmethod object-width ((drawing-object display:void-object))
-  0)
-
-(defmethod object-width ((drawing-object display:text-object))
-  (lem-core:string-width (display:text-object-string drawing-object)))
-
-(defmethod object-width ((drawing-object display:eol-cursor-object))
-  0)
-
-(defmethod object-width ((drawing-object display:extend-to-eol-object))
-  0)
-
-(defmethod object-width ((drawing-object display:line-end-object))
-  (lem-core:string-width (lem-core/display:text-object-string drawing-object)))
-
-(defmethod object-width ((drawing-object display:image-object))
-  ;; width in character cells. when :pixel-width is given (and the client's cell size is known),
-  ;; round it up to whole cells so the column reserves enough grid space. otherwise use :width
-  ;; (a cell count) from the attribute.
-  (let ((pw (image-pixel-dimension drawing-object :pixel-width))
-        (cw (jsonrpc-cell-width (lem-core:implementation))))
-    (if (and pw cw)
-        (ceiling pw cw)
-        (or (display:image-object-width drawing-object) 1))))
-
-(defgeneric object-height (drawing-object)
-  (:documentation "height of DRAWING-OBJECT in character cells.
-`lem-core/display:layout-row' grows the row to fit everything on it, so returning more than 1 for
-an image gives it the cells it needs."))
-
-(defmethod object-height (drawing-object)
-  1)
-
-(defmethod object-height ((drawing-object display:image-object))
-  (let ((ph (image-pixel-dimension drawing-object :pixel-height))
-        (ch (jsonrpc-cell-height (lem-core:implementation))))
-    (if (and ph ch)
-        (ceiling ph ch)
-        (or (display:image-object-height drawing-object) 1))))
-
-(defun image-pixel-dimension (object key)
-  "pixel value of KEY (:pixel-width / :pixel-height) on OBJECT's attribute, or NIL."
-  (let ((attribute (display:image-object-attribute object)))
-    (and attribute (lem:attribute-value attribute key))))
-
-(defgeneric draw-object (jsonrpc object x y view))
+(defgeneric draw-object (jsonrpc object x y view)
+  (:documentation "draw OBJECT into VIEW with its top-left corner at pixel position X, Y.
+`lem-core/display:layout-row' already chose Y as the row's baseline minus this object's ascent, so
+a method never needs to know the row's own top or height."))
 
 (defmethod draw-object (jsonrpc (object display:void-object) x y view)
   (values))
@@ -670,7 +659,9 @@ same hash."
       (setf attribute (lem:make-attribute :background lem-if:*background-color-of-drawing-window*)))
     (attribute-to-hash attribute)))
 
-(defun put (jsonrpc view x y string attribute &key font text-width)
+(defun put (jsonrpc view x y string attribute &key font text-width height)
+  "draw STRING at pixel position X, Y in VIEW, over a TEXT-WIDTH by HEIGHT pixel background.
+HEIGHT defaults to one line of text."
   (with-error-handler ()
     (notify* jsonrpc
              (ecase *put-target*
@@ -680,7 +671,8 @@ same hash."
                    "x" x
                    "y" y
                    "text" string
-                   "textWidth" (or text-width (lem:string-width string))
+                   "textWidth" (or text-width (* (lem:string-width string) (jsonrpc-cell-width jsonrpc)))
+                   "height" height
                    "attribute" (ensure-attribute attribute)
                    "font" font))))
 
@@ -688,7 +680,7 @@ same hash."
   (let* ((string (display:text-object-string object))
          (attribute (display:text-object-attribute object))
          (type (display:text-object-type object))
-         (width (object-width object)))
+         (width (lem-if:object-width jsonrpc object)))
     (when (and attribute (lem-core:cursor-attribute-p attribute))
       (lem-core:set-last-print-cursor (view-window view) x y))
     (put jsonrpc
@@ -703,7 +695,7 @@ same hash."
   (let* ((string (display:text-object-string object))
          (attribute (display:text-object-attribute object))
          (type (display:text-object-type object))
-         (width (object-width object)))
+         (width (lem-if:object-width jsonrpc object)))
     (when (and attribute (lem-core:cursor-attribute-p attribute))
       (lem-core:set-last-print-cursor (view-window view) x y))
     (put jsonrpc
@@ -722,15 +714,16 @@ same hash."
                :background
                (lem:color-to-hex-string (display:eol-cursor-object-color object)))))
     (lem-core:set-cursor-attribute attr)
-    (put jsonrpc view x y " " attr :text-width 1)))
+    (put jsonrpc view x y " " attr :text-width (jsonrpc-cell-width jsonrpc))))
 
 (defmethod draw-object (jsonrpc (object display:line-end-object) x y view)
   (let ((string (display:text-object-string object))
         (attribute (display:text-object-attribute object))
-        (width (object-width object)))
+        (width (lem-if:object-width jsonrpc object)))
     (put jsonrpc
          view
-         (+ x (display:line-end-object-offset object))
+         ;; the offset is a column count, unlike the x it is added to.
+         (+ x (* (display:line-end-object-offset object) (jsonrpc-cell-width jsonrpc)))
          y
          string
          attribute
@@ -754,42 +747,35 @@ a string already carrying a data:/https: URL is passed through unchanged."
   (let ((url (image-object-url object)))
     (when url
       (with-error-handler ()
-        ;; use the attribute's :pixel-width/:pixel-height if given, else the reserved cell box
-        ;; (cells * cell pixel size) when the cell size is known.
-        (let ((pw (or (image-pixel-dimension object :pixel-width)
-                      (alexandria:when-let ((cw (jsonrpc-cell-width jsonrpc)))
-                        (* (object-width object) cw))))
-              (ph (or (image-pixel-dimension object :pixel-height)
-                      (alexandria:when-let ((ch (jsonrpc-cell-height jsonrpc)))
-                        (* (object-height object) ch)))))
+        (let ((pw (display:image-draw-width jsonrpc object))
+              (ph (display:image-draw-height jsonrpc object)))
           (notify* jsonrpc
                    "put-image"
                    (hash "viewInfo" (view-id-hash view)
                          "x" x
                          "y" y
-                         "width" (object-width object)
-                         "height" (object-height object)
                          "pixelWidth" pw
                          "pixelHeight" ph
                          "url" url)))))))
 
 (defun draw-row (jsonrpc view row)
   "draw ROW's background fill, then everything placed on it.
-`clear-eol'/`clear-eob' only ever paint the editor's plain background, so a fill in an arbitrary
-color (e.g. a highlighted row) goes out as spaces carrying that color via `put'."
-  (let ((width (view-width view)))
+the client paints a put's background before its text, so the fill goes as an empty string sized
+TEXT-WIDTH by HEIGHT, the row's full height, which may exceed a single text line's height when a
+tall object (e.g. an image) sits on the row."
+  (let ((width (view-px-width view)))
     (when (and (display:row-fill-color row)
                (< (display:row-fill-x row) width))
-      (let ((fill-width (- width (display:row-fill-x row))))
-        (put jsonrpc
-             view
-             (display:row-fill-x row)
-             (display:row-top row)
-             (make-string fill-width :initial-element #\space)
-             (lem:make-attribute
-              :background
-              (lem:color-to-hex-string (display:row-fill-color row)))
-             :text-width fill-width))))
+      (put jsonrpc
+           view
+           (display:row-fill-x row)
+           (display:row-top row)
+           ""
+           (lem:make-attribute
+            :background
+            (lem:color-to-hex-string (display:row-fill-color row)))
+           :text-width (- width (display:row-fill-x row))
+           :height (display:row-height row))))
   (loop :for placement :in (display:row-placements row)
         :do (draw-object jsonrpc
                          (display:placement-object placement)
@@ -799,8 +785,6 @@ color (e.g. a highlighted row) goes out as spaces carrying that color via `put'.
 
 (defmethod lem-if:render-row ((jsonrpc jsonrpc) view row)
   (with-error-handler ()
-    ;; clear the row's full height (not just one line of text) since a tall object such as an image
-    ;; may occupy several.
     (notify* jsonrpc
              "clear-eol"
              (hash "viewInfo" (view-id-hash view)
@@ -818,16 +802,12 @@ color (e.g. a highlighted row) goes out as spaces carrying that color via `put'.
                (hash "viewInfo" (view-id-hash view)
                      "x" 0
                      "y" (display:row-top row)
-                     "text" (make-string (view-width view) :initial-element #\space)
-                     "textWidth" (view-width view)
+                     ;; the modeline's own background: no text, just fill
+                     "text" ""
+                     "textWidth" (view-px-width view)
+                     "height" (display:row-height row)
                      "attribute" (attribute-to-hash default-attribute)))
       (draw-row jsonrpc view row))))
-
-(defmethod lem-if:object-width ((jsonrpc jsonrpc) drawing-object)
-  (object-width drawing-object))
-
-(defmethod lem-if:object-height ((jsonrpc jsonrpc) drawing-object)
-  (object-height drawing-object))
 
 (defmethod lem-if:clear-to-end-of-window ((jsonrpc jsonrpc) view y)
   (notify* jsonrpc

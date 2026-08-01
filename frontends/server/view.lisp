@@ -13,6 +13,10 @@
            :view-pixel-y
            :view-pixel-width
            :view-pixel-height
+           :view-px-x
+           :view-px-y
+           :view-px-width
+           :view-px-height
            :view-use-modeline
            :view-kind
            :move-view
@@ -51,35 +55,63 @@
                    use-modeline kind border border-shape))
   (apply #'%make-view args))
 
+(defun cell-pixel-size ()
+  "The pixel size of one character cell, as (values WIDTH HEIGHT).
+Never NIL here: this frontend starts from a guess and the client corrects it at login."
+  (lem-if:cell-pixel-size (lem:implementation)))
+
+(defun view-px-x (view)
+  "VIEW's left edge in pixels."
+  (or (view-pixel-x view)
+      (* (view-x view) (nth-value 0 (cell-pixel-size)))))
+
+(defun view-px-y (view)
+  "VIEW's top edge in pixels."
+  (or (view-pixel-y view)
+      (* (view-y view) (nth-value 1 (cell-pixel-size)))))
+
+(defun view-px-width (view)
+  "VIEW's width in pixels."
+  (or (view-pixel-width view)
+      (* (view-width view) (nth-value 0 (cell-pixel-size)))))
+
+(defun view-px-height (view)
+  "VIEW's height in pixels, the edit area only, since the modeline is a surface of its own."
+  (or (view-pixel-height view)
+      (* (view-height view) (nth-value 1 (cell-pixel-size)))))
+
 (defun move-view (view x y &optional pixel-x pixel-y)
-  "Move view to new position. Pixel coordinates are optional."
+  "Move VIEW to cell position X, Y, or to PIXEL-X / PIXEL-Y for an axis given in pixels.
+Passing no pixel position clears any earlier one, so the view follows the cell grid again."
   (setf (view-x view) x
-        (view-y view) y)
-  (when pixel-x (setf (view-pixel-x view) pixel-x))
-  (when pixel-y (setf (view-pixel-y view) pixel-y)))
+        (view-y view) y
+        (view-pixel-x view) pixel-x
+        (view-pixel-y view) pixel-y)
+  (values))
 
 (defun resize-view (view width height &optional pixel-width pixel-height)
-  "Resize view. Pixel dimensions are optional."
+  "Resize VIEW to WIDTH x HEIGHT cells, or to PIXEL-WIDTH / PIXEL-HEIGHT for a dimension given in
+pixels. As in `move-view', passing no pixel size clears any earlier one."
   (setf (view-width view) width
-        (view-height view) height)
-  (when pixel-width (setf (view-pixel-width view) pixel-width))
-  (when pixel-height (setf (view-pixel-height view) pixel-height))
+        (view-height view) height
+        (view-pixel-width view) pixel-width
+        (view-pixel-height view) pixel-height)
   (values))
 
 (defmethod yason:encode ((view view) &optional (stream *standard-output*))
   (yason:with-output (stream)
     (yason:with-object ()
       (yason:encode-object-element "id" (view-id view))
-      ;; Character-unit coordinates (for backward compatibility)
+      ;; the cell geometry the core laid this view out on
       (yason:encode-object-element "x" (view-x view))
       (yason:encode-object-element "y" (view-y view))
       (yason:encode-object-element "width" (view-width view))
       (yason:encode-object-element "height" (view-height view))
-      ;; Pixel coordinates (new)
-      (yason:encode-object-element "pixelX" (view-pixel-x view))
-      (yason:encode-object-element "pixelY" (view-pixel-y view))
-      (yason:encode-object-element "pixelWidth" (view-pixel-width view))
-      (yason:encode-object-element "pixelHeight" (view-pixel-height view))
+      ;; and in pixels, always present, so the client never needs the cell size
+      (yason:encode-object-element "pixelX" (view-px-x view))
+      (yason:encode-object-element "pixelY" (view-px-y view))
+      (yason:encode-object-element "pixelWidth" (view-px-width view))
+      (yason:encode-object-element "pixelHeight" (view-px-height view))
       ;; Other existing fields
       (yason:encode-object-element "use_modeline" (view-use-modeline view))
       (yason:encode-object-element "kind" (view-kind view))

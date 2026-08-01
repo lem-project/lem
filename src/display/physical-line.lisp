@@ -767,9 +767,41 @@ over the top-level spine and tolerant of improper (dotted) lists."
    scroll-start
    left-side-width))
 
+(defstruct screen-row
+  "One drawn row of a window, recorded as it was drawn."
+  height
+  ;; which buffer line this row's logical line starts on.
+  line-number
+  ;; this row's index within its line. a break in virtual text starts a row without advancing it.
+  wrap-index)
+
+(defun window-screen-rows (window)
+  "Every screen row of WINDOW, top to bottom, as recorded while it was drawn."
+  (window-parameter window 'screen-rows))
+
+(defun (setf window-screen-rows) (rows window)
+  (setf (window-parameter window 'screen-rows) rows))
+
+(defun window-screen-row-index-at-y (window y)
+  "Index of the screen row Y falls in, counted from the top of WINDOW's view, or NIL when Y is past
+the last row drawn or the window has not been drawn yet. Y is in the frontend's units.
+Walks the rows because they are not all one height, so there is nothing to divide by."
+  (loop :with top := 0
+        :for row :in (window-screen-rows window)
+        :for index :from 0
+        :do (when (< y (+ top (screen-row-height row)))
+              (return index))
+            (incf top (screen-row-height row))))
+
+(defun window-screen-row-at-index (window index)
+  "WINDOW's screen row at INDEX, counted from the top of its view, or NIL if no row was drawn
+there."
+  (nth index (window-screen-rows window)))
+
 (defun check-line-fingerprint (window y fingerprint)
-  "Check if the fingerprint for line at Y matches. Returns the cached list of row heights, or NIL.
-One entry per row, since a line can draw several without wrapping."
+  "Check if the fingerprint for line at Y matches. Returns the cached list of rows, or NIL.
+One entry per row, so a line taken from the cache still contributes its rows to
+`window-screen-rows'."
   (let ((cache (line-fingerprint-cache window)))
     (multiple-value-bind (entry found) (gethash y cache)
       (when (and found (eql (car entry) fingerprint))
@@ -787,12 +819,13 @@ iteration per pixel, against a cache holding one entry per line drawn."
     (dolist (row stale)
       (remhash row cache))))
 
-(defun update-line-fingerprint (window y fingerprint heights)
-  "Store the fingerprint and HEIGHTS for line at Y, and drop the rows it covers.
-HEIGHTS is one entry per screen row the line drew, as the redraw functions collect them."
+(defun update-line-fingerprint (window y fingerprint rows)
+  "Store the fingerprint and ROWS for line at Y, and drop the rows it covers.
+ROWS is one (HEIGHT . WRAP-INDEX) per screen row the line drew, as the redraw functions collect
+them."
   (let ((cache (line-fingerprint-cache window)))
-    (setf (gethash y cache) (cons fingerprint heights))
-    (evict-line-fingerprint-shadow cache y (reduce #'+ heights :initial-value 0))))
+    (setf (gethash y cache) (cons fingerprint rows))
+    (evict-line-fingerprint-shadow cache y (reduce #'+ rows :key #'car :initial-value 0))))
 
 (defun left-side-character-count (left-side-objects)
   (loop :for obj :in left-side-objects
@@ -805,7 +838,7 @@ HEIGHTS is one entry per screen row the line drew, as the redraw functions colle
                                                left-side-objects
                                                left-side-width)
   (let* ((left-side-characters (left-side-character-count left-side-objects)))
-    (multiple-value-bind (first-line-objects rest-line-objects)
+    (multiple-value-bind (first-line-objects rest-line-objects why)
         (separate-objects-by-width (create-drawing-objects logical-line)
                                    (- (window-view-width window) left-side-width)
                                    (window-buffer window))
@@ -815,7 +848,8 @@ HEIGHTS is one entry per screen row the line drew, as the redraw functions colle
                             *active-modes*
                             left-side-width
                             left-side-characters)))))
-        (let ((heights '())
+        (let ((rows)
+              (wrap-index 0)
               (objects first-line-objects))
           (loop
             ;; an empty row is still a row when more of the line follows, which is what a break at
@@ -825,15 +859,18 @@ HEIGHTS is one entry per screen row the line drew, as the redraw functions colle
                    (height (render-row-with-caching window y all-objects)))
               (incf y height)
               (setq left-side-objects wrapped-left-side-objects)
-              (push height heights)
+              (push (cons height wrap-index) rows)
+              ;; only running out of width advances the position, a virtual-text break does not.
+              (when (eq why :wrapped)
+                (incf wrap-index))
               ;; y is in the frontend's units, so the bound must be too, not the row count.
               (unless (< y (window-view-height window))
                 (return)))
-            (setf (values objects rest-line-objects)
+            (setf (values objects rest-line-objects why)
                   (separate-objects-by-width rest-line-objects
                                              (- (window-view-width window) left-side-width)
                                              (window-buffer window))))
-          (nreverse heights))))))
+          (nreverse rows))))))
 
 (defun find-cursor-object (objects)
   (loop :for object :in objects
@@ -918,11 +955,11 @@ creating zero temporary letter-objects."
                                                 scroll-before
                                                 left-side-width)))
     ;; Early exit if line content unchanged
-    (alexandria:when-let ((cached-heights (check-line-fingerprint window y fingerprint)))
-      (return-from redraw-logical-line-when-horizontal-scroll cached-heights))
+    (alexandria:when-let ((cached-rows (check-line-fingerprint window y fingerprint)))
+      (return-from redraw-logical-line-when-horizontal-scroll cached-rows))
     (let* ((rows (split-objects-at-line-breaks (create-drawing-objects logical-line)))
            (left-side-characters (left-side-character-count left-side-objects))
-           (heights '())
+           (row-heights)
            (total-height 0))
       ;; the cursor is on one of the rows, scrolling follows it there.
       (dolist (row-objects rows)
@@ -954,11 +991,12 @@ creating zero temporary letter-objects."
                          (height (render-row-with-caching window (+ y total-height)
                                                           (append side clipped))))
                     (incf total-height height)
-                    (push height heights))
+                    ;; wrapping is off here, so every row begins where the line does, index 0
+                    (push (cons height 0) row-heights))
                   ;; y is in the frontend's units, as is the bound
                   (when (<= (window-view-height window) (+ y total-height))
                     (return))))
-      (setf heights (nreverse heights))
+      (setf row-heights (nreverse row-heights))
       ;; Reuse fingerprint if scroll position didn't change; avoids redundant sxhash
       (update-line-fingerprint
        window y
@@ -967,8 +1005,8 @@ creating zero temporary letter-objects."
            (compute-line-fingerprint logical-line
                                      (horizontal-scroll-start window)
                                      left-side-width))
-       heights)
-      heights)))
+       row-heights)
+      row-heights)))
 
 (defun redraw-lines (window)
   (let* ((*line-wrap* (variable-value 'line-wrap
@@ -978,9 +1016,11 @@ creating zero temporary letter-objects."
                         #'redraw-logical-line-when-horizontal-scroll)))
     (let ((y 0)
           (height (window-view-height window))
+          ;; every row drawn, in reverse. see `window-screen-rows'
+          (rows)
           left-side-width)
       (block outer
-        (do-logical-line (logical-line window)
+        (do-logical-line (logical-line window line-point)
           (let* ((left-side-objects
                    (alexandria:when-let (content (logical-line-left-content logical-line))
                      (mapcan #'create-drawing-object
@@ -990,11 +1030,19 @@ creating zero temporary letter-objects."
             (setf left-side-width
                   (loop :for object :in left-side-objects
                         :sum (object-width object)))
-            (dolist (row-height
-                     (funcall redraw-fn window y logical-line left-side-objects left-side-width))
-              (incf y row-height))
+            (let ((line-rows
+                    (funcall redraw-fn window y logical-line left-side-objects left-side-width))
+                  ;; read once, shared by the line's rows
+                  (line-number (line-number-at-point line-point)))
+              (loop :for (row-height . wrap-index) :in line-rows
+                    :do (push (make-screen-row :height row-height
+                                               :line-number line-number
+                                               :wrap-index wrap-index)
+                              rows)
+                        (incf y row-height)))
             (unless (< y height)
               (return-from outer)))))
+      (setf (window-screen-rows window) (nreverse rows))
       (when (< y height)
         (clear-line-fingerprint-cache-from window y)
         (invalidate-drawing-cache-from window y)

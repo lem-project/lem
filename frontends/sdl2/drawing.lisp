@@ -291,18 +291,33 @@ width so the rasterizer's right-edge anti-aliasing tail is preserved."
                     view))
 
 (defmethod draw-object ((drawing-object image-object) x top display view)
-  (let* ((surface-width (object-width drawing-object))
+  (let* ((draw-width (max 1 (image-draw-width (lem-core:implementation) drawing-object)))
+         (visible-width (object-width drawing-object))
          (surface-height (object-height drawing-object))
-         (texture (sdl2:create-texture-from-surface (display:display-renderer display)
-                                                    (image-object-image drawing-object))))
-    (display:with-scratch-rect (dest-rect display x top surface-width surface-height)
-      (sdl2:render-copy-ex (display:display-renderer display)
-                           texture
-                           :source-rect nil
-                           :dest-rect dest-rect
-                           :flip (list :none)))
+         (surface (image-object-image drawing-object))
+         (texture (sdl2:create-texture-from-surface (display:display-renderer display) surface)))
+    (if (< visible-width draw-width)
+        ;; copy the leading fraction of the source into a dest that wide
+        (sdl2:with-rects ((dest-rect x top visible-width surface-height)
+                          (source-rect 0
+                                       0
+                                       (max 1 (round (* (sdl2:surface-width surface)
+                                                        visible-width)
+                                                     draw-width))
+                                       (sdl2:surface-height surface)))
+          (sdl2:render-copy-ex (display:display-renderer display)
+                               texture
+                               :source-rect source-rect
+                               :dest-rect dest-rect
+                               :flip (list :none)))
+        (display:with-scratch-rect (dest-rect display x top visible-width surface-height)
+          (sdl2:render-copy-ex (display:display-renderer display)
+                               texture
+                               :source-rect nil
+                               :dest-rect dest-rect
+                               :flip (list :none))))
     (sdl2:destroy-texture texture)
-    surface-width))
+    visible-width))
 
 (defun plain-text-object-p (object)
   "True when OBJECT is an instance of the base `text-object' class (and not

@@ -440,6 +440,10 @@ several folds that each hide arbitrary character ranges across multiple buffer l
   attribute
   offset)
 
+;; a newline inside virtual text (an overlay's :before-string / :after-string): ends the screen row
+;; without touching the buffer line.
+(defstruct line-break-item)
+
 (defmethod item-string ((item string-with-attribute-item))
   (string-with-attribute-item-string item))
 
@@ -519,11 +523,18 @@ VIRTUAL-ITEMS arrive in draw order (from `create-logical-line')."
     (flet ((add-virtuals-at (pos)
              (loop :while (and pending (= (virtual-item-charpos (first pending)) pos))
                    :do (let ((vi (pop pending)))
-                         (setf items (add-or-merge-item
-                                      (make-string-with-attribute-item
-                                       :string (virtual-item-string vi)
-                                       :attribute (virtual-item-attribute vi))
-                                      items))))))
+                         ;; a newline ends the screen row rather than being drawn, so the segments
+                         ;; around it become items with a break between them.
+                         (loop :for segment :in (uiop:split-string (virtual-item-string vi)
+                                                                   :separator '(#\newline))
+                               :for firstp := t :then nil
+                               :do (unless firstp
+                                     (setf items (cons (make-line-break-item) items)))
+                                   (setf items (add-or-merge-item
+                                                (make-string-with-attribute-item
+                                                 :string segment
+                                                 :attribute (virtual-item-attribute vi))
+                                                items)))))))
       ;; walk segments between break positions, injecting virtual items at each boundary
       (loop :for (pos . rest) :on positions
             :while rest

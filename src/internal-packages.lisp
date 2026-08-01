@@ -843,9 +843,9 @@
    :get-mouse-position
    :cell-width
    :cell-height
+   :cell-pixel-size
    :clear-to-end-of-window
    :js-eval
-   :cell-pixel-size
    :render-row
    :render-modeline-row
    :object-width

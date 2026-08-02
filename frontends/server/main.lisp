@@ -659,9 +659,8 @@ same hash."
       (setf attribute (lem:make-attribute :background lem-if:*background-color-of-drawing-window*)))
     (attribute-to-hash attribute)))
 
-(defun put (jsonrpc view x y string attribute &key font text-width height)
-  "draw STRING at pixel position X, Y in VIEW, over a TEXT-WIDTH by HEIGHT pixel background.
-HEIGHT defaults to one line of text."
+(defun put (jsonrpc view x y string attribute &key font text-width)
+  "draw STRING at pixel position X, Y in VIEW, over a TEXT-WIDTH background one line of text tall."
   (with-error-handler ()
     (notify* jsonrpc
              (ecase *put-target*
@@ -672,9 +671,24 @@ HEIGHT defaults to one line of text."
                    "y" y
                    "text" string
                    "textWidth" (or text-width (* (lem:string-width string) (jsonrpc-cell-width jsonrpc)))
-                   "height" height
                    "attribute" (ensure-attribute attribute)
                    "font" font))))
+
+(defun draw-block (jsonrpc view x y width height color)
+  "fill the WIDTH by HEIGHT rectangle at pixel position X, Y in VIEW with COLOR.
+unlike `put', which is one line of text tall, this covers a row an image made taller. a NIL COLOR
+leaves the client to use its default background."
+  (with-error-handler ()
+    (notify* jsonrpc
+             (ecase *put-target*
+               (:edit-area "draw-block")
+               (:modeline "modeline-draw-block"))
+             (hash "viewInfo" (view-id-hash view)
+                   "x" x
+                   "y" y
+                   "width" width
+                   "height" height
+                   "color" (and color (lem:color-to-hex-string color))))))
 
 (defmethod draw-object (jsonrpc (object display:text-object) x y view)
   (let* ((string (display:text-object-string object))
@@ -770,22 +784,18 @@ a string already carrying a data:/https: URL is passed through unchanged."
 
 (defun draw-row (jsonrpc view row)
   "draw ROW's background fill, then everything placed on it.
-the client paints a put's background before its text, so the fill goes as an empty string sized
-TEXT-WIDTH by HEIGHT, the row's full height, which may exceed a single text line's height when a
-tall object (e.g. an image) sits on the row."
+the fill covers the row's full height, which a tall object (e.g. an image) can push past a single
+text line's, so it goes as a `draw-block' rather than a put's background."
   (let ((width (view-px-width view)))
     (when (and (display:row-fill-color row)
                (< (display:row-fill-x row) width))
-      (put jsonrpc
-           view
-           (display:row-fill-x row)
-           (display:row-top row)
-           ""
-           (lem:make-attribute
-            :background
-            (lem:color-to-hex-string (display:row-fill-color row)))
-           :text-width (- width (display:row-fill-x row))
-           :height (display:row-height row))))
+      (draw-block jsonrpc
+                  view
+                  (display:row-fill-x row)
+                  (display:row-top row)
+                  (- width (display:row-fill-x row))
+                  (display:row-height row)
+                  (display:row-fill-color row))))
   (loop :for placement :in (display:row-placements row)
         :do (draw-object jsonrpc
                          (display:placement-object placement)
@@ -806,18 +816,15 @@ tall object (e.g. an image) sits on the row."
 (defmethod lem-if:render-modeline-row ((jsonrpc jsonrpc) view row default-attribute)
   ;; the modeline has a surface of its own here, so the row is drawn where it was laid out.
   (let ((*put-target* :modeline))
-    (with-error-handler ()
-      (notify* jsonrpc
-               "modeline-put"
-               (hash "viewInfo" (view-id-hash view)
-                     "x" 0
-                     "y" (display:row-top row)
-                     ;; the modeline's own background: no text, just fill
-                     "text" ""
-                     "textWidth" (view-px-width view)
-                     "height" (display:row-height row)
-                     "attribute" (attribute-to-hash default-attribute)))
-      (draw-row jsonrpc view row))))
+    ;; the modeline's own background, under everything the row places on it
+    (draw-block jsonrpc
+                view
+                0
+                (display:row-top row)
+                (view-px-width view)
+                (display:row-height row)
+                (lem:attribute-background-with-reverse default-attribute))
+    (draw-row jsonrpc view row)))
 
 (defmethod lem-if:clear-to-end-of-window ((jsonrpc jsonrpc) view y)
   (notify* jsonrpc

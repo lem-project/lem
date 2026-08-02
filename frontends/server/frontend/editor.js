@@ -351,7 +351,7 @@ class BaseSurface {
 
   // drawing coordinates are relative to the surface's own top-left corner.
   drawBlock(x, y, width, height, color) { }
-  drawText(x, y, text, textWidth, attribute, font, height) { }
+  drawText(x, y, text, textWidth, attribute, font) { }
   drawImage(x, y, width, height, clipWidth, clipHeight, url) { }
 
   clearImages(yStart, yEnd) { }
@@ -417,12 +417,11 @@ class CanvasSurface extends BaseSurface {
     });
   }
 
-  // the background is filled first, textWidth by blockHeight, then the text drawn over it, so a
-  // fill with no text is an empty string with a width. only those fills pass a height, to cover a
-  // row an image made taller than one line of text. text keeps its own cell height.
-  drawText(x, y, text, textWidth, attribute, font, height) {
+  // the background is filled first, textWidth by one line of text, then the text drawn over it. a
+  // rectangle taller than that is a `drawBlock', not a text-less draw through here.
+  drawText(x, y, text, textWidth, attribute, font) {
     const option = this.editor.option;
-    const blockHeight = height || option.fontHeight;
+    const blockHeight = option.fontHeight;
     this.drawingQueue.push(function(ctx) {
       font = font ? `${option.fontSize}px ${font}` : option.font;
       if (!attribute) {
@@ -874,7 +873,7 @@ class View {
     this.mainSurface.clearImages(y, this.pixelHeight);
   }
 
-  print(x, y, text, textWidth, attribute, font, height) {
+  print(x, y, text, textWidth, attribute, font) {
     this.mainSurface.drawText(
       x,
       y,
@@ -882,15 +881,26 @@ class View {
       textWidth,
       attribute,
       font,
-      height,
     );
+  }
+
+  // a fill of its own, for a rectangle that is not one line of text tall. a missing color is the
+  // editor's default background, as an attribute with no background of its own would be.
+  drawBlock(x, y, width, height, color) {
+    this.mainSurface.drawBlock(x, y, width, height, color || this.option.background);
+  }
+
+  drawBlockOnModeline(x, y, width, height, color) {
+    if (this.modelineSurface) {
+      this.modelineSurface.drawBlock(x, y, width, height, color || this.option.background);
+    }
   }
 
   printImage(x, y, pixelWidth, pixelHeight, clipWidth, clipHeight, url) {
     this.mainSurface.drawImage(x, y, pixelWidth, pixelHeight, clipWidth, clipHeight, url);
   }
 
-  printToModeline(x, y, text, textWidth, attribute, height) {
+  printToModeline(x, y, text, textWidth, attribute) {
     if (this.modelineSurface) {
       this.modelineSurface.drawText(
         x,
@@ -899,7 +909,6 @@ class View {
         textWidth,
         attribute,
         null,
-        height,
       );
     }
   }
@@ -1253,6 +1262,8 @@ export class Editor {
       'put': this.put.bind(this),
       'put-image': this.putImage.bind(this),
       'modeline-put': this.modelinePut.bind(this),
+      'draw-block': this.drawBlock.bind(this),
+      'modeline-draw-block': this.modelineDrawBlock.bind(this),
       'update-display': this.updateDisplay.bind(this),
       'move-cursor': this.moveCursor.bind(this),
       'change-view': this.changeView.bind(this),
@@ -1469,9 +1480,19 @@ export class Editor {
     view.clearEob(x, y);
   }
 
-  put({ viewInfo: { id }, x, y, text, textWidth, attribute, font, height }) {
+  put({ viewInfo: { id }, x, y, text, textWidth, attribute, font }) {
     const view = this.findViewById(id);
-    view.print(x, y, text, textWidth, attribute, font, height);
+    view.print(x, y, text, textWidth, attribute, font);
+  }
+
+  drawBlock({ viewInfo: { id }, x, y, width, height, color }) {
+    const view = this.findViewById(id);
+    view.drawBlock(x, y, width, height, color);
+  }
+
+  modelineDrawBlock({ viewInfo: { id }, x, y, width, height, color }) {
+    const view = this.findViewById(id);
+    view.drawBlockOnModeline(x, y, width, height, color);
   }
 
   putImage({ viewInfo: { id }, x, y, pixelWidth, pixelHeight, clipWidth, clipHeight, url }) {
@@ -1479,9 +1500,9 @@ export class Editor {
     view.printImage(x, y, pixelWidth, pixelHeight, clipWidth, clipHeight, url);
   }
 
-  modelinePut({ viewInfo: { id }, x, y, text, textWidth, attribute, height }) {
+  modelinePut({ viewInfo: { id }, x, y, text, textWidth, attribute }) {
     const view = this.findViewById(id);
-    view.printToModeline(x, y, text, textWidth, attribute, height);
+    view.printToModeline(x, y, text, textWidth, attribute);
   }
 
   updateDisplay() {

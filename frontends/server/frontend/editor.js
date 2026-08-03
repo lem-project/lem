@@ -351,7 +351,7 @@ class BaseSurface {
 
   // drawing coordinates are relative to the surface's own top-left corner.
   drawBlock(x, y, width, height, color) { }
-  drawText(x, y, text, textWidth, attribute, font) { }
+  drawText(x, y, text, textWidth, attribute, font, backgroundY, backgroundHeight) { }
   drawImage(x, y, width, height, clipWidth, clipHeight, url) { }
 
   clearImages(yStart, yEnd) { }
@@ -417,18 +417,19 @@ class CanvasSurface extends BaseSurface {
     });
   }
 
-  // the background is filled first, textWidth by one line of text, then the text drawn over it. a
-  // rectangle taller than that is a `drawBlock', not a text-less draw through here.
-  drawText(x, y, text, textWidth, attribute, font) {
+  // the background is filled first, then the text over it. it covers the row the text sits on,
+  // which an image can make taller, and defaults to one line at the text's own y.
+  drawText(x, y, text, textWidth, attribute, font, backgroundY, backgroundHeight) {
     const option = this.editor.option;
-    const blockHeight = option.fontHeight;
+    const blockY = backgroundY == null ? y : backgroundY;
+    const blockHeight = backgroundHeight == null ? option.fontHeight : backgroundHeight;
     this.drawingQueue.push(function(ctx) {
       font = font ? `${option.fontSize}px ${font}` : option.font;
       if (!attribute) {
         drawBlock({
           ctx,
           x: x,
-          y: y,
+          y: blockY,
           width: textWidth,
           height: blockHeight,
           style: option.background,
@@ -463,7 +464,7 @@ class CanvasSurface extends BaseSurface {
         drawBlock({
           ctx,
           x: x,
-          y: y,
+          y: blockY,
           width: textWidth,
           height: blockHeight,
           style: background,
@@ -873,7 +874,7 @@ class View {
     this.mainSurface.clearImages(y, this.pixelHeight);
   }
 
-  print(x, y, text, textWidth, attribute, font) {
+  print(x, y, text, textWidth, attribute, font, backgroundY, backgroundHeight) {
     this.mainSurface.drawText(
       x,
       y,
@@ -881,6 +882,8 @@ class View {
       textWidth,
       attribute,
       font,
+      backgroundY,
+      backgroundHeight,
     );
   }
 
@@ -900,7 +903,7 @@ class View {
     this.mainSurface.drawImage(x, y, pixelWidth, pixelHeight, clipWidth, clipHeight, url);
   }
 
-  printToModeline(x, y, text, textWidth, attribute) {
+  printToModeline(x, y, text, textWidth, attribute, backgroundY, backgroundHeight) {
     if (this.modelineSurface) {
       this.modelineSurface.drawText(
         x,
@@ -909,6 +912,8 @@ class View {
         textWidth,
         attribute,
         null,
+        backgroundY,
+        backgroundHeight,
       );
     }
   }
@@ -1480,9 +1485,9 @@ export class Editor {
     view.clearEob(x, y);
   }
 
-  put({ viewInfo: { id }, x, y, text, textWidth, attribute, font }) {
+  put({ viewInfo: { id }, x, y, text, textWidth, attribute, font, backgroundY, backgroundHeight }) {
     const view = this.findViewById(id);
-    view.print(x, y, text, textWidth, attribute, font);
+    view.print(x, y, text, textWidth, attribute, font, backgroundY, backgroundHeight);
   }
 
   drawBlock({ viewInfo: { id }, x, y, width, height, color }) {
@@ -1500,9 +1505,9 @@ export class Editor {
     view.printImage(x, y, pixelWidth, pixelHeight, clipWidth, clipHeight, url);
   }
 
-  modelinePut({ viewInfo: { id }, x, y, text, textWidth, attribute }) {
+  modelinePut({ viewInfo: { id }, x, y, text, textWidth, attribute, backgroundY, backgroundHeight }) {
     const view = this.findViewById(id);
-    view.printToModeline(x, y, text, textWidth, attribute);
+    view.printToModeline(x, y, text, textWidth, attribute, backgroundY, backgroundHeight);
   }
 
   updateDisplay() {

@@ -616,12 +616,13 @@ returns true when one of them changed, since nothing already measured survives a
 
 ;;; drawing
 
-(defgeneric draw-object (jsonrpc object x y view)
+(defgeneric draw-object (jsonrpc object x y view row)
   (:documentation "draw OBJECT into VIEW with its top-left corner at pixel position X, Y.
-`lem-core/display:layout-row' already chose Y as the row's baseline minus this object's ascent, so
-a method never needs to know the row's own top or height."))
+`lem-core/display:layout-row' already positioned it, so ROW is only for what an object shares with
+the rest of its row: the full height a background fills and where the row's text sits, which is
+where the caret goes."))
 
-(defmethod draw-object (jsonrpc (object display:void-object) x y view)
+(defmethod draw-object (jsonrpc (object display:void-object) x y view row)
   (values))
 
 (defvar *put-target* :edit-area)
@@ -659,20 +660,28 @@ same hash."
       (setf attribute (lem:make-attribute :background lem-if:*background-color-of-drawing-window*)))
     (attribute-to-hash attribute)))
 
-(defun put (jsonrpc view x y string attribute &key font text-width)
-  "draw STRING at pixel position X, Y in VIEW, over a TEXT-WIDTH background one line of text tall."
+(defun taller-than-text-p (jsonrpc row)
+  "whether ROW is taller than a line of text, which an image on it can make it."
+  (and row (> (display:row-height row) (jsonrpc-cell-height jsonrpc))))
+
+(defun put (jsonrpc view x y string attribute &key font text-width row)
+  "draw STRING at pixel position X, Y in VIEW, over a background TEXT-WIDTH wide and as tall as ROW."
   (with-error-handler ()
-    (notify* jsonrpc
-             (ecase *put-target*
-               (:edit-area "put")
-               (:modeline "modeline-put"))
-             (hash "viewInfo" (view-id-hash view)
-                   "x" x
-                   "y" y
-                   "text" string
-                   "textWidth" (or text-width (* (lem:string-width string) (jsonrpc-cell-width jsonrpc)))
-                   "attribute" (ensure-attribute attribute)
-                   "font" font))))
+    (let ((tall (taller-than-text-p jsonrpc row)))
+      (notify* jsonrpc
+               (ecase *put-target*
+                 (:edit-area "put")
+                 (:modeline "modeline-put"))
+               (hash "viewInfo" (view-id-hash view)
+                     "x" x
+                     "y" y
+                     "text" string
+                     "textWidth" (or text-width
+                                     (* (lem:string-width string) (jsonrpc-cell-width jsonrpc)))
+                     "backgroundY" (and tall (display:row-top row))
+                     "backgroundHeight" (and tall (display:row-height row))
+                     "attribute" (ensure-attribute attribute)
+                     "font" font)))))
 
 (defun draw-block (jsonrpc view x y width height color)
   "fill the WIDTH by HEIGHT rectangle at pixel position X, Y in VIEW with COLOR.
@@ -690,22 +699,7 @@ leaves the client to use its default background."
                    "height" height
                    "color" (and color (lem:color-to-hex-string color))))))
 
-(defmethod draw-object (jsonrpc (object display:text-object) x y view)
-  (let* ((string (display:text-object-string object))
-         (attribute (display:text-object-attribute object))
-         (type (display:text-object-type object))
-         (width (lem-if:object-width jsonrpc object)))
-    (when (and attribute (lem-core:cursor-attribute-p attribute))
-      (lem-core:set-last-print-cursor (view-window view) x y))
-    (put jsonrpc
-         view
-         x
-         y
-         string
-         attribute
-         :text-width width)))
-
-(defmethod draw-object (jsonrpc (object display:icon-object) x y view)
+(defmethod draw-object (jsonrpc (object display:text-object) x y view row)
   (let* ((string (display:text-object-string object))
          (attribute (display:text-object-attribute object))
          (type (display:text-object-type object))
@@ -719,10 +713,27 @@ leaves the client to use its default background."
          string
          attribute
          :text-width width
+         :row row)))
+
+(defmethod draw-object (jsonrpc (object display:icon-object) x y view row)
+  (let* ((string (display:text-object-string object))
+         (attribute (display:text-object-attribute object))
+         (type (display:text-object-type object))
+         (width (lem-if:object-width jsonrpc object)))
+    (when (and attribute (lem-core:cursor-attribute-p attribute))
+      (lem-core:set-last-print-cursor (view-window view) x y))
+    (put jsonrpc
+         view
+         x
+         y
+         string
+         attribute
+         :text-width width
+         :row row
          :font (lem:icon-value (char-code (char string 0))
                                :font))))
 
-(defmethod draw-object (jsonrpc (object display:eol-cursor-object) x y view)
+(defmethod draw-object (jsonrpc (object display:eol-cursor-object) x y view row)
   (lem-core:set-last-print-cursor (view-window view) x y)
   (let ((attr (lem:make-attribute
                :background
@@ -730,7 +741,7 @@ leaves the client to use its default background."
     (lem-core:set-cursor-attribute attr)
     (put jsonrpc view x y " " attr :text-width (jsonrpc-cell-width jsonrpc))))
 
-(defmethod draw-object (jsonrpc (object display:line-end-object) x y view)
+(defmethod draw-object (jsonrpc (object display:line-end-object) x y view row)
   (let ((string (display:text-object-string object))
         (attribute (display:text-object-attribute object))
         (width (lem-if:object-width jsonrpc object)))
@@ -741,7 +752,8 @@ leaves the client to use its default background."
          y
          string
          attribute
-         :text-width width)))
+         :text-width width
+         :row row)))
 
 (defun image-object-url (object)
   "return a URL the JS client can load for OBJECT's image, or NIL.
@@ -757,7 +769,32 @@ a string already carrying a data:/https: URL is passed through unchanged."
                   (format nil "/local~A" image)))
       (t nil))))
 
-(defmethod draw-object (jsonrpc (object display:image-object) x y view)
+(defun attribute-own-background (attribute)
+  "the background ATTRIBUTE asks for as a color, or NIL when it asks for none.
+not `lem:attribute-background-with-reverse', which answers with the default background rather than NIL."
+  (alexandria:when-let ((background (if (lem:attribute-reverse attribute)
+                                        (lem:attribute-foreground attribute)
+                                        (lem:attribute-background attribute))))
+    (typecase background
+      (lem:color background)
+      (string (lem:parse-color background)))))
+
+(defun row-text-top (jsonrpc row)
+  "the top of a line of text on ROW: its baseline less the font's ascent."
+  (- (display:row-baseline row)
+     (or (jsonrpc-cell-ascent jsonrpc) (jsonrpc-cell-height jsonrpc))))
+
+(defmethod draw-object (jsonrpc (object display:image-object) x y view row)
+  (alexandria:when-let ((attribute (lem:ensure-attribute (display:image-object-attribute object)
+                                                         nil)))
+    ;; the image carries the attribute of the text it replaced, so selecting the line reaches it too
+    (alexandria:when-let ((color (attribute-own-background attribute)))
+      (draw-block jsonrpc view x (display:row-top row) (lem-if:object-width jsonrpc object)
+                  (display:row-height row) color))
+    ;; the cursor can sit on an image. Y is the image's top, which can be far above the row's text,
+    ;; so report the text's top instead and the caret aligns with the text.
+    (when (lem-core:cursor-attribute-p attribute)
+      (lem-core:set-last-print-cursor (view-window view) x (row-text-top jsonrpc row))))
   (let ((url (image-object-url object)))
     (when url
       (with-error-handler ()
@@ -801,7 +838,8 @@ text line's, so it goes as a `draw-block' rather than a put's background."
                          (display:placement-object placement)
                          (display:placement-x placement)
                          (display:placement-top placement)
-                         view)))
+                         view
+                         row)))
 
 (defmethod lem-if:render-row ((jsonrpc jsonrpc) view row)
   (with-error-handler ()

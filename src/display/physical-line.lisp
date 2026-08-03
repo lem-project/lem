@@ -63,9 +63,14 @@
 
 (defclass image-object (drawing-object)
   ((image :initarg :image :reader image-object-image)
+   ;; the size the image is drawn at, in pixels, or NIL for its natural one.
    (width :initarg :width :reader image-object-width)
    (height :initarg :height :reader image-object-height)
    (attribute :initarg :attribute :reader image-object-attribute)
+   ;; columns of the line the image accounts for, so a click can be turned back into a position.
+   (columns :initarg :columns
+            :initform 1
+            :reader image-object-columns)
    ;; how much of the width may be shown, or NIL for all of it. see `crop-image-object'.
    (visible-width :initarg :visible-width
                   :initform nil
@@ -142,6 +147,7 @@ frontend can report one (`lem-if:image-natural-size'), otherwise one cell wide."
                  :width (image-object-width object)
                  :height (image-object-height object)
                  :attribute (image-object-attribute object)
+                 :columns (image-object-columns object)
                  :visible-width (alexandria:if-let ((visible (image-object-visible-width object)))
                                   (min width visible)
                                   width)))
@@ -190,6 +196,9 @@ frontend can report one (`lem-if:image-natural-size'), otherwise one cell wide."
   (and (eq (image-object-image drawing-object-1) (image-object-image drawing-object-2))
        (equal (image-object-width drawing-object-1) (image-object-width drawing-object-2))
        (equal (image-object-height drawing-object-1) (image-object-height drawing-object-2))
+       ;; the cursor landing on the image changes its attribute and nothing else
+       (attribute-equal (image-object-attribute drawing-object-1)
+                        (image-object-attribute drawing-object-2))
        ;; a differently cropped image draws differently, so the cached row must not be reused
        (equal (image-object-visible-width drawing-object-1)
               (image-object-visible-width drawing-object-2))))
@@ -273,6 +282,18 @@ frontend can report one (`lem-if:image-natural-size'), otherwise one cell wide."
 
 (defun object-ascent (drawing-object)
   (lem-if:object-ascent (implementation) drawing-object))
+
+(defgeneric object-columns (drawing-object)
+  (:documentation "How many columns of the line DRAWING-OBJECT accounts for.
+Not its width in pixels (`object-width'): an image can account for one column and be hundreds of
+pixels wide.")
+  (:method (drawing-object) 0)
+  (:method ((drawing-object text-object))
+    (string-width (text-object-string drawing-object)))
+  ;; drawn past the end of the line, so it accounts for nothing on it.
+  (:method ((drawing-object line-end-object)) 0)
+  (:method ((drawing-object image-object))
+    (image-object-columns drawing-object)))
 
 (defun split-string-by-character-type (string)
   (loop :with pos := 0 :and items := '()
@@ -365,7 +386,8 @@ frontend can report one (`lem-if:image-natural-size'), otherwise one cell wide."
                                        :image (attribute-image attribute)
                                        :width (attribute-width attribute)
                                        :height (attribute-height attribute)
-                                       :attribute attribute)))
+                                       :attribute attribute
+                                       :columns (string-width string))))
                  (t
                   (loop :for (type . string) :in (split-string-by-character-type string)
                         :unless (alexandria:emptyp string)
@@ -539,12 +561,13 @@ Returns T if the cached entry matches (render can be skipped)."
          nil)))
 
 (defun render-row-with-caching (window y objects)
-  "Lay OBJECTS out as one screen row of WINDOW at Y and draw it, unless it is already on screen."
+  "Lay OBJECTS out as one screen row of WINDOW at Y and draw it, unless it is already on screen.
+Returns the laid-out row."
   (let* ((reduced (reduce-objects objects))
          (row (layout-row y reduced)))
     (unless (update-and-validate-cache-p window y (row-height row) reduced)
       (render-row (window-view window) row))
-    (row-height row)))
+    row))
 
 (defun text-row-metrics ()
   "The ascent and height of a row holding nothing but text, as (values ASCENT HEIGHT).
@@ -770,11 +793,18 @@ over the top-level spine and tolerant of improper (dotted) lists."
 
 (defstruct screen-row
   "One drawn row of a window, recorded as it was drawn."
-  height
   ;; which buffer line this row's logical line starts on.
   line-number
   ;; this row's index within its line. a break in virtual text starts a row without advancing it.
-  wrap-index)
+  wrap-index
+  ;; how much of the row's left edge the left area took
+  left-width
+  ;; as `layout-row' laid it out and the frontend drew it, so a pixel position can be read back
+  ;; against what is on screen rather than derived a second time.
+  row)
+
+(defun screen-row-height (screen-row)
+  (row-height (screen-row-row screen-row)))
 
 (defun window-screen-rows (window)
   "Every screen row of WINDOW, top to bottom, as recorded while it was drawn."
@@ -799,6 +829,27 @@ Walks the rows because they are not all one height, so there is nothing to divid
 there."
   (nth index (window-screen-rows window)))
 
+(defun screen-row-column-at-x (screen-row x)
+  "The column of SCREEN-ROW's line that pixel X, measured from the window's left edge, is over.
+Walks the objects drawn rather than dividing by a cell width, which would miscount every row holding
+something not one cell wide."
+  (let ((column 0)
+        (right (screen-row-left-width screen-row)))
+    (dolist (placement (row-placements (screen-row-row screen-row)))
+      (let ((object (placement-object placement))
+            (left (placement-x placement)))
+        ;; skip the left area: line numbers and the like, which account for no column
+        (when (<= (screen-row-left-width screen-row) left)
+          (let ((width (object-width object)))
+            (when (and (plusp width) (< x (+ left width)))
+              (return-from screen-row-column-at-x
+                (+ column (floor (* (object-columns object) (- x left)) width))))
+            (incf column (object-columns object))
+            (setf right (max right (+ left width)))))))
+    ;; no object under x, so it is out past the line where the window is plain cells. callers clamp
+    ;; this to the line's end.
+    (+ column (floor (max 0 (- x right)) (lem-if:cell-width (implementation))))))
+
 (defun check-line-fingerprint (window y fingerprint)
   "Check if the fingerprint for line at Y matches. Returns the cached list of rows, or NIL.
 One entry per row, so a line taken from the cache still contributes its rows to
@@ -822,11 +873,12 @@ iteration per pixel, against a cache holding one entry per line drawn."
 
 (defun update-line-fingerprint (window y fingerprint rows)
   "Store the fingerprint and ROWS for line at Y, and drop the rows it covers.
-ROWS is one (HEIGHT . WRAP-INDEX) per screen row the line drew, as the redraw functions collect
-them."
+ROWS is one `screen-row' per screen row the line drew, as the redraw functions collect them."
   (let ((cache (line-fingerprint-cache window)))
     (setf (gethash y cache) (cons fingerprint rows))
-    (evict-line-fingerprint-shadow cache y (reduce #'+ rows :key #'car :initial-value 0))))
+    (evict-line-fingerprint-shadow cache
+                                   y
+                                   (reduce #'+ rows :key #'screen-row-height :initial-value 0))))
 
 (defun left-side-character-count (left-side-objects)
   (loop :for obj :in left-side-objects
@@ -856,11 +908,13 @@ them."
             ;; an empty row is still a row when more of the line follows, which is what a break at
             ;; the very start of the virtual text asks for.
             (unless (or objects rest-line-objects) (return))
-            (let* ((all-objects (append left-side-objects objects))
-                   (height (render-row-with-caching window y all-objects)))
-              (incf y height)
+            (let ((row (render-row-with-caching window y (append left-side-objects objects))))
+              (incf y (row-height row))
               (setq left-side-objects wrapped-left-side-objects)
-              (push (cons height wrap-index) rows)
+              (push (make-screen-row :row row
+                                     :wrap-index wrap-index
+                                     :left-width left-side-width)
+                    rows)
               ;; only running out of width advances the position, a virtual-text break does not.
               (when (eq why :wrapped)
                 (incf wrap-index))
@@ -960,7 +1014,7 @@ creating zero temporary letter-objects."
       (return-from redraw-logical-line-when-horizontal-scroll cached-rows))
     (let* ((rows (split-objects-at-line-breaks (create-drawing-objects logical-line)))
            (left-side-characters (left-side-character-count left-side-objects))
-           (row-heights)
+           (screen-rows)
            (total-height 0))
       ;; the cursor is on one of the rows, scrolling follows it there.
       (dolist (row-objects rows)
@@ -989,15 +1043,16 @@ creating zero temporary letter-objects."
                                    (horizontal-scroll-start window)
                                    (+ (horizontal-scroll-start window)
                                       (window-view-width window))))
-                         (height (render-row-with-caching window (+ y total-height)
-                                                          (append side clipped))))
-                    (incf total-height height)
+                         (row (render-row-with-caching window (+ y total-height)
+                                                       (append side clipped))))
+                    (incf total-height (row-height row))
                     ;; wrapping is off here, so every row begins where the line does, index 0
-                    (push (cons height 0) row-heights))
+                    (push (make-screen-row :row row :wrap-index 0 :left-width left-side-width)
+                          screen-rows))
                   ;; y is in the frontend's units, as is the bound
                   (when (<= (window-view-height window) (+ y total-height))
                     (return))))
-      (setf row-heights (nreverse row-heights))
+      (setf screen-rows (nreverse screen-rows))
       ;; Reuse fingerprint if scroll position didn't change; avoids redundant sxhash
       (update-line-fingerprint
        window y
@@ -1006,8 +1061,8 @@ creating zero temporary letter-objects."
            (compute-line-fingerprint logical-line
                                      (horizontal-scroll-start window)
                                      left-side-width))
-       row-heights)
-      row-heights)))
+       screen-rows)
+      screen-rows)))
 
 (defun redraw-lines (window)
   (let* ((*line-wrap* (variable-value 'line-wrap
@@ -1035,12 +1090,10 @@ creating zero temporary letter-objects."
                     (funcall redraw-fn window y logical-line left-side-objects left-side-width))
                   ;; read once, shared by the line's rows
                   (line-number (line-number-at-point line-point)))
-              (loop :for (row-height . wrap-index) :in line-rows
-                    :do (push (make-screen-row :height row-height
-                                               :line-number line-number
-                                               :wrap-index wrap-index)
-                              rows)
-                        (incf y row-height)))
+              (loop :for row :in line-rows
+                    :do (setf (screen-row-line-number row) line-number)
+                        (push row rows)
+                        (incf y (screen-row-height row))))
             (unless (< y height)
               (return-from outer)))))
       (setf (window-screen-rows window) (nreverse rows))

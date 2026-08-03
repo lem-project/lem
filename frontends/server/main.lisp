@@ -118,7 +118,10 @@ quits by itself afterwards.")
                 :accessor jsonrpc-cell-height)
    ;; how far below a cell's top the client puts the text baseline.
    (cell-ascent :initform nil
-                :accessor jsonrpc-cell-ascent))
+                :accessor jsonrpc-cell-ascent)
+   ;; the font's own size. the cell height is measured from the glyph bounding box, so it is larger.
+   (font-em :initform nil
+            :accessor jsonrpc-font-em))
   (:default-initargs
    :name :jsonrpc
    :redraw-after-modifying-floating-window t
@@ -181,7 +184,8 @@ returns true when one of them changed, since nothing already measured survives a
                  (setf changed t)))))
       (update "fontWidth" 'jsonrpc-cell-width)
       (update "fontHeight" 'jsonrpc-cell-height)
-      (update "fontAscent" 'jsonrpc-cell-ascent))
+      (update "fontAscent" 'jsonrpc-cell-ascent)
+      (update "fontSize" 'jsonrpc-font-em))
     changed))
 
 (defun handle-login (jsonrpc logged-in-callback params)
@@ -516,6 +520,9 @@ returns true when one of them changed, since nothing already measured survives a
   (values (jsonrpc-cell-width jsonrpc)
           (jsonrpc-cell-height jsonrpc)
           (jsonrpc-cell-ascent jsonrpc)))
+
+(defmethod lem-if:font-em-pixels ((jsonrpc jsonrpc))
+  (jsonrpc-font-em jsonrpc))
 
 (defun call (method params)
   (let ((mailbox (sb-concurrency:make-mailbox :name "lem-server-call-async")))

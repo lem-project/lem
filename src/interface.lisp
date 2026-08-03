@@ -192,6 +192,12 @@ Always pixels, unlike `cell-width' / `cell-height', which are 1 on a cell-based 
   (:method (implementation)
     (values nil nil nil)))
 
+(defgeneric lem-if:font-em-pixels (implementation)
+  (:documentation "Pixels one em of the editor font takes, or NIL when the frontend cannot say.
+In the same units as `cell-pixel-size'.
+The em is smaller than `cell-height', which is measured from the glyph bounding box.")
+  (:method (implementation) nil))
+
 (defgeneric lem-if:render-row (implementation view row)
   (:documentation "Draw ROW, one screen row of VIEW, replacing whatever it held before.
 ROW is a `lem-core/display:row'. Its height, background and the position of every object on it were

@@ -83,6 +83,19 @@ with or the window is undrawn."
             fallback-row))
       fallback-row))
 
+(defun mouse-event-screen-column (mouse-event window row-index fallback-column)
+  "The column that MOUSE-EVENT points at on ROW-INDEX of WINDOW, counted from the top of its view.
+FALLBACK-COLUMN is used when there is no pixel position to walk with or no such row was drawn."
+  (alexandria:if-let ((screen-row (and (mouse-event-pixel-x mouse-event)
+                                       (mouse-event-pixel-y mouse-event)
+                                       (window-screen-row-at-index window row-index))))
+    (multiple-value-bind (relative-x relative-y)
+        (get-relative-mouse-coordinates-pixels mouse-event window)
+      (declare (ignore relative-y))
+      ;; measured from the window's left edge, where the row was laid out from
+      (screen-row-column-at-x screen-row relative-x))
+    fallback-column))
+
 (defun move-point-to-screen-row (point window row)
   "Move POINT to the start of screen ROW of WINDOW, counting rows from the top of its view.
 Uses the line recorded when the row was drawn, since counting virtual lines down from the view top
@@ -216,11 +229,12 @@ that was not drawn, or whose line the buffer no longer has."
                                   (mouse-event-y mouse-event))
          (when (and window
                     (window-clickable window))
-           (handle-mouse-button-down (window-buffer window)
-                                     mouse-event
-                                     :window window
-                                     :x x
-                                     :y (mouse-event-screen-row mouse-event window y))))))))
+           (let ((row-index (mouse-event-screen-row mouse-event window y)))
+             (handle-mouse-button-down (window-buffer window)
+                                       mouse-event
+                                       :window window
+                                       :x (mouse-event-screen-column mouse-event window row-index x)
+                                       :y row-index))))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-button-up))
   (setf *last-dragged-separator* nil)
@@ -282,11 +296,12 @@ that was not drawn, or whose line the buffer no longer has."
                                     (mouse-event-x mouse-event)
                                     (mouse-event-y mouse-event))
            (when window
-             (handle-mouse-hover (window-buffer window)
-                                 mouse-event
-                                 :window window
-                                 :x x
-                                 :y (mouse-event-screen-row mouse-event window y)))))
+             (let ((row-index (mouse-event-screen-row mouse-event window y)))
+               (handle-mouse-hover (window-buffer window)
+                                   mouse-event
+                                   :window window
+                                   :x (mouse-event-screen-column mouse-event window row-index x)
+                                   :y row-index)))))
         ((typep *last-dragged-separator* 'window-vertical-separator)
          (let ((x (mouse-event-x mouse-event))
                (button (mouse-event-button mouse-event)))

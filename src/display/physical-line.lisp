@@ -15,7 +15,8 @@
   (setf (window-parameter window 'redrawing-cache) value))
 
 (defclass drawing-object ()
-  ((width :initform nil :accessor drawing-object-width)))
+  ;; where `object-width' caches its result. `width' is left free for subclasses like `image-object'.
+  ((occupied-width :initform nil :accessor drawing-object-width)))
 
 (defclass void-object (drawing-object) ())
 

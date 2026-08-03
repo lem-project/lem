@@ -1337,6 +1337,7 @@ export class Editor {
       fontWidth: this.option.fontWidth,
       fontHeight: this.option.fontHeight,
       fontAscent: this.option.fontAscent,
+      fontSize: this.option.fontSize,
     };
   }
 
@@ -1388,6 +1389,7 @@ export class Editor {
       fontWidth: this.option.fontWidth,
       fontHeight: this.option.fontHeight,
       fontAscent: this.option.fontAscent,
+      fontSize: this.option.fontSize,
     }, (response) => {
       this.updateForeground(response.foreground);
       this.updateBackground(response.background);

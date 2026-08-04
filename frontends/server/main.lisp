@@ -289,10 +289,14 @@ returns true when one of them changed, since nothing already measured survives a
 
 (defmethod lem-if:update-foreground ((jsonrpc jsonrpc) color-name)
   (with-error-handler ()
+    (alexandria:when-let (color (lem:parse-color color-name))
+      (setf (jsonrpc-foreground-color jsonrpc) color))
     (notify jsonrpc "update-foreground" color-name)))
 
 (defmethod lem-if:update-background ((jsonrpc jsonrpc) color-name)
   (with-error-handler ()
+    (alexandria:when-let (color (lem:parse-color color-name))
+      (setf (jsonrpc-background-color jsonrpc) color))
     (notify jsonrpc "update-background" color-name)))
 
 (defmethod lem-if:update-cursor-shape ((jsonrpc jsonrpc) cursor-type)

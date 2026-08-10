@@ -44,7 +44,12 @@ When rendering the DOM and a window in a one-to-one manner, no redraw is require
     :initform nil
     :initarg :support-pixel-positioning
     :reader support-pixel-positioning-p
-    :documentation "When true, the frontend supports pixel-based floating window positioning.")))
+    :documentation "When true, the frontend supports pixel-based floating window positioning.")
+   (image-support
+    :initform nil
+    :initarg :image-support
+    :reader image-support-p
+    :documentation "When true, the frontend can draw an image object.")))
 
 (defun get-default-implementation (&key implementation)
   (let ((classes (c2mop:class-direct-subclasses (find-class 'implementation)))

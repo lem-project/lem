@@ -702,6 +702,7 @@
    :support-pixel-positioning-p
    :html-support-p
    :underline-color-support-p
+   :image-support-p
    :no-force-needed-p
    :set-foreground
    :set-background

@@ -130,7 +130,8 @@ quits by itself afterwards.")
    :html-support t
    :underline-color-support t
    :no-force-needed t
-   :support-pixel-positioning t))
+   :support-pixel-positioning t
+   :image-support t))
 
 (defun view-id-hash (view)
   "Return a minimal hash table containing only the view ID.

@@ -242,7 +242,7 @@
                #+sbcl
                "lem-go-mode"
                "lem-swift-mode"
-
+               "lem-ansible-mode"
                "lem-c-mode"
                "lem-python-mode"
                "lem-posix-shell-mode"

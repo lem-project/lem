@@ -10,7 +10,7 @@
 (defvar *odin-format-command* '("odinfmt" "-stdin")
   "Command used by `odin-format-buffer'.
 It reads from standard input and writes the formatted source to standard output.
-Ships with ols.")
+Odinfmt ships with ols.")
 
 (defvar *odin-keywords*
   '("asm" "auto_cast" "bit_field" "bit_set" "break" "case" "cast" "context"
@@ -76,13 +76,12 @@ Ships with ols.")
   "Create the TextMate grammar."
   (let* ((patterns
            (make-tm-patterns
-            ;; Comments.  The block comment is a match with a move action
-            ;; rather than a region so that nesting is handled.
+            ;; Comments.
             (make-tm-match "/\\*"
                            :name 'syntax-comment-attribute
                            :move-action #'odin-skip-block-comment)
             (make-tm-region "//" "$" :name 'syntax-comment-attribute)
-            ;; Raw strings perform no escape processing at all.
+            ;; Raw strings.
             (make-tm-region "`" "`" :name 'syntax-string-attribute)
             (make-tm-region '(:sequence "\"")
                             '(:sequence "\"")
@@ -126,8 +125,7 @@ Ships with ols.")
                                              (make-tm-name 'syntax-type-attribute)
                                              (make-tm-name 'syntax-keyword-attribute)
                                              (make-tm-name 'syntax-keyword-attribute)))
-            ;; Only package-qualified calls are matched; a bare `name(' is
-            ;; indistinguishable from `if (' without a parser.
+            ;; Only package-qualified calls are matched
             (make-tm-match `(:sequence
                              :word-boundary
                              ,(identifier-register)
@@ -146,8 +144,6 @@ Ships with ols.")
                            :name 'syntax-builtin-attribute)
             (make-tm-match (tokens :word-boundary *odin-constants*)
                            :name 'syntax-constant-attribute)
-            ;; `::' declares a constant and `:=' a variable; both are worth
-            ;; distinguishing from the plain `:' of a type annotation.
             (make-tm-match (tokens nil '("::" ":=" "->" "---" "..=" "..<" ".."))
                            :name 'syntax-keyword-attribute)
             (make-tm-match (concatenate 'string
@@ -185,7 +181,6 @@ Ships with ols.")
      :formatter 'odin-format)
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'calc-indent-function) 'odin-calc-indent
-        ;; Odin's standard formatting indents with tabs.
         (variable-value 'indent-tabs-mode) t
         (variable-value 'beginning-of-defun-function) 'odin-beginning-of-defun
         (variable-value 'end-of-defun-function) 'odin-end-of-defun
@@ -198,9 +193,7 @@ Ships with ols.")
 ;;; Navigation
 
 (defun odin-beginning-of-defun (point n)
-  "Move POINT backward across N Odin declarations.
-Odin declarations are `name :: proc' and friends at column 0, so no return
-type has to be skipped the way it does in C."
+  "Move point backward across n declarations."
   (loop :repeat n
         :do (search-backward-regexp
              point
@@ -208,7 +201,7 @@ type has to be skipped the way it does in C."
                      *odin-identifier*))))
 
 (defun odin-end-of-defun (point n)
-  "Move POINT forward to the end of the current Odin declaration."
+  "Move point forward to the end of the current declaration."
   (if (minusp n)
       (odin-beginning-of-defun point (- n))
       (search-forward-regexp point "^\\}")))
@@ -216,16 +209,14 @@ type has to be skipped the way it does in C."
 ;;; Indentation
 
 (defun odin-where-clause-line-p (point)
-  "True when the line at POINT begins with a `where' clause."
+  "True when the line at point begins with a `where' clause."
   (with-point ((p point))
     (back-to-indentation p)
     (and (looking-at p "where\\b") t)))
 
 (defun odin-enclosing-block-column (point)
-  "Column the block enclosing POINT is indented from, or NIL at top level.
-A `where' clause is itself indented one level below its declaration, yet
-the body whose brace it carries belongs to the declaration, so a brace
-opened on a `where' line is measured from the line above it."
+  "Column the block enclosing point is indented from, or NIL at top level.
+A brace opened on a `where' line is measured from the line above it."
   (with-point ((tmp point))
     (when (scan-lists tmp -1 1 t)
       (back-to-indentation tmp)
@@ -235,10 +226,7 @@ opened on a `where' line is measured from the line above it."
       (point-column tmp))))
 
 (defun odin-calc-indent (point)
-  "Calculate the indentation of the line at POINT.
-Odin is brace delimited, so the enclosing block gives the base indent;
-`case' labels sit at the level of their `switch' and `where' clauses one
-level in from the declaration they constrain."
+  "Calculate the indentation of the line at point."
   (let ((tab-width (variable-value 'tab-width :default point)))
     (with-point ((p point))
       (back-to-indentation p)
@@ -246,9 +234,6 @@ level in from the declaration they constrain."
         ((in-string-p p)
          nil)
         ((in-comment-p p)
-         ;; A `*'-prefixed continuation line aligns under the opening `/*'.
-         ;; Odin's doc comments run flush against the margin instead, so
-         ;; anything else keeps the indentation it already has.
          (if (eql #\* (character-at p))
              (with-point ((start p))
                (maybe-beginning-of-comment start)
@@ -270,7 +255,7 @@ level in from the declaration they constrain."
 ;;; Formatting
 
 (defun odin-run-formatter (text directory)
-  "Pipe TEXT through `*odin-format-command*' run in DIRECTORY.
+  "Pipe text through `*odin-format-command*' run in a given directory.
 Returns the formatted text, or NIL and a message describing the failure."
   (handler-case
       (multiple-value-bind (output error-output status)
@@ -288,7 +273,7 @@ Returns the formatted text, or NIL and a message describing the failure."
       (values nil (princ-to-string e)))))
 
 (defun odin-replace-with-formatted (buffer)
-  "Replace BUFFER with its odinfmt output, keeping the cursor on its line.
+  "Replace buffer with its odinfmt output, keeping the cursor on its line.
 Returns true on success, or NIL and a message describing the failure."
   (let* ((start (buffer-start-point buffer))
          (end (buffer-end-point buffer))
@@ -304,18 +289,12 @@ Returns true on success, or NIL and a message describing the failure."
                       (charpos (point-charpos point)))
                  (delete-between-points start end)
                  (insert-string (buffer-point buffer) formatted)
-                 ;; Formatting can drop lines, and `move-to-line' refuses to
-                 ;; move at all past the last one, which would strand the
-                 ;; cursor at the end of the buffer.
                  (move-to-line point (min line (buffer-nlines buffer)))
                  (line-offset point 0 charpos)))
              (values t nil))))))
 
 (defun odin-format (buffer)
-  "Format BUFFER with odinfmt, reporting failures in the echo area.
-This is the formatter registered for `odin-mode': `lem/format:format-buffer'
-turns anything signalled by a formatter into a generic \"No formatter for
-mode\" notice, so the odinfmt error has to be reported here instead."
+  "Format buffer with odinfmt."
   (multiple-value-bind (successp error-message) (odin-replace-with-formatted buffer)
     (if successp
         (message "Formatted buffer with odinfmt.")

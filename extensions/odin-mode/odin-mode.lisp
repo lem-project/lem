@@ -48,133 +48,28 @@ Odinfmt ships with ols.")
 (defvar *odin-identifier* "[A-Za-z_][A-Za-z_0-9]*"
   "Regular expression matching a single identifier.")
 
-(defun identifier-register ()
-  "Return a ppcre parse tree capturing one identifier."
-  `(:register ,(ppcre:parse-string *odin-identifier*)))
-
-(defun tokens (boundary strings)
-  "Build a ppcre parse tree."
-  (let ((alternation
-          `(:alternation ,@(sort (copy-list strings) #'> :key #'length))))
-    (if boundary
-        `(:sequence ,boundary ,alternation ,boundary)
-        alternation)))
-
-(defun odin-skip-block-comment (point)
-  "Move point past the block comment. In Odin block comments can nest."
-  (character-offset point 2)
-  (loop :with depth := 1
-        :do (unless (search-forward-regexp point "/\\*|\\*/")
-              (return (buffer-end point)))
-            (if (eql #\/ (character-at point -1))
-                (decf depth)
-                (incf depth))
-            (when (zerop depth)
-              (return point))))
-
-(defun make-tmlanguage-odin ()
-  "Create the TextMate grammar."
-  (let* ((patterns
-           (make-tm-patterns
-            ;; Comments.
-            (make-tm-match "/\\*"
-                           :name 'syntax-comment-attribute
-                           :move-action #'odin-skip-block-comment)
-            (make-tm-region "//" "$" :name 'syntax-comment-attribute)
-            ;; Raw strings.
-            (make-tm-region "`" "`" :name 'syntax-string-attribute)
-            (make-tm-region '(:sequence "\"")
-                            '(:sequence "\"")
-                            :name 'syntax-string-attribute
-                            :patterns (make-tm-patterns
-                                       (make-tm-match "\\\\.")))
-            (make-tm-match "'(?:\\\\.|[^'\\\\])'"
-                           :name 'syntax-string-attribute)
-            ;; Attributes such as @(private="file") may span several lines,
-            ;; so only the opening `@(name' is highlighted.
-            (make-tm-match (format nil "@\\(?~A" *odin-identifier*)
-                           :name 'syntax-builtin-attribute)
-            ;; Directives are expressions, not preprocessor lines: `#partial
-            ;; switch' must not swallow the rest of the line.
-            (make-tm-match (format nil "#~A" *odin-identifier*)
-                           :name 'syntax-builtin-attribute)
-            ;; `name :: proc' and `name :: struct' carry the declaration.
-            (make-tm-match `(:sequence
-                             :word-boundary
-                             ,(identifier-register)
-                             (:greedy-repetition 0 nil :whitespace-char-class)
-                             (:register "::")
-                             (:greedy-repetition 0 nil :whitespace-char-class)
-                             (:register "proc")
-                             :word-boundary)
-                           :captures (vector nil
-                                             (make-tm-name 'syntax-function-name-attribute)
-                                             (make-tm-name 'syntax-keyword-attribute)
-                                             (make-tm-name 'syntax-keyword-attribute)))
-            (make-tm-match `(:sequence
-                             :word-boundary
-                             ,(identifier-register)
-                             (:greedy-repetition 0 nil :whitespace-char-class)
-                             (:register "::")
-                             (:greedy-repetition 0 nil :whitespace-char-class)
-                             (:register (:alternation "struct" "union" "enum"
-                                                      "bit_field" "bit_set"
-                                                      "distinct" "matrix" "map"))
-                             :word-boundary)
-                           :captures (vector nil
-                                             (make-tm-name 'syntax-type-attribute)
-                                             (make-tm-name 'syntax-keyword-attribute)
-                                             (make-tm-name 'syntax-keyword-attribute)))
-            ;; Only package-qualified calls are matched
-            (make-tm-match `(:sequence
-                             :word-boundary
-                             ,(identifier-register)
-                             "."
-                             ,(identifier-register)
-                             (:greedy-repetition 0 nil :whitespace-char-class)
-                             "(")
-                           :captures (vector nil
-                                             nil
-                                             (make-tm-name 'syntax-function-name-attribute)))
-            (make-tm-match (tokens :word-boundary *odin-keywords*)
-                           :name 'syntax-keyword-attribute)
-            (make-tm-match (tokens :word-boundary *odin-types*)
-                           :name 'syntax-type-attribute)
-            (make-tm-match (tokens :word-boundary *odin-builtins*)
-                           :name 'syntax-builtin-attribute)
-            (make-tm-match (tokens :word-boundary *odin-constants*)
-                           :name 'syntax-constant-attribute)
-            (make-tm-match (tokens nil '("::" ":=" "->" "---" "..=" "..<" ".."))
-                           :name 'syntax-keyword-attribute)
-            (make-tm-match (concatenate 'string
-                                        "\\b(?:0[bB][01_]+|0[oO][0-7_]+|0[dD][0-9_]+"
-                                        "|0[zZ][0-9abAB_]+|0[xX][0-9a-fA-F_]+"
-                                        "|[0-9][0-9_]*(?:\\.[0-9][0-9_]*)?(?:[eE][-+]?[0-9_]+)?)"
-                                        "[ijk]?\\b")
-                           :name 'syntax-constant-attribute))))
-    (make-tmlanguage :patterns patterns)))
-
 (defvar *odin-syntax-table*
-  (let ((table (make-syntax-table
-                :space-chars '(#\space #\tab #\newline)
-                :symbol-chars '(#\_)
-                :paren-pairs '((#\( . #\))
-                               (#\{ . #\})
-                               (#\[ . #\]))
-                :string-quote-chars '(#\" #\')
-                :expr-prefix-chars '(#\- #\+ #\& #\^)
-                :expr-suffix-chars '(#\: #\, #\;)
-                :block-string-pairs '(("`" . "`"))
-                :line-comment-string "//"
-                :block-comment-pairs '(("/*" . "*/"))))
-        (tmlanguage (make-tmlanguage-odin)))
-    (set-syntax-parser table tmlanguage)
-    table))
+  (make-syntax-table
+   :space-chars '(#\space #\tab #\newline)
+   :symbol-chars '(#\_)
+   :paren-pairs '((#\( . #\))
+                  (#\{ . #\})
+                  (#\[ . #\]))
+   :string-quote-chars '(#\" #\')
+   :expr-prefix-chars '(#\- #\+ #\& #\^)
+   :expr-suffix-chars '(#\: #\, #\;)
+   :block-string-pairs '(("`" . "`"))
+   :line-comment-string "//"
+   :block-comment-pairs '(("/*" . "*/")))
+  "Syntax table for `odin-mode'.
+Its parser is installed at the end of this file, once the rules it is
+built from are defined.")
 
 ;;; Major Mode Definition
 
 (define-major-mode odin-mode language-mode
     (:name "Odin"
+     :description "Edits Odin source, with odinfmt as the formatter."
      :keymap *odin-mode-keymap*
      :syntax-table *odin-syntax-table*
      :mode-hook *odin-mode-hook*
@@ -296,15 +191,122 @@ Returns true on success, or NIL and a message describing the failure."
 (defun odin-format (buffer)
   "Format buffer with odinfmt."
   (multiple-value-bind (successp error-message) (odin-replace-with-formatted buffer)
-    (if successp
-        (message "Formatted buffer with odinfmt.")
-        (message "odinfmt failed: ~A" error-message))))
-
-(define-command odin-format-buffer (buffer) ((current-buffer))
-  "Format BUFFER with odinfmt, keeping the cursor on its current line."
-  (multiple-value-bind (successp error-message) (odin-replace-with-formatted buffer)
     (unless successp
       (editor-error "odinfmt failed: ~A" error-message))
     (message "Formatted buffer with odinfmt.")))
+
+(define-command odin-format-buffer (buffer) ((current-buffer))
+  "Format BUFFER with odinfmt, keeping the cursor on its current line."
+  (odin-format buffer))
+
+;;; Syntax Highlighting
+
+(defun identifier-register ()
+  "Return a ppcre parse tree capturing one identifier."
+  (list :register (ppcre:parse-string *odin-identifier*)))
+
+(defun tokens (boundary strings)
+  "Build a ppcre parse tree."
+  (let ((alternation
+          (list* :alternation (sort (copy-list strings) #'> :key #'length))))
+    (if boundary
+        (list :sequence boundary alternation boundary)
+        alternation)))
+
+(defun odin-skip-block-comment (point)
+  "Move point past the block comment. In Odin block comments can nest."
+  (character-offset point 2)
+  (loop :with depth := 1
+        :do (unless (search-forward-regexp point "/\\*|\\*/")
+              (return (buffer-end point)))
+            (if (eql #\/ (character-at point -1))
+                (decf depth)
+                (incf depth))
+            (when (zerop depth)
+              (return point))))
+
+(defun make-tmlanguage-odin ()
+  "Create the TextMate grammar."
+  (let* ((patterns
+           (make-tm-patterns
+            ;; Comments.
+            (make-tm-match "/\\*"
+                           :name 'syntax-comment-attribute
+                           :move-action #'odin-skip-block-comment)
+            (make-tm-region "//" "$" :name 'syntax-comment-attribute)
+            ;; Raw strings.
+            (make-tm-region "`" "`" :name 'syntax-string-attribute)
+            (make-tm-region '(:sequence "\"")
+                            '(:sequence "\"")
+                            :name 'syntax-string-attribute
+                            :patterns (make-tm-patterns
+                                       (make-tm-match "\\\\.")))
+            (make-tm-match "'(?:\\\\.|[^'\\\\])'"
+                           :name 'syntax-string-attribute)
+            ;; Attributes such as @(private="file") may span several lines,
+            ;; so only the opening `@(name' is highlighted.
+            (make-tm-match (format nil "@\\(?~A" *odin-identifier*)
+                           :name 'syntax-builtin-attribute)
+            ;; Directives are expressions, not preprocessor lines: `#partial
+            ;; switch' must not swallow the rest of the line.
+            (make-tm-match (format nil "#~A" *odin-identifier*)
+                           :name 'syntax-builtin-attribute)
+            ;; `name :: proc' and `name :: struct' carry the declaration.
+            (make-tm-match (list :sequence
+                                 :word-boundary
+                                 (identifier-register)
+                                 '(:greedy-repetition 0 nil :whitespace-char-class)
+                                 '(:register "::")
+                                 '(:greedy-repetition 0 nil :whitespace-char-class)
+                                 '(:register "proc")
+                                 :word-boundary)
+                           :captures (vector nil
+                                             (make-tm-name 'syntax-function-name-attribute)
+                                             (make-tm-name 'syntax-keyword-attribute)
+                                             (make-tm-name 'syntax-keyword-attribute)))
+            (make-tm-match (list :sequence
+                                 :word-boundary
+                                 (identifier-register)
+                                 '(:greedy-repetition 0 nil :whitespace-char-class)
+                                 '(:register "::")
+                                 '(:greedy-repetition 0 nil :whitespace-char-class)
+                                 '(:register (:alternation "struct" "union" "enum"
+                                              "bit_field" "bit_set"
+                                              "distinct" "matrix" "map"))
+                                 :word-boundary)
+                           :captures (vector nil
+                                             (make-tm-name 'syntax-type-attribute)
+                                             (make-tm-name 'syntax-keyword-attribute)
+                                             (make-tm-name 'syntax-keyword-attribute)))
+            ;; Only package-qualified calls are matched
+            (make-tm-match (list :sequence
+                                 :word-boundary
+                                 (identifier-register)
+                                 "."
+                                 (identifier-register)
+                                 '(:greedy-repetition 0 nil :whitespace-char-class)
+                                 "(")
+                           :captures (vector nil
+                                             nil
+                                             (make-tm-name 'syntax-function-name-attribute)))
+            (make-tm-match (tokens :word-boundary *odin-keywords*)
+                           :name 'syntax-keyword-attribute)
+            (make-tm-match (tokens :word-boundary *odin-types*)
+                           :name 'syntax-type-attribute)
+            (make-tm-match (tokens :word-boundary *odin-builtins*)
+                           :name 'syntax-builtin-attribute)
+            (make-tm-match (tokens :word-boundary *odin-constants*)
+                           :name 'syntax-constant-attribute)
+            (make-tm-match (tokens nil '("::" ":=" "->" "---" "..=" "..<" ".."))
+                           :name 'syntax-keyword-attribute)
+            (make-tm-match (concatenate 'string
+                                        "\\b(?:0[bB][01_]+|0[oO][0-7_]+|0[dD][0-9_]+"
+                                        "|0[zZ][0-9abAB_]+|0[xX][0-9a-fA-F_]+"
+                                        "|[0-9][0-9_]*(?:\\.[0-9][0-9_]*)?(?:[eE][-+]?[0-9_]+)?)"
+                                        "[ijk]?\\b")
+                           :name 'syntax-constant-attribute))))
+    (make-tmlanguage :patterns patterns)))
+
+(set-syntax-parser *odin-syntax-table* (make-tmlanguage-odin))
 
 (define-file-type ("odin") odin-mode)

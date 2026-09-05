@@ -149,13 +149,13 @@ A brace opened on a `where' line is measured from the line above it."
 
 ;;; Formatting
 
-(defun odin-run-formatter (text directory)
-  "Pipe text through `*odin-format-command*' run in a given directory.
+(defun odin-run-formatter (command text directory)
+  "Pipe text through COMMAND run in a given directory.
 Returns the formatted text, or NIL and a message describing the failure."
   (handler-case
       (multiple-value-bind (output error-output status)
           (with-input-from-string (input text)
-            (uiop:run-program *odin-format-command*
+            (uiop:run-program command
                               :directory directory
                               :input input
                               :output :string
@@ -174,7 +174,7 @@ Returns true on success, or NIL and a message describing the failure."
          (end (buffer-end-point buffer))
          (text (points-to-string start end)))
     (multiple-value-bind (formatted error-message)
-        (odin-run-formatter text (buffer-directory buffer))
+        (odin-run-formatter *odin-format-command* text (buffer-directory buffer))
       (cond ((null formatted)
              (values nil error-message))
             (t

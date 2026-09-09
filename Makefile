@@ -8,6 +8,11 @@ ncurses:
 	$(LISP) --load .qlot/setup.lisp \
 		--load scripts/build-ncurses.lisp
 
+minimal-build:
+	qlot install
+	$(LISP) --load .qlot/setup.lisp \
+		--load scripts/build-minimal-build.lisp
+
 sdl2:
 	qlot install
 	-$(MAKE) terminal-lib

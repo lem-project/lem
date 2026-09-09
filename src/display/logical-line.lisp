@@ -446,7 +446,7 @@ several folds that each hide arbitrary character ranges across multiple buffer l
 
 ;; a newline inside virtual text (an overlay's :before-string / :after-string): ends the screen row
 ;; without touching the buffer line.
-(defstruct line-break-item)
+(defstruct virtual-line-break-item)
 
 (defmethod item-string ((item string-with-attribute-item))
   (string-with-attribute-item-string item))
@@ -534,8 +534,8 @@ VIRTUAL-ITEMS arrive in draw order (from `create-logical-line')."
                                                          run-string
                                                          :separator '(#\newline))
                                        :for firstp := t :then nil
-                                       :do (unless firstp
-                                             (setf items (cons (make-line-break-item) items)))
+                                        :do (unless firstp
+                                              (setf items (cons (make-virtual-line-break-item) items)))
                                            (setf items (add-or-merge-item
                                                         (make-string-with-attribute-item
                                                          :string segment

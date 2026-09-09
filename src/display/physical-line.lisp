@@ -20,9 +20,9 @@
 
 (defclass void-object (drawing-object) ())
 
-;; from a `line-break-item', consumed while splitting a line into rows, so it never reaches a
+;; from a `virtual-line-break-item', consumed while splitting a line into rows, so it never reaches a
 ;; frontend.
-(defclass line-break-object (void-object) ())
+(defclass virtual-line-break-object (void-object) ())
 
 (defclass text-object (drawing-object)
   ((surface :initarg :surface :initform nil :accessor text-object-surface)
@@ -365,8 +365,8 @@ pixels wide.")
                               :true-cursor-p (eol-cursor-item-true-cursor-p item))))
         ((typep item 'extend-to-eol-item)
          (list (make-instance 'extend-to-eol-object :color (extend-to-eol-item-color item))))
-        ((typep item 'line-break-item)
-         (list (make-instance 'line-break-object)))
+        ((typep item 'virtual-line-break-item)
+         (list (make-instance 'virtual-line-break-object)))
         ((typep item 'line-end-item)
          (let ((string (line-end-item-text item))
                (attribute (line-end-item-attribute item)))
@@ -409,7 +409,7 @@ pixels wide.")
 (defun separate-objects-by-width (objects view-width buffer)
   "Take one screen row's worth of OBJECTS, at most VIEW-WIDTH wide.
 Returns (values ROW REST WHY): the row's objects, those left for the rows after it, and why the row
-ended. :WRAPPED for running out of width, :LINE-BREAK for a newline inside virtual text, :END for
+ended. :WRAPPED for running out of width, :VIRTUAL-LINE-BREAK for a newline inside virtual text, :END for
 the end of the line. Only after :WRAPPED does the next row show more of the buffer's text, which is
 what turning a row back into a buffer position needs to know."
   (flet ((explode-object (text-object)
@@ -429,10 +429,10 @@ what turning a row back into a buffer position needs to know."
             :and physical-line-objects := '()
             :for object := (pop objects)
             :while object
-            :do (cond ((typep object 'line-break-object)
+            :do (cond ((typep object 'virtual-line-break-object)
                        ;; a newline in virtual text, not a row that ran out of width, so no wrap
                        ;; marker and not :wrapped.
-                       (return (values (nreverse physical-line-objects) objects :line-break)))
+                       (return (values (nreverse physical-line-objects) objects :virtual-line-break)))
                       ((and (typep object 'image-object)
                             (< (- view-width total-width) (object-width object)))
                        ;; an image cannot be broken in half the way a text run is, so it moves whole
@@ -459,14 +459,14 @@ what turning a row back into a buffer position needs to know."
                        (push object physical-line-objects)))
             :finally (return (values (nreverse physical-line-objects) nil :end))))))
 
-(defun split-objects-at-line-breaks (objects)
-  "Split OBJECTS into one list per screen row, consuming each `line-break-object'.
+(defun split-objects-at-virtual-line-breaks (objects)
+  "Split OBJECTS into one list per screen row, consuming each `virtual-line-break-object'.
 Returns a list of lists, never empty: a line with no breaks in it gives one row."
-  (if (notany (lambda (object) (typep object 'line-break-object)) objects)
+  (if (notany (lambda (object) (typep object 'virtual-line-break-object)) objects)
       (list objects)
       (let (rows row)
         (dolist (object objects)
-          (if (typep object 'line-break-object)
+          (if (typep object 'virtual-line-break-object)
               (progn (push (nreverse row) rows)
                      (setf row nil))
               (push object row)))
@@ -1012,7 +1012,7 @@ creating zero temporary letter-objects."
     ;; Early exit if line content unchanged
     (alexandria:when-let ((cached-rows (check-line-fingerprint window y fingerprint)))
       (return-from redraw-logical-line-when-horizontal-scroll cached-rows))
-    (let* ((rows (split-objects-at-line-breaks (create-drawing-objects logical-line)))
+    (let* ((rows (split-objects-at-virtual-line-breaks (create-drawing-objects logical-line)))
            (left-side-characters (left-side-character-count left-side-objects))
            (screen-rows)
            (total-height 0))

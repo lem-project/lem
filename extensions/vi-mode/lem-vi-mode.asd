@@ -1,13 +1,14 @@
 (defsystem "lem-vi-mode"
   :depends-on ("esrap"
                "closer-mop"
-               "lem"
+               "lem/core"
                "cl-ppcre"
                "parse-number"
                "cl-package-locks"
                "alexandria"
                "split-sequence"
                "lem-lisp-mode"
+               "lem-dashboard"
                "trivial-types")
   :components ((:file "core")
                (:file "leader" :depends-on ("core"))
@@ -36,7 +37,7 @@
   :in-order-to ((test-op (test-op "lem-vi-mode/tests"))))
 
 (defsystem "lem-vi-mode/tests"
-  :depends-on ("lem"
+  :depends-on ("lem/core"
                "lem-vi-mode"
                "lem-fake-interface"
                "rove"
@@ -57,7 +58,8 @@
      (:file "registers")
      (:file "kbdmacro")
      (:file "jumplist")
-     (:file "options")))
+     (:file "options")
+     (:file "insert")))
    (:file "utils"
     :pathname "tests/utils"))
   :perform (test-op (op c) (symbol-call :rove '#:run c)))

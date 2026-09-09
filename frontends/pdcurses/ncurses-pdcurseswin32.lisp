@@ -294,15 +294,15 @@
 ;; for resizing display
 (defkeycode "[resize]" #x222)
 (let ((resize-delay-counter 0)
-      (lock (bt:make-lock)))
+      (lock (bt2:make-lock)))
   (defun now-resizing ()
-    (bt:with-lock-held (lock)
+    (bt2:with-lock-held (lock)
       resize-delay-counter))
   (defun (setf now-resizing) (v)
-    (bt:with-lock-held (lock)
+    (bt2:with-lock-held (lock)
       (setf resize-delay-counter v)))
   (defun now-resizing-countdown ()
-    (bt:with-lock-held (lock)
+    (bt2:with-lock-held (lock)
       (decf resize-delay-counter))))
 (defvar *min-cols*  5)
 (defvar *min-lines* 3)
@@ -328,21 +328,20 @@
 (defmethod lem-if:make-view
     ((implementation ncurses) window x y width height use-modeline)
   (make-ncurses-view
-   :border (when (and (floating-window-p window)
-                      (floating-window-border window)
-                      (< 0 (floating-window-border window)))
+   :border (when (and (window-border window)
+                      (< 0 (window-border window)))
              (destructuring-bind (x y)
                  (compute-border-window-position x
                                                  y
-                                                 (floating-window-border window))
+                                                 (window-border window))
                (destructuring-bind (width height)
                    (compute-border-window-size width
                                                height
-                                               (floating-window-border window))
+                                               (window-border window))
                  (make-border :win charms/ll:*stdscr*
                               :width width
                               :height height
-                              :size (floating-window-border window)))))
+                              :size (window-border window)))))
    :scrwin charms/ll:*stdscr*
    :modeline-scrwin (if use-modeline charms/ll:*stdscr* nil)
    :x x
@@ -709,7 +708,7 @@
       (loop
          (handler-case
              (progn
-               (unless (bt:thread-alive-p editor-thread) (return))
+               (unless (bt2:thread-alive-p editor-thread) (return))
                (let ((event (get-event)))
                  (case event
                    ;; retry is necessary to exit lem normally

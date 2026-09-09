@@ -38,18 +38,13 @@
 
 (defvar *colors*)
 
-(defun color-red (color) (first color))
-(defun color-green (color) (second color))
-(defun color-blue (color) (third color))
-(defun color-number (color) (fourth color))
-
 (defun term-set-color (index r g b &optional (call-init-color t))
   (when call-init-color
     (charms/ll:init-color index
                           (round (* r 1000/255))
                           (round (* g 1000/255))
                           (round (* b 1000/255))))
-  (setf (aref *colors* index) (list r g b index)))
+  (setf (aref *colors* index) (lem:make-color r g b)))
 
 (defun init-colors (n)
 
@@ -320,31 +315,32 @@
         (add-color #xe4 #xe4 #xe4)
         (add-color #xee #xee #xee)))))
 
-(defun rgb-to-hsv-distance (r1 g1 b1 r2 g2 b2)
-  (multiple-value-bind (h1 s1 v1) (lem:rgb-to-hsv r1 g1 b1)
-    (multiple-value-bind (h2 s2 v2) (lem:rgb-to-hsv r2 g2 b2)
+(defun rgb-to-hsv-distance (color-1 color-2)
+  (multiple-value-bind (h1 s1 v1) (lem:rgb-to-hsv color-1)
+    (multiple-value-bind (h2 s2 v2) (lem:rgb-to-hsv color-2)
       (let ((h (abs (- h1 h2)))
             (s (abs (- s1 s2)))
             (v (abs (- v1 v2))))
         (+ (* h h) (* s s) (* v v))))))
 
-(defun get-color-rgb (r g b)
+(defun get-color-rgb (color-1)
   (let ((min most-positive-fixnum)
-        (best-color))
-    (loop :for color :across *colors*
+        (best-color)
+        (best-number))
+    (loop :for color-2 :across *colors*
+          :for color-number :from 0
           :do (let ((dist (rgb-to-hsv-distance
-                           r g b
-                           (color-red color) (color-green color) (color-blue color))))
+                           color-1
+                           color-2)))
                 (when (< dist min)
-                  (setf min dist)
-                  (setf best-color color))))
-    (color-number best-color)))
+                  (setf min dist
+                        best-color color-2
+                        best-number color-number))))
+    best-number))
 
 (defun get-color-1 (string)
   (alexandria:when-let ((color (lem:parse-color string)))
-    (get-color-rgb (lem:color-red color)
-                   (lem:color-green color)
-                   (lem:color-blue color))))
+    (get-color-rgb color)))
 
 (defun get-color (string)
   (let ((color (get-color-1 string)))
@@ -376,16 +372,6 @@
             ((< *pair-counter* *color-pairs*)
              (init-pair pair-color))
             (t 0)))))
-
-#+(or)
-(defun get-color-content (n)
-  (cffi:with-foreign-pointer (r (cffi:foreign-type-size '(:pointer :short)))
-    (cffi:with-foreign-pointer (g (cffi:foreign-type-size '(:pointer :short)))
-      (cffi:with-foreign-pointer (b (cffi:foreign-type-size '(:pointer :short)))
-        (charms/ll:color-content n r g b)
-        (list (cffi:mem-ref r :short)
-              (cffi:mem-ref g :short)
-              (cffi:mem-ref b :short))))))
 
 (defun get-default-colors ()
   (cffi:with-foreign-pointer (f (cffi:foreign-type-size '(:pointer :short)))
@@ -420,12 +406,9 @@
 
 (defun background-color ()
   (let ((b (nth-value 1 (get-default-colors))))
-    (cond ((= b -1) (lem:make-color 0 0 0))
-          (t
-           (let ((color (aref *colors* b)))
-             (lem:make-color (color-red color)
-                             (color-green color)
-                             (color-blue color)))))))
+    (if (= b -1)
+        (lem:make-color 0 0 0)
+        (aref *colors* b))))
 
 ;;;
 
@@ -498,6 +481,7 @@
   (charms/ll:delscreen charms/ll:*stdscr*))
 
 (defun update-cursor-shape (cursor-type)
+  (check-type cursor-type lem:cursor-type)
   (uiop:run-program `("printf"
                       ,(format nil "~C[~D q"
                                #\Esc

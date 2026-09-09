@@ -76,6 +76,7 @@ see : https://docs.oracle.com/javase/specs/jls/se8/html/jls-3.html
      :mode-hook *java-mode-hook*)
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'indent-tabs-mode) nil
+        (variable-value 'calc-indent-function) 'lem-c-mode::calc-indent
         (variable-value 'tab-width) 2
         (variable-value 'line-comment) "//"))
 

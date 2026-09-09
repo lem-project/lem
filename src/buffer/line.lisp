@@ -4,14 +4,16 @@
            :content-string
            :content-attributes
            :line
-           :line-prev
+           :line-previous
            :line-next
-           :line-str
+           :line-string
+           :set-line-string
            :line-plist
            :line-syntax-context
            :line-points
            :make-line
            :make-empty-line
+           :line-free
            :line-alive-p
            :line-char
            :line-length
@@ -29,54 +31,95 @@
            :line-search-property
            :line-search-property-range
            :line-property-insert-pos
-           :line-property-insert-newline
-           :line-property-delete-pos
-           :line-property-delete-line
+           :line-delete-property-region
            :line-string/attributes
-           :line-free))
+           :line-substring
+           :insert-string
+           :insert-newline
+           :delete-region
+           :merge-with-next-line))
 (in-package :lem/buffer/line)
 
 (defstruct content
   string
   attributes)
 
-(defstruct (line (:constructor %make-line))
-  prev
-  next
-  str
-  plist
-  syntax-context
-  points)
+(defclass line ()
+  ((previous
+    :initarg :previous
+    :initform nil
+    :accessor line-previous)
+   (next
+    :initarg :next
+    :initform nil
+    :accessor line-next)
+   (string
+    :initarg :string
+    :initform nil
+    :reader line-string
+    :writer set-line-string
+    :documentation "Raw text of the line as a simple-string.
+
+`set-line-string' is the writer for this slot, exposed as a fast-path
+API for renderers that fully own a buffer (e.g. the terminal extension)
+and need to replace a line's text without going through the
+buffer-edit machinery (change hooks, undo, marker shifting).  Do not
+call it from code that participates in normal editing.")
+   (plist
+    :initarg :plist
+    :initform nil
+    :accessor line-plist)
+   (syntax-context
+    :initarg :syntax-context
+    :initform nil
+    :accessor line-syntax-context)
+   (points
+    :initarg :points
+    :initform nil
+    :accessor line-points)))
 
 (defmethod print-object ((object line) stream)
   (print-unreadable-object (object stream :identity t :type t)
     (format stream "string: ~S, plist: ~S"
-            (line-str object)
+            (line-string object)
             (line-plist object))))
 
-(defun make-line (prev next str)
-  (let ((line (%make-line :next next
-                          :prev prev
-                          :str str)))
+(defun make-line (previous next string)
+  (let ((line (make-instance 'line
+                             :next next
+                             :previous previous
+                             :string string)))
     (when next
-      (setf (line-prev next) line))
-    (when prev
-      (setf (line-next prev) line))
+      (setf (line-previous next) line))
+    (when previous
+      (setf (line-next previous) line))
     line))
 
 (defun make-empty-line ()
   (make-line nil nil ""))
 
+(defun line-free (line)
+  (when (line-previous line)
+    (setf (line-next (line-previous line))
+          (line-next line)))
+  (when (line-next line)
+    (setf (line-previous (line-next line))
+          (line-previous line)))
+  (setf (line-previous line) nil)
+  (setf (line-next line) nil)
+  (setf (line-points line) nil)
+  (set-line-string nil line))
+
 (defun line-alive-p (line)
-  (not (null (line-str line))))
+  (not (null (line-string line))))
 
 (defun line-char (line i)
   (if (= i (line-length line))
       #\newline
-      (char (line-str line) i)))
+      (char (line-string line) i)))
 
 (defun line-length (line)
-  (length (line-str line)))
+  (length (line-string line)))
 
 (defun remove-elements (elements start end)
   (iter:iter (iter:for (start1 end1 value1) iter:in elements)
@@ -94,23 +137,43 @@
        (iter:collect (list start1 end1 value1))))))
 
 (defun normalization-elements (elements)
-  (flet ((start (elt) (first elt))
-         (end (elt) (second elt))
-         (value (elt) (third elt)))
-    (setf elements (sort elements #'< :key #'first))
-    (iter:iter (iter:until (null elements))
-      (cond
-        ((and (eql (end (first elements))
-                   (start (second elements)))
-              (equal (value (first elements))
-                     (value (second elements))))
-         (iter:collect (list (start (first elements))
-                             (end (second elements))
-                             (value (first elements))))
-         (setf elements (cddr elements)))
-        (t
-         (iter:collect (first elements))
-         (setf elements (cdr elements)))))))
+  (declare (optimize (speed 3) (safety 1)))
+  ;; Early exit for empty or single-element lists
+  (cond
+    ((null elements) nil)
+    ((null (cdr elements)) elements)
+    (t
+     ;; Check if already sorted to avoid unnecessary sorting
+     (unless (sorted-elements-p elements)
+       (setf elements (sort (copy-list elements) #'< :key #'first)))
+     ;; Optimized merge loop using direct list manipulation
+     (normalize-sorted-elements elements))))
+
+(defun sorted-elements-p (elements)
+  "Check if elements are already sorted by start position"
+  (declare (optimize (speed 3) (safety 1)))
+  (loop for (current next) on elements
+        while next
+        always (<= (first current) (first next))))
+
+(defun normalize-sorted-elements (elements)
+  "Normalize sorted elements by merging adjacent ones with same values"
+  (declare (optimize (speed 3) (safety 1)))
+  (loop with result = '()
+        with current = (first elements)
+        for next in (rest elements)
+        do (if (and (eql (second current) (first next))
+                   (equal (third current) (third next)))
+               ;; Merge adjacent elements with same value
+               (setf current (list (first current)
+                                  (second next)
+                                  (third current)))
+               ;; Different values or non-adjacent, add current and move to next
+               (progn
+                 (push current result)
+                 (setf current next)))
+        finally (push current result)
+                (return (nreverse result))))
 
 (defun subseq-elements (elements start end)
   (iter:iter (iter:for (start1 end1 value1) iter:in elements)
@@ -129,9 +192,77 @@
     (iter:collect (list (+ n start1) (+ n end1) value1))))
 
 (defun put-elements (elements start end value &optional contp)
-  (normalization-elements
-   (cons (list start end value contp)
-         (remove-elements elements start end))))
+  (declare (optimize (speed 3) (safety 1))
+           (type fixnum start end))
+  ;; Fast path: if elements is empty or already normalized and we're appending at end
+  (cond
+    ;; Empty case - no normalization needed
+    ((null elements)
+     (list (list start end value contp)))
+    ;; Single element case - check if we can merge
+    ((null (cdr elements))
+     (let ((elem (first elements)))
+       (if (and (eql (second elem) start)
+                (equal (third elem) value)
+                (eql (fourth elem) contp))
+           ;; Can merge with single element
+           (list (list (first elem) end value contp))
+           ;; Need to insert and potentially sort
+           (put-elements-general elements start end value contp))))
+    ;; Multiple elements - use optimized path
+    (t (put-elements-general elements start end value contp))))
+
+(defun put-elements-general (elements start end value &optional contp)
+  "General case for put-elements with optimization for pre-sorted input"
+  (declare (optimize (speed 3) (safety 1)))
+  (let ((new-element (list start end value contp))
+        (removed (remove-elements elements start end)))
+    ;; Check if we can avoid full normalization
+    (if (and removed
+             (sorted-elements-p removed)
+             (can-insert-without-normalization-p removed new-element))
+        (insert-sorted-element removed new-element)
+        (normalization-elements (cons new-element removed)))))
+
+(defun can-insert-without-normalization-p (sorted-elements new-element)
+  "Check if new element can be inserted without full normalization"
+  (declare (optimize (speed 3) (safety 1)))
+  (let ((new-start (first new-element))
+        (new-end (second new-element))
+        (new-value (third new-element)))
+    ;; Find insertion position and check for merge possibilities
+    (loop for elem in sorted-elements
+          for elem-start = (first elem)
+          for elem-end = (second elem)
+          for elem-value = (third elem)
+          when (> elem-start new-end)
+            return t  ;; Can insert before this element
+          when (and (eql elem-end new-start) (equal elem-value new-value))
+            return nil  ;; Would need merging
+          when (and (eql new-end elem-start) (equal new-value elem-value))
+            return nil  ;; Would need merging
+          finally (return t))))
+
+(defun insert-sorted-element (sorted-elements new-element)
+  "Insert element into sorted list maintaining order"
+  (declare (optimize (speed 3) (safety 1)))
+  (let ((new-start (first new-element)))
+    (cond
+      ;; Insert at beginning
+      ((<= new-start (first (first sorted-elements)))
+       (cons new-element sorted-elements))
+      ;; Insert at end
+      ((>= new-start (first (car (last sorted-elements))))
+       (append sorted-elements (list new-element)))
+      ;; Insert in middle
+      (t (loop with result = '()
+               with inserted = nil
+               for elem in sorted-elements
+               when (and (null inserted) (< new-start (first elem)))
+                 do (push new-element result)
+                    (setf inserted t)
+               do (push elem result)
+               finally (return (nreverse result)))))))
 
 (defun merge-plist (plist1 plist2)
   (let ((new-plist '()))
@@ -143,7 +274,7 @@
       (f plist2))
     new-plist))
 
-(defun line-merge (curr-line next-line pos)
+(defun line-merge-plist (curr-line next-line pos)
   (setf (line-plist curr-line)
         (merge-plist
          (line-plist curr-line)
@@ -230,45 +361,36 @@
                   (setf (getf new-plist (car plist-rest)) new-values))))
     (setf (line-plist next-line) new-plist)))
 
-(defun line-property-delete-pos (line pos n)
+(defun line-delete-property-region (line start &optional end)
+  (unless end (setf end (line-length line)))
+  (assert (<= start end))
   (loop :for plist-rest :on (line-plist line) :by #'cddr
         :do (setf (cadr plist-rest)
                   (loop :for elt :in (cadr plist-rest)
-                        :for (start end value) := elt
+                        :for (start1 end1 value) := elt
 
-                        :if (<= pos start end (+ pos n -1))
+                        :if (<= start start1 end1 (1- end))
                         :do (progn)
 
-                        :else :if (<= pos (+ pos n) start)
-                        :collect (list (- start n) (- end n) value)
+                        :else :if (<= start end start1)
+                        :collect (list (- start1 (- end start))
+                                       (- end1 (- end start))
+                                       value)
 
-                        :else :if (< pos start (+ pos n))
-                        :collect (list pos (- end n) value)
+                        :else :if (< start start1 end)
+                        :collect (list start (- end1 (- end start)) value)
 
-                        :else :if (<= start pos (+ pos n) end)
-                        :collect (list start (- end n) value)
+                        :else :if (<= start1 start end end1)
+                        :collect (list start1 (- end1 (- end start)) value)
 
-                        :else :if (<= start pos end (+ pos n))
-                        :collect (list start pos value)
+                        :else :if (<= start1 start end1 end)
+                        :collect (list start1 start value)
 
                         :else
                         :collect elt))))
 
-(defun line-property-delete-line (line pos)
-  (loop :for plist-rest :on (line-plist line) :by #'cddr
-        :do (setf (cadr plist-rest)
-                  (loop :for elt :in (cadr plist-rest)
-                        :for (start end value) := elt
-                        :if (<= pos start)
-                        :do (progn)
-                        :else :if (<= pos end)
-                        :collect (list start pos value)
-                        :else
-                        :collect elt
-                        ))))
-
 (defun line-string/attributes (line)
-  (cons (line-str line)
+  (cons (line-string line)
         (alexandria:if-let (sticky-attribute (getf (line-plist line) :sticky-attribute))
           (loop :with attributes := (getf (line-plist line) :attribute)
                 :for (start end value contp) :in sticky-attribute
@@ -276,14 +398,40 @@
                 :finally (return attributes))
           (getf (line-plist line) :attribute))))
 
-(defun line-free (line)
-  (when (line-prev line)
-    (setf (line-next (line-prev line))
-          (line-next line)))
-  (when (line-next line)
-    (setf (line-prev (line-next line))
-          (line-prev line)))
-  (setf (line-prev line) nil
-        (line-next line) nil
-        (line-str line) nil
-        (line-points line) nil))
+(defun line-substring (line &key (start 0) end)
+  (cond ((and (= start 0) (or (null end) (= end (line-length line))))
+         (line-string line))
+        (t
+         (subseq (line-string line) start end))))
+
+(defun insert-string (line string index)
+  (line-property-insert-pos line index (length string))
+  (set-line-string (concatenate 'string
+                                (line-substring line :start 0 :end index)
+                                string
+                                (line-substring line :start index))
+                   line))
+
+(defun insert-newline (line position)
+  (let ((before-string (line-substring line :start 0 :end position))
+        (after-string (line-substring line :start position)))
+    (set-line-string before-string line)
+    (let ((next (make-line line (line-next line) after-string)))
+      (line-property-insert-newline line next position))))
+
+(defun delete-region (line &key start end)
+  (line-delete-property-region line start end)
+  (set-line-string (concatenate 'string
+                                (line-substring line :start 0 :end start)
+                                (line-substring line :start (or end (line-length line))))
+                   line))
+
+(defun merge-with-next-line (line &key (start 0))
+  (assert (line-next line))
+  (line-delete-property-region line start)
+  (line-merge-plist line (line-next line) start)
+  (set-line-string (concatenate 'string
+                                (line-substring line :start 0 :end start)
+                                (line-string (line-next line)))
+                   line)
+  (line-free (line-next line)))

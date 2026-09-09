@@ -1,57 +1,67 @@
 {
-  "workspace":{
-  },
-  "textDocument":{
-    "synchronization":{
+  "workspace": {},
+  "textDocument": {
+    "synchronization": {
       "didSave": true
     },
     "publishDiagnostics": {
       "relatedInformation": true
     },
-    "completion":{
-      "completionItem":{
+    "completion": {
+      "completionItem": {
         "snippetSupport": false
       },
-      "contextSupport":true
+      "contextSupport": true
     },
-    "hover":{
-    },
-    "signatureHelp":{
-      "signatureInformation":{
-        "documentationFormat":[
+    "hover": {},
+    "signatureHelp": {
+      "signatureInformation": {
+        "documentationFormat": [
           "plaintext",
           "markdown"
         ],
-        "parameterInformation":{
-          "labelOffsetSupport":true
+        "parameterInformation": {
+          "labelOffsetSupport": true
         },
         "activeParameterSupport": true
       },
       "contextSupport": true
     },
-    "definition":{
-      "linkSupport":false
+    "definition": {
+      "linkSupport": false
     },
-    "typeDefinition":{
-      "linkSupport":false
+    "typeDefinition": {
+      "linkSupport": false
     },
-    "implementation":{
-      "linkSupport":false
+    "implementation": {
+      "linkSupport": false
     },
-    "references":{
+    "references": {},
+    "documentSymbol": {
+      "hierarchicalDocumentSymbolSupport": true
     },
-    "documentSymbol":{
-      "hierarchicalDocumentSymbolSupport":true
+    "codeAction": {
+      "isPreferredSupport": true,
+      "disabledSupport": true,
+      "codeActionLiteralSupport": {
+        "codeActionKind": {
+          "valueSet": [
+            "",
+            "quickfix",
+            "refactor",
+            "refactor.extract",
+            "refactor.inline",
+            "refactor.rewrite",
+            "source",
+            "source.organizeImports"
+          ]
+        }
+      },
+      "dynamicRegistration": false
     },
-    "codeAction":{
-    },
-    "formatting":{
-    },
-    "rangeFormatting":{
-    },
-    "onTypeFormatting":{
-    },
-    "rename":{
-    }
+    "formatting": {},
+    "rangeFormatting": {},
+    "onTypeFormatting": {},
+    "rename": {}
   }
 }

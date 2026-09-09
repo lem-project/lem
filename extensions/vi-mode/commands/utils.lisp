@@ -61,7 +61,10 @@
             (1- len)))))
 
 (defun fall-within-line (point)
-  (when (eolp point)
+  "Clamps the given point to the character before the newline at the end of the line it is in."
+  ;; a buffer-line end whose newline is hidden by a fold is mid-visual-line, so we dont clamp.
+  (when (and (eolp point)
+             (not (invisible-overlay-covering point)))
     (line-end point)
     (unless (bolp point)
       (character-offset point *cursor-offset*))))
@@ -94,9 +97,9 @@
      (values () ()))
     ((eq (first arg-list) '&optional)
      (values
-       arg-list
-       '("p")
-       (second (ensure-list (second arg-list)))))
+      arg-list
+      '("p")
+      (second (ensure-list (second arg-list)))))
     (t (values arg-list '("P") nil))))
 
 (defmacro define-motion (name arg-list arg-descriptors (&key type jump (repeat :motion) (default-n-arg 1)) &body body)
@@ -117,7 +120,7 @@
          (n (or n
                 (typecase command
                   (vi-motion
-                    (vi-motion-default-n-arg command))
+                   (vi-motion-default-n-arg command))
                   (otherwise 1))))
          (lem-core::*universal-argument* n))
     (execute (lem-core::get-active-modes-class-instance (current-buffer))
@@ -178,7 +181,7 @@
               ((visual-block-p) :block)
               (t :exclusive))))))
 
-(defun operator-region (motion &key move-point with-type)
+(defun operator-region (motion &key with-type)
   (multiple-value-bind (start end type)
       (multiple-value-bind (start end type)
           (if (visual-p)
@@ -200,16 +203,7 @@
     (multiple-value-prog1
         (if with-type
             (values start end type)
-            (values start end))
-      (when move-point
-        (if (eq type :block)
-            (with-point ((p (current-point)))
-              (move-to-line p (min (line-number-at-point start)
-                                   (line-number-at-point end)))
-              (move-to-column p (min (point-column start)
-                                     (point-column end)))
-              (move-point (current-point) p))
-            (move-point (current-point) start))))))
+            (values start end)))))
 
 (defun call-define-operator (fn &key keep-visual restore-point)
   (with-point ((*vi-origin-point* (current-point)))
@@ -221,16 +215,16 @@
           (when (visual-p)
             (vi-visual-end)))))))
 
-(defun parse-arg-descriptors (arg-descriptors &key motion move-point)
+(defun parse-arg-descriptors (arg-descriptors &key motion)
   `(values-list
     (append
      ,@(mapcar (lambda (arg-descriptor)
                  (if (stringp arg-descriptor)
                      (cond
                        ((string= arg-descriptor "<r>")
-                        `(multiple-value-list (operator-region ',motion :move-point ,move-point)))
+                        `(multiple-value-list (operator-region ',motion)))
                        ((string= arg-descriptor "<R>")
-                        `(multiple-value-list (operator-region ',motion :move-point ,move-point :with-type t)))
+                        `(multiple-value-list (operator-region ',motion :with-type t)))
                        ((string= arg-descriptor "<v>")
                         '(multiple-value-list (visual-region)))
                        ((string= arg-descriptor "p")
@@ -240,15 +234,28 @@
                      `(multiple-value-list ,arg-descriptor)))
                arg-descriptors))))
 
+(defun move-point-to-start (start end mode)
+  (if (eq mode :block)
+      (with-point ((p (current-point)))
+        (move-to-line p (min (line-number-at-point start)
+                             (line-number-at-point end)))
+        (move-to-column p (min (point-column start)
+                               (point-column end)))
+        (move-point (current-point) p))
+      (move-point (current-point) start)))
+
+
 (defmacro define-operator (name arg-list arg-descriptors
                            (&key motion keep-visual (move-point t) (repeat t) restore-point)
                            &body body)
   `(define-command (,name (:advice-classes vi-operator)
                           (:initargs :repeat ,repeat)) ,arg-list
-       (,(parse-arg-descriptors arg-descriptors :motion motion :move-point move-point))
-     (call-define-operator (lambda () ,@body)
-                              :keep-visual ,keep-visual
-                              :restore-point ,restore-point)))
+       (,(parse-arg-descriptors arg-descriptors :motion motion))
+     (call-define-operator (lambda () ,@body
+                             (when ,move-point
+                               (move-point-to-start ,(first arg-list) ,(second arg-list) ,(third arg-list))))
+                           :keep-visual ,keep-visual
+                           :restore-point ,restore-point)))
 
 (defun call-define-text-object-command (fn &key expand-selection)
   (flet ((expand-visual-range (range)
@@ -278,8 +285,11 @@
 
 (defmacro define-text-object-command (name arg-list arg-descriptors (&key expand-selection)
                                       &body body)
-  `(define-command (,name (:advice-classes vi-text-object)) ,arg-list
-       (,(parse-arg-descriptors arg-descriptors))
-     (call-define-text-object-command
-      (lambda () ,@body)
-      :expand-selection ,expand-selection)))
+  "Define a text-object command. An optional docstring may appear as the first form of BODY."
+  (let ((docstring (when (stringp (car body)) (pop body))))
+    `(define-command (,name (:advice-classes vi-text-object)) ,arg-list
+         (,(parse-arg-descriptors arg-descriptors))
+       ,@(when docstring (list docstring))
+       (call-define-text-object-command
+        (lambda () ,@body)
+        :expand-selection ,expand-selection))))

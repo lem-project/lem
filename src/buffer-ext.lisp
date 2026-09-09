@@ -6,7 +6,9 @@
   (dolist (window (get-buffer-windows buffer :frame frame :include-floating-windows t))
     (with-current-window window
       (switch-to-buffer (or (get-previous-buffer buffer)
-                            (first (last (buffer-list))))))))
+                            (first (last (buffer-list))))))
+    (when (buffer-attached-buffer buffer)
+      (delete-buffer (buffer-attached-buffer buffer)))))
 
 (defmethod delete-buffer-using-manager :before
     ((manager buffer-list-manager)

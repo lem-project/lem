@@ -3,7 +3,7 @@
 (define-major-mode lem/buffer/fundamental-mode:fundamental-mode nil
     (:name "Fundamental"))
 
-(defvar *global-keymap* (make-keymap :name '*global-keymap*))
+(defvar *global-keymap* (make-keymap :description '*global-keymap*))
 
 (define-global-mode emacs-mode ()
   (:name "emacs"

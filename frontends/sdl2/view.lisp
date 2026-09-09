@@ -13,6 +13,7 @@
    :draw-window-border
    :render-border-using-view
    :render-view-texture-to-display
+   :refresh-all-view-textures
    :view-window
    :view-x
    :view-y
@@ -101,15 +102,15 @@
         (view-y view) y))
 
 (defmethod draw-window-border (view display (window lem:floating-window))
-  (when (and (lem:floating-window-border window)
-             (< 0 (lem:floating-window-border window)))
+  (when (and (lem:window-border window)
+             (< 0 (lem:window-border window)))
     (sdl2:set-render-target (display:display-renderer display) (display:display-texture display))
     (display:render-border display
-                                     (lem:window-x window)
-                                     (lem:window-y window)
-                                     (lem:window-width window)
-                                     (lem:window-height window)
-                                     :without-topline (eq :drop-curtain (lem:floating-window-border-shape window)))))
+                           (lem:window-x window)
+                           (lem:window-y window)
+                           (lem:window-width window)
+                           (lem:window-height window)
+                           :border-type (lem:floating-window-border-shape window))))
 
 (defmethod draw-window-border (view display (window lem:window))
   (when (< 0 (lem:window-x window))
@@ -131,3 +132,27 @@
     (sdl2:render-copy (display:display-renderer display)
                       (view-texture view)
                       :dest-rect dest-rect)))
+
+(defun refresh-all-view-textures (display)
+  "Recreate the SDL texture backing every live view at the current
+display char dimensions.  Called via `display:*post-display-change-hooks*'
+whenever a DPI-driven font swap changes `display:display-char-width' /
+`display:display-char-height' without changing the col/row count of any
+window (the canonical Retina \u2194 standard-DPI move case).  In that
+situation `lem-if:set-view-size' is a no-op \u2014 `window-set-size'
+short-circuits when width/height are unchanged \u2014 so view textures
+would otherwise stay sized at the *old* char metrics and leak through
+as scaled or clipped artifacts (the buffer occupying only the
+upper-left quarter of the window)."
+  (dolist (window (append (lem:window-list)
+                          (lem:frame-floating-windows (lem:current-frame))))
+    (let ((view (lem:window-view window)))
+      (when (typep view 'view)
+        (when (view-texture view)
+          (sdl2:destroy-texture (view-texture view)))
+        (setf (view-texture view)
+              (display:create-view-texture display
+                                           (max (view-width view) 1)
+                                           (max (view-height view) 1)))))))
+
+(display:add-post-display-change-hook 'refresh-all-view-textures)

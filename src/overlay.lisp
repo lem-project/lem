@@ -116,10 +116,10 @@
 (defun overlay-get (overlay key)
   (getf (overlay-plist overlay) key))
 
-(defun buffer-overlays (buffer)
+(defun buffer-overlays (&optional (buffer (current-buffer)))
   (buffer-value buffer 'overlays))
 
-(defun clear-overlays (buffer)
+(defun clear-overlays (&optional (buffer (current-buffer)))
   (mapc #'delete-overlay (buffer-overlays buffer)))
 
 (defun point-overlays (point)

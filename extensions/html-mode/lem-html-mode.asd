@@ -1,6 +1,8 @@
 (defsystem "lem-html-mode"
-  :depends-on ("lem"
+  :depends-on ("lem/core"
                "lem-xml-mode"
+               "lem-js-mode"
+               "lem-css-mode"
                "cl-ppcre")
   :serial t
   :components ((:file "html-mode")))

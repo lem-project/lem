@@ -1,23 +1,23 @@
 ("quicklisp" .
  (:class qlot/source/dist:source-dist
-  :initargs (:distribution "http://beta.quicklisp.org/dist/quicklisp.txt" :%version :latest)
-  :version "2023-06-18"))
+  :initargs (:distribution "https://beta.quicklisp.org/dist/quicklisp.txt" :%version :latest)
+  :version "2025-06-22"))
+("uiop" .
+ (:class qlot/source/ql:source-ql
+  :initargs (:%version :latest)
+  :version "ql-2024-10-12"))
 ("micros" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/micros.git")
-  :version "git-994d4d67467ec1b6eddacad9dba385b42101679e"))
+  :version "git-08c313476bf436d72bcd5cd8f4e494d9f9323d08"))
 ("lem-mailbox" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/lem-mailbox.git")
   :version "git-12d629541da440fadf771b0225a051ae65fa342a"))
-("lem-base16-themes" .
- (:class qlot/source/git:source-git
-  :initargs (:remote-url "https://github.com/lem-project/lem-base16-themes.git")
-  :version "git-07dacae6c1807beaeffc730063b54487d5c82eb0"))
 ("async-process" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/async-process.git")
-  :version "git-9690530fc92b59636d9f17d821afa7697e7c8ca4"))
+  :version "git-ad9f07c1b09dfa1c9bd8eb2b9d5588baf278b113"))
 ("sblint" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/cxxxr/sblint.git")
@@ -25,7 +25,7 @@
 ("rove" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/fukamachi/rove.git")
-  :version "git-f168cd177b5f83f171dd970dc1a9abb6eb43f044"))
+  :version "git-27c17044e647367ce8379c11b2f937e5024fb220"))
 ("cl-sdl2" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/cl-sdl2.git")
@@ -33,7 +33,7 @@
 ("cl-sdl2-ttf" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/cl-sdl2-ttf.git")
-  :version "git-e61bb2119003d8ae7792d38aa11f7728d3ee5a00"))
+  :version "git-f43344efe89cf9ce509e6ce4f7303ebb2ff14434"))
 ("cl-sdl2-image" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/cl-sdl2-image.git")
@@ -41,8 +41,24 @@
 ("jsonrpc" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/cxxxr/jsonrpc.git")
-  :version "git-28c4c962cfe936c7cd00dcab3bcae47b6f9de071"))
+  :version "git-42fa96ec34f6b6be77a6f12f7c4e84f375eff019"))
 ("cl-template" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/alpha123/cl-template")
   :version "git-46193a9a389bb950530e579eae7e6e5a18184832"))
+("named-readtables" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/melisgl/named-readtables.git")
+  :version "git-fb2aa150440b3368c2ae6bf0ce5e959e3b755a35"))
+("lem-extension-manager" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/lem-project/lem-extension-manager.git")
+  :version "git-d467164b0f3e1a479031ec7097fa6fb0cd9d9d09"))
+("webview" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/lem-project/webview.git")
+  :version "git-607daff93e9e716a76c5dbd08c48b5233c96b9a3"))
+("tree-sitter-cl" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/lem-project/tree-sitter-cl.git")
+  :version "git-bfc3471b165856a20c3379f538a00ec256785a44"))

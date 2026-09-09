@@ -9,7 +9,7 @@
 (defvar *overlays* '())
 
 (defvar *rectangle-mark-mode-keymap*
-  (make-keymap :name '*rectangle-mark-mode-keymap*
+  (make-keymap :description '*rectangle-mark-mode-keymap*
                :undef-hook 'rectangle-self-insert))
 
 (define-minor-mode rectangle-mark-mode
@@ -126,7 +126,7 @@
   (let ((rectangle-command-name (alexandria:symbolicate '#:rectangle- name)))
     `(progn
        (define-key *rectangle-mark-mode-keymap* ',name ',rectangle-command-name)
-       (define-command ,rectangle-command-name (arg) ("p")
+       (define-command ,rectangle-command-name (arg) (:universal)
          (declare (ignorable arg))
          (,name ,@args)
          (update-overlay)))))

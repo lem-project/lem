@@ -44,6 +44,7 @@
     ;; == part 1 ==
     ("begin"                          t   t   0)
     ("case"                           t   t   (4 &rest (&whole 2 &rest 1)))
+    ("def"                            t   t   1)
     ("define"                         t   t   1)
     ("define-library"                 t   t   1)
     ("define-record-type"             t   t   3)

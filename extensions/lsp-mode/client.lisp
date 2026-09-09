@@ -35,7 +35,7 @@
             :reader stdio-client-process)))
 
 (defmethod lem-language-client/client:jsonrpc-connect ((client stdio-client))
-  (jsonrpc/class::client-connect-using-class (lem-language-client/client:client-connection client)
+  (jsonrpc/client:client-connect-using-class (lem-language-client/client:client-connection client)
                                              'lem-stdio-transport
                                              :process (stdio-client-process client)))
 

@@ -6,6 +6,12 @@
    :idle-function
    :beginning-of-defun-function
    :end-of-defun-function
+   :fold-region-function
+   :fold-toggle-at-point
+   :unfold-all
+   :comment-region
+   :uncomment-region
+   :comment-or-uncomment-region
    :line-comment
    :insertion-line-comment
    :find-definitions-function
@@ -15,6 +21,8 @@
    :language-mode-tag
    :buffer-language-mode
    :completion-spec
+   :complete-symbol
+   :pop-definition-stack
    :indent-size
    :root-uri-patterns
    :detective-search
@@ -55,6 +63,13 @@
 (define-editor-variable indent-size 2)
 (define-editor-variable root-uri-patterns '())
 (define-editor-variable detective-search nil)
+(define-editor-variable enable-tab-fold
+  t
+  "When T, the Tab key attempts to fold/unfold defuns and falls back to
+`indent-line-and-complete-symbol', otherwise it just invokes the latter.")
+(define-editor-variable fold-region-function
+  'fold-region-default
+  "Function of one point returning (values start end) for the foldable region at point, or NIL.")
 
 (defun prompt-for-symbol (prompt history-name)
   (prompt-for-string prompt :history-symbol history-name))
@@ -81,7 +96,7 @@
 
 (define-key *language-mode-keymap* "C-M-a" 'beginning-of-defun)
 (define-key *language-mode-keymap* "C-M-e" 'end-of-defun)
-(define-key *language-mode-keymap* "Tab" 'indent-line-and-complete-symbol)
+(define-key *language-mode-keymap* "Tab" 'fold-or-indent-or-complete)
 (define-key *global-keymap* "C-j" 'newline-and-indent)
 (define-key *global-keymap* "M-j" 'newline-and-indent)
 (define-key *language-mode-keymap* "C-M-\\" 'indent-region)
@@ -91,26 +106,79 @@
 (define-key *language-mode-keymap* "M-?" 'find-references)
 (define-key *language-mode-keymap* "M-," 'pop-definition-stack)
 (define-key *language-mode-keymap* "C-M-i" 'complete-symbol)
-(define-key *global-keymap* "M-(" 'insert-\(\))
-(define-key *global-keymap* "M-)" 'move-over-\))
+(define-key *global-keymap* "M-(" 'insert-\(\)-or-wrap)
+(define-key *global-keymap* "M-)" 'move-over-\)-or-wrap)
 
 (defun beginning-of-defun-1 (n)
   (alexandria:when-let ((fn (variable-value 'beginning-of-defun-function :buffer)))
     (when fn (funcall fn (current-point) n))))
 
-(define-command (beginning-of-defun (:advice-classes movable-advice)) (n) ("p")
+(define-command (beginning-of-defun (:advice-classes movable-advice)) (n) (:universal)
   (if (minusp n)
       (end-of-defun (- n))
       (beginning-of-defun-1 n)))
 
-(define-command (end-of-defun (:advice-classes movable-advice)) (n) ("p")
+(define-command (end-of-defun (:advice-classes movable-advice)) (n) (:universal)
   (if (minusp n)
       (beginning-of-defun (- n))
       (alexandria:if-let ((fn (variable-value 'end-of-defun-function :buffer)))
         (funcall fn (current-point) n)
         (beginning-of-defun-1 (- n)))))
 
-(define-command (indent (:advice-classes editable-advice)) (&optional (n 1)) ("p")
+(defun fold-region-default (point)
+  "Return (values start end) spanning the defun at POINT, or NIL."
+  (let ((defun-begin (variable-value 'beginning-of-defun-function :buffer point))
+        (defun-end (variable-value 'end-of-defun-function :buffer point)))
+    (when (and defun-begin defun-end)
+      (let ((start (copy-point point :temporary))
+            (end (copy-point point :temporary)))
+        (funcall defun-end end 1)
+        (move-point start end)
+        (funcall defun-begin start 1)
+        (when (point< start end)
+          (values start end))))))
+
+(defun fold-overlay-at (point)
+  "The fold overlay whose header line is POINT's line, or NIL."
+  (find-if
+   (lambda (overlay)
+     (and (overlay-get overlay :fold)
+          (same-line-p (overlay-start overlay) point)))
+   (buffer-overlays (point-buffer point))))
+
+(defun fold-defun-at (point)
+  "Fold the defun at POINT. Returns T when something was folded."
+  (let ((fn (variable-value 'fold-region-function :default point)))
+    (multiple-value-bind (start end) (funcall fn point)
+      (when (and start end
+                 (not (same-line-p start end))
+                 (same-line-p start point))
+        (let ((overlay (place-region-placeholder-overlay start end :is-line-fold t)))
+          (move-point point start)
+          (overlay-put overlay :fold t)
+          overlay)))))
+
+(defun fold-toggle-at-point (&optional (point (current-point)))
+  "Toggle the fold at POINT. returns T when a fold was added or removed, and NIL when there was
+nothing to fold."
+  (let ((fold (fold-overlay-at point)))
+    (cond (fold (delete-overlay fold) t)
+          ((fold-defun-at point) t)
+          (t nil))))
+
+(define-command fold-or-indent-or-complete () ()
+  "Fold or unfold the defun at point. otherwise indent and complete the symbol."
+  (unless (and (variable-value 'enable-tab-fold)
+               (fold-toggle-at-point))
+    (indent-line-and-complete-symbol)))
+
+(define-command unfold-all () ()
+  "Remove every fold in the current buffer."
+  (dolist (overlay (copy-list (buffer-overlays)))
+    (when (overlay-get overlay :fold)
+      (delete-overlay overlay))))
+
+(define-command (indent (:advice-classes editable-advice)) (&optional (n 1)) (:universal)
   (if (variable-value 'calc-indent-function)
       (indent-line (current-point))
       (self-insert n)))
@@ -122,12 +190,12 @@
     (line-end end)
     (delete-between-points start end)))
 
-(define-command (newline-and-indent (:advice-classes editable-advice)) (n) ("p")
+(define-command (newline-and-indent (:advice-classes editable-advice)) (n) (:universal)
   (trim-eol (current-point))
   (insert-character (current-point) #\newline n)
   (indent-line (current-point)))
 
-(define-command indent-region (start end) ("r")
+(define-command indent-region (start end) (:region)
   (indent-points start end))
 
 (defmethod execute :around (mode
@@ -153,11 +221,18 @@
       (uncomment-region)
       (comment-region)))
 
+(defun select-current-line-if-no-region-is-selected (start end)
+  (when (point= start end)
+    (setf start (line-start start))
+    (setf end (line-end end))))
+
 (defun commented-region-p ()
   (alexandria:when-let ((line-comment (variable-value 'line-comment :buffer)))
     (with-point ((start (current-point))
                  (end (current-point)))
       (set-region-point-using-global-mode (current-global-mode) start end)
+      (select-current-line-if-no-region-is-selected start end)
+      
       (loop
         (skip-whitespace-forward start)
         (when (point>= start end)
@@ -175,6 +250,8 @@
         (with-point ((start (current-point) :right-inserting)
                      (end (current-point) :left-inserting))
           (set-region-point-using-global-mode (current-global-mode) start end)
+          (select-current-line-if-no-region-is-selected start end)
+          
           (skip-whitespace-forward start)
           (when (point>= start end)
             (insert-string (current-point) line-comment)
@@ -185,12 +262,17 @@
                 (cond ((space*-p start))
                       ((indentation-point-p end))
                       (t
+                       (line-start start)
+                       (skip-whitespace-forward start)
                        (insert-string start line-comment)
                        (unless (space*-p end)
-                         (insert-character end #\newline))))
+                           (insert-character end #\newline))))
                 (return))
               (unless (space*-p start)
-                (insert-string start line-comment))
+                (progn
+                  (line-start start)
+                  (skip-whitespace-forward start)
+                  (insert-string start line-comment)))
               (line-offset start 1 charpos))))))))
 
 (define-command (uncomment-region (:advice-classes editable-advice)) () ()
@@ -202,6 +284,8 @@
         (with-point ((start (current-point) :right-inserting)
                      (end (current-point) :right-inserting))
           (set-region-point-using-global-mode (current-global-mode) start end)
+          (select-current-line-if-no-region-is-selected start end)
+          
           (let ((p start))
             (loop
               (parse-partial-sexp p end nil t)
@@ -448,22 +532,37 @@
     (lem/completion-mode:run-completion completion)))
 
 (define-command indent-line-and-complete-symbol () ()
-  (if (variable-value 'calc-indent-function :buffer)
-      (let* ((p (current-point))
-             (old (point-charpos p)))
-        (let ((charpos (point-charpos p)))
-          (handler-case (indent-line p)
-            (editor-condition ()
-              (line-offset p 0 charpos))))
-        (when (= old (point-charpos p))
-          (complete-symbol)))
-      (complete-symbol)))
+  (cond
+    ;; If no indent function is defined then just complete-symbol
+    ((null (variable-value 'calc-indent-function :buffer))
+     (complete-symbol))
 
-(define-command (insert-\(\) (:advice-classes editable-advice)) () ()
-  (let ((p (current-point)))
-    (insert-character p #\()
-    (insert-character p #\))
-    (character-offset p -1)))
+    ;; Else if there is a highlighted region indent the region
+    ((buffer-mark-p (current-buffer))
+     (call-command 'indent-region nil))
+
+    ;; Else indent the line and complete-symbol if the cursor doesn't move
+    (t (let* ((p (current-point))
+              (old (point-charpos p))
+              (charpos (point-charpos p)))
+         (handler-case (indent-line p)
+           (editor-condition ()
+             (line-offset p 0 charpos)))
+         (when (= old (point-charpos p))
+           (complete-symbol))))))
+
+(define-command (insert-\(\)-or-wrap (:advice-classes editable-advice)) () ()
+  (if (mark-active-p (cursor-mark (current-point)))
+      (with-point ((start (cursor-region-beginning (current-point)))
+                   (end (cursor-region-end (current-point))))
+        (when (point< start (current-point))
+          (exchange-point-mark))
+        (insert-character end #\))
+        (insert-character start #\())
+      (let ((p (current-point)))
+        (insert-character p #\()
+        (insert-character p #\))
+        (character-offset p -1))))
 
 (defun backward-search-rper ()
   (save-excursion
@@ -486,16 +585,23 @@
       (delete-character p)
       (character-offset p -1))))
 
-(define-command (move-over-\) (:advice-classes movable-advice editable-advice)) () ()
-  (let ((rper (backward-search-rper)))
-    (if rper
-        (progn
-          (backward-delete-to-rper)
-          (scan-lists (current-point) 1 1 T)
-          (newline-and-indent 1))
-        (progn
-          (scan-lists (current-point) 1 1 T)
-          (newline-and-indent 1)))))
+(define-command (move-over-\)-or-wrap (:advice-classes movable-advice editable-advice)) () ()
+  (if (mark-active-p (cursor-mark (current-point)))
+      (with-point ((start (cursor-region-beginning (current-point)))
+                   (end (cursor-region-end (current-point))))
+        (when (point> end (current-point))
+          (exchange-point-mark))
+        (insert-character end #\))
+        (insert-character start #\())
+      (let ((rper (backward-search-rper)))
+        (if rper
+            (progn
+              (backward-delete-to-rper)
+              (scan-lists (current-point) 1 1 T)
+              (newline-and-indent 1))
+            (progn
+              (scan-lists (current-point) 1 1 T)
+              (newline-and-indent 1))))))
 
 (defun match-pattern-p (pattern file)
   (etypecase pattern

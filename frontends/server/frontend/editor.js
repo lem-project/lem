@@ -1,0 +1,1524 @@
+"use strict";
+
+import { JSONRPC } from './jsonrpc.js';
+import * as keyevent from './keyevent.js';
+import * as meaw from 'meaw';
+
+const textOffsetY = 5;
+
+const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+function isWideChar(c) {
+  switch (meaw.getEAW(c)) {
+    case 'F':
+    case 'W':
+      return true;
+    // following the recommendations in the Unicode Standard Annex #11,
+    // absent additional context, ambiguous width characters should be 
+    // treated as narrow
+    case 'A':
+    default:
+      return false;
+  }
+}
+
+function isMacOS() {
+  return window.navigator.userAgent.indexOf('Mac OS X') !== -1;
+}
+
+function computeFontSize(font) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.font = font;
+
+  const textMetrics = ctx.measureText('W');
+
+  return [
+    Math.floor(textMetrics.width),
+    Math.round(textMetrics.fontBoundingBoxAscent + textOffsetY + (textMetrics.emHeightDescent || 0)),
+  ];
+}
+
+function drawBlock({ ctx, x, y, width, height, style }) {
+  ctx.fillStyle = style;
+  ctx.fillRect(x, y, width, height);
+}
+
+function drawText({ ctx, x, y, text, font, style, option }) {
+  y += Math.round(textOffsetY); // 少しずらしておかないと上の部分が現在行からはみ出して、その行だけ再描画しても描画跡が残ってしまう
+  ctx.fillStyle = style;
+  ctx.font = font;
+  ctx.textBaseline = 'top';
+
+  for (const c of text) {
+    if (isWideChar(c)) {
+      ctx.fillText(c, x, y, option.fontWidth * 2);
+      x += option.fontWidth * 2;
+    } else {
+      ctx.fillText(c, x, y, option.fontWidth);
+      x += option.fontWidth;
+    }
+  }
+}
+
+function drawHorizontalLine({ ctx, x, y, width, style, lineWidth = 1 }) {
+  ctx.strokeStyle = style;
+  ctx.lineWidth = lineWidth;
+  ctx.setLineDash = [];
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + width, y);
+  ctx.stroke();
+}
+
+class Option {
+  constructor({ fontName, fontSize }) {
+    this.setFont(fontName, fontSize);
+    this.foreground = '#cccccc';
+    this.background = '#2d2d2d';
+  }
+
+  setFont(fontName, fontSize) {
+    const font = fontSize + 'px ' + fontName;
+    const [width, height] = computeFontSize(font);
+    this.fontName = fontName;
+    this.fontSize = fontSize;
+    this.fontWidth = width;
+    this.fontHeight = height;
+    this.font = font;
+  }
+}
+
+function getLemEditorElement() {
+  return document.getElementById('lem-editor');
+}
+
+// --- Wheel / scroll handling ---------------------------------------------------
+//
+// Design: the Lem backend scrolls in whole-line increments, but browsers report
+// wheel deltas in pixels (trackpads), lines, or pages depending on the device
+// and OS.  We therefore:
+//
+//  1. Normalize every delta to fractional *line* units (normalizeWheelDelta).
+//  2. Accumulate fractional lines across events so small trackpad gestures are
+//     never silently dropped (extractWholeLines keeps the remainder).
+//  3. Coalesce all wheel events that arrive within a single animation frame
+//     into one JSON-RPC call (makeWheelHandler + requestAnimationFrame), which
+//     avoids flooding the WebSocket with redundant messages.
+//
+// The three pure helpers are deliberately kept separate from the stateful
+// factory (makeWheelHandler) so they can be tested or reused independently.
+// ---------------------------------------------------------------------------
+
+/** Convert raw browser wheel deltas to fractional line units. */
+function normalizeWheelDelta(deltaX, deltaY, deltaMode, fontHeight) {
+  switch (deltaMode) {
+    case 0: // pixels – convert to lines
+      return { dx: deltaX / fontHeight, dy: deltaY / fontHeight };
+    case 2: // pages – rough line conversion
+      return { dx: deltaX * 20, dy: deltaY * 20 };
+    default: // 1 = lines
+      return { dx: deltaX, dy: deltaY };
+  }
+}
+
+/** Split a float accumulator into whole-line scroll counts and a remainder. */
+function extractWholeLines(accX, accY) {
+  const scrollX = Math.trunc(accX);
+  const scrollY = Math.trunc(accY);
+  return {
+    scrollX,
+    scrollY,
+    remainderX: accX - scrollX,
+    remainderY: accY - scrollY,
+  };
+}
+
+/** Derive pixel and character coordinates from a mouse/wheel event. */
+function cursorPosition(event, editor) {
+  const [displayX, displayY] = editor.getDisplayRectangle();
+  const pixelX = event.clientX - displayX;
+  const pixelY = event.clientY - displayY;
+  return {
+    pixelX,
+    pixelY,
+    x: Math.floor(pixelX / editor.option.fontWidth),
+    y: Math.floor(pixelY / editor.option.fontHeight),
+  };
+}
+
+/**
+ * Create a wheel-event handler bound to `editor`.
+ *
+ * State is encapsulated in the returned closure:
+ *  - `acc`     – fractional line remainder carried between frames
+ *  - `pending` – whether a rAF callback is already scheduled
+ *  - `lastPos` – cursor position from the most recent wheel event
+ */
+function makeWheelHandler(editor) {
+  let acc = { x: 0, y: 0 };
+  let pending = false;
+  let lastPos = { pixelX: 0, pixelY: 0, x: 0, y: 0 };
+
+  return (event) => {
+    event.preventDefault();
+    lastPos = cursorPosition(event, editor);
+
+    const { dx, dy } = normalizeWheelDelta(
+      event.deltaX, event.deltaY, event.deltaMode, editor.option.fontHeight,
+    );
+    acc = { x: acc.x + dx, y: acc.y + dy };
+
+    if (!pending) {
+      pending = true;
+      requestAnimationFrame(() => {
+        pending = false;
+        const { scrollX, scrollY, remainderX, remainderY } = extractWholeLines(acc.x, acc.y);
+        acc = { x: remainderX, y: remainderY };
+
+        if (scrollX !== 0 || scrollY !== 0) {
+          editor.jsonrpc.notify('input', {
+            kind: 'wheel',
+            value: { ...lastPos, wheelX: -scrollX, wheelY: -scrollY },
+          });
+        }
+      });
+    }
+  };
+}
+
+function addMouseEventListeners({ dom, editor, isDraggable, draggableStyle }) {
+  dom.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+  });
+
+  const handleMouseDownUp = (event, eventName) => {
+    event.preventDefault();
+
+    const [displayX, displayY] = editor.getDisplayRectangle();
+
+    const pixelX = (event.clientX - displayX);
+    const pixelY = (event.clientY - displayY);
+    const x = Math.floor(pixelX / editor.option.fontWidth);
+    const y = Math.floor(pixelY / editor.option.fontHeight);
+
+    editor.jsonrpc.notify('input', {
+      kind: eventName,
+      value: {
+        x: x,
+        y: y,
+        pixelX: pixelX,
+        pixelY: pixelY,
+        button: event.button,
+        clicks: event.detail,
+      }
+    });
+  };
+
+  dom.addEventListener('mousedown', (event) => {
+    if (isDraggable) document.body.style.cursor = draggableStyle;
+    editor.focusHiddenInput();
+    handleMouseDownUp(event, 'mousedown');
+  });
+
+  dom.addEventListener('mouseup', (event) => {
+    if (isDraggable) document.body.style.cursor = 'default';
+    handleMouseDownUp(event, 'mouseup');
+  });
+
+  let lastMouseMoveTime = 0;
+  dom.addEventListener('mousemove', (event) => {
+    event.preventDefault();
+    const now = Date.now();
+    if (now - lastMouseMoveTime > 50) {
+      lastMouseMoveTime = now;
+      const [displayX, displayY] = editor.getDisplayRectangle();
+
+      const pixelX = (event.clientX - displayX);
+      const pixelY = (event.clientY - displayY);
+      const x = Math.floor(pixelX / editor.option.fontWidth);
+      const y = Math.floor(pixelY / editor.option.fontHeight);
+      editor.jsonrpc.notify('input', {
+        kind: 'mousemove',
+        value: {
+          x: x,
+          y: y,
+          pixelX: pixelX,
+          pixelY: pixelY,
+          button: event.buttons === 0 ? null : event.buttons - 1,
+        }
+      });
+    }
+  });
+
+  if (isDraggable) {
+    dom.addEventListener('mouseover', () => {
+      document.body.style.cursor = draggableStyle;
+    });
+    dom.addEventListener('mouseout', (e) => {
+      if (e.buttons !== 1) {
+        document.body.style.cursor = 'default';
+      }
+    });
+  }
+
+  dom.addEventListener('wheel', makeWheelHandler(editor));
+}
+
+const zIndexTable = {
+  'floating-window': 200,
+  'modeline': 100,
+  'vertical-border': 100,
+  'horizontal-border': 101,
+};
+
+function zindex(type) {
+  return zIndexTable[type] || 0;
+}
+
+const borderOffsetX = 5;
+const borderOffsetY = 10;
+
+class BaseSurface {
+  constructor({ editor }) {
+    this.editor = editor;
+    this.mainDOM = null;
+    this.wrapper = null;
+  }
+
+  delete() {
+    if (this.wrapper) {
+      getLemEditorElement().removeChild(this.wrapper);
+    } else {
+      getLemEditorElement().removeChild(this.mainDOM);
+    }
+  }
+
+  setupDOM({ dom, isFloating, border, cssClassName }) {
+    this.mainDOM = dom;
+
+    if (isFloating && border) {
+      this.wrapper = document.createElement('div');
+      if (cssClassName) this.wrapper.className = cssClassName;
+      this.wrapper.style.position = 'absolute';
+      this.wrapper.style.backgroundColor = this.editor.option.background;
+      this.wrapper.style.zIndex = zindex('floating-window');
+      this.wrapper.appendChild(dom);
+      getLemEditorElement().appendChild(this.wrapper);
+    } else {
+      if (cssClassName) {
+        dom.className = cssClassName;
+      }
+      getLemEditorElement().appendChild(dom);
+    }
+  }
+
+  move(x, y, pixelX, pixelY) {
+    const [x0, y0] = this.editor.getDisplayRectangle();
+    // Use pixel coordinates if provided, otherwise calculate from character coordinates
+    const left = (pixelX != null) ? Math.floor(x0 + pixelX) : Math.floor(x0 + x * this.editor.option.fontWidth);
+    const top = (pixelY != null) ? Math.floor(y0 + pixelY) : Math.floor(y0 + y * this.editor.option.fontHeight);
+    if (this.wrapper) {
+      this.wrapper.style.left = left - borderOffsetX + 'px';
+      this.wrapper.style.top = top - borderOffsetY + 'px';
+      this.mainDOM.style.left = borderOffsetX + 'px';
+      this.mainDOM.style.top = borderOffsetY + 'px';
+    } else {
+      this.mainDOM.style.left = left + 'px';
+      this.mainDOM.style.top = top + 'px';
+    }
+  }
+
+  _resize(width, height, pixelWidth, pixelHeight) {
+    const ratio = window.devicePixelRatio || 1;
+    // Use pixel dimensions if provided, otherwise calculate from character dimensions
+    const actualWidth = (pixelWidth != null) ? pixelWidth : width * this.editor.option.fontWidth;
+    const actualHeight = (pixelHeight != null) ? pixelHeight : height * this.editor.option.fontHeight;
+    this.mainDOM.width = actualWidth * ratio;
+    this.mainDOM.height = actualHeight * ratio;
+    this.mainDOM.style.width = actualWidth + 'px';
+    this.mainDOM.style.height = actualHeight + 'px';
+    if (this.wrapper) {
+      this.wrapper.style.width = actualWidth + borderOffsetX * 2 + 'px';
+      this.wrapper.style.height = actualHeight + borderOffsetY * 2 + 'px';
+    }
+  }
+
+  drawBlock(x, y, width, height, color) { }
+  drawText(x, y, text, textWidth, attribute) { }
+
+  touch() {
+    return;
+  }
+
+  evalIn(code) {
+    return eval(code);
+  }
+}
+
+class CanvasSurface extends BaseSurface {
+  constructor({ editor, view, x, y, width, height, styles, isFloating, border, cssClassName }) {
+    super({ editor });
+
+    const canvas = this.setupCanvas(styles);
+    this.setupDOM({ dom: canvas, isFloating, border, cssClassName });
+    this.move(x, y);
+    this.resize(width, height);
+
+    this.drawingQueue = [];
+
+    addMouseEventListeners({ dom: canvas, editor });
+  }
+
+  setupCanvas(styles) {
+    const canvas = document.createElement('canvas');
+    canvas.style.position = 'absolute';
+    if (styles) {
+      for (let key in styles) {
+        canvas.style[key] = styles[key];
+      }
+    }
+    return canvas;
+  }
+
+  resize(width, height, pixelWidth, pixelHeight) {
+    this._resize(width, height, pixelWidth, pixelHeight);
+    const ratio = window.devicePixelRatio || 1;
+    const ctx = this.mainDOM.getContext('2d');
+    ctx.scale(ratio, ratio);
+  }
+
+  drawBlock(x, y, width, height, color) {
+    const option = this.editor.option;
+    this.drawingQueue.push(function(ctx) {
+      drawBlock({
+        ctx,
+        x: x * option.fontWidth,
+        y: y * option.fontHeight,
+        width: width * option.fontWidth,
+        height: height * option.fontHeight,
+        style: color,
+      })
+    });
+  }
+
+  drawText(x, y, text, textWidth, attribute, font) {
+    const option = this.editor.option;
+    this.drawingQueue.push(function(ctx) {
+      font = font ? `${option.fontSize}px ${font}` : option.font;
+      if (!attribute) {
+        drawBlock({
+          ctx,
+          x: x * option.fontWidth,
+          y: y * option.fontHeight,
+          width: textWidth * option.fontWidth,
+          height: option.fontHeight,
+          style: option.background,
+        });
+        drawText({
+          ctx,
+          x: x * option.fontWidth,
+          y: y * option.fontHeight,
+          text: text,
+          style: option.foreground,
+          font: font,
+          option,
+        });
+      } else {
+        let { foreground, background, bold, reverse, underline, cursor } = attribute;
+        if (!foreground) {
+          foreground = option.foreground;
+        }
+        if (!background) {
+          background = option.background;
+        }
+        if (reverse) {
+          const tmp = background;
+          background = foreground;
+          foreground = tmp;
+        }
+        if (cursor) {
+          // Only reset background; keep foreground to preserve syntax highlighting
+          // when the cursor overlay blinks off.
+          background = option.background;
+        }
+        const gx = x * option.fontWidth;
+        const gy = y * option.fontHeight;
+        drawBlock({
+          ctx,
+          x: gx,
+          y: gy,
+          width: textWidth * option.fontWidth,
+          height: option.fontHeight,
+          style: background,
+        });
+        drawText({
+          ctx,
+          x: gx,
+          y: gy,
+          text: text,
+          style: foreground,
+          font: bold ? ('bold ' + font) : font,
+          option,
+        });
+        if (underline) {
+          drawHorizontalLine({
+            ctx,
+            x: gx,
+            y: gy + option.fontHeight - 2,
+            width: textWidth * option.fontWidth,
+            style: typeof (underline) === 'string' ? underline : foreground,
+            lineWidth: 2
+          });
+        }
+      }
+    });
+  }
+
+  touch() {
+    const ctx = this.mainDOM.getContext('2d');
+    for (let fn of this.drawingQueue) {
+      fn(ctx);
+    }
+    this.drawingQueue = [];
+  }
+
+  activate() {
+    this.mainDOM.dataset.store = 'active';
+  }
+
+  deactivate() {
+    this.mainDOM.dataset.store = 'inactive';
+  }
+}
+
+class HTMLSurface extends BaseSurface {
+  constructor({ editor, x, y, width, height, styles, option, isFloating, border, html }) {
+    super({ editor });
+
+    const iframe = document.createElement('iframe');
+    this.setupDOM({ dom: iframe, isFloating, border });
+    iframe.style.position = 'absolute';
+    iframe.style.backgroundColor = option.background;
+    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+    iframe.srcdoc = html;
+    iframe.addEventListener('load', () => {
+      const win = iframe.contentWindow;
+      win.invokeLem = (method, args) => parent.postMessage(
+        { type: 'invoke-lem', method, args }
+      );
+    });
+
+    this.iframe = iframe;
+
+    this.move(x, y);
+    this.resize(width, height);
+  }
+
+  resize(width, height, pixelWidth, pixelHeight) {
+    this._resize(width, height, pixelWidth, pixelHeight);
+  }
+
+  update(content) {
+    const scrollY = this.iframe.contentWindow.scrollY;
+    this.iframe.srcdoc = content;
+    this.iframe.onload = () => {
+      this.iframe.onload = null;
+      this.iframe.contentWindow.scrollTo(0, scrollY);
+    };
+  }
+
+  evalIn(code) {
+    return this.iframe.contentWindow.eval(code);
+  }
+}
+
+class VerticalBorder {
+  constructor({ x, y, height, option, editor }) {
+    this.option = option;
+    this.editor = editor;
+    this.line = document.createElement('div');
+    this.line.className = 'lem-editor__vertical-border';
+    this.line.style.height = height * option.fontHeight + 'px';
+    this.line.style.position = 'absolute';
+    this.line.style.zIndex = zindex('vertical-border');
+
+    getLemEditorElement().appendChild(this.line);
+
+    this.move(x, y);
+
+    addMouseEventListeners({
+      dom: this.line,
+      editor,
+      isDraggable: true,
+      draggableStyle: 'col-resize',
+    });
+  }
+
+  delete() {
+    this.line.parentNode.removeChild(this.line);
+  }
+
+  move(x, y) {
+    const [x0, y0] = this.editor.getDisplayRectangle();
+    this.line.style.left = Math.floor(x0 + x * this.option.fontWidth - this.option.fontWidth / 2) + 'px';
+    this.line.style.top = (y0 + y * this.option.fontHeight) + 'px';
+  }
+
+  resize(height) {
+    this.line.style.height = height * this.option.fontHeight + 'px';
+  }
+}
+
+class HorizontalBorder {
+  constructor({ x, y, width, option, editor }) {
+    this.option = option;
+    this.editor = editor;
+    this.line = document.createElement('div');
+    this.line.className = 'lem-editor__horizontal-border';
+    this.line.style.width = width * option.fontWidth + 'px';
+    this.line.style.position = 'absolute';
+    this.line.style.zIndex = zindex('horizontal-border');
+
+    getLemEditorElement().appendChild(this.line);
+
+    this.move(x, y);
+
+    addMouseEventListeners({
+      dom: this.line,
+      editor,
+      isDraggable: true,
+      draggableStyle: 'row-resize',
+    });
+  }
+
+  delete() {
+    this.line.parentNode.removeChild(this.line);
+  }
+
+  move(x, y) {
+    const [x0, y0] = this.editor.getDisplayRectangle();
+    this.line.style.left = (x0 + x * this.option.fontWidth) + 'px';
+    this.line.style.top = Math.floor(y0 + y * this.option.fontHeight - 4) + 'px';
+  }
+
+  resize(width) {
+    this.line.style.width = (width * this.option.fontWidth) + 'px';
+  }
+}
+
+const viewStyles = {
+  header: () => { },
+  tile: () => { },
+  floating: (option) => ({
+    boxSizing: 'border-box',
+    borderColor: option.foreground,
+    backgroundColor: option.background,
+  }),
+};
+
+function getViewStyle(kind, option) {
+  return viewStyles[kind](option) || {};
+}
+
+class View {
+  constructor({
+    id,
+    x,
+    y,
+    width,
+    height,
+    pixelX,
+    pixelY,
+    pixelWidth,
+    pixelHeight,
+    useModeline,
+    kind,
+    type,
+    content,
+    border,
+    borderShape,
+    option,
+    editor,
+  }) {
+    this.option = option;
+    this.id = id;
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.pixelX = pixelX;
+    this.pixelY = pixelY;
+    this.pixelWidth = pixelWidth;
+    this.pixelHeight = pixelHeight;
+    this.useModeline = useModeline;
+    this.kind = kind;
+    this.type = type;
+    this.border = border;
+    this.borderShape = borderShape;
+    this.editor = editor;
+
+    this.bottomBar = null;
+    this.leftsideBar = null;
+
+    switch (kind) {
+      case 'tile':
+        this.mainSurface = this.makeSurface(type, content);
+        this.leftSideBar = new VerticalBorder({
+          x: x,
+          y: y,
+          height: height + (useModeline ? 1 : 0),
+          option: option,
+          editor: editor,
+        });
+        if (!useModeline) {
+          this.bottomBar = new HorizontalBorder({
+            x: x,
+            y: y + height - 1,
+            width: width,
+            option: option,
+            editor: editor,
+          });
+        }
+        break;
+      case 'header':
+        this.mainSurface = this.makeSurface(type, content);
+        break;
+      case 'floating':
+        this.mainSurface = this.makeSurface(type, content);
+        if (borderShape === 'left-border') {
+          this.leftSideBar = new VerticalBorder({
+            x: x,
+            y: y,
+            height: height,
+            option: option,
+            editor: editor,
+          });
+        }
+        break;
+    }
+
+    this.modelineSurface = useModeline ? this.makeModelineSurface() : null;
+
+    // For floating windows with pixel coordinates, reposition using pixel coordinates
+    if (kind === 'floating' && (pixelX != null || pixelY != null)) {
+      this.move(x, y, pixelX, pixelY);
+    }
+  }
+
+  delete() {
+    this.mainSurface.delete();
+    if (this.modelineSurface) {
+      this.modelineSurface.delete();
+    }
+    if (this.leftSideBar) {
+      this.leftSideBar.delete();
+    }
+    if (this.bottomBar) {
+      this.bottomBar.delete();
+    }
+  }
+
+  move(x, y, pixelX, pixelY) {
+    this.x = x;
+    this.y = y;
+    this.pixelX = pixelX;
+    this.pixelY = pixelY;
+
+    this.mainSurface.move(x, y, pixelX, pixelY);
+    if (this.modelineSurface) {
+      // Calculate modeline pixel position if pixel coordinates are provided
+      const modelinePixelY = (pixelY != null && this.pixelHeight != null)
+        ? pixelY + this.pixelHeight
+        : null;
+      this.modelineSurface.move(x, y + this.height, pixelX, modelinePixelY);
+    }
+    if (this.leftSideBar) {
+      this.leftSideBar.move(x, y);
+    }
+    if (this.bottomBar) {
+      this.bottomBar.move(x, y + this.height);
+    }
+  }
+
+  resize(width, height, pixelWidth, pixelHeight) {
+    this.width = width;
+    this.height = height;
+    this.pixelWidth = pixelWidth;
+    this.pixelHeight = pixelHeight;
+    this.mainSurface.resize(width, height, pixelWidth, pixelHeight);
+    if (this.modelineSurface) {
+      // Calculate modeline pixel position if pixel coordinates are provided
+      const modelinePixelY = (this.pixelY != null && pixelHeight != null)
+        ? this.pixelY + pixelHeight
+        : null;
+      this.modelineSurface.move(
+        this.x,
+        this.y + this.height,
+        this.pixelX,
+        modelinePixelY,
+      );
+      this.modelineSurface.resize(width, 1);
+    }
+    if (this.leftSideBar) {
+      this.leftSideBar.resize(height + (this.modelineSurface ? 1 : 0));
+    }
+    if (this.bottomBar) {
+      this.bottomBar.resize(width);
+    }
+  }
+
+  clear() {
+    this.mainSurface.drawBlock(
+      0,
+      0,
+      this.width,
+      this.height,
+      this.option.background,
+    );
+  }
+
+  clearEol(x, y) {
+    this.mainSurface.drawBlock(
+      x,
+      y,
+      this.width - x,
+      1,
+      this.option.background,
+    );
+  }
+
+  clearEob(x, y) {
+    this.mainSurface.drawBlock(
+      x, // x === 0
+      y,
+      this.width,
+      this.height - y,
+      this.option.background,
+    );
+  }
+
+  print(x, y, text, textWidth, attribute, font) {
+    this.mainSurface.drawText(
+      x,
+      y,
+      text,
+      textWidth,
+      attribute,
+      font,
+    );
+  }
+
+  printToModeline(x, y, text, textWidth, attribute) {
+    if (this.modelineSurface) {
+      this.modelineSurface.drawText(
+        x,
+        y,
+        text,
+        textWidth,
+        attribute,
+      );
+    }
+  }
+
+  touch(isActive) {
+    this.mainSurface.touch();
+    if (this.modelineSurface) {
+      this.modelineSurface.touch();
+      if (isActive) {
+        this.modelineSurface.activate();
+      } else {
+        this.modelineSurface.deactivate();
+      }
+    }
+  }
+
+  makeSurface(type, content) {
+    switch (type) {
+      case 'html':
+        return this.makeHTMLSurface(content);
+      case 'editor':
+        return this.makeEditorSurface();
+      default:
+        console.error(`unknown type: ${type}`);
+    }
+  }
+
+  makeHTMLSurface(content) {
+    return new HTMLSurface({
+      editor: this.editor,
+      x: this.x,
+      y: this.y,
+      width: this.width,
+      height: this.height,
+      styles: getViewStyle(this.kind, this.option),
+      option: this.option,
+      isFloating: this.kind === 'floating',
+      border: this.border,
+      html: content,
+    });
+  }
+
+  makeEditorSurface() {
+    const border = this.borderShape === 'left-border' ? 0 : this.border;
+    const isFloating = this.kind === 'floating';
+
+    return new CanvasSurface({
+      option: this.editor.option,
+      x: this.x,
+      y: this.y,
+      width: this.width,
+      height: this.height,
+      styles: getViewStyle(this.kind, this.option),
+      editor: this.editor,
+      border,
+      isFloating,
+      view: this,
+      cssClassName: ((isFloating && border) ? 'lem-editor__floating-window--bordered' : null),
+    });
+  }
+
+  makeModelineSurface() {
+    const surface = new CanvasSurface({
+      option: this.editor.option,
+      x: this.x,
+      y: this.y + this.height,
+      width: this.width,
+      height: 1,
+      editor: this.editor,
+      view: this,
+      styles: { zIndex: zindex('modeline') },
+      cssClassName: 'lem-editor__mode-line',
+    });
+    addMouseEventListeners({
+      dom: surface.mainDOM,
+      editor: this.editor,
+      isDraggable: true,
+      draggableStyle: 'row-resize',
+    });
+    return surface;
+  }
+
+  changeToHTMLContent(content) {
+    if (this.mainSurface.constructor.name === 'HTMLSurface') {
+      this.mainSurface.update(content);
+    } else {
+      this.mainSurface.delete();
+      this.mainSurface = this.makeHTMLSurface(content);
+    }
+  }
+
+  changeToEditorContent() {
+    this.mainSurface.delete();
+    this.mainSurface = this.makeEditorSurface();
+  }
+
+  evalIn(code) {
+    return this.mainSurface.evalIn(code);
+  }
+}
+
+function isPasteKeyEvent(event) {
+  if (isMacOS()) {
+    return (event.metaKey && event.key === 'v');
+  } else {
+    return (event.ctrlKey && event.shiftKey && event.key === 'V');
+  }
+}
+
+class Input {
+  constructor(editor) {
+    const option = editor.option;
+    this.editor = editor;
+
+    this.composition = false;
+    this.ignoreKeydownAfterCompositionend = false;
+
+    this.span = document.createElement('span');
+    this.span.style.color = option.foreground;
+    this.span.style.backgroundColor = option.background;
+    this.span.style.position = 'absolute';
+    this.span.style.zIndex = 1000000;
+    this.span.style.top = '0';
+    this.span.style.left = '0';
+    this.span.style.font = option.font;
+
+    this.input = document.createElement('input');
+    this.input.style.backgroundColor = 'transparent';
+    this.input.style.color = 'transparent';
+    this.input.style.width = '0';
+    this.input.style.padding = '0';
+    this.input.style.margin = '0';
+    this.input.style.border = 'none';
+    this.input.style.position = 'absolute';
+    this.input.style.zIndex = '-10';
+    this.input.style.top = '0';
+    this.input.style.left = '0';
+    this.input.style.font = option.font;
+
+    this.input.addEventListener('blur', (event) => {
+      this.input.focus();
+    });
+
+    this.input.addEventListener('input', (event) => {
+      //console.log('input', event);
+      if (this.composition === false) {
+        this.input.value = '';
+        this.span.innerHTML = '';
+        this.input.style.width = '0';
+        if (!isMacOS()) {
+          this.editor.emitInputString(event.data);
+        }
+        //console.log('>>> input', event.data);
+      }
+    });
+
+    this.input.addEventListener('paste', async (event) => {
+      event.preventDefault(); // Block only the native insertion
+      const cd = event.clipboardData || window.Clipboard.data;
+      const textFromEvent = cd?.getData('text') ?? cd?.getData('text/plain');
+
+      if (textFromEvent && textFromEvent.length > 0) {
+        this.editor.emitInputString(textFromEvent);
+        return;
+      }
+
+      // Fallback: Clipboard API (requires HTTPS/localhost & focus)
+      try {
+        if (navigator.clipboard?.readText) {
+          const text = await navigator.clipboard.readText();
+          if (text && text.length > 0) {
+            this.editor.emitInputString(text);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('clipboard.readText() failed:', e);
+      }
+
+      alert("Paste failed (permission/environment restriction");
+    });
+
+    this.input.addEventListener('keydown', (event) => {
+      if (isPasteKeyEvent(event)) {
+        // Do nothing here (do not call preventDefault)
+        // Let the browser fire the paste event
+        return;
+      }
+
+      if (event.isComposing || this.composition) {
+        return;
+      }
+
+      // IMEに変換を指示する値はlemに渡すと誤作動するのでreturnする
+      if (event.key === 'Process') {
+        return;
+      }
+
+      if (this.ignoreKeydownAfterCompositionend && (isSafari || isMacOS())) {
+        // safariではIMの入力中にバックスペースやエンターキーの入力によってcompositionendイベントが来ると
+        // その後にkeydownイベントが即座に来る
+        // それを処理してしまうと余分に改行されたり文字が消えるので無視する
+        event.preventDefault();
+        this.ignoreKeydownAfterCompositionend = false;
+        return;
+      }
+
+      if (!isMacOS()) {
+        // 修飾キーなしで、ReturnやBackspaceではなく'a'などの入力であるか(event.key.length === 1)
+        if (!event.ctrlKey && !event.altKey && event.key.length === 1) {
+          // そうであれば'input' eventが受け取れるようにここでreturnする
+          return;
+        }
+      }
+
+      event.preventDefault();
+
+      if (event.isComposing !== true && event.code !== '') {
+        // mac/chromium系のブラウザで"あ"と入力すると、
+        // keydownの後にcompositionstartが来るので、
+        // それを逆転するためにsetTimeoutを使う
+        setTimeout(() => {
+          if (!this.composition) {
+            this.editor.emitInput(event);
+            this.input.value = '';
+          }
+        }, 0);
+        return false;
+      }
+    });
+
+    this.input.addEventListener('compositionstart', (event) => {
+      //console.log('compositionstart', event);
+      this.composition = true;
+      this.span.innerHTML = this.input.value;
+      this.input.style.width = this.span.offsetWidth + 'px';
+    });
+
+    this.input.addEventListener('compositionupdate', (event) => {
+      //console.log('compositionupdate', event);
+      this.span.innerHTML = event.data;
+      this.input.style.width = this.span.offsetWidth + 'px';
+    });
+
+    this.input.addEventListener('compositionend', (event) => {
+      //console.log('compositionend', event);
+      this.composition = false;
+      this.editor.emitInputString(this.input.value);
+      this.input.value = '';
+      this.span.innerHTML = this.input.value;
+      this.input.style.width = '0';
+      this.ignoreKeydownAfterCompositionend = true;
+    });
+
+    document.body.appendChild(this.input);
+    document.body.appendChild(this.span);
+    this.input.focus();
+  }
+
+  finalize() {
+    document.body.removeChild(this.input);
+    document.body.removeChild(this.span);
+  }
+
+  move(left, top) {
+    const [x0, y0] = this.editor.getDisplayRectangle();
+    this.span.style.top = (y0 + top) + 'px';
+    this.span.style.left = (x0 + left) + 'px';
+    this.input.style.top = this.span.offsetTop + 'px';
+    this.input.style.left = this.span.offsetLeft + 'px';
+  }
+
+  updateForeground(color) {
+    this.span.style.color = color;
+  }
+
+  updateBackground(color) {
+    this.span.style.backgroundColor = color;
+  }
+}
+
+class MessageTable {
+  constructor() {
+    this.map = new Map();
+  }
+
+  register(jsonrpc, table) {
+    for (const method in table) {
+      const handler = table[method];
+      this.map.set(method, handler);
+      jsonrpc.on(method, handler);
+    }
+  }
+
+  get(method) {
+    return this.map.get(method);
+  }
+}
+
+function getDisplayRectangleDefault() {
+  return [0, 0, window.innerWidth, window.innerHeight];
+}
+
+export class Editor {
+  constructor({
+    getDisplayRectangle = getDisplayRectangleDefault,
+    fontName,
+    fontSize,
+    url,
+    onExit,
+    onClosed,
+  }) {
+    this.getDisplayRectangle = getDisplayRectangle;
+
+    this.option = new Option({ fontName, fontSize });
+
+    this.onExit = onExit;
+
+    this.input = new Input(this);
+    this.cursors = new Map();
+
+    this.cursorOverlay = document.createElement('div');
+    this.cursorOverlay.className = 'lem-cursor';
+    this.cursorOverlay.style.width = this.option.fontWidth + 'px';
+    this.cursorOverlay.style.height = this.option.fontHeight + 'px';
+    this.cursorOverlay.style.backgroundColor = '#ffffff';
+    this.cursorType = 'box';
+
+    this.viewMap = new Map();
+
+    this.jsonrpc = new JSONRPC(url, {
+      onClosed: () => {
+        onClosed();
+      },
+    });
+
+    this.messageTable = new MessageTable();
+    this.messageTable.register(this.jsonrpc, {
+      'update-foreground': this.updateForeground.bind(this),
+      'update-background': this.updateBackground.bind(this),
+      'make-view': this.makeView.bind(this),
+      'delete-view': this.deleteView.bind(this),
+      'resize-view': this.resize.bind(this),
+      'move-view': this.move.bind(this),
+      'redraw-view-after': this.redrawViewAfter.bind(this),
+      'clear': this.clear.bind(this),
+      'clear-eol': this.clearEol.bind(this),
+      'clear-eob': this.clearEob.bind(this),
+      'put': this.put.bind(this),
+      'modeline-put': this.modelinePut.bind(this),
+      'update-display': this.updateDisplay.bind(this),
+      'move-cursor': this.moveCursor.bind(this),
+      'change-view': this.changeView.bind(this),
+      'resize-display': this.resizeDisplay.bind(this),
+      'bulk': this.bulk.bind(this),
+      'exit': this.exitEditor.bind(this),
+      'get-clipboard-text': this.getClipboardText.bind(this),
+      'set-clipboard-text': this.setClipboardText.bind(this),
+      'js-eval': this.jsEval.bind(this),
+      'set-font': this.setFont.bind(this),
+      'get-font': this.getFont.bind(this),
+      'get-display-size': this.getDisplaySize.bind(this),
+      'load-css': this.loadCSS.bind(this),
+      'update-cursor-shape': this.updateCursorShape.bind(this),
+    });
+
+    this.login();
+
+    this.boundedHandleResize = this.handleResize.bind(this);
+    this.focusHiddenInput = this.focusHiddenInput.bind(this);
+  }
+
+  init() {
+    window.addEventListener('resize', this.boundedHandleResize);
+    document.getElementsByTagName('html')[0].style['background-color'] = '#333';
+    getLemEditorElement().appendChild(this.cursorOverlay);
+  }
+
+  finalize() {
+    window.removeEventListener('resize', this.boundedHandleResize);
+    this.input.finalize();
+    if (this.cursorOverlay.parentNode) {
+      this.cursorOverlay.parentNode.removeChild(this.cursorOverlay);
+    }
+  }
+
+  closeConnection() {
+    this.jsonrpc.close();
+  }
+
+  emitInput(event) {
+    const key = keyevent.convertKeyEvent(event);
+    if (!key) return;
+
+    if (key.key === ']' && key.ctrl && !key.meta && !key.super && !key.shift) {
+      this.jsonrpc.notify('input', { kind: 'abort' });
+      return;
+    }
+
+    if (key.key === 'Unidentified') {
+      return;
+    }
+    this.jsonrpc.notify('input', { kind: 'key', value: key });
+  }
+
+  emitInputString(string) {
+    if (string) {
+      this.jsonrpc.notify('input', { kind: 'input-string', value: string });
+    } else {
+      console.error('unexpected argument', string);
+    }
+  }
+
+  handleResize(event) {
+    const canResize = true;
+    if (canResize) {
+      this.jsonrpc.notify('redraw', { size: this.getDisplaySize() });
+    } else {
+      this.jsonrpc.notify('redraw');
+    }
+  }
+
+  focusHiddenInput() {
+    const el = this.input?.input;
+    if (!el) return;
+    try { window.focus(); } catch (_) { }
+    // mousedown 内で即座に focus() するとブラウザのデフォルト処理に負けることがある
+    requestAnimationFrame(() => {
+      // 一部環境ではさらに 1tick 遅らせると安定する
+      setTimeout(() => {
+        el.focus({ preventScroll: true });
+      }, 0);
+    });
+  }
+
+  sendNotification(method, args) {
+    this.jsonrpc.notify(method, args);
+  }
+
+  request(method, args, callback) {
+    this.jsonrpc.request(method, args, callback);
+  }
+
+  getDisplaySize() {
+    const [_x, _y, displayWidth, displayHeight] = this.getDisplayRectangle();
+    const width = Math.floor(displayWidth / this.option.fontWidth);
+    const height = Math.floor(displayHeight / this.option.fontHeight);
+    return { width, height };
+  }
+
+  callMessage(method, argument) {
+    this.messageTable.get(method)(argument);
+  }
+
+  findViewById(id) {
+    return this.viewMap.get(id);
+  }
+
+  login() {
+    this.jsonrpc.request('login', {
+      size: this.getDisplaySize(),
+      foreground: this.option.foreground,
+      background: this.option.background,
+    }, (response) => {
+      this.updateForeground(response.foreground);
+      this.updateBackground(response.background);
+      if (response.views) {
+        for (const view of response.views) {
+          this.makeView(view);
+        }
+      }
+
+      this.jsonrpc.notify('redraw', { size: this.getDisplaySize() });
+    });
+  }
+
+  updateForeground(color) {
+    if (color == null) return;
+    this.option.foreground = color;
+    this.input.updateForeground(color);
+  }
+
+  updateBackground(color) {
+    if (color == null) return;
+    this.option.background = color;
+    this.input.updateBackground(color);
+    const element = getLemEditorElement();
+    element.style.backgroundColor = color;
+  }
+
+  makeView({ id, x, y, width, height, pixelX, pixelY, pixelWidth, pixelHeight, use_modeline, kind, type, content, border, border_shape }) {
+    const view = new View({
+      option: this.option,
+      id: id,
+      x: x,
+      y: y,
+      width: width,
+      height: height,
+      pixelX: pixelX,
+      pixelY: pixelY,
+      pixelWidth: pixelWidth,
+      pixelHeight: pixelHeight,
+      useModeline: use_modeline,
+      kind: kind,
+      type: type,
+      content: content,
+      border: border,
+      borderShape: border_shape,
+      editor: this
+    });
+    this.viewMap.set(id, view);
+  }
+
+  deleteView({ viewInfo: { id } }) {
+    const view = this.findViewById(id);
+    view.delete();
+    this.viewMap.delete(id);
+  }
+
+  resize({ viewInfo: { id }, width, height, pixelWidth, pixelHeight }) {
+    const view = this.findViewById(id);
+    if (view) {
+      view.resize(width, height, pixelWidth, pixelHeight);
+    } else {
+      console.warn(`resize: view not found for id ${id}`);
+    }
+  }
+
+  move({ viewInfo: { id }, x, y, pixelX, pixelY }) {
+    const view = this.findViewById(id);
+    if (view) {
+      view.move(x, y, pixelX, pixelY);
+    } else {
+      console.warn(`move: view not found for id ${id}`);
+    }
+  }
+
+  redrawViewAfter({ viewInfo: { id }, isActive }) {
+    const view = this.findViewById(id);
+    view.touch(isActive);
+  }
+
+  clear({ viewInfo: { id } }) {
+    const view = this.findViewById(id);
+    view.clear();
+  }
+
+  clearEol({ viewInfo: { id }, x, y }) {
+    const view = this.findViewById(id);
+    view.clearEol(x, y);
+  }
+
+  clearEob({ viewInfo: { id }, x, y }) {
+    const view = this.findViewById(id);
+    view.clearEob(x, y);
+  }
+
+  put({ viewInfo: { id }, x, y, text, textWidth, attribute, font }) {
+    const view = this.findViewById(id);
+    view.print(x, y, text, textWidth, attribute, font);
+  }
+
+  modelinePut({ viewInfo: { id }, x, y, text, textWidth, attribute }) {
+    const view = this.findViewById(id);
+    view.printToModeline(x, y, text, textWidth, attribute);
+  }
+
+  updateDisplay() {
+  }
+
+  moveCursor({ viewInfo: { id }, x, y, color, cursorText, cursorForeground }) {
+    const view = this.findViewById(id);
+    const [x0, y0] = this.getDisplayRectangle();
+    const left = view.x * this.option.fontWidth + x * this.option.fontWidth;
+    const top = view.y * this.option.fontHeight + y * this.option.fontHeight;
+    this.input.move(left, top);
+
+    const cursorColor = color || this.option.foreground;
+    const cursorFg = cursorForeground || this.option.background;
+    const overlay = this.cursorOverlay;
+
+    // Apply cursor type styling
+    switch (this.cursorType) {
+      case 'bar':
+        overlay.style.left = (x0 + left) + 'px';
+        overlay.style.top = (y0 + top) + 'px';
+        overlay.style.width = '2px';
+        overlay.style.height = this.option.fontHeight + 'px';
+        overlay.style.backgroundColor = cursorColor;
+        overlay.textContent = '';
+        overlay.style.color = '';
+        overlay.style.font = '';
+        overlay.style.paddingTop = '';
+        break;
+      case 'underline':
+        overlay.style.left = (x0 + left) + 'px';
+        overlay.style.top = (y0 + top + this.option.fontHeight - 2) + 'px';
+        overlay.style.width = this.option.fontWidth + 'px';
+        overlay.style.height = '2px';
+        overlay.style.backgroundColor = cursorColor;
+        overlay.textContent = '';
+        overlay.style.color = '';
+        overlay.style.font = '';
+        overlay.style.paddingTop = '';
+        break;
+      case 'box':
+      default:
+        overlay.style.left = (x0 + left) + 'px';
+        overlay.style.top = (y0 + top) + 'px';
+        overlay.style.width = this.option.fontWidth + 'px';
+        overlay.style.height = this.option.fontHeight + 'px';
+        overlay.style.backgroundColor = cursorColor;
+        overlay.style.font = this.option.font;
+        overlay.style.paddingTop = textOffsetY + 'px';
+        overlay.textContent = cursorText || '';
+        overlay.style.color = cursorFg;
+        break;
+    }
+
+    // Reset blink animation on cursor move
+    overlay.style.animation = 'none';
+    overlay.offsetHeight; // force reflow
+    overlay.style.animation = '';
+  }
+
+  updateCursorShape({ cursorType }) {
+    this.cursorType = cursorType || 'box';
+  }
+
+  changeView({ viewInfo: { id }, type, content }) {
+    const view = this.findViewById(id);
+    switch (type) {
+      case 'html':
+        view.changeToHTMLContent(content);
+        break;
+      case 'editor':
+        view.changeToEditorContent();
+        break;
+    }
+  }
+
+  resizeDisplay({ width, height }) {
+    // TODO: offset
+    const element = getLemEditorElement();
+    element.style.width = Math.floor(width * this.option.fontWidth) + 'px';
+    element.style.height = Math.floor(height * this.option.fontHeight) + 'px';
+  }
+
+  bulk(messages) {
+    for (const { method, argument } of messages) {
+      this.callMessage(method, argument);
+    }
+  }
+
+  exitEditor() {
+    if (this.onExit) {
+      this.onExit();
+    }
+  }
+
+  getClipboardText() {
+    navigator.clipboard?.readText().then(text => {
+      this.jsonrpc.notify('got-clipboard-text', { text });
+    });
+  }
+
+  setClipboardText({ text }) {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+    }
+  }
+
+  jsEval({ viewInfo: { id }, code }) {
+    const view = this.findViewById(id);
+    const result = view.evalIn(code);
+    if (result) {
+      return result.toString();
+    }
+    return result;
+  }
+
+  setFont({ fontName, fontSize }) {
+    this.option.setFont(
+      fontName || this.option.fontName,
+      fontSize || this.option.fontSize,
+    );
+  }
+
+  getFont() {
+    return {
+      name: this.option.fontName,
+      size: this.option.fontSize,
+    };
+  }
+
+  loadCSS({ content }) {
+    const style = document.createElement('style');
+    style.textContent = content;
+    document.head.appendChild(style);
+  }
+
+  notifyToServer(method, args) {
+    this.jsonrpc.notify('invoke', { method, args });
+  }
+}

@@ -1,9 +1,8 @@
 (uiop:define-package :lem-ncurses
   (:use :cl)
   (:use-reexport :lem-ncurses/config)
-  (:export :*terminal-io-saved*
-           ;; ncurses-pdcurseswin32.lisp
-           :input-polling-interval))
+  (:export :*terminal-io-saved*))
+
 (in-package :lem-ncurses)
 
 (pushnew :lem-ncurses *features*)
@@ -44,11 +43,14 @@
                               width
                               height
                               :modeline use-modeline
-                              :type (if (lem:floating-window-p window)
-                                        :tile
-                                        :floating)
-                              :border (and (lem:floating-window-p window)
-                                           (lem:floating-window-border window))
+                              :type (cond ((or (lem:floating-window-p window)
+                                               (lem:attached-window-p window))
+                                           :floating)
+                                          ((lem:header-window-p window)
+                                           :header)
+                                          (t
+                                           :tile))
+                              :border (lem:window-border window)
                               :border-shape (and (lem:floating-window-p window)
                                                  (lem:floating-window-border-shape window))
                               :cursor-invisible (lem:window-cursor-invisible-p window)))
@@ -69,7 +71,7 @@
   (lem-ncurses/view:redraw-view-after view))
 
 (defmethod lem-if:update-display ((implementation ncurses))
-  (lem-ncurses/view:update-cursor (lem:window-view (lem:current-window))))
+  (lem-ncurses/view:update-display (lem:window-view (lem:current-window))))
 
 (defmethod lem-if:clipboard-paste ((implementation ncurses))
   (lem-ncurses/clipboard:paste))

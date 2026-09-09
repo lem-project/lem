@@ -104,10 +104,10 @@
     (setf (buffer-value buffer 'record) (make-record)))
   (buffer-value buffer 'record))
 
-(define-command go-back-global (n) ("p")
+(define-command go-back-global (n) (:universal)
   (go-back-internal *global-record* n))
 
-(define-command go-back (n) ("p")
+(define-command go-back (n) (:universal)
   (go-back-internal (buffer-record (current-buffer)) n))
 
 (defun record-location (point &optional tail)

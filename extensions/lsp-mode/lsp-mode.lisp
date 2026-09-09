@@ -18,11 +18,27 @@
   (:local-nicknames (:context-menu :lem/context-menu))
   (:local-nicknames (:spinner :lem/loading-spinner))
   (:local-nicknames (:language-mode :lem/language-mode))
-  (:export :get-buffer-from-text-document-identifier
+  (:export :*inhibit-highlight-diagnotics*
+           :get-buffer-from-text-document-identifier
            :spec-initialization-options
            :register-lsp-method
-           :define-language-spec))
+           :define-language-spec
+           :without-lsp-mode))
 (in-package :lem-lsp-mode/lsp-mode)
+
+;; FIXME:
+;; dirty hack.
+;; Ideally, improve lsp-mode to work within markdown code blocks.
+(defvar *disable* nil
+  "This variable is used to temporarily disable lsp-mode.
+Its purpose is to disable lsp-mode in a code block within markdown-mode, which can cause unexpected behavior in lsp-mode.
+Setting this variable to T while working within a markdown code block will avoid this problem.")
+
+(defmacro without-lsp-mode (() &body body)
+  "This macro prevents enabling lsp-mode within the body.
+Use this when lsp-mode has side effects that you want to avoid."
+  `(let ((*disable* T))
+     ,@body))
 
 ;;;
 (define-condition not-found-program (editor-error)
@@ -60,7 +76,7 @@
                   (point (buffer-point buffer)))
              (buffer-end point)
              (insert-string point string))))
-    (let* ((port (or (spec-port spec) (lem-socket-utils:random-available-port)))
+    (let* ((port (or (spec-port spec) (lem/common/socket:random-available-port)))
            (process (when-let (command (get-spec-command spec port))
                       (check-exist-program (first command) spec)
                       (lem-process:run-process command :output-callback #'output-callback))))
@@ -215,10 +231,15 @@
     (setf (workspace-list-current-workspace workspace-list) workspace)))
 
 (defun find-workspace (language-id &key (errorp t))
-  (if-let (workspace-list (gethash language-id *workspace-list-per-language-id*))
-    (workspace-list-current-workspace workspace-list)
-    (when errorp
-      (error "The ~A workspace is not found." language-id))))
+  ;; A nil LANGUAGE-ID means the buffer's current major mode has no
+  ;; registered language spec (e.g. a REPL mode whose parent had one).
+  ;; That is not an error condition -- the buffer simply does not
+  ;; participate in LSP.  Return nil silently regardless of ERRORP.
+  (when language-id
+    (if-let (workspace-list (gethash language-id *workspace-list-per-language-id*))
+      (workspace-list-current-workspace workspace-list)
+      (when errorp
+        (error "The ~A workspace is not found." language-id)))))
 
 (defun buffer-workspace (buffer &optional (errorp t))
   (find-workspace (buffer-language-id buffer) :errorp errorp))
@@ -272,6 +293,7 @@
 (defun lsp-revert-buffer (buffer)
   (remove-hook (variable-value 'before-change-functions :buffer buffer) 'handle-change-buffer)
   (unwind-protect (progn
+                    (clear-document-highlight-overlays)
                     (sync-buffer-with-file-content buffer)
                     (reopen-buffer buffer))
     (add-hook (variable-value 'before-change-functions :buffer buffer) 'handle-change-buffer)))
@@ -360,7 +382,7 @@
                 (funcall continuation workspace))))
 
 (defun connect (client continuation)
-  (bt:make-thread
+  (bt2:make-thread
    (lambda ()
      (loop :with condition := nil
            :repeat 20
@@ -487,13 +509,16 @@
 (defmethod apply-document-change ((document-change lsp:delete-file))
   (error "deleteFile is not yet supported"))
 
+(defun apply-change (uri text-edits)
+  (let ((buffer (find-buffer-from-uri uri)))
+    (apply-text-edits buffer text-edits)))
+
 (defun apply-workspace-edit (workspace-edit)
   (labels ((apply-document-changes (document-changes)
              (do-sequence (document-change document-changes)
                (apply-document-change document-change)))
            (apply-changes (changes)
-             (declare (ignore changes))
-             (error "Not yet implemented")))
+             (maphash #'apply-change changes)))
     (if-let ((document-changes (handler-case
                                    (lsp:workspace-edit-document-changes workspace-edit)
                                  (unbound-slot () nil))))
@@ -593,22 +618,24 @@
 ;;; Text Synchronization
 
 (defun text-document/did-open (buffer)
-  (request:request
-   (workspace-client (buffer-workspace buffer))
-   (make-instance 'lsp:text-document/did-open)
-   (make-instance 'lsp:did-open-text-document-params
-                  :text-document (buffer-to-text-document-item buffer))))
+  (when-let (workspace (buffer-workspace buffer nil))
+    (request:request
+     (workspace-client workspace)
+     (make-instance 'lsp:text-document/did-open)
+     (make-instance 'lsp:did-open-text-document-params
+                    :text-document (buffer-to-text-document-item buffer)))))
 
 (defun text-document/did-change (buffer content-changes)
-  (request:request
-   (workspace-client (buffer-workspace buffer))
-   (make-instance
-    'lsp:text-document/did-change)
-   (make-instance 'lsp:did-change-text-document-params
-                  :text-document (make-instance 'lsp:versioned-text-document-identifier
-                                                :version (buffer-version buffer)
-                                                :uri (buffer-uri buffer))
-                  :content-changes content-changes)))
+  (when-let (workspace (buffer-workspace buffer nil))
+    (request:request
+     (workspace-client workspace)
+     (make-instance
+      'lsp:text-document/did-change)
+     (make-instance 'lsp:did-change-text-document-params
+                    :text-document (make-instance 'lsp:versioned-text-document-identifier
+                                                  :version (buffer-version buffer)
+                                                  :uri (buffer-uri buffer))
+                    :content-changes content-changes))))
 
 (defun provide-did-save-text-document-p (workspace)
   (let ((sync (lsp:server-capabilities-text-document-sync
@@ -624,20 +651,22 @@
            nil))))))
 
 (defun text-document/did-save (buffer)
-  (when (provide-did-save-text-document-p (buffer-workspace buffer))
-    (request:request
-     (workspace-client (buffer-workspace buffer))
-     (make-instance 'lsp:text-document/did-save)
-     (make-instance 'lsp:did-save-text-document-params
-                    :text-document (make-text-document-identifier buffer)
-                    :text (buffer-text buffer)))))
+  (when-let (workspace (buffer-workspace buffer nil))
+    (when (provide-did-save-text-document-p workspace)
+      (request:request
+       (workspace-client workspace)
+       (make-instance 'lsp:text-document/did-save)
+       (make-instance 'lsp:did-save-text-document-params
+                      :text-document (make-text-document-identifier buffer)
+                      :text (buffer-text buffer))))))
 
 (defun text-document/did-close (buffer)
-  (request:request
-   (workspace-client (buffer-workspace buffer))
-   (make-instance 'lsp:text-document/did-close)
-   (make-instance 'lsp:did-close-text-document-params
-                  :text-document (make-text-document-identifier buffer))))
+  (when-let (workspace (buffer-workspace buffer nil))
+    (request:request
+     (workspace-client workspace)
+     (make-instance 'lsp:text-document/did-close)
+     (make-instance 'lsp:did-close-text-document-params
+                    :text-document (make-text-document-identifier buffer)))))
 
 ;;; publishDiagnostics
 
@@ -712,11 +741,13 @@
       (move-to-lsp-position start (lsp:range-start range))
       (move-to-lsp-position end (lsp:range-end range))
       (when (point= start end)
-        ;; XXX: gopls用
+        ;; XXX: for `gopls`
+        ;; ```
         ;; func main() {
         ;;     fmt.
-        ;; というコードでrange.start, range.endが行末を
-        ;; 差していてハイライトされないので一文字ずらしておく
+        ;; ```
+        ;; `range.start` and `range.end` point to the end of the line, and aren't highlighted.
+        ;; Shift by one character to fix this.
         (if (end-line-p end)
             (character-offset start -1)
             (character-offset end 1)))
@@ -725,7 +756,8 @@
                                      (unbound-slot ()
                                        'diagnostic-error-attribute)
                                      (:no-error (severity)
-                                       (diagnostic-severity-attribute severity))))))
+                                       (diagnostic-severity-attribute severity)))
+                                   :end-point-kind :right-inserting)))
         (overlay-put overlay
                      'diagnostic
                      (make-diagnostic :buffer buffer
@@ -755,7 +787,8 @@
 (defun text-document/publish-diagnostics (params)
   (request::do-request-log "textDocument/publishDiagnostics" params :from :server)
   (let ((params (convert-from-json params 'lsp:publish-diagnostics-params)))
-    (send-event (lambda () (highlight-diagnostics params)))))
+    (send-event (lambda ()
+                  (highlight-diagnostics params)))))
 
 (define-command lsp-document-diagnostics () ()
   (when-let ((diagnostics (buffer-diagnostics (current-buffer))))
@@ -787,9 +820,9 @@
 ;; TODO
 ;; - workDoneProgress
 ;; - partialResult
-;; - hoverClientCapabilitiesのcontentFormatを設定する
-;; - hoverのrangeを使って範囲に背景色をつける
-;; - serverでサポートしているかのチェックをする
+;; - Set `contentFormat`  `hoverClientCapabilities`
+;; - Use `hover`'s `range` to add background color to the range
+;; - Check if supported by server
 
 (defun contents-to-string (contents)
   (flet ((marked-string-to-string (marked-string)
@@ -844,11 +877,11 @@
 ;;; completion
 
 ;; TODO
-;; - serverでサポートしているかのチェックをする
+;; - Check if supported by the server
 ;; - workDoneProgress
 ;; - partialResult
-;; - completionParams.context, どのように補完が起動されたかの情報を含める
-;; - completionItemの使っていない要素が多分にある
+;; - completionParams.context, include information about how completion was triggered.
+;; - There are many unused fields in `completionItem`
 ;; - completionResolve
 
 (defclass completion-item (completion:completion-item)
@@ -883,7 +916,8 @@
                (make-instance
                 'completion-item
                 :start start
-                ;; 補完候補を表示した後に文字を入力し, 候補選択をするとendがずれるので使えない
+                ;; After showing completion candidates, if you type characters and select a candidate,
+                ;; the `end` position becomes mis-aligned and can't be used.
                 ;; :end end
                 :label label
                 :detail (handler-case (lsp:completion-item-detail item)
@@ -936,7 +970,12 @@
               'lsp:completion-params
               (make-text-document-position-arguments point))
        :then (lambda (response)
-               (funcall then (convert-completion-response point response)))))))
+               (funcall then
+                        (if-let ((symbol-at-point (symbol-string-at-point point)))
+                          (completion-strings symbol-at-point
+                                              (convert-completion-response point response)
+                                              :key #'lem/completion-mode::completion-item-label)
+                          (convert-completion-response point response))))))))
 
 (defun completion-with-trigger-character (c)
   (declare (ignore c))
@@ -978,7 +1017,8 @@
     (buffer-start point)
     (do-sequence ((parameter index) parameters)
       (let ((label (lsp:parameter-information-label parameter)))
-        ;; TODO: labelの型が[number, number]の場合に対応する
+        ;; TODO:
+        ;; Handle the case where the label's type is [number, number]
         (when (stringp label)
           (search-forward point label)
           (when (= active-parameter index)
@@ -1070,7 +1110,8 @@
 
 (defun text-document/declaration (point)
   (declare (ignore point))
-  ;; TODO: goplsが対応していなかったので後回し
+  ;; TODO:
+  ;; not supported by `gopls`, delaying to later
   nil)
 
 ;;; definition
@@ -1094,7 +1135,9 @@
 
 (defgeneric convert-location (location)
   (:method ((location lsp:location))
-    ;; TODO: end-positionも使い、定義位置への移動後のハイライトをstart/endの範囲にする
+    ;; TODO:
+    ;; Also use `end-position`.
+    ;; After moving to definition location, set the highlight to the start/end range.
     (let* ((start-position (lsp:range-start (lsp:location-range location)))
            (end-position (lsp:range-end (lsp:location-range location)))
            (uri (lsp:location-uri location))
@@ -1332,7 +1375,7 @@
 ;;; document symbols
 
 ;; TODO
-;; - position順でソートする
+;; - Sort by `position`
 
 (define-attribute symbol-kind-file-attribute
   (t :foreground "snow1"))
@@ -1511,7 +1554,7 @@
 (defun append-document-symbol-item (buffer document-symbol nest-level)
   (let ((selection-range (lsp:document-symbol-selection-range document-symbol))
         (range (lsp:document-symbol-range document-symbol)))
-    (declare (ignore range)) ; TODO: rangeをリージョンのハイライトに使う
+    (declare (ignore range)) ; TODO: use `range` in region highlighting
     (lem/peek-source:with-appending-source
         (point :move-function (lambda ()
                                 (let ((point (buffer-point buffer)))
@@ -1565,8 +1608,8 @@
 
 (defun execute-command (workspace command)
   ;; TODO
-  ;; レスポンスを見てなんらかの処理をする必要がある
-  ;; この機能はgoplsで使われる事が今のところないので動作テストをできていない
+  ;; Need to look at response, and deal with it somehow.
+  ;; This feature isn't currently used by `gopls`, so its behavior hasn't been tested.
   (request:request
    (workspace-client workspace)
    (make-instance 'lsp:workspace/execute-command)
@@ -1690,7 +1733,7 @@
 
 ;;; range formatting
 
-;; WARNING: goplsでサポートされていないので動作未確認
+;; WARNING: This is unsupported by `gopls`, so behavior is not tested.
 
 (defun provide-range-formatting-p (workspace)
   (handler-case (lsp:server-capabilities-document-range-formatting-provider
@@ -1713,14 +1756,14 @@
            :range (points-to-lsp-range start end)
            :options (make-formatting-options buffer))))))))
 
-(define-command lsp-document-range-format (start end) ("r")
+(define-command lsp-document-range-format (start end) (:region)
   (check-connection)
   (text-document/range-formatting start end))
 
 ;;; onTypeFormatting
 
 ;; TODO
-;; - バッファの初期化時にtext-document/on-type-formattingを呼び出すフックを追加する
+;; - Add a hook to call `text-document/on-type-formatting` when buffer is initialized
 
 (defun provide-on-type-formatting-p (workspace)
   (handler-case (lsp:server-capabilities-document-on-type-formatting-provider
@@ -1766,28 +1809,32 @@
                             (make-text-document-position-arguments point))))))
         (apply-workspace-edit response)))))
 
-(define-command lsp-rename (new-name) ("sNew name: ")
+(define-command lsp-rename (new-name) ((:string "New name: "))
   (check-connection)
   (text-document/rename (current-point) new-name))
 
 ;;;
 (define-command lsp-restart-server () ()
-  (dispose-workspace (buffer-workspace (current-buffer)))
+  (when-let (workspace (buffer-workspace (current-buffer) nil))
+    (dispose-workspace workspace))
   ;; TODO:
-  ;; 現在のバッファを開き直すだけでは不十分
-  ;; buffer-listを全て見る必要がある
+  ;; It's not enough to reopen just the current buffer,
+  ;; we need to check the entire `buffer-list`.
   (ensure-lsp-buffer (current-buffer)))
 
 ;;;
 (defun enable-lsp-mode ()
-  (lsp-mode t))
+  "This function is called when the corresponding major mode is enabled,
+because lsp-mode acts as a minor mode for the corresponding major mode."
+  (unless *disable*
+    (lsp-mode t)))
 
-(defmacro define-language-spec ((spec-name major-mode) &body initargs)
+(defmacro define-language-spec ((spec-name major-mode &key (parent-spec 'lem-lsp-mode/spec::spec)) &body initargs)
   `(progn
      ,(when (mode-hook-variable major-mode)
         `(add-hook ,(mode-hook-variable major-mode) 'enable-lsp-mode))
      (eval-when (:compile-toplevel :load-toplevel :execute)
-       (defclass ,spec-name (lem-lsp-mode/spec::spec) ()
+       (defclass ,spec-name (,parent-spec) ()
          (:default-initargs ,@initargs
           :mode ',major-mode)))
      (register-language-spec ',major-mode (make-instance ',spec-name))))

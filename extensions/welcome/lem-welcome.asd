@@ -1,4 +1,4 @@
 (defsystem "lem-welcome"
-  :depends-on (:lem :lem-vi-mode)
+  :depends-on (:lem/core :lem-vi-mode)
   :serial t 
   :components ((:file "welcome")))

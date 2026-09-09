@@ -30,8 +30,8 @@
 
 (define-condition end-of-buffer (move-cursor-error)
   ()
-  (:default-initargs :message "End of buffer"))
+  (:default-initargs :message nil))
 
 (define-condition beginning-of-buffer (move-cursor-error)
   ()
-  (:default-initargs :message "Beginning of buffer"))
+  (:default-initargs :message nil))

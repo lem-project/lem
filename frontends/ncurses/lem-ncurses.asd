@@ -2,10 +2,10 @@
   :depends-on ("cffi"
                "cl-charms"
                "cl-setlocale"
-               "lem"
+               "lem/core"
                "lem/extensions")
   :serial t
-  :components (#+win32(:file "cl-charms-pdcurseswin32")
+  :components (#+pdcurses(:file "cl-charms-pdcurseswin32")
                (:file "config")
                (:file "term")
                (:file "clipboard")

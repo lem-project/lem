@@ -120,12 +120,11 @@
 (defmethod %syntax-scan-region ((tmlanguage tmlanguage) start end)
   (tm-syntax-scan-region start end))
 
-
 (defun set-syntax-context (line x)
-  (setf (line-syntax-context line) x))
+  (setf (line:line-syntax-context line) x))
 
 (defun get-syntax-context (line)
-  (line-syntax-context line))
+  (line:line-syntax-context line))
 
 (defun tm-get-repository (name)
   (gethash name (tmlanguage-repository (current-syntax-parser))))
@@ -223,7 +222,7 @@
     (tm-patterns
      (tm-scan-line point capture start end))
     (otherwise
-     (line-add-property (point-line point) start end :attribute capture nil))))
+     (line:line-add-property (point-line point) start end :attribute capture nil))))
 
 (defun tm-apply-captures (point result captures)
   (when (and captures (< 0 (length captures)))
@@ -242,7 +241,7 @@
 
 (defun tm-apply-content-name (rule point start end contp)
   (alexandria:when-let (content-name (tm-region-content-name rule))
-    (line-add-property (point-line point) start end
+    (line:line-add-property (point-line point) start end
                        :attribute content-name
                        contp)))
 
@@ -300,18 +299,30 @@
         (setf best (tm-get-best-result best end-result))
         (loop
           (cond ((null best)
-                 (line-add-property (point-line point) start1 (line-length (point-line point))
-                                    :attribute (tm-rule-name rule)
-                                    t)
+                 (alexandria:when-let ((rule-name (tm-rule-name rule)))
+                   (line:line-add-property (point-line point) start1
+                                           (line:line-length (point-line point))
+                                           :attribute rule-name
+                                           t))
+                 (tm-apply-content-name rule point start1 (line:line-length (point-line point)) t)
+                 (tm-scan-line point
+                               (tm-region-patterns rule)
+                               start2
+                               end)
                  (tm-apply-begin-captures rule point begin-result start-line-p)
-                 (tm-apply-content-name rule point start2 (line-length (point-line point)) t)
                  (set-syntax-context (point-line point) (cons rule begin-result))
-                 (line-end point)
+                 (if end
+                     (line-offset point 0 end)
+                     (line-end point))
                  (return))
                 ((and best end-result (tm-result= best end-result))
-                 (line-add-property (point-line point) start1 (tm-result-end end-result)
-                                    :attribute (tm-rule-name rule)
-                                    nil)
+                 (line:line-add-property (point-line point) start1 (tm-result-end end-result)
+                                         :attribute (tm-rule-name rule)
+                                         nil)
+                 (tm-scan-line point
+                               (tm-region-patterns rule)
+                               start2
+                               (tm-result-start end-result))
                  (tm-apply-begin-captures rule point begin-result start-line-p)
                  (tm-apply-end-captures rule point end-result)
                  (tm-apply-content-name rule point start1 (tm-result-start end-result) nil)
@@ -357,13 +368,13 @@
     (tm-patterns
      (tm-scan-line point capture start end))
     (otherwise
-     (line-add-property (point-line point) start end :attribute capture nil))))
+     (line:line-add-property (point-line point) start end :attribute capture nil))))
 
 (defun tm-apply-match (rule point result)
   (let ((start (tm-result-start result))
         (end (tm-result-end result))
         (captures (tm-match-captures rule)))
-    (line-add-property (point-line point) start end :attribute (tm-rule-name rule) nil)
+    (line:line-add-property (point-line point) start end :attribute (tm-rule-name rule) nil)
     (tm-apply-captures point result captures)
     (cond ((tm-match-move-action rule)
            (line-offset point 0 start)
@@ -382,7 +393,7 @@
 
 (defun tm-continue-prev-line (point)
   (let* ((line (point-line point))
-         (prev (line-prev line))
+         (prev (line:line-previous line))
          (context (and prev (get-syntax-context prev)))
          (rule (alexandria:ensure-car context)))
     (cond ((null rule)
@@ -399,8 +410,8 @@
                       (when goal
                         (move-point point goal)))))
                  (t
-                  (line-add-property (point-line point)
-                                     0 (line-length line)
+                  (line:line-add-property (point-line point)
+                                     0 (line:line-length line)
                                      :attribute (tm-rule-name rule)
                                      t)
                   (line-end point))))
@@ -429,7 +440,7 @@
 
 (defun tm-syntax-scan-region (start end)
   (loop
-    (line-clear-property (point-line start) :attribute)
+    (line:line-clear-property (point-line start) :attribute)
     (unless (tm-syntax-scan-line start)
       (return start))
     (when (point<= end start)

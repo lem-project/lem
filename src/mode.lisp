@@ -112,8 +112,8 @@
 (defun all-active-modes (buffer)
   (mapcar #'ensure-mode-object
           (append (buffer-minor-modes buffer)
-                  (active-global-minor-modes)
                   (list (buffer-major-mode buffer))
+                  (active-global-minor-modes)
                   (list (current-global-mode)))))
 
 (defun mode-active-p (buffer mode)
@@ -149,8 +149,8 @@
        ,@(when mode-hook
            `((defvar ,mode-hook '())))
        ,@(when keymap
-           `((defvar ,keymap (make-keymap :name ',keymap
-                                          :parent ,(when parent-mode
+           `((defvar ,keymap (make-keymap :description ',keymap
+                                          :base ,(when parent-mode
                                                      `(mode-keymap ',parent-mode))))))
        (define-command (,major-mode (:class ,command-class-name)) () ()
          (clear-editor-local-variables (current-buffer))
@@ -205,8 +205,8 @@
   (let ((command-class-name (make-mode-command-class-name minor-mode)))
     `(progn
        ,@(when keymapp
-           `((defvar ,keymap (make-keymap :name ',keymap))))
-       (define-command (,minor-mode (:class ,command-class-name)) (&optional (arg nil arg-p)) ("p")
+           `((defvar ,keymap (make-keymap :description ',keymap))))
+       (define-command (,minor-mode (:class ,command-class-name)) (&optional (arg nil arg-p)) (:universal)
          (cond ((not arg-p)
                 (toggle-minor-mode ',minor-mode))
                ((eq arg t)
@@ -252,8 +252,8 @@
       `(progn
          ,@(when keymap
              `((defvar ,keymap
-                 (make-keymap :name ',keymap
-                              :parent (alexandria:when-let ((,parent-mode
+                 (make-keymap :description ',keymap
+                              :base (alexandria:when-let ((,parent-mode
                                                              ,(when parent
                                                                 `(get-mode-object ',parent))))
                                         (mode-keymap ,parent-mode))))))
@@ -300,3 +300,36 @@
              instance))
           (t
            (cdr (buffer-active-modes-class-cache buffer))))))
+
+(defun get-syntax-table-by-mode-name (mode-name)
+  (alexandria:when-let* ((mode (find-mode mode-name))
+                         (syntax-table (mode-syntax-table mode)))
+    syntax-table))
+
+;;;
+(defun clear-region-major-mode (start end)
+  (remove-text-property start end :mode))
+
+(defun set-region-major-mode (start end mode)
+  (put-text-property start end :mode mode))
+
+(defun major-mode-at-point (point)
+  (text-property-at point :mode))
+
+(defun current-major-mode-at-point (point)
+  (or (major-mode-at-point point)
+      (buffer-major-mode (point-buffer point))))
+
+(defun call-with-major-mode (buffer mode function)
+  (let ((previous-mode (buffer-major-mode buffer)))
+    (cond ((eq previous-mode mode)
+           (funcall function))
+          (t
+           (change-buffer-mode buffer mode)
+           (unwind-protect (funcall function)
+             (change-buffer-mode buffer previous-mode))))))
+
+(defmacro with-major-mode (mode &body body)
+  `(call-with-major-mode (current-buffer) ,mode (lambda () ,@body)))
+
+(defgeneric paste-using-mode (mode text))

@@ -1,6 +1,6 @@
-(defpackage :lem/tests/interp
+(defpackage :lem-tests/interp
   (:use :cl :rove))
-(in-package :lem/tests/interp)
+(in-package :lem-tests/interp)
 
 (defvar *result*)
 

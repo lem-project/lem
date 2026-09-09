@@ -21,6 +21,20 @@ If FROM-BOTTOM is T, start counting from the bottom."
       (window-scroll window n)
       n)))
 
+(defun window-recenter-top-bottom (window)
+  "In first call recenter WINDOW to the middle line.
+If cursor is already in the middle of WINDOW then move cursor in the top position.
+If cursor is on top then move move WINDOW to the bottom."
+  (let* ((line (window-cursor-y window))
+         (window-height (window-height-without-modeline window))
+         (middle (floor window-height 2))
+         (scrolloff (min (floor (/ (window-height window) 2)) 0))
+         (top 0))
+    (cond
+      ((= line middle) (window-recenter window :line scrolloff :from-bottom nil))
+      ((= line top) (window-recenter window :line scrolloff :from-bottom t))
+      (t (window-recenter window :line nil :from-bottom nil)))))
+
 (defun %calc-window-cursor-x (point window)
   "Return (values cur-x next). the 'next' is a flag if the cursor goes to
 next line because it is at the end of width."
@@ -81,9 +95,30 @@ next line because it is at the end of width."
                                        #'inc)))
       offset)))
 
+(defun count-hidden-lines (start-point end-point)
+  "Number of hidden buffer lines between START-POINT and END-POINT."
+  (when (point< end-point start-point)
+    (rotatef start-point end-point))
+  (with-point ((p start-point)
+               (goal end-point))
+    (line-start p)
+    (line-start goal)
+    (loop :with count := 0
+          :until (same-line-p p goal)
+          :do (unless (line-offset p 1)
+                (return count))
+              (when (line-continuation-p p)
+                (incf count))
+          :finally (return count))))
+
 (defun window-cursor-y-not-wrapping (window)
-  (count-lines (window-buffer-point window)
-               (window-view-point window)))
+  "Number of screen rows between the view point and the cursor.
+excludes lines hidden by overlays with :invisible property because those lines dont occupy any
+vertical space."
+  (let ((view-point (window-view-point window))
+        (buffer-point (window-buffer-point window)))
+    (- (count-lines buffer-point view-point)
+       (count-hidden-lines view-point buffer-point))))
 
 (defun window-cursor-y (window)
   (if (point< (window-buffer-point window)

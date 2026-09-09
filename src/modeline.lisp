@@ -1,5 +1,10 @@
 (in-package :lem-core)
 
+(defvar *cached-lem-version-string*
+  (format nil " v~A " (asdf:component-version (asdf:find-system :lem)))
+  "Cached version string for the modeline. Computed once at load time
+to avoid calling asdf:find-system on every frame.")
+
 (define-editor-variable modeline-format '("  "
                                           modeline-write-info
                                           modeline-name
@@ -39,6 +44,12 @@
 (define-attribute inactive-modeline-posline-attribute
   (t :foreground "black" :background "#505050"))
 
+(define-attribute modeline-version-attribute
+  (t :foreground "#6a6a6a"))
+
+(define-attribute inactive-modeline-version-attribute
+  (t :foreground "#444444"))
+
 (defvar *modeline-status-list* nil)
 
 (defun modeline-add-status-list (x &optional (buffer nil bufferp))
@@ -62,9 +73,9 @@
 (defun modeline-write-info (window)
   (let ((buffer (window-buffer window)))
     (cond ((buffer-read-only-p buffer)
-           (format nil " ~a " (icon-string "lock")))
+           (format nil " ~a" (icon-string "lock")))
           ((buffer-modified-p buffer)
-           " * ")
+           (format nil " ~a" (icon-string "bullet-point")))
           (t
            "   "))))
 
@@ -123,6 +134,11 @@
           (if (eq window (current-window))
               'modeline-posline-attribute
               'inactive-modeline-posline-attribute)))
+
+(defun modeline-version (window)
+  (declare (ignore window))
+  (values *cached-lem-version-string*
+          'modeline-version-attribute))
 
 (defgeneric convert-modeline-element (element window))
 

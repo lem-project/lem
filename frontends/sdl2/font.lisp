@@ -12,6 +12,8 @@
            :font-braille-font
            :font-char-width
            :font-char-height
+           :font-ascent
+           :font-descent
            :save-font-size
            :make-font-config
            :font-config-size
@@ -43,7 +45,13 @@
   emoji-font
   braille-font
   char-width
-  char-height)
+  char-height
+  ;; Latin-normal-font TTF intrinsic metrics, cached at open-font time so the
+  ;; glyph-draw path can anchor baselines without round-tripping into FFI on
+  ;; every blit.  ASCENT is positive (pixels above baseline), DESCENT is
+  ;; negative (pixels below baseline) per SDL_ttf convention.
+  ascent
+  descent)
 
 (defun save-font-size (font-config &optional (ratio 1))
   (setf (lem:config :sdl2-font-size)
@@ -106,6 +114,8 @@
   (let* ((surface (sdl2-ttf:render-text-solid font " " 0 0 0 0))
          (width (sdl2:surface-width surface))
          (height (sdl2:surface-height surface)))
+    (trivial-garbage:cancel-finalization surface)
+    (sdl2:free-surface surface)
     (list width height)))
 
 (defun open-font (&optional font-config)
@@ -131,7 +141,9 @@
                  :emoji-font emoji-font
                  :braille-font braille-font
                  :char-width char-width
-                 :char-height char-height))))
+                 :char-height char-height
+                 :ascent (sdl2-ffi.functions:ttf-font-ascent latin-normal-font)
+                 :descent (sdl2-ffi.functions:ttf-font-descent latin-normal-font)))))
 
 (defun close-font (font)
   (sdl2-ttf:close-font (font-latin-normal-font font))
@@ -148,6 +160,12 @@
   '())
 
 (defmethod get-font-list ((platform lem-sdl2/platform:linux))
+  (loop :for line :in (split-sequence:split-sequence #\newline
+                                                     (uiop:run-program "fc-list" :output :string)
+                                                     :remove-empty-subseqs t)
+        :collect (first (split-sequence:split-sequence #\: line :count 1))))
+
+(defmethod get-font-list ((platform lem-sdl2/platform:mac))
   (loop :for line :in (split-sequence:split-sequence #\newline
                                                      (uiop:run-program "fc-list" :output :string)
                                                      :remove-empty-subseqs t)

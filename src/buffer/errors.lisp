@@ -27,12 +27,13 @@
 
 (define-condition editor-error (editor-condition)
   ((message
-    :initform ""
+    :initform nil
     :initarg :message))
   (:report
    (lambda (condition stream)
      (with-slots (message) condition
-       (princ message stream)))))
+       (when message
+         (princ message stream))))))
 
 (defun editor-error (message &rest args)
   (error 'editor-error :message (apply #'format nil message args)))

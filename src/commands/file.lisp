@@ -4,6 +4,7 @@
            :find-file-executor
            :execute-find-file
            :find-file
+           :open-init-file
            :find-file-recursively
            :read-file
            :add-newline-at-eof-on-writing-file
@@ -13,6 +14,7 @@
            :write-file
            :write-region-file
            :insert-file
+           :insert-filename
            :save-some-buffers
            :sync-buffer-with-file-content
            :revert-buffer
@@ -20,13 +22,23 @@
            :change-directory
            :current-directory
            :prompt-for-files-recursively
-           :format-current-buffer))
+           :format-current-buffer
+           :file-history
+           :find-recent-file
+           :find-history-file
+           :*file-history-limit*
+           :get-file-mode
+           :recent-files
+           :format-current-buffer)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/file)
 
 (define-key *global-keymap* "C-x C-f" 'find-file)
 (define-key *global-keymap* "C-x C-r" 'read-file)
 (define-key *global-keymap* "C-x C-s" 'save-current-buffer)
 (define-key *global-keymap* "C-x C-w" 'write-file)
+(define-key *global-keymap* "C-x C-h" 'find-recent-file)
 (define-key *global-keymap* "C-x Tab" 'insert-file)
 (define-key *global-keymap* "C-x s" 'save-some-buffers)
 
@@ -54,7 +66,7 @@
 
 (defun directory-for-file-or-lose (filename)
   (let ((directory (directory-namestring filename)))
-    (unless (or (uiop:directory-exists-p directory)
+    (unless (or (virtual-directory-exists-p directory)
                 (maybe-create-directory directory))
       (error 'editor-abort))
     directory))
@@ -64,7 +76,7 @@
 
 (defvar *find-file-executor* (make-instance 'find-file-executor))
 
-(define-command find-file (arg) ("p")
+(define-command find-file (arg) (:universal)
   "Open the file."
   (let ((*default-external-format* *default-external-format*))
     (let ((filename
@@ -92,8 +104,12 @@
           (setf buffer (execute-find-file *find-file-executor*
                                           (get-file-mode pathname)
                                           pathname)))
-        (when buffer
+        (when (bufferp buffer)
           (switch-to-buffer buffer t nil))))))
+
+(define-command open-init-file () ()
+  "Opens the lem init file"
+  (find-file (lem-core:get-preferred-init-file-path)))
 
 (defmethod execute-find-file :before (executor mode pathname)
   (directory-for-file-or-lose pathname))
@@ -126,6 +142,11 @@
                 (setf *find-program* key)
                 (return key)))))
 
+(defun parse-find-program-output (output)
+  (mapcar #'namestring
+          (mapcar #'uiop:parse-native-namestring
+                  (str:lines output))))
+
 (defgeneric get-files-recursively (program)
   (:documentation "Find files recursively on the current working
   directory with the program set in `*find-program*'.
@@ -135,15 +156,15 @@
 
 (defmethod get-files-recursively ((finder (eql :fdfind)))
   ;; fdfind excludes .git, node_modules and such by default.
-  (str:lines
+  (parse-find-program-output
    (uiop:run-program (list "fdfind") :output :string)))
 
 (defmethod get-files-recursively ((finder (eql :fd)))
-  (str:lines
+  (parse-find-program-output
    (uiop:run-program (list "fd") :output :string)))
 
 (defmethod get-files-recursively ((finder (eql :find)))
-  (str:lines
+  (parse-find-program-output
    (uiop:run-program (list "find" ".") :output :string)))
 
 (defun %shorten-path (cwd path)
@@ -176,15 +197,15 @@
   If finding files times out, such as in a HOME directory, stop the operation.
 
   Return a list of files or signal a FALLBACK-TO-FIND-FILE simple condition."
-  (let ((thread (bt:make-thread
+  (let ((thread (bt2:make-thread
                  (lambda ()
                    (get-files-recursively find-program))
                  :name "Lem get-files-recursively")))
     (handler-case
-        (bt:with-timeout (timeout)
-          (bt:join-thread thread))
-      (bt:timeout ()
-        (bt:destroy-thread thread)
+        (bt2:with-timeout (timeout)
+          (bt2:join-thread thread))
+      (bt2:timeout ()
+        (bt2:destroy-thread thread)
         (signal 'fallback-to-find-file)))))
 
 (defun prompt-for-files-recursively ()
@@ -204,10 +225,10 @@
     (let ((candidates (get-files-recursively-with-timeout (find-program))))
       (prompt-for-string
        "File: "
-       :completion-function (lambda (x) (completion-strings x candidates))
+       :completion-function (lambda (x) (completion-files x candidates))
        :test-function (lambda (name) (member name candidates :test #'string=))))))
 
-(define-command find-file-recursively (arg) ("p")
+(define-command find-file-recursively (arg) (:universal)
   "Open a file, from the list of all files present under the buffer's directory, recursively."
   ;; ARG is currently not used, use it when needed.
   (declare (ignorable arg))
@@ -223,7 +244,7 @@
             (switch-to-buffer buffer t nil)))))))
 
 
-(define-command read-file (filename) ("FRead File: ")
+(define-command read-file (filename) ((:new-file "Read File: "))
   "Open the file as a read-only."
   (when (pathnamep filename)
     (setf filename (namestring filename)))
@@ -261,13 +282,13 @@
      (editor-error "No file name"))
     (t nil)))
 
-(define-command save-current-buffer (&optional force-p) ("P")
+(define-command save-current-buffer (&optional force-p) (:universal-nil)
   "Saves the current buffer text to a file"
   (let ((buffer (current-buffer)))
     (alexandria:when-let (filename (save-buffer buffer force-p))
       (message "Wrote ~A" filename))))
 
-(define-command write-file (filename) ("FWrite File: ")
+(define-command write-file (filename) ((:new-file "Write File: "))
   "Saves the text in the current buffer to the specified file"
   (let* ((old (buffer-name))
          (new (file-namestring filename))
@@ -289,21 +310,33 @@
       (save-current-buffer t))))
 
 (define-command write-region-file (start end filename)
-    ("r" "FWrite Region To File: ")
+    (:region (:new-file "Write Region To File: "))
   "Saves the region of text to the specified file"
   (setf filename (expand-file-name filename))
   (add-newline-at-eof (point-buffer start))
   (write-region-to-file start end filename)
   (message "Wrote ~A" filename))
 
-(define-command insert-file (filename) ("fInsert file: ")
+(define-command insert-file (filename) ((:file "Insert file: "))
   "Inserts the contents of the file into the current buffer."
   (insert-file-contents (current-point)
                         (expand-file-name filename))
   t)
 
-(define-command save-some-buffers (&optional save-silently-p) ("P")
-  "Save some files in the open buffer."
+(define-command insert-filename (filename &optional arg) ((:file "Insert file name:") :universal-nil)
+  "Prompt for a file and insert its full filename at the current point.
+
+  With universal argument C-u, print it inside double quotes."
+  ;; note: insert-file-name exists as a function in directory-mode/internals.lisp
+  (when filename
+    (when arg (insert-string (current-point) "\""))
+    (insert-string (current-point) filename)
+    (when arg (insert-string (current-point) "\""))))
+
+(define-command save-some-buffers (&optional save-silently-p) (:universal-nil)
+  "For all modified files, interactively ask to save it.
+
+  With a prefix argument, don't ask interactively."
   (let ((prev-buffer (current-buffer)))
     (dolist (buffer (buffer-list))
       (when (and (buffer-modified-p buffer)
@@ -334,7 +367,7 @@
       (move-to-column point column)
       t)))
 
-(define-command revert-buffer (does-not-ask-p) ("P")
+(define-command revert-buffer (does-not-ask-p) (:universal-nil)
   "Restores the buffer. Normally this command will cause the contents of the file to be reflected in the buffer."
   (let ((ask (not does-not-ask-p))
         (buffer (current-buffer)))
@@ -376,7 +409,7 @@
     (setf *default-pathname-defaults* (uiop:getcwd)))
   t)
 
-(define-command current-directory (&optional insert) ("P")
+(define-command current-directory (&optional insert) (:universal-nil)
   "Display the directory of the active buffer.
 With prefix argument INSERT, insert the directory of the active buffer at point."
   (let ((dir (buffer-directory)))
@@ -389,3 +422,55 @@ With prefix argument INSERT, insert the directory of the active buffer at point.
 
 Supported modes include: c-mode with clang-format, go-mode with gofmt, js-mode and json-mode with prettier, and lisp-mode. Additionally rust-mode uses rustfmt."
   (format-buffer))
+
+(defvar *files-history*)
+(defvar *file-history-limit* 10
+  "The maximum number of files to keep in the file history.")
+  
+(defun file-history ()
+  "Return or create the files' history struct.
+  The history file is saved on (lem-home)/history/files"
+  (unless (boundp '*files-history*)
+    (let* ((pathname (merge-pathnames "history/files" (lem-home)))
+           (history (lem/common/history:make-history :pathname pathname :limit *file-history-limit*)))
+      (setf *files-history* history)))
+  *files-history*)
+
+(defun add-to-file-history (buffer)
+  "Add the buffer's filename to the file history."
+  (let ((filename (buffer-filename buffer)))
+    (when filename
+      (lem/common/history:add-history (file-history) 
+                                      (namestring filename)
+                                      :allow-duplicates nil
+                                      :move-to-top t)
+      (lem/common/history:save-file (file-history)))))
+
+(add-hook *find-file-hook* 'add-to-file-history)
+
+(defun recent-files ()
+  "Return a list of the recent files (as strings), the last accessed first.
+
+  For an interactive command, see `find-recent-file`."
+  (reverse
+   (lem/common/history:history-data-list (file-history))))
+
+
+(define-command find-recent-file () ()
+  "Open a recently accessed file."
+  (let ((candidates (recent-files)))
+    (if candidates
+        (let ((filename (prompt-for-string
+                         "File: "
+                         :completion-function (lambda (x) (completion-strings x candidates))
+                         :test-function (lambda (name) (member name candidates :test #'string=)))))
+          (when filename
+            (find-file filename)))
+        (editor-error "No file history."))))
+
+;; deprecated command, name changed <2025-08-12>
+(define-command find-history-file () ()
+  "Open a recently accessed file.
+
+  Alias for `find-recent-file`."
+  (find-recent-file))

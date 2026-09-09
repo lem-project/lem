@@ -15,7 +15,7 @@
   (setf (window-parameter window 'redrawing-cache) value))
 
 (defclass drawing-object ()
-  ())
+  ((width :initform nil :accessor drawing-object-width)))
 
 (defclass void-object (drawing-object) ())
 
@@ -26,6 +26,13 @@
    (type :initarg :type :reader text-object-type)
    (within-cursor :initform nil :initarg :within-cursor :reader text-object-within-cursor-p)))
 
+(defmethod print-object ((drawing-object text-object) stream)
+  (print-unreadable-object (drawing-object stream :type t)
+    (format stream
+            "~S ~S"
+            (text-object-string drawing-object)
+            (text-object-attribute drawing-object))))
+
 (defclass control-character-object (text-object) ())
 
 (defclass icon-object (text-object) ())
@@ -34,7 +41,12 @@
 
 (defclass eol-cursor-object (drawing-object)
   ((color :initarg :color
-          :reader eol-cursor-object-color)))
+          :reader eol-cursor-object-color)
+   (attribute :initarg :attribute
+              :reader eol-cursor-object-attribute)
+   (true-cursor-p :initarg :true-cursor-p
+                  :initform nil
+                  :reader eol-cursor-object-true-cursor-p)))
 
 (defclass extend-to-eol-object (drawing-object)
   ((color :initarg :color
@@ -86,14 +98,94 @@
          (extend-to-eol-object-color drawing-object-2)))
 
 (defmethod drawing-object-equal ((drawing-object-1 line-end-object) (drawing-object-2 line-end-object))
-  (equal (line-end-object-offset drawing-object-1)
-         (line-end-object-offset drawing-object-2)))
+  (and (call-next-method)
+       (equal (line-end-object-offset drawing-object-1)
+              (line-end-object-offset drawing-object-2))))
 
 (defmethod drawing-object-equal ((drawing-object-1 image-object) (drawing-object-2 image-object))
+  (and (eq (image-object-image drawing-object-1) (image-object-image drawing-object-1))
+       (equal (image-object-width drawing-object-1) (image-object-width drawing-object-1))
+       (equal (image-object-height drawing-object-1) (image-object-height drawing-object-1))))
+
+
+(defgeneric drawing-object-mergable-p (drawing-object-1 drawing-object-2))
+
+(defmethod drawing-object-mergable-p (drawing-object-1 drawing-object-2)
   nil)
 
+(defmethod drawing-object-mergable-p ((drawing-object-1 void-object) (drawing-object-2 void-object))
+  t)
+
+(defmethod drawing-object-mergable-p ((drawing-object-1 text-object) (drawing-object-2 text-object))
+  (and (attribute-equal (text-object-attribute drawing-object-1)
+                        (text-object-attribute drawing-object-2))
+       (eq (text-object-type drawing-object-1)
+           (text-object-type drawing-object-2))
+       (eq (text-object-within-cursor-p drawing-object-1)
+           (text-object-within-cursor-p drawing-object-2))))
+
+(defmethod drawing-object-mergable-p ((drawing-object-1 eol-cursor-object) (drawing-object-2 eol-cursor-object))
+  (equal (eol-cursor-object-color drawing-object-1)
+         (eol-cursor-object-color drawing-object-2)))
+
+(defmethod drawing-object-mergable-p ((drawing-object-1 extend-to-eol-object) (drawing-object-2 extend-to-eol-object))
+  (equal (extend-to-eol-object-color drawing-object-1)
+         (extend-to-eol-object-color drawing-object-2)))
+
+(defmethod drawing-object-mergable-p ((drawing-object-1 line-end-object) (drawing-object-2 line-end-object))
+  (and (call-next-method)
+       (equal (line-end-object-offset drawing-object-1)
+              (line-end-object-offset drawing-object-2))))
+
+(defmethod drawing-object-mergable-p ((drawing-object-1 image-object) (drawing-object-2 image-object))
+  (and (eq (image-object-image drawing-object-1) (image-object-image drawing-object-1))
+       (equal (image-object-width drawing-object-1) (image-object-width drawing-object-1))
+       (equal (image-object-height drawing-object-1) (image-object-height drawing-object-1))))
+
+
+(defgeneric drawing-object-merge (drawing-object-1 drawing-object-2))
+
+(defmethod drawing-object-merge ((drawing-object-1 void-object) (drawing-object-2 void-object))
+  drawing-object-1)
+
+(defmethod drawing-object-merge ((drawing-object-1 text-object) (drawing-object-2 text-object))
+  ;; Destructive merge: mutate drawing-object-1 in place to avoid allocating
+  ;; a new CLOS instance.  Safe because reduce-list discards the originals.
+  (setf (slot-value drawing-object-1 'string)
+        (str:concat (text-object-string drawing-object-1)
+                    (text-object-string drawing-object-2)))
+  ;; Reset cached width and surface since string changed.  The surface is the
+  ;; frontend-rendered glyph bitmap; leaving the pre-merge surface in place
+  ;; makes draw-time render only the original (shorter) string and drop the
+  ;; rest of the merged run.
+  (setf (drawing-object-width drawing-object-1) nil)
+  (setf (text-object-surface drawing-object-1) nil)
+  drawing-object-1)
+
+(defmethod drawing-object-merge ((drawing-object-1 eol-cursor-object) (drawing-object-2 eol-cursor-object))
+  drawing-object-1)
+
+(defmethod drawing-object-merge ((drawing-object-1 extend-to-eol-object) (drawing-object-2 extend-to-eol-object))
+  drawing-object-1)
+
+(defmethod drawing-object-merge ((drawing-object-1 line-end-object) (drawing-object-2 line-end-object))
+  ;; Destructive merge: mutate in place like text-object
+  (setf (slot-value drawing-object-1 'string)
+        (str:concat (text-object-string drawing-object-1)
+                    (text-object-string drawing-object-2)))
+  (setf (drawing-object-width drawing-object-1) nil)
+  (setf (text-object-surface drawing-object-1) nil)
+  drawing-object-1)
+
+(defmethod drawing-object-merge ((drawing-object-1 image-object) (drawing-object-2 image-object))
+  drawing-object-1)
+
+
+
 (defun object-width (drawing-object)
-  (lem-if:object-width (implementation) drawing-object))
+  (or (drawing-object-width drawing-object)
+      (setf (drawing-object-width drawing-object)
+            (lem-if:object-width (implementation) drawing-object))))
 
 (defun object-height (drawing-object)
   (lem-if:object-height (implementation) drawing-object))
@@ -118,28 +210,54 @@
                    :attribute attribute
                    :type type)))
 
+;;; Split make-instance calls by class name so SBCL can cache each constructor
+;;; independently (compile-time-known class name → inlined CTOR, bypassing
+;;; the generic ENSURE-CACHED-CTOR lookup on every call).
 (defun make-object-with-type (string attribute type)
-  (let ((attribute (and attribute (ensure-attribute attribute nil))))
-    (make-instance (case type
-                     (:folder 'folder-object)
-                     (:icon 'icon-object)
-                     (:emoji 'emoji-object)
-                     (:control 'control-character-object)
-                     (otherwise 'text-object))
-                   :string (if (eq type :control)
-                               (control-char (char string 0))
-                               string)
-                   :attribute attribute
-                   :type type
-                   :within-cursor (and attribute
-                                       (cursor-attribute-p attribute)))))
+  (let* ((attribute (and attribute (ensure-attribute attribute nil)))
+         (within-cursor (and attribute (cursor-attribute-p attribute)))
+         (resolved-string (case type
+                            (:control (control-char (char string 0)))
+                            (:zero-width
+                             (make-string (length string) :initial-element #\·))
+                            (otherwise string)))
+         (resolved-attribute (case type
+                               ((:control :zero-width)
+                                (let ((attr (ensure-attribute 'special-char-attribute nil)))
+                                  (if attribute
+                                      (merge-attribute attribute attr)
+                                      attr)))
+                               (otherwise attribute))))
+    (case type
+      (:folder
+       (make-instance 'folder-object
+                      :string resolved-string :attribute resolved-attribute
+                      :type type :within-cursor within-cursor))
+      (:icon
+       (make-instance 'icon-object
+                      :string resolved-string :attribute resolved-attribute
+                      :type type :within-cursor within-cursor))
+      (:emoji
+       (make-instance 'emoji-object
+                      :string resolved-string :attribute resolved-attribute
+                      :type type :within-cursor within-cursor))
+      (:control
+       (make-instance 'control-character-object
+                      :string resolved-string :attribute resolved-attribute
+                      :type type :within-cursor within-cursor))
+      (otherwise
+       (make-instance 'text-object
+                      :string resolved-string :attribute resolved-attribute
+                      :type type :within-cursor within-cursor)))))
 
 (defun create-drawing-object (item)
   (cond ((and *line-wrap* (typep item 'eol-cursor-item))
          (list (make-instance 'eol-cursor-object
+                              :attribute (eol-cursor-item-attribute item)
                               :color (parse-color
                                       (attribute-background
-                                       (eol-cursor-item-attribute item))))))
+                                       (eol-cursor-item-attribute item)))
+                              :true-cursor-p (eol-cursor-item-true-cursor-p item))))
         ((typep item 'extend-to-eol-item)
          (list (make-instance 'extend-to-eol-object :color (extend-to-eol-item-color item))))
         ((typep item 'line-end-item)
@@ -180,7 +298,7 @@
                          attribute
                          (char-type character)))
 
-(defun separate-objects-by-width (objects view-width)
+(defun separate-objects-by-width (objects view-width buffer)
   (flet ((explode-object (text-object)
            (check-type text-object text-object)
            (let* ((string (text-object-string text-object))
@@ -192,55 +310,111 @@
                    :collect (make-object-with-type
                              part-string
                              (text-object-attribute text-object) char-type)))))
-    (loop
-      :until (null objects)
-      :collect (loop :with total-width := 0
-                     :and physical-line-objects := '()
-                     :for object := (pop objects)
-                     :while object
-                     :do (cond ((and (typep object 'text-object)
-                                     (<= view-width (+ total-width (object-width object))))
-                                (cond ((< 1 (length (text-object-string object)))
-                                       (setf objects (nconc (explode-object object) objects)))
-                                      (t
-                                       (push object objects)
-                                       (push (make-letter-object #\\ nil)
-                                             physical-line-objects)
-                                       (return (nreverse physical-line-objects)))))
-                               (t
-                                (incf total-width (object-width object))
-                                (push object physical-line-objects)))
-                     :finally (return (nreverse physical-line-objects))))))
+    (let ((wrap-line-character (variable-value 'wrap-line-character :default buffer))
+          (wrap-line-attribute (variable-value 'wrap-line-attribute :default buffer)))
+      (loop :with total-width := 0
+            :and physical-line-objects := '()
+            :for object := (pop objects)
+            :while object
+            :do (cond ((and (typep object 'text-object)
+                            (<= view-width (+ total-width (object-width object))))
+                       (cond ((< 1 (length (text-object-string object)))
+                              (setf objects (nconc (explode-object object) objects)))
+                             (t
+                              (push object objects)
+                              (push (make-letter-object wrap-line-character
+                                                        wrap-line-attribute)
+                                    physical-line-objects)
+                              (return (values (nreverse physical-line-objects) objects)))))
+                      (t
+                       (incf total-width (object-width object))
+                       (push object physical-line-objects)))
+            :finally (return (nreverse physical-line-objects))))))
 
 (defun render-line (view x y objects height)
   (lem-if:render-line (implementation) view x y objects height))
+
+(defun reduce-list (list
+                    &key (test (alexandria:required-argument :test))
+                         (merge (alexandria:required-argument :merge)))
+  ;; Destructive: operates on LIST in place.  Callers must pass freshly-
+  ;; allocated lists (clip-objects-to-display-range and append both do).
+  (let ((new '()))
+    (loop :for current-list := list
+          :for (current next rest) := current-list
+          :do (cond ((alexandria:length= current-list 0)
+                     (return))
+                    ((alexandria:length= current-list 1)
+                     (push current new)
+                     (return))
+                    ((funcall test current next)
+                     (setf (car current-list)
+                           (funcall merge current next))
+                     (setf (cdr current-list)
+                           (cddr current-list)))
+                    (t
+                     (push current new)
+                     (pop list))))
+    (nreverse new)))
+
+(defun reduce-objects (objects)
+  (reduce-list objects
+               :test #'drawing-object-mergable-p
+               :merge #'drawing-object-merge))
+
+(defun drawing-objects-equal (objects1 objects2)
+  "Compare two lists of drawing objects for equality.
+Assumes inputs are already reduced (no adjacent mergeable objects)."
+  (when (alexandria:length= objects1 objects2)
+    (loop :for obj1 :in objects1
+          :for obj2 :in objects2
+          :always (drawing-object-equal obj1 obj2))))
 
 (defun validate-cache-p (window y height objects)
   (loop :for (cache-y cache-height cache-objects) :in (drawing-cache window)
         :when (and (= y cache-y)
                    (= height cache-height)
-                   (alexandria:length= objects cache-objects)
-                   (every #'drawing-object-equal objects cache-objects))
+                   (drawing-objects-equal objects cache-objects))
         :return t))
 
 (defun invalidate-cache (window y height)
   (setf (drawing-cache window)
-        (remove-if-not (lambda (elt)
-                         (destructuring-bind (cache-y cache-height cache-logical-line) elt
-                           (declare (ignore cache-logical-line))
-                           (or (< (+ y height)
-                                  cache-y)
-                               (<= (+ cache-y cache-height)
-                                   y))))
-                       (drawing-cache window))))
+        (remove-if (lambda (elt)
+                     (destructuring-bind (cache-y cache-height drawing-objects) elt
+                       (declare (ignore drawing-objects))
+                       (and (<= cache-y y)
+                            (<= (+ y height) (+ cache-y cache-height)))))
+                   (drawing-cache window))))
+
+(defun remove-drawing-cache-entries-from (entries y)
+  "Return ENTRIES with drawing-cache rows at or below Y removed.
+Pure helper over the entry list so the eviction can be unit tested without
+a window."
+  (remove-if (lambda (elt)
+               (>= (first elt) y))
+             entries))
+
+(defun invalidate-drawing-cache-from (window y)
+  "Drop drawing-cache entries for screen rows at or below Y.
+Counterpart to CLEAR-LINE-FINGERPRINT-CACHE-FROM for the drawing-object
+cache: when the area from Y down is blanked by CLEAR-TO-END-OF-WINDOW
+those rows no longer hold the objects their cache entries describe.  A
+later frame whose restored content matches a stale entry (e.g. undoing a
+large deletion) would otherwise pass VALIDATE-CACHE-P and skip the render,
+leaving the row blank on persistent-texture frontends such as SDL2."
+  (setf (drawing-cache window)
+        (remove-drawing-cache-entries-from (drawing-cache window) y)))
 
 (defun update-and-validate-cache-p (window y height objects)
-  (cond ((validate-cache-p window y height objects) t)
-        (t
-         (invalidate-cache window y height)
-         (push (list y height objects)
-               (drawing-cache window))
-         nil)))
+  "Check cache validity, reducing objects once before storing.
+Returns T if the cached entry matches (render can be skipped)."
+  (let ((reduced (reduce-objects objects)))
+    (cond ((validate-cache-p window y height reduced) t)
+          (t
+           (invalidate-cache window y height)
+           (push (list y height reduced)
+                 (drawing-cache window))
+           nil))))
 
 (defun render-line-with-caching (window x y objects height)
   (unless (update-and-validate-cache-p window y height objects)
@@ -250,6 +424,134 @@
   (loop :for object :in objects
         :maximize (object-height object)))
 
+;;; Line fingerprint cache — avoids creating drawing objects for unchanged lines
+
+(defun line-fingerprint-cache (window)
+  "Return WINDOW's line-fingerprint hash table, lazily allocating one.
+Stored on the window's parameter plist so the cache lives and dies with
+the window itself (no global state)."
+  (or (window-parameter window 'line-fingerprint-cache)
+      (setf (window-parameter window 'line-fingerprint-cache)
+            (make-hash-table :test 'eql))))
+
+(defun clear-line-fingerprint-cache (window)
+  "Drop all cached line fingerprints on WINDOW.  Invoked when the screen
+is force-redrawn or marked as needing redraw, since cached heights may
+no longer reflect the current layout."
+  (alexandria:when-let ((cache (window-parameter window 'line-fingerprint-cache)))
+    (clrhash cache)))
+
+(defun evict-line-fingerprints-from (cache y)
+  "Remove fingerprint entries in CACHE for screen rows at or below Y.
+Pure helper over the hash table so it can be unit tested without a window."
+  (loop :for key :being :the :hash-keys :of cache
+        :when (>= key y)
+        :collect key :into stale
+        :finally (dolist (key stale)
+                   (remhash key cache))))
+
+(defun clear-line-fingerprint-cache-from (window y)
+  "Drop cached line fingerprints for screen rows at or below Y on WINDOW.
+Called when the area from Y down is about to be blanked by
+CLEAR-TO-END-OF-WINDOW: those rows no longer hold the content their cached
+fingerprints describe.  Leaving them would let a later frame whose restored
+content happens to match a stale fingerprint (e.g. undoing a large
+deletion) skip the render, leaving the row blank on persistent-texture
+frontends such as SDL2."
+  (alexandria:when-let ((cache (window-parameter window 'line-fingerprint-cache)))
+    (evict-line-fingerprints-from cache y)))
+
+(defun item-content-hash (item)
+  "Return a content-based hash for ITEM.
+
+SXHASH on STANDARD-OBJECTs and STRUCTURE-OBJECTs is identity-based in
+SBCL, so an attribute mutated in place (e.g. recoloring the shared CURSOR
+attribute via SET-ATTRIBUTE) keeps the same SXHASH even though its visible
+content changed.  Hashing attribute/color content keeps the line
+fingerprint consistent with ATTRIBUTE-EQUAL and avoids stale glyphs
+(ghosting) when an attribute is mutated rather than replaced."
+  (typecase item
+    (attribute
+     (let ((hash 5381))
+       (declare (type fixnum hash))
+       (flet ((mix (x)
+                (setf hash (logand most-positive-fixnum
+                                   (+ (* hash 33) (item-content-hash x))))))
+         (mix (attribute-foreground item))
+         (mix (attribute-background item))
+         (mix (attribute-reverse item))
+         (mix (attribute-bold item))
+         (mix (attribute-underline item)))
+       hash))
+    (lem/common/color:color
+     (logand most-positive-fixnum
+             (+ (* 33 (+ (* 33 (lem/common/color:color-red item))
+                         (lem/common/color:color-green item)))
+                (lem/common/color:color-blue item))))
+    (cons
+     ;; Descend so attributes nested inside sublists (the (start end
+     ;; attribute) entries of LOGICAL-LINE-ATTRIBUTES) are content-hashed
+     ;; rather than caught by the identity-based SXHASH of the sublist.
+     (let ((hash 5381))
+       (declare (type fixnum hash))
+       (loop :for x := item :then (cdr x)
+             :while (consp x)
+             :do (setf hash (logand most-positive-fixnum
+                                    (+ (* hash 33) (item-content-hash (car x)))))
+             :finally (when x
+                        (setf hash (logand most-positive-fixnum
+                                           (+ (* hash 33) (item-content-hash x))))))
+       hash))
+    (t (sxhash item))))
+
+(defun djb2 (hash item)
+  "Hash with seed and item using djb2 hash algorithm"
+  (declare (type fixnum hash))
+  (logand most-positive-fixnum
+          (+ (* hash 33)
+             (item-content-hash item))))
+
+(defun mix-hashes (&rest items)
+  "Fold ITEMS into one fixnum hash, descending into nested lists. Iterative
+over the top-level spine and tolerant of improper (dotted) lists."
+  (declare (dynamic-extent items))
+  (let ((hash 5381))
+    (labels ((mix-list (x)
+               (loop :while (consp x)
+                     :do (setf hash (djb2 hash (car x)))
+                         (setf x (cdr x)))
+               (when x
+                 (setf hash (djb2 hash x)))))
+      (dolist (item items)
+        (if (consp item)
+            (mix-list item)
+            (setf hash (djb2 hash item))))
+      hash)))
+
+(defun compute-line-fingerprint (logical-line scroll-start left-side-width)
+  "Compute a cheap fingerprint for a logical line's display state."
+  (mix-hashes
+   (logical-line-string logical-line)
+   (logical-line-attributes logical-line)
+   (logical-line-end-of-line-cursor-attribute logical-line)
+   (logical-line-extend-to-end logical-line)
+   (logical-line-line-end-overlay logical-line)
+   (logical-line-virtual-items logical-line)
+   scroll-start
+   left-side-width))
+
+(defun check-line-fingerprint (window y fingerprint)
+  "Check if the fingerprint for line at Y matches. Returns cached height or NIL."
+  (let ((cache (line-fingerprint-cache window)))
+    (multiple-value-bind (entry found) (gethash y cache)
+      (when (and found (eql (car entry) fingerprint))
+        (cdr entry)))))
+
+(defun update-line-fingerprint (window y fingerprint height)
+  "Store the fingerprint and height for line at Y."
+  (setf (gethash y (line-fingerprint-cache window))
+        (cons fingerprint height)))
+
 (defun redraw-logical-line-when-line-wrapping (window
                                                y
                                                logical-line
@@ -257,23 +559,34 @@
                                                left-side-width)
   (let* ((left-side-characters (loop :for obj :in left-side-objects
                                      :when (typep obj 'text-object)
-                                     :sum (length (text-object-string obj))))
-         (objects-per-physical-line
-           (separate-objects-by-width (create-drawing-objects logical-line)
-                                      (- (window-view-width window) left-side-width)))
-         (empty-left-side-object (if (< 0 left-side-width)
-                                     (list (make-object-with-type
-                                            (make-string left-side-characters :initial-element #\space)
-                                            nil
-                                            (char-type #\space)))
-                                     nil)))
-    (loop :for objects :in objects-per-physical-line
-          :for all-objects := (append left-side-objects objects)
-          :for height := (max-height-of-objects all-objects)
-          :do (render-line-with-caching window 0 y all-objects height)
+                                     :sum (length (text-object-string obj)))))
+    (multiple-value-bind (first-line-objects rest-line-objects)
+        (separate-objects-by-width (create-drawing-objects logical-line)
+                                   (- (window-view-width window) left-side-width)
+                                   (window-buffer window))
+      (let ((wrapped-left-side-objects
+              (when rest-line-objects
+                (copy-list (compute-wrap-left-area-content
+                            *active-modes*
+                            left-side-width
+                            left-side-characters)))))
+        (let ((total-height 0)
+              (objects first-line-objects))
+          (loop
+            (unless objects (return))
+            (let* ((all-objects (append left-side-objects objects))
+                   (height (max-height-of-objects all-objects)))
+              (render-line-with-caching window 0 y all-objects height)
               (incf y height)
-              (setq left-side-objects (copy-list empty-left-side-object))
-          :sum height)))
+              (setq left-side-objects wrapped-left-side-objects)
+              (incf total-height height)
+              (unless (< y (window-height window))
+                (return)))
+            (setf (values objects rest-line-objects)
+                  (separate-objects-by-width rest-line-objects
+                                             (- (window-view-width window) left-side-width)
+                                             (window-buffer window))))
+          total-height)))))
 
 (defun find-cursor-object (objects)
   (loop :for object :in objects
@@ -295,15 +608,67 @@
                    (<= (+ x (object-width object)) end-x))
         :collect object))
 
+(defun clip-objects-to-display-range (objects start-x end-x)
+  "Extract and clip objects to [start-x, end-x). Only explodes text-objects
+that straddle a boundary; fully-visible objects pass through unchanged.
+For straddling text-objects, computes per-character width from the object's
+total width / length (exact for monospace fonts) to find the visible substring,
+creating zero temporary letter-objects."
+  (let ((result '())
+        (x 0))
+    (dolist (object objects)
+      (let* ((w (object-width object))
+             (obj-end (+ x w)))
+        (cond
+          ;; Fully before visible range - skip
+          ((<= obj-end start-x) nil)
+          ;; Fully after visible range - done
+          ((<= end-x x) (return))
+          ;; Fully within visible range - include as-is (no allocation)
+          ((and (<= start-x x) (<= obj-end end-x))
+           (push object result))
+          ;; Straddles boundary and is a text-object - extract visible substring
+          ;; Uses total-width/length to compute per-char width (exact for monospace,
+          ;; the font type Lem uses). No letter-object creation needed.
+          ((typep object 'text-object)
+           (let* ((string (text-object-string object))
+                  (len (length string))
+                  (per-char-width (if (> len 0) (/ w len) 0))
+                  (char-x x)
+                  (start-idx nil)
+                  (end-idx 0))
+             (loop :for i :from 0 :below len
+                   :do (cond
+                         ((>= char-x end-x) (return))
+                         ((and (<= start-x char-x)
+                               (<= (+ char-x per-char-width) end-x))
+                          (when (null start-idx) (setf start-idx i))
+                          (setf end-idx (1+ i))))
+                       (incf char-x per-char-width))
+             ;; Create one text-object for the visible substring
+             (when start-idx
+               (push (make-object-with-type
+                      (subseq string start-idx end-idx)
+                      (text-object-attribute object)
+                      (text-object-type object))
+                     result))))
+          ;; Non-text objects straddling boundary - include
+          (t (push object result)))
+        (incf x w)))
+    (nreverse result)))
+
 (defun redraw-logical-line-when-horizontal-scroll (window
                                                    y
                                                    logical-line
                                                    left-side-objects
                                                    left-side-width)
-  (flet ((explode-object (text-object)
-           (check-type text-object text-object)
-           (loop :for c :across (text-object-string text-object)
-                 :collect (make-letter-object c (text-object-attribute text-object)))))
+  (let* ((scroll-before (horizontal-scroll-start window))
+         (fingerprint (compute-line-fingerprint logical-line
+                                                scroll-before
+                                                left-side-width)))
+    ;; Early exit if line content unchanged
+    (alexandria:when-let ((cached-height (check-line-fingerprint window y fingerprint)))
+      (return-from redraw-logical-line-when-horizontal-scroll cached-height))
     (let* ((objects (create-drawing-objects logical-line))
            (height
              (max (max-height-of-objects left-side-objects)
@@ -319,18 +684,24 @@
                       (+ cursor-x (object-width cursor-object)))
                    (setf (horizontal-scroll-start window)
                          (+ (- cursor-x width)
-                            (object-width cursor-object))))))
-          (setf objects
-                (extract-object-in-display-range
-                 (mapcan (lambda (object)
-                           (if (typep object 'text-object)
-                               (explode-object object)
-                               (list object)))
-                         objects)
-                 (horizontal-scroll-start window)
-                 (+ (horizontal-scroll-start window)
-                    (window-view-width window)))))
+                            (object-width cursor-object)))))))
+        (setf objects
+              (reduce-objects
+               (clip-objects-to-display-range
+                objects
+                (horizontal-scroll-start window)
+                (+ (horizontal-scroll-start window)
+                   (window-view-width window)))))
         (render-line-with-caching window 0 y (append left-side-objects objects) height))
+      ;; Reuse fingerprint if scroll position didn't change; avoids redundant sxhash
+      (update-line-fingerprint
+       window y
+       (if (eql scroll-before (horizontal-scroll-start window))
+           fingerprint
+           (compute-line-fingerprint logical-line
+                                     (horizontal-scroll-start window)
+                                     left-side-width))
+       height)
       height)))
 
 (defun redraw-lines (window)
@@ -356,7 +727,10 @@
             (incf y (funcall redraw-fn window y logical-line left-side-objects left-side-width))
             (unless (< y height)
               (return-from outer)))))
-      (lem-if:clear-to-end-of-window (implementation) (window-view window) y)
+      (when (< y height)
+        (clear-line-fingerprint-cache-from window y)
+        (invalidate-drawing-cache-from window y)
+        (lem-if:clear-to-end-of-window (implementation) (window-view window) y))
       (setf (window-left-width window)
             (floor left-side-width (lem-if:get-char-width (implementation)))))))
 
@@ -441,7 +815,8 @@
 
 (defun clear-cache-if-screen-modified (window force)
   (when (or force (window-need-to-redraw-p window))
-    (setf (drawing-cache window) '())))
+    (setf (drawing-cache window) '())
+    (clear-line-fingerprint-cache window)))
 
 (defmethod redraw-buffer (implementation (buffer text-buffer) window force)
   (assert (eq buffer (window-buffer window)))

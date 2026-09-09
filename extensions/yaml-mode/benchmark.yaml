@@ -1,0 +1,2416 @@
+# ============================================================================
+# YAML Mode Benchmark File
+# This file contains various YAML structures for performance testing
+# ============================================================================
+
+---
+# Metadata section
+metadata:
+  version: "1.0.0"
+  description: "Benchmark file for yaml-mode performance testing"
+  created_at: 2024-01-15T10:30:00Z
+  updated_at: 2024-01-15T10:30:00Z
+  tags:
+    - benchmark
+    - performance
+    - yaml-mode
+    - lem-editor
+  author:
+    name: "Lem Developer"
+    email: "developer@lem-project.org"
+    organization: "Lem Project"
+
+# ============================================================================
+# Section 1: Deep Nested Structures
+# ============================================================================
+deep_nested:
+  level_1:
+    level_2:
+      level_3:
+        level_4:
+          level_5:
+            level_6:
+              level_7:
+                level_8:
+                  level_9:
+                    level_10:
+                      value: "deeply nested value"
+                      number: 42
+                      boolean: true
+                      list:
+                        - item1
+                        - item2
+                        - item3
+                      nested_object:
+                        key1: value1
+                        key2: value2
+                        key3: value3
+
+# ============================================================================
+# Section 2: Large Arrays
+# ============================================================================
+large_array_strings: &string_array
+  - "Lorem ipsum dolor sit amet, consectetur adipiscing elit"
+  - "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua"
+  - "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris"
+  - "Duis aute irure dolor in reprehenderit in voluptate velit esse"
+  - "Excepteur sint occaecat cupidatat non proident, sunt in culpa"
+  - "Nisi ut aliquip ex ea commodo consequat"
+  - "Cillum dolore eu fugiat nulla pariatur"
+  - "Qui officia deserunt mollit anim id est laborum"
+  - "Consectetur adipiscing elit sed do eiusmod tempor"
+  - "Incididunt ut labore et dolore magna aliqua enim"
+  - "Ad minim veniam quis nostrud exercitation ullamco"
+  - "Laboris nisi ut aliquip ex ea commodo consequat"
+  - "Irure dolor in reprehenderit in voluptate velit"
+  - "Esse cillum dolore eu fugiat nulla pariatur"
+  - "Excepteur sint occaecat cupidatat non proident"
+  - "Sunt in culpa qui officia deserunt mollit anim"
+  - "Id est laborum lorem ipsum dolor sit amet"
+  - "Consectetur adipiscing elit sed do eiusmod"
+  - "Tempor incididunt ut labore et dolore magna"
+  - "Aliqua ut enim ad minim veniam quis nostrud"
+
+large_array_numbers:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+  - 15
+  - 16
+  - 17
+  - 18
+  - 19
+  - 20
+  - 21
+  - 22
+  - 23
+  - 24
+  - 25
+  - 26
+  - 27
+  - 28
+  - 29
+  - 30
+  - 31
+  - 32
+  - 33
+  - 34
+  - 35
+  - 36
+  - 37
+  - 38
+  - 39
+  - 40
+  - 41
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  - 47
+  - 48
+  - 49
+  - 50
+  - 100
+  - 200
+  - 300
+  - 400
+  - 500
+  - 1000
+  - 2000
+  - 3000
+  - 4000
+  - 5000
+  - 10000
+  - 20000
+  - 30000
+  - 40000
+  - 50000
+  - 100000
+  - 200000
+  - 300000
+  - 400000
+  - 500000
+  - 1000000
+  - 2000000
+  - 3000000
+  - 4000000
+  - 5000000
+
+large_array_mixed:
+  - string_value: "test"
+    number_value: 123
+    boolean_value: true
+    null_value: null
+  - string_value: "another test"
+    number_value: 456
+    boolean_value: false
+    null_value: ~
+  - string_value: "yet another"
+    number_value: 789
+    boolean_value: true
+    array_value:
+      - a
+      - b
+      - c
+  - string_value: "complex"
+    nested:
+      deep:
+        value: "found"
+
+# ============================================================================
+# Section 3: Anchors and Aliases
+# ============================================================================
+anchors:
+  base_config: &base_config
+    timeout: 30
+    retries: 3
+    debug: false
+    logging:
+      level: info
+      format: json
+
+  development:
+    <<: *base_config
+    debug: true
+    logging:
+      level: debug
+      format: text
+
+  staging:
+    <<: *base_config
+    timeout: 60
+    logging:
+      level: warn
+
+  production:
+    <<: *base_config
+    timeout: 120
+    retries: 5
+
+  default_user: &default_user
+    role: user
+    permissions:
+      - read
+      - write
+
+  admin_user:
+    <<: *default_user
+    role: admin
+    permissions:
+      - read
+      - write
+      - delete
+      - admin
+
+  reused_strings: *string_array
+
+# ============================================================================
+# Section 4: Multiline Strings
+# ============================================================================
+multiline_strings:
+  literal_block: |
+    This is a literal block scalar.
+    Line breaks are preserved.
+
+    Empty lines are also preserved.
+
+    This is useful for:
+      - Configuration files
+      - Scripts
+      - Documentation
+
+    The indentation is relative to the first line.
+    All subsequent lines follow this indentation.
+
+    You can include special characters: < > & " '
+    Without escaping them.
+
+  folded_block: >
+    This is a folded block scalar.
+    Line breaks become spaces.
+
+    But blank lines become newlines.
+
+    This is useful for long paragraphs
+    that you want to wrap in your YAML file
+    but display as a single paragraph.
+
+  literal_strip: |-
+    This literal block
+    has no trailing newline
+    at the end
+
+  literal_keep: |+
+    This literal block
+    keeps trailing newlines
+
+
+
+  folded_strip: >-
+    This folded block
+    has no trailing newline
+
+  folded_keep: >+
+    This folded block
+    keeps trailing newlines
+
+
+
+  code_block: |
+    (defun hello-world ()
+      (format t "Hello, World!~%"))
+
+    (defun factorial (n)
+      (if (<= n 1)
+          1
+          (* n (factorial (1- n)))))
+
+    (defun fibonacci (n)
+      (cond ((= n 0) 0)
+            ((= n 1) 1)
+            (t (+ (fibonacci (- n 1))
+                  (fibonacci (- n 2))))))
+
+  json_example: |
+    {
+      "name": "example",
+      "version": "1.0.0",
+      "dependencies": {
+        "foo": "^1.0.0",
+        "bar": "^2.0.0"
+      }
+    }
+
+  yaml_in_yaml: |
+    nested:
+      yaml:
+        inside:
+          a:
+            string: "value"
+
+# ============================================================================
+# Section 5: Various Data Types
+# ============================================================================
+data_types:
+  # Strings
+  strings:
+    plain: This is a plain string
+    single_quoted: 'This is a single-quoted string with ''escaped'' quotes'
+    double_quoted: "This is a double-quoted string with \"escaped\" quotes"
+    with_special: "Contains: colon, #hash, @at, !exclaim"
+    unicode: "日本語テキスト、中文文本、한국어 텍스트"
+    emoji: "🎉 🚀 ✨ 🔥 💻"
+    empty_string: ""
+    null_like: "null"
+    true_like: "true"
+    false_like: "false"
+    number_like: "12345"
+    hex_color: "#FF5733"
+    url: "https://example.com/path?query=value&other=123"
+    email: "user@example.com"
+    path: "/usr/local/bin/lem"
+
+  # Numbers
+  numbers:
+    integer: 42
+    negative: -17
+    zero: 0
+    float: 3.14159
+    negative_float: -2.718
+    scientific: 6.022e23
+    scientific_negative: 1.6e-19
+    hex: 0xFF
+    octal: 0o755
+    infinity: .inf
+    negative_infinity: -.inf
+    not_a_number: .nan
+
+  # Booleans
+  booleans:
+    true_lowercase: true
+    false_lowercase: false
+    true_uppercase: True
+    false_uppercase: False
+    true_caps: TRUE
+    false_caps: FALSE
+    yes_value: yes
+    no_value: no
+    on_value: on
+    off_value: off
+
+  # Null values
+  nulls:
+    tilde: ~
+    null_word: null
+    empty:
+
+  # Dates and times
+  dates:
+    date_only: 2024-01-15
+    datetime: 2024-01-15T10:30:00
+    datetime_utc: 2024-01-15T10:30:00Z
+    datetime_offset: 2024-01-15T10:30:00+09:00
+    datetime_space: 2024-01-15 10:30:00
+
+# ============================================================================
+# Section 6: Complex Objects
+# ============================================================================
+complex_objects:
+  users:
+    - id: 1
+      username: alice
+      email: alice@example.com
+      profile:
+        first_name: Alice
+        last_name: Smith
+        age: 28
+        bio: |
+          Software developer with 5 years of experience.
+          Specializes in Common Lisp and functional programming.
+        interests:
+          - programming
+          - reading
+          - hiking
+        social:
+          twitter: "@alice_dev"
+          github: "alice"
+          linkedin: "alice-smith"
+      settings:
+        theme: dark
+        notifications: true
+        language: en
+      created_at: 2023-01-15T08:00:00Z
+      updated_at: 2024-01-10T14:30:00Z
+
+    - id: 2
+      username: bob
+      email: bob@example.com
+      profile:
+        first_name: Bob
+        last_name: Johnson
+        age: 35
+        bio: >
+          DevOps engineer passionate about automation
+          and infrastructure as code.
+        interests:
+          - devops
+          - automation
+          - gaming
+        social:
+          twitter: "@bob_ops"
+          github: "bobjohnson"
+      settings:
+        theme: light
+        notifications: false
+        language: en
+      created_at: 2023-03-20T12:00:00Z
+      updated_at: 2024-01-12T09:15:00Z
+
+    - id: 3
+      username: charlie
+      email: charlie@example.com
+      profile:
+        first_name: Charlie
+        last_name: Brown
+        age: 42
+        bio: |
+          Technical architect with expertise in
+          distributed systems and microservices.
+        interests:
+          - architecture
+          - distributed-systems
+          - music
+        social:
+          github: "charlieb"
+      settings:
+        theme: auto
+        notifications: true
+        language: ja
+      created_at: 2022-06-01T00:00:00Z
+      updated_at: 2024-01-14T18:45:00Z
+
+  organizations:
+    - id: 1
+      name: "Lem Project"
+      description: "An editor written in Common Lisp"
+      website: "https://lem-project.github.io/"
+      repositories:
+        - name: lem
+          url: "https://github.com/lem-project/lem"
+          stars: 2000
+          language: "Common Lisp"
+        - name: lem-maillist
+          url: "https://github.com/lem-project/lem-maillist"
+          stars: 10
+          language: "Common Lisp"
+      members:
+        - alice
+        - bob
+        - charlie
+
+    - id: 2
+      name: "SBCL Team"
+      description: "Steel Bank Common Lisp"
+      website: "http://www.sbcl.org/"
+      repositories:
+        - name: sbcl
+          url: "https://github.com/sbcl/sbcl"
+          stars: 1800
+          language: "Common Lisp"
+      members:
+        - maintainer1
+        - maintainer2
+
+  projects:
+    - name: "Web Application"
+      status: active
+      priority: high
+      team:
+        lead: alice
+        members:
+          - bob
+          - charlie
+      milestones:
+        - name: "MVP"
+          due_date: 2024-03-01
+          tasks:
+            - title: "Setup project structure"
+              status: completed
+              assignee: alice
+            - title: "Implement authentication"
+              status: in_progress
+              assignee: bob
+            - title: "Create landing page"
+              status: pending
+              assignee: charlie
+        - name: "Beta Release"
+          due_date: 2024-06-01
+          tasks:
+            - title: "Add payment integration"
+              status: pending
+            - title: "Performance optimization"
+              status: pending
+            - title: "Security audit"
+              status: pending
+
+# ============================================================================
+# Section 7: Configuration Examples
+# ============================================================================
+configurations:
+  database:
+    primary:
+      host: localhost
+      port: 5432
+      database: myapp_production
+      username: dbuser
+      password: ${DB_PASSWORD}
+      pool:
+        min: 5
+        max: 20
+        timeout: 30000
+      ssl:
+        enabled: true
+        verify: true
+        ca_file: /etc/ssl/certs/ca-certificates.crt
+
+    replica:
+      host: replica.example.com
+      port: 5432
+      database: myapp_production
+      username: readonly
+      password: ${DB_REPLICA_PASSWORD}
+      pool:
+        min: 2
+        max: 10
+
+  cache:
+    redis:
+      host: redis.example.com
+      port: 6379
+      password: ${REDIS_PASSWORD}
+      db: 0
+      ttl: 3600
+      cluster:
+        enabled: false
+        nodes: []
+
+  queue:
+    rabbitmq:
+      host: rabbitmq.example.com
+      port: 5672
+      vhost: /myapp
+      username: queueuser
+      password: ${RABBITMQ_PASSWORD}
+      exchanges:
+        - name: events
+          type: topic
+          durable: true
+        - name: commands
+          type: direct
+          durable: true
+      queues:
+        - name: email_notifications
+          durable: true
+          bindings:
+            - exchange: events
+              routing_key: "user.*"
+        - name: payment_processing
+          durable: true
+          bindings:
+            - exchange: commands
+              routing_key: payment
+
+  logging:
+    default:
+      level: info
+      format: json
+      output:
+        - type: console
+          colored: true
+        - type: file
+          path: /var/log/myapp/app.log
+          max_size: 100MB
+          max_files: 10
+          compress: true
+        - type: syslog
+          facility: local0
+          tag: myapp
+
+  http:
+    server:
+      host: 0.0.0.0
+      port: 8080
+      timeout:
+        read: 30s
+        write: 30s
+        idle: 120s
+      tls:
+        enabled: true
+        cert_file: /etc/ssl/certs/server.crt
+        key_file: /etc/ssl/private/server.key
+      cors:
+        enabled: true
+        allowed_origins:
+          - "https://example.com"
+          - "https://www.example.com"
+        allowed_methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        allowed_headers:
+          - Authorization
+          - Content-Type
+          - X-Request-ID
+        max_age: 86400
+
+# ============================================================================
+# Section 8: API Definitions
+# ============================================================================
+api:
+  openapi: "3.0.0"
+  info:
+    title: "Sample API"
+    version: "1.0.0"
+    description: |
+      This is a sample API definition for benchmarking purposes.
+      It includes various endpoint definitions and schemas.
+    contact:
+      name: "API Support"
+      email: "api@example.com"
+    license:
+      name: "MIT"
+      url: "https://opensource.org/licenses/MIT"
+
+  servers:
+    - url: "https://api.example.com/v1"
+      description: "Production server"
+    - url: "https://staging-api.example.com/v1"
+      description: "Staging server"
+    - url: "http://localhost:8080/v1"
+      description: "Development server"
+
+  paths:
+    /users:
+      get:
+        summary: "List all users"
+        operationId: listUsers
+        tags:
+          - users
+        parameters:
+          - name: page
+            in: query
+            schema:
+              type: integer
+              default: 1
+          - name: limit
+            in: query
+            schema:
+              type: integer
+              default: 20
+              maximum: 100
+        responses:
+          "200":
+            description: "Successful response"
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/User"
+          "400":
+            description: "Bad request"
+          "500":
+            description: "Internal server error"
+
+      post:
+        summary: "Create a new user"
+        operationId: createUser
+        tags:
+          - users
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateUserRequest"
+        responses:
+          "201":
+            description: "User created"
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/User"
+          "400":
+            description: "Validation error"
+          "409":
+            description: "User already exists"
+
+    /users/{id}:
+      get:
+        summary: "Get user by ID"
+        operationId: getUserById
+        tags:
+          - users
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: integer
+        responses:
+          "200":
+            description: "Successful response"
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/User"
+          "404":
+            description: "User not found"
+
+      put:
+        summary: "Update user"
+        operationId: updateUser
+        tags:
+          - users
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: integer
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateUserRequest"
+        responses:
+          "200":
+            description: "User updated"
+          "404":
+            description: "User not found"
+
+      delete:
+        summary: "Delete user"
+        operationId: deleteUser
+        tags:
+          - users
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: integer
+        responses:
+          "204":
+            description: "User deleted"
+          "404":
+            description: "User not found"
+
+  components:
+    schemas:
+      User:
+        type: object
+        required:
+          - id
+          - username
+          - email
+        properties:
+          id:
+            type: integer
+            format: int64
+          username:
+            type: string
+            minLength: 3
+            maxLength: 50
+          email:
+            type: string
+            format: email
+          created_at:
+            type: string
+            format: date-time
+          updated_at:
+            type: string
+            format: date-time
+
+      CreateUserRequest:
+        type: object
+        required:
+          - username
+          - email
+          - password
+        properties:
+          username:
+            type: string
+          email:
+            type: string
+          password:
+            type: string
+            minLength: 8
+
+      UpdateUserRequest:
+        type: object
+        properties:
+          username:
+            type: string
+          email:
+            type: string
+
+    securitySchemes:
+      bearerAuth:
+        type: http
+        scheme: bearer
+        bearerFormat: JWT
+      apiKey:
+        type: apiKey
+        in: header
+        name: X-API-Key
+
+# ============================================================================
+# Section 9: Kubernetes-like Resources
+# ============================================================================
+kubernetes:
+  deployment:
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: myapp
+      namespace: production
+      labels:
+        app: myapp
+        version: "1.0.0"
+        environment: production
+      annotations:
+        deployment.kubernetes.io/revision: "5"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+    spec:
+      replicas: 3
+      selector:
+        matchLabels:
+          app: myapp
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxSurge: 1
+          maxUnavailable: 0
+      template:
+        metadata:
+          labels:
+            app: myapp
+        spec:
+          serviceAccountName: myapp-sa
+          containers:
+            - name: myapp
+              image: myregistry.com/myapp:1.0.0
+              imagePullPolicy: Always
+              ports:
+                - containerPort: 8080
+                  name: http
+                - containerPort: 9090
+                  name: metrics
+              env:
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: myapp-secrets
+                      key: database-url
+                - name: REDIS_URL
+                  valueFrom:
+                    configMapKeyRef:
+                      name: myapp-config
+                      key: redis-url
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              resources:
+                requests:
+                  cpu: "100m"
+                  memory: "256Mi"
+                limits:
+                  cpu: "500m"
+                  memory: "512Mi"
+              livenessProbe:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 10
+                timeoutSeconds: 5
+                failureThreshold: 3
+              readinessProbe:
+                httpGet:
+                  path: /ready
+                  port: 8080
+                initialDelaySeconds: 5
+                periodSeconds: 5
+                timeoutSeconds: 3
+                failureThreshold: 3
+              volumeMounts:
+                - name: config-volume
+                  mountPath: /etc/myapp
+                  readOnly: true
+                - name: data-volume
+                  mountPath: /var/lib/myapp
+          volumes:
+            - name: config-volume
+              configMap:
+                name: myapp-config
+            - name: data-volume
+              persistentVolumeClaim:
+                claimName: myapp-pvc
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 100
+                  podAffinityTerm:
+                    labelSelector:
+                      matchExpressions:
+                        - key: app
+                          operator: In
+                          values:
+                            - myapp
+                    topologyKey: kubernetes.io/hostname
+          tolerations:
+            - key: "node-role.kubernetes.io/master"
+              operator: "Exists"
+              effect: "NoSchedule"
+
+  service:
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: myapp
+      namespace: production
+      labels:
+        app: myapp
+    spec:
+      type: ClusterIP
+      selector:
+        app: myapp
+      ports:
+        - name: http
+          port: 80
+          targetPort: 8080
+          protocol: TCP
+        - name: metrics
+          port: 9090
+          targetPort: 9090
+          protocol: TCP
+
+  configmap:
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: myapp-config
+      namespace: production
+    data:
+      redis-url: "redis://redis:6379"
+      log-level: "info"
+      config.yaml: |
+        server:
+          host: 0.0.0.0
+          port: 8080
+        database:
+          pool_size: 10
+        cache:
+          ttl: 3600
+
+  secret:
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: myapp-secrets
+      namespace: production
+    type: Opaque
+    data:
+      database-url: cG9zdGdyZXM6Ly91c2VyOnBhc3NAaG9zdC9kYg==
+      api-key: c2VjcmV0LWFwaS1rZXktaGVyZQ==
+
+  ingress:
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: myapp
+      namespace: production
+      annotations:
+        kubernetes.io/ingress.class: nginx
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    spec:
+      tls:
+        - hosts:
+            - myapp.example.com
+          secretName: myapp-tls
+      rules:
+        - host: myapp.example.com
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: myapp
+                    port:
+                      number: 80
+
+# ============================================================================
+# Section 10: CI/CD Pipeline Definition
+# ============================================================================
+cicd:
+  github_actions:
+    name: CI/CD Pipeline
+    on:
+      push:
+        branches:
+          - main
+          - develop
+        tags:
+          - "v*"
+      pull_request:
+        branches:
+          - main
+          - develop
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}
+
+    jobs:
+      test:
+        name: Run Tests
+        runs-on: ubuntu-latest
+        strategy:
+          matrix:
+            node-version:
+              - "18"
+              - "20"
+              - "21"
+        steps:
+          - name: Checkout code
+            uses: actions/checkout@v4
+            with:
+              fetch-depth: 0
+
+          - name: Setup Node.js
+            uses: actions/setup-node@v4
+            with:
+              node-version: ${{ matrix.node-version }}
+              cache: npm
+
+          - name: Install dependencies
+            run: npm ci
+
+          - name: Run linter
+            run: npm run lint
+
+          - name: Run tests
+            run: npm test -- --coverage
+
+          - name: Upload coverage
+            uses: codecov/codecov-action@v3
+            with:
+              files: ./coverage/lcov.info
+              fail_ci_if_error: true
+
+      build:
+        name: Build and Push Image
+        needs: test
+        runs-on: ubuntu-latest
+        permissions:
+          contents: read
+          packages: write
+        steps:
+          - name: Checkout code
+            uses: actions/checkout@v4
+
+          - name: Setup Docker Buildx
+            uses: docker/setup-buildx-action@v3
+
+          - name: Login to Registry
+            uses: docker/login-action@v3
+            with:
+              registry: ${{ env.REGISTRY }}
+              username: ${{ github.actor }}
+              password: ${{ secrets.GITHUB_TOKEN }}
+
+          - name: Extract metadata
+            id: meta
+            uses: docker/metadata-action@v5
+            with:
+              images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+              tags: |
+                type=ref,event=branch
+                type=ref,event=pr
+                type=semver,pattern={{version}}
+                type=semver,pattern={{major}}.{{minor}}
+                type=sha
+
+          - name: Build and push
+            uses: docker/build-push-action@v5
+            with:
+              context: .
+              push: true
+              tags: ${{ steps.meta.outputs.tags }}
+              labels: ${{ steps.meta.outputs.labels }}
+              cache-from: type=gha
+              cache-to: type=gha,mode=max
+
+      deploy:
+        name: Deploy to Production
+        needs: build
+        runs-on: ubuntu-latest
+        if: github.ref == 'refs/heads/main'
+        environment:
+          name: production
+          url: https://myapp.example.com
+        steps:
+          - name: Deploy to Kubernetes
+            uses: azure/k8s-deploy@v4
+            with:
+              manifests: |
+                k8s/deployment.yaml
+                k8s/service.yaml
+              images: |
+                ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+# ============================================================================
+# Section 11: Docker Compose
+# ============================================================================
+docker_compose:
+  version: "3.8"
+  services:
+    app:
+      build:
+        context: .
+        dockerfile: Dockerfile
+        args:
+          NODE_ENV: production
+      image: myapp:latest
+      container_name: myapp
+      restart: unless-stopped
+      ports:
+        - "8080:8080"
+      environment:
+        NODE_ENV: production
+        DATABASE_URL: postgres://user:pass@db:5432/myapp
+        REDIS_URL: redis://redis:6379
+      depends_on:
+        db:
+          condition: service_healthy
+        redis:
+          condition: service_started
+      networks:
+        - backend
+      volumes:
+        - app-data:/var/lib/myapp
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+        start_period: 40s
+      deploy:
+        resources:
+          limits:
+            cpus: "0.5"
+            memory: 512M
+          reservations:
+            cpus: "0.25"
+            memory: 256M
+
+    db:
+      image: postgres:16-alpine
+      container_name: myapp-db
+      restart: unless-stopped
+      environment:
+        POSTGRES_USER: user
+        POSTGRES_PASSWORD: pass
+        POSTGRES_DB: myapp
+      ports:
+        - "5432:5432"
+      networks:
+        - backend
+      volumes:
+        - db-data:/var/lib/postgresql/data
+        - ./init-scripts:/docker-entrypoint-initdb.d
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U user -d myapp"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+    redis:
+      image: redis:7-alpine
+      container_name: myapp-redis
+      restart: unless-stopped
+      ports:
+        - "6379:6379"
+      networks:
+        - backend
+      volumes:
+        - redis-data:/data
+      command: redis-server --appendonly yes
+
+    nginx:
+      image: nginx:alpine
+      container_name: myapp-nginx
+      restart: unless-stopped
+      ports:
+        - "80:80"
+        - "443:443"
+      networks:
+        - backend
+        - frontend
+      volumes:
+        - ./nginx.conf:/etc/nginx/nginx.conf:ro
+        - ./ssl:/etc/nginx/ssl:ro
+      depends_on:
+        - app
+
+  networks:
+    backend:
+      driver: bridge
+    frontend:
+      driver: bridge
+
+  volumes:
+    app-data:
+    db-data:
+    redis-data:
+
+# ============================================================================
+# Section 12: Terraform-like Infrastructure
+# ============================================================================
+terraform:
+  aws:
+    vpc:
+      resource_type: aws_vpc
+      name: main
+      config:
+        cidr_block: "10.0.0.0/16"
+        enable_dns_hostnames: true
+        enable_dns_support: true
+        tags:
+          Name: "main-vpc"
+          Environment: "production"
+
+    subnets:
+      public:
+        - resource_type: aws_subnet
+          name: public_1
+          config:
+            vpc_id: "${aws_vpc.main.id}"
+            cidr_block: "10.0.1.0/24"
+            availability_zone: "us-east-1a"
+            map_public_ip_on_launch: true
+            tags:
+              Name: "public-subnet-1"
+              Type: "public"
+
+        - resource_type: aws_subnet
+          name: public_2
+          config:
+            vpc_id: "${aws_vpc.main.id}"
+            cidr_block: "10.0.2.0/24"
+            availability_zone: "us-east-1b"
+            map_public_ip_on_launch: true
+            tags:
+              Name: "public-subnet-2"
+              Type: "public"
+
+      private:
+        - resource_type: aws_subnet
+          name: private_1
+          config:
+            vpc_id: "${aws_vpc.main.id}"
+            cidr_block: "10.0.10.0/24"
+            availability_zone: "us-east-1a"
+            tags:
+              Name: "private-subnet-1"
+              Type: "private"
+
+        - resource_type: aws_subnet
+          name: private_2
+          config:
+            vpc_id: "${aws_vpc.main.id}"
+            cidr_block: "10.0.11.0/24"
+            availability_zone: "us-east-1b"
+            tags:
+              Name: "private-subnet-2"
+              Type: "private"
+
+    security_groups:
+      - resource_type: aws_security_group
+        name: web
+        config:
+          name: "web-sg"
+          description: "Security group for web servers"
+          vpc_id: "${aws_vpc.main.id}"
+          ingress:
+            - from_port: 80
+              to_port: 80
+              protocol: "tcp"
+              cidr_blocks:
+                - "0.0.0.0/0"
+            - from_port: 443
+              to_port: 443
+              protocol: "tcp"
+              cidr_blocks:
+                - "0.0.0.0/0"
+          egress:
+            - from_port: 0
+              to_port: 0
+              protocol: "-1"
+              cidr_blocks:
+                - "0.0.0.0/0"
+
+      - resource_type: aws_security_group
+        name: db
+        config:
+          name: "db-sg"
+          description: "Security group for database"
+          vpc_id: "${aws_vpc.main.id}"
+          ingress:
+            - from_port: 5432
+              to_port: 5432
+              protocol: "tcp"
+              security_groups:
+                - "${aws_security_group.web.id}"
+          egress:
+            - from_port: 0
+              to_port: 0
+              protocol: "-1"
+              cidr_blocks:
+                - "0.0.0.0/0"
+
+    rds:
+      resource_type: aws_db_instance
+      name: main
+      config:
+        identifier: "myapp-db"
+        engine: "postgres"
+        engine_version: "16.1"
+        instance_class: "db.t3.medium"
+        allocated_storage: 100
+        max_allocated_storage: 1000
+        storage_type: "gp3"
+        storage_encrypted: true
+        db_name: "myapp"
+        username: "admin"
+        password: "${var.db_password}"
+        vpc_security_group_ids:
+          - "${aws_security_group.db.id}"
+        db_subnet_group_name: "${aws_db_subnet_group.main.name}"
+        backup_retention_period: 7
+        backup_window: "03:00-04:00"
+        maintenance_window: "Mon:04:00-Mon:05:00"
+        multi_az: true
+        deletion_protection: true
+        skip_final_snapshot: false
+        final_snapshot_identifier: "myapp-db-final-snapshot"
+        tags:
+          Name: "myapp-database"
+          Environment: "production"
+
+    elasticache:
+      resource_type: aws_elasticache_cluster
+      name: redis
+      config:
+        cluster_id: "myapp-redis"
+        engine: "redis"
+        engine_version: "7.0"
+        node_type: "cache.t3.medium"
+        num_cache_nodes: 1
+        port: 6379
+        security_group_ids:
+          - "${aws_security_group.cache.id}"
+        subnet_group_name: "${aws_elasticache_subnet_group.main.name}"
+        tags:
+          Name: "myapp-redis"
+          Environment: "production"
+
+    ecs:
+      cluster:
+        resource_type: aws_ecs_cluster
+        name: main
+        config:
+          name: "myapp-cluster"
+          setting:
+            name: "containerInsights"
+            value: "enabled"
+
+      service:
+        resource_type: aws_ecs_service
+        name: app
+        config:
+          name: "myapp-service"
+          cluster: "${aws_ecs_cluster.main.id}"
+          task_definition: "${aws_ecs_task_definition.app.arn}"
+          desired_count: 3
+          launch_type: "FARGATE"
+          network_configuration:
+            subnets:
+              - "${aws_subnet.private_1.id}"
+              - "${aws_subnet.private_2.id}"
+            security_groups:
+              - "${aws_security_group.app.id}"
+            assign_public_ip: false
+          load_balancer:
+            target_group_arn: "${aws_lb_target_group.app.arn}"
+            container_name: "myapp"
+            container_port: 8080
+
+# ============================================================================
+# Section 13: Monitoring and Alerting
+# ============================================================================
+monitoring:
+  prometheus:
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      external_labels:
+        cluster: production
+        region: us-east-1
+
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets:
+                - alertmanager:9093
+
+    rule_files:
+      - /etc/prometheus/rules/*.yml
+
+    scrape_configs:
+      - job_name: prometheus
+        static_configs:
+          - targets:
+              - localhost:9090
+
+      - job_name: node
+        static_configs:
+          - targets:
+              - node-exporter:9100
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: instance
+            regex: "([^:]+):\\d+"
+            replacement: "$1"
+
+      - job_name: kubernetes-pods
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+
+  alertmanager:
+    global:
+      smtp_smarthost: smtp.example.com:587
+      smtp_from: alerts@example.com
+      smtp_auth_username: alertmanager
+      smtp_auth_password: ${SMTP_PASSWORD}
+
+    route:
+      group_by:
+        - alertname
+        - cluster
+        - service
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      receiver: default
+      routes:
+        - match:
+            severity: critical
+          receiver: pagerduty
+          continue: true
+        - match:
+            severity: warning
+          receiver: slack
+        - match_re:
+            service: database|cache
+          receiver: dba-team
+
+    receivers:
+      - name: default
+        email_configs:
+          - to: team@example.com
+
+      - name: slack
+        slack_configs:
+          - api_url: ${SLACK_WEBHOOK_URL}
+            channel: "#alerts"
+            username: Alertmanager
+            icon_emoji: ":warning:"
+            title: "{{ .GroupLabels.alertname }}"
+            text: "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}"
+
+      - name: pagerduty
+        pagerduty_configs:
+          - service_key: ${PAGERDUTY_SERVICE_KEY}
+            severity: "{{ .CommonLabels.severity }}"
+
+      - name: dba-team
+        email_configs:
+          - to: dba@example.com
+        slack_configs:
+          - api_url: ${SLACK_WEBHOOK_URL}
+            channel: "#dba-alerts"
+
+  grafana:
+    dashboards:
+      - name: "Application Overview"
+        uid: app-overview
+        panels:
+          - title: "Request Rate"
+            type: graph
+            datasource: prometheus
+            targets:
+              - expr: "rate(http_requests_total[5m])"
+                legendFormat: "{{method}} {{path}}"
+            gridPos:
+              x: 0
+              y: 0
+              w: 12
+              h: 8
+
+          - title: "Error Rate"
+            type: graph
+            datasource: prometheus
+            targets:
+              - expr: "rate(http_requests_total{status=~'5..'}[5m])"
+                legendFormat: "{{status}}"
+            gridPos:
+              x: 12
+              y: 0
+              w: 12
+              h: 8
+
+          - title: "Response Time P99"
+            type: graph
+            datasource: prometheus
+            targets:
+              - expr: "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))"
+                legendFormat: "P99"
+            gridPos:
+              x: 0
+              y: 8
+              w: 12
+              h: 8
+
+          - title: "Memory Usage"
+            type: graph
+            datasource: prometheus
+            targets:
+              - expr: "process_resident_memory_bytes"
+                legendFormat: "Memory"
+            gridPos:
+              x: 12
+              y: 8
+              w: 12
+              h: 8
+
+# ============================================================================
+# Section 14: Localization Strings
+# ============================================================================
+localization:
+  en:
+    common:
+      app_name: "My Application"
+      welcome: "Welcome"
+      goodbye: "Goodbye"
+      loading: "Loading..."
+      error: "An error occurred"
+      success: "Success"
+      cancel: "Cancel"
+      confirm: "Confirm"
+      save: "Save"
+      delete: "Delete"
+      edit: "Edit"
+      create: "Create"
+      search: "Search"
+      filter: "Filter"
+      sort: "Sort"
+      refresh: "Refresh"
+      back: "Back"
+      next: "Next"
+      previous: "Previous"
+      submit: "Submit"
+      reset: "Reset"
+
+    errors:
+      not_found: "The requested resource was not found"
+      unauthorized: "You are not authorized to perform this action"
+      forbidden: "Access to this resource is forbidden"
+      server_error: "An internal server error occurred"
+      validation_error: "Please check your input and try again"
+      network_error: "Network error. Please check your connection"
+      timeout: "The request timed out. Please try again"
+
+    auth:
+      login: "Log In"
+      logout: "Log Out"
+      register: "Register"
+      forgot_password: "Forgot Password?"
+      reset_password: "Reset Password"
+      email: "Email"
+      password: "Password"
+      confirm_password: "Confirm Password"
+      remember_me: "Remember Me"
+      login_success: "You have been logged in successfully"
+      logout_success: "You have been logged out successfully"
+      invalid_credentials: "Invalid email or password"
+
+    user:
+      profile: "Profile"
+      settings: "Settings"
+      account: "Account"
+      preferences: "Preferences"
+      notifications: "Notifications"
+      security: "Security"
+      privacy: "Privacy"
+
+  ja:
+    common:
+      app_name: "マイアプリケーション"
+      welcome: "ようこそ"
+      goodbye: "さようなら"
+      loading: "読み込み中..."
+      error: "エラーが発生しました"
+      success: "成功"
+      cancel: "キャンセル"
+      confirm: "確認"
+      save: "保存"
+      delete: "削除"
+      edit: "編集"
+      create: "作成"
+      search: "検索"
+      filter: "フィルター"
+      sort: "並び替え"
+      refresh: "更新"
+      back: "戻る"
+      next: "次へ"
+      previous: "前へ"
+      submit: "送信"
+      reset: "リセット"
+
+    errors:
+      not_found: "リクエストされたリソースが見つかりませんでした"
+      unauthorized: "この操作を実行する権限がありません"
+      forbidden: "このリソースへのアクセスは禁止されています"
+      server_error: "内部サーバーエラーが発生しました"
+      validation_error: "入力内容を確認してもう一度お試しください"
+      network_error: "ネットワークエラー。接続を確認してください"
+      timeout: "リクエストがタイムアウトしました。もう一度お試しください"
+
+    auth:
+      login: "ログイン"
+      logout: "ログアウト"
+      register: "登録"
+      forgot_password: "パスワードをお忘れですか？"
+      reset_password: "パスワードをリセット"
+      email: "メールアドレス"
+      password: "パスワード"
+      confirm_password: "パスワード確認"
+      remember_me: "ログイン状態を保持"
+      login_success: "ログインしました"
+      logout_success: "ログアウトしました"
+      invalid_credentials: "メールアドレスまたはパスワードが無効です"
+
+    user:
+      profile: "プロフィール"
+      settings: "設定"
+      account: "アカウント"
+      preferences: "環境設定"
+      notifications: "通知"
+      security: "セキュリティ"
+      privacy: "プライバシー"
+
+  zh:
+    common:
+      app_name: "我的应用程序"
+      welcome: "欢迎"
+      goodbye: "再见"
+      loading: "加载中..."
+      error: "发生错误"
+      success: "成功"
+      cancel: "取消"
+      confirm: "确认"
+      save: "保存"
+      delete: "删除"
+      edit: "编辑"
+      create: "创建"
+      search: "搜索"
+      filter: "筛选"
+      sort: "排序"
+      refresh: "刷新"
+      back: "返回"
+      next: "下一步"
+      previous: "上一步"
+      submit: "提交"
+      reset: "重置"
+
+    errors:
+      not_found: "请求的资源未找到"
+      unauthorized: "您没有权限执行此操作"
+      forbidden: "禁止访问此资源"
+      server_error: "发生内部服务器错误"
+      validation_error: "请检查您的输入并重试"
+      network_error: "网络错误，请检查您的连接"
+      timeout: "请求超时，请重试"
+
+# ============================================================================
+# Section 15: Feature Flags
+# ============================================================================
+feature_flags:
+  new_dashboard:
+    enabled: true
+    description: "New dashboard UI with improved analytics"
+    rollout_percentage: 100
+    enabled_for:
+      users:
+        - alice
+        - bob
+      groups:
+        - beta-testers
+        - internal
+    disabled_for:
+      users: []
+      groups: []
+    metadata:
+      created_at: 2024-01-01
+      updated_at: 2024-01-15
+      owner: product-team
+
+  dark_mode:
+    enabled: true
+    description: "Dark mode theme support"
+    rollout_percentage: 100
+    default_value: false
+    variants:
+      - name: "light"
+        weight: 50
+      - name: "dark"
+        weight: 50
+
+  experimental_search:
+    enabled: false
+    description: "Experimental search with AI-powered suggestions"
+    rollout_percentage: 0
+    prerequisites:
+      - new_dashboard
+    metadata:
+      created_at: 2024-01-10
+      owner: search-team
+      jira: "SEARCH-123"
+
+  payment_v2:
+    enabled: true
+    description: "New payment processing system"
+    rollout_percentage: 25
+    targeting_rules:
+      - condition:
+          attribute: country
+          operator: in
+          values:
+            - US
+            - CA
+            - UK
+        enabled: true
+      - condition:
+          attribute: plan
+          operator: equals
+          value: enterprise
+        enabled: true
+
+# ============================================================================
+# Section 16: Machine Learning Configuration
+# ============================================================================
+machine_learning:
+  models:
+    text_classifier:
+      name: "text-classifier-v1"
+      type: "classification"
+      framework: "pytorch"
+      version: "2.0.0"
+      architecture:
+        type: "transformer"
+        layers: 12
+        hidden_size: 768
+        attention_heads: 12
+        intermediate_size: 3072
+        max_sequence_length: 512
+        vocab_size: 30522
+        dropout: 0.1
+      training:
+        epochs: 10
+        batch_size: 32
+        learning_rate: 0.00002
+        warmup_steps: 1000
+        weight_decay: 0.01
+        optimizer: "adamw"
+        scheduler: "linear"
+        gradient_accumulation_steps: 4
+        max_grad_norm: 1.0
+        fp16: true
+        evaluation_strategy: "steps"
+        eval_steps: 500
+        save_steps: 1000
+        logging_steps: 100
+      metrics:
+        - accuracy
+        - f1
+        - precision
+        - recall
+      hyperparameters:
+        learning_rate_range: [0.00001, 0.0001]
+        batch_size_options: [16, 32, 64]
+        dropout_range: [0.1, 0.3]
+
+    recommendation_engine:
+      name: "rec-engine-v2"
+      type: "recommendation"
+      framework: "tensorflow"
+      version: "2.15.0"
+      architecture:
+        type: "two-tower"
+        user_tower:
+          layers: [256, 128, 64]
+          activation: "relu"
+          embedding_dim: 64
+        item_tower:
+          layers: [256, 128, 64]
+          activation: "relu"
+          embedding_dim: 64
+        similarity: "cosine"
+      features:
+        user_features:
+          - user_id
+          - age_bucket
+          - country
+          - subscription_type
+          - interaction_history
+        item_features:
+          - item_id
+          - category
+          - tags
+          - popularity_score
+          - creation_date
+      training:
+        epochs: 50
+        batch_size: 1024
+        learning_rate: 0.001
+        negative_sampling_ratio: 4
+
+  pipelines:
+    training:
+      - name: "data_preprocessing"
+        type: "preprocessing"
+        inputs:
+          - raw_data
+        outputs:
+          - processed_data
+        config:
+          remove_duplicates: true
+          handle_missing: "impute"
+          normalize: true
+          tokenize: true
+
+      - name: "feature_engineering"
+        type: "feature"
+        inputs:
+          - processed_data
+        outputs:
+          - feature_set
+        config:
+          create_embeddings: true
+          create_aggregations: true
+          create_interactions: true
+
+      - name: "model_training"
+        type: "training"
+        inputs:
+          - feature_set
+        outputs:
+          - trained_model
+        config:
+          cross_validation: 5
+          early_stopping: true
+          patience: 3
+
+      - name: "model_evaluation"
+        type: "evaluation"
+        inputs:
+          - trained_model
+          - test_data
+        outputs:
+          - evaluation_report
+        config:
+          metrics:
+            - auc
+            - precision@k
+            - recall@k
+            - ndcg
+
+# ============================================================================
+# Section 17: E-commerce Product Catalog
+# ============================================================================
+products:
+  - id: "PROD-001"
+    sku: "LAPTOP-PRO-15"
+    name: "Professional Laptop 15-inch"
+    description: |
+      High-performance laptop designed for professionals.
+      Features the latest processor and graphics card.
+      Perfect for software development, video editing, and gaming.
+    brand: "TechBrand"
+    category:
+      primary: "Electronics"
+      secondary: "Computers"
+      tertiary: "Laptops"
+    price:
+      amount: 1499.99
+      currency: "USD"
+      discount:
+        type: "percentage"
+        value: 10
+        valid_until: 2024-02-28
+    inventory:
+      in_stock: true
+      quantity: 150
+      warehouse_locations:
+        - location: "US-EAST-1"
+          quantity: 75
+        - location: "US-WEST-1"
+          quantity: 50
+        - location: "EU-WEST-1"
+          quantity: 25
+    specifications:
+      display:
+        size: "15.6 inches"
+        resolution: "2560x1440"
+        type: "IPS"
+        refresh_rate: "144Hz"
+      processor:
+        brand: "Intel"
+        model: "Core i9-13900H"
+        cores: 14
+        threads: 20
+        base_clock: "2.6GHz"
+        turbo_clock: "5.4GHz"
+      memory:
+        size: "32GB"
+        type: "DDR5"
+        speed: "5600MHz"
+      storage:
+        primary:
+          size: "1TB"
+          type: "NVMe SSD"
+        secondary: null
+      graphics:
+        brand: "NVIDIA"
+        model: "RTX 4070"
+        memory: "8GB"
+      battery:
+        capacity: "99Wh"
+        life: "10 hours"
+      weight: "2.1 kg"
+      dimensions:
+        width: "355mm"
+        depth: "243mm"
+        height: "19.9mm"
+    images:
+      - url: "https://cdn.example.com/products/laptop-pro-15/main.jpg"
+        alt: "Professional Laptop 15-inch - Front View"
+        type: "main"
+      - url: "https://cdn.example.com/products/laptop-pro-15/side.jpg"
+        alt: "Professional Laptop 15-inch - Side View"
+        type: "gallery"
+      - url: "https://cdn.example.com/products/laptop-pro-15/ports.jpg"
+        alt: "Professional Laptop 15-inch - Ports"
+        type: "gallery"
+    reviews:
+      average_rating: 4.7
+      total_reviews: 342
+      breakdown:
+        5_star: 250
+        4_star: 60
+        3_star: 20
+        2_star: 8
+        1_star: 4
+    shipping:
+      weight: "3.5 kg"
+      dimensions:
+        width: "45cm"
+        depth: "35cm"
+        height: "12cm"
+      free_shipping: true
+      estimated_delivery: "3-5 business days"
+    seo:
+      title: "Professional Laptop 15-inch | TechBrand"
+      description: "High-performance 15-inch laptop with Intel i9, RTX 4070, 32GB RAM"
+      keywords:
+        - laptop
+        - professional laptop
+        - gaming laptop
+        - developer laptop
+    created_at: 2023-06-15T00:00:00Z
+    updated_at: 2024-01-10T14:30:00Z
+
+  - id: "PROD-002"
+    sku: "HEADPHONES-NC-100"
+    name: "Noise Cancelling Headphones"
+    description: |
+      Premium wireless headphones with active noise cancellation.
+      30-hour battery life and premium sound quality.
+    brand: "AudioPro"
+    category:
+      primary: "Electronics"
+      secondary: "Audio"
+      tertiary: "Headphones"
+    price:
+      amount: 349.99
+      currency: "USD"
+    inventory:
+      in_stock: true
+      quantity: 500
+    specifications:
+      driver_size: "40mm"
+      frequency_response: "4Hz - 40kHz"
+      impedance: "32 ohm"
+      sensitivity: "103dB"
+      noise_cancellation: true
+      bluetooth_version: "5.3"
+      codecs:
+        - AAC
+        - SBC
+        - LDAC
+        - aptX HD
+      battery_life: "30 hours"
+      charging_time: "2 hours"
+      quick_charge: "10 min for 3 hours"
+      weight: "250g"
+    colors:
+      - name: "Midnight Black"
+        hex: "#1a1a1a"
+        available: true
+      - name: "Silver"
+        hex: "#c0c0c0"
+        available: true
+      - name: "Navy Blue"
+        hex: "#000080"
+        available: false
+    created_at: 2023-09-01T00:00:00Z
+    updated_at: 2024-01-05T10:00:00Z
+
+  - id: "PROD-003"
+    sku: "KEYBOARD-MECH-RGB"
+    name: "Mechanical Gaming Keyboard"
+    description: "RGB mechanical keyboard with hot-swappable switches"
+    brand: "GameGear"
+    category:
+      primary: "Electronics"
+      secondary: "Computer Accessories"
+      tertiary: "Keyboards"
+    price:
+      amount: 149.99
+      currency: "USD"
+    inventory:
+      in_stock: true
+      quantity: 300
+    specifications:
+      layout: "Full-size (104 keys)"
+      switch_type: "Mechanical"
+      switch_options:
+        - name: "Red"
+          force: "45g"
+          type: "Linear"
+        - name: "Blue"
+          force: "50g"
+          type: "Clicky"
+        - name: "Brown"
+          force: "45g"
+          type: "Tactile"
+      backlighting: "Per-key RGB"
+      connection: "USB-C Wired / 2.4GHz Wireless / Bluetooth"
+      polling_rate: "1000Hz"
+      anti_ghosting: "N-key rollover"
+      software: "GameGear Hub"
+
+# ============================================================================
+# Section 18: Network Configuration
+# ============================================================================
+network:
+  topology:
+    name: "Production Network"
+    type: "hub-and-spoke"
+    regions:
+      - name: "us-east"
+        vpc_cidr: "10.0.0.0/16"
+        availability_zones:
+          - name: "us-east-1a"
+            subnets:
+              - name: "public-1a"
+                cidr: "10.0.1.0/24"
+                type: "public"
+              - name: "private-1a"
+                cidr: "10.0.10.0/24"
+                type: "private"
+              - name: "database-1a"
+                cidr: "10.0.20.0/24"
+                type: "isolated"
+          - name: "us-east-1b"
+            subnets:
+              - name: "public-1b"
+                cidr: "10.0.2.0/24"
+                type: "public"
+              - name: "private-1b"
+                cidr: "10.0.11.0/24"
+                type: "private"
+              - name: "database-1b"
+                cidr: "10.0.21.0/24"
+                type: "isolated"
+
+      - name: "eu-west"
+        vpc_cidr: "10.1.0.0/16"
+        availability_zones:
+          - name: "eu-west-1a"
+            subnets:
+              - name: "public-1a"
+                cidr: "10.1.1.0/24"
+                type: "public"
+              - name: "private-1a"
+                cidr: "10.1.10.0/24"
+                type: "private"
+          - name: "eu-west-1b"
+            subnets:
+              - name: "public-1b"
+                cidr: "10.1.2.0/24"
+                type: "public"
+              - name: "private-1b"
+                cidr: "10.1.11.0/24"
+                type: "private"
+
+  firewall_rules:
+    - name: "allow-http"
+      priority: 100
+      direction: "ingress"
+      action: "allow"
+      protocol: "tcp"
+      source: "0.0.0.0/0"
+      destination: "10.0.1.0/24"
+      port: 80
+
+    - name: "allow-https"
+      priority: 101
+      direction: "ingress"
+      action: "allow"
+      protocol: "tcp"
+      source: "0.0.0.0/0"
+      destination: "10.0.1.0/24"
+      port: 443
+
+    - name: "allow-ssh-bastion"
+      priority: 200
+      direction: "ingress"
+      action: "allow"
+      protocol: "tcp"
+      source: "203.0.113.0/24"
+      destination: "10.0.1.100/32"
+      port: 22
+
+    - name: "deny-all-ingress"
+      priority: 65534
+      direction: "ingress"
+      action: "deny"
+      protocol: "all"
+      source: "0.0.0.0/0"
+      destination: "0.0.0.0/0"
+
+  load_balancers:
+    - name: "web-lb"
+      type: "application"
+      scheme: "internet-facing"
+      listeners:
+        - protocol: "HTTPS"
+          port: 443
+          certificate_arn: "arn:aws:acm:us-east-1:123456789:certificate/abc123"
+          default_action:
+            type: "forward"
+            target_group: "web-tg"
+          rules:
+            - priority: 1
+              conditions:
+                - type: "path-pattern"
+                  values: ["/api/*"]
+              actions:
+                - type: "forward"
+                  target_group: "api-tg"
+            - priority: 2
+              conditions:
+                - type: "host-header"
+                  values: ["admin.example.com"]
+              actions:
+                - type: "forward"
+                  target_group: "admin-tg"
+      target_groups:
+        - name: "web-tg"
+          protocol: "HTTP"
+          port: 8080
+          health_check:
+            path: "/health"
+            interval: 30
+            timeout: 5
+            healthy_threshold: 2
+            unhealthy_threshold: 3
+        - name: "api-tg"
+          protocol: "HTTP"
+          port: 8080
+          health_check:
+            path: "/api/health"
+            interval: 15
+            timeout: 5
+
+  dns:
+    zones:
+      - name: "example.com"
+        type: "public"
+        records:
+          - name: "@"
+            type: "A"
+            ttl: 300
+            values:
+              - "203.0.113.10"
+          - name: "www"
+            type: "CNAME"
+            ttl: 300
+            values:
+              - "example.com"
+          - name: "api"
+            type: "A"
+            ttl: 60
+            alias:
+              target: "web-lb.us-east-1.elb.amazonaws.com"
+              zone_id: "Z1234567890"
+          - name: "@"
+            type: "MX"
+            ttl: 3600
+            values:
+              - "10 mail1.example.com"
+              - "20 mail2.example.com"
+          - name: "@"
+            type: "TXT"
+            ttl: 3600
+            values:
+              - "v=spf1 include:_spf.google.com ~all"
+
+# ============================================================================
+# Section 19: Test Data
+# ============================================================================
+test_data:
+  users_batch:
+    - { id: 1, name: "User 1", email: "user1@test.com", active: true }
+    - { id: 2, name: "User 2", email: "user2@test.com", active: true }
+    - { id: 3, name: "User 3", email: "user3@test.com", active: false }
+    - { id: 4, name: "User 4", email: "user4@test.com", active: true }
+    - { id: 5, name: "User 5", email: "user5@test.com", active: true }
+    - { id: 6, name: "User 6", email: "user6@test.com", active: false }
+    - { id: 7, name: "User 7", email: "user7@test.com", active: true }
+    - { id: 8, name: "User 8", email: "user8@test.com", active: true }
+    - { id: 9, name: "User 9", email: "user9@test.com", active: true }
+    - { id: 10, name: "User 10", email: "user10@test.com", active: false }
+    - { id: 11, name: "User 11", email: "user11@test.com", active: true }
+    - { id: 12, name: "User 12", email: "user12@test.com", active: true }
+    - { id: 13, name: "User 13", email: "user13@test.com", active: false }
+    - { id: 14, name: "User 14", email: "user14@test.com", active: true }
+    - { id: 15, name: "User 15", email: "user15@test.com", active: true }
+    - { id: 16, name: "User 16", email: "user16@test.com", active: true }
+    - { id: 17, name: "User 17", email: "user17@test.com", active: false }
+    - { id: 18, name: "User 18", email: "user18@test.com", active: true }
+    - { id: 19, name: "User 19", email: "user19@test.com", active: true }
+    - { id: 20, name: "User 20", email: "user20@test.com", active: true }
+    - { id: 21, name: "User 21", email: "user21@test.com", active: true }
+    - { id: 22, name: "User 22", email: "user22@test.com", active: false }
+    - { id: 23, name: "User 23", email: "user23@test.com", active: true }
+    - { id: 24, name: "User 24", email: "user24@test.com", active: true }
+    - { id: 25, name: "User 25", email: "user25@test.com", active: true }
+    - { id: 26, name: "User 26", email: "user26@test.com", active: false }
+    - { id: 27, name: "User 27", email: "user27@test.com", active: true }
+    - { id: 28, name: "User 28", email: "user28@test.com", active: true }
+    - { id: 29, name: "User 29", email: "user29@test.com", active: true }
+    - { id: 30, name: "User 30", email: "user30@test.com", active: true }
+    - { id: 31, name: "User 31", email: "user31@test.com", active: false }
+    - { id: 32, name: "User 32", email: "user32@test.com", active: true }
+    - { id: 33, name: "User 33", email: "user33@test.com", active: true }
+    - { id: 34, name: "User 34", email: "user34@test.com", active: true }
+    - { id: 35, name: "User 35", email: "user35@test.com", active: false }
+    - { id: 36, name: "User 36", email: "user36@test.com", active: true }
+    - { id: 37, name: "User 37", email: "user37@test.com", active: true }
+    - { id: 38, name: "User 38", email: "user38@test.com", active: true }
+    - { id: 39, name: "User 39", email: "user39@test.com", active: false }
+    - { id: 40, name: "User 40", email: "user40@test.com", active: true }
+    - { id: 41, name: "User 41", email: "user41@test.com", active: true }
+    - { id: 42, name: "User 42", email: "user42@test.com", active: true }
+    - { id: 43, name: "User 43", email: "user43@test.com", active: false }
+    - { id: 44, name: "User 44", email: "user44@test.com", active: true }
+    - { id: 45, name: "User 45", email: "user45@test.com", active: true }
+    - { id: 46, name: "User 46", email: "user46@test.com", active: true }
+    - { id: 47, name: "User 47", email: "user47@test.com", active: false }
+    - { id: 48, name: "User 48", email: "user48@test.com", active: true }
+    - { id: 49, name: "User 49", email: "user49@test.com", active: true }
+    - { id: 50, name: "User 50", email: "user50@test.com", active: true }
+
+  orders_batch:
+    - { order_id: "ORD-001", user_id: 1, total: 99.99, status: "completed" }
+    - { order_id: "ORD-002", user_id: 2, total: 149.50, status: "completed" }
+    - { order_id: "ORD-003", user_id: 1, total: 75.00, status: "pending" }
+    - { order_id: "ORD-004", user_id: 3, total: 200.00, status: "shipped" }
+    - { order_id: "ORD-005", user_id: 4, total: 50.25, status: "completed" }
+    - { order_id: "ORD-006", user_id: 5, total: 125.75, status: "cancelled" }
+    - { order_id: "ORD-007", user_id: 2, total: 89.99, status: "completed" }
+    - { order_id: "ORD-008", user_id: 6, total: 175.00, status: "pending" }
+    - { order_id: "ORD-009", user_id: 7, total: 45.50, status: "completed" }
+    - { order_id: "ORD-010", user_id: 8, total: 300.00, status: "shipped" }
+    - { order_id: "ORD-011", user_id: 9, total: 67.25, status: "completed" }
+    - { order_id: "ORD-012", user_id: 10, total: 150.00, status: "pending" }
+    - { order_id: "ORD-013", user_id: 1, total: 225.50, status: "completed" }
+    - { order_id: "ORD-014", user_id: 11, total: 80.00, status: "shipped" }
+    - { order_id: "ORD-015", user_id: 12, total: 95.75, status: "completed" }
+    - { order_id: "ORD-016", user_id: 13, total: 110.25, status: "cancelled" }
+    - { order_id: "ORD-017", user_id: 14, total: 185.00, status: "completed" }
+    - { order_id: "ORD-018", user_id: 15, total: 62.50, status: "pending" }
+    - { order_id: "ORD-019", user_id: 16, total: 140.00, status: "completed" }
+    - { order_id: "ORD-020", user_id: 17, total: 250.75, status: "shipped" }
+    - { order_id: "ORD-021", user_id: 18, total: 88.00, status: "completed" }
+    - { order_id: "ORD-022", user_id: 19, total: 175.25, status: "pending" }
+    - { order_id: "ORD-023", user_id: 20, total: 55.00, status: "completed" }
+    - { order_id: "ORD-024", user_id: 21, total: 195.50, status: "shipped" }
+    - { order_id: "ORD-025", user_id: 22, total: 72.75, status: "cancelled" }
+    - { order_id: "ORD-026", user_id: 23, total: 130.00, status: "completed" }
+    - { order_id: "ORD-027", user_id: 24, total: 215.25, status: "pending" }
+    - { order_id: "ORD-028", user_id: 25, total: 48.50, status: "completed" }
+    - { order_id: "ORD-029", user_id: 26, total: 165.00, status: "shipped" }
+    - { order_id: "ORD-030", user_id: 27, total: 92.25, status: "completed" }
+
+  products_batch:
+    - { sku: "SKU-001", name: "Product 1", price: 19.99, stock: 100 }
+    - { sku: "SKU-002", name: "Product 2", price: 29.99, stock: 50 }
+    - { sku: "SKU-003", name: "Product 3", price: 39.99, stock: 75 }
+    - { sku: "SKU-004", name: "Product 4", price: 49.99, stock: 200 }
+    - { sku: "SKU-005", name: "Product 5", price: 59.99, stock: 30 }
+    - { sku: "SKU-006", name: "Product 6", price: 69.99, stock: 150 }
+    - { sku: "SKU-007", name: "Product 7", price: 79.99, stock: 80 }
+    - { sku: "SKU-008", name: "Product 8", price: 89.99, stock: 120 }
+    - { sku: "SKU-009", name: "Product 9", price: 99.99, stock: 45 }
+    - { sku: "SKU-010", name: "Product 10", price: 109.99, stock: 90 }
+    - { sku: "SKU-011", name: "Product 11", price: 119.99, stock: 60 }
+    - { sku: "SKU-012", name: "Product 12", price: 129.99, stock: 25 }
+    - { sku: "SKU-013", name: "Product 13", price: 139.99, stock: 110 }
+    - { sku: "SKU-014", name: "Product 14", price: 149.99, stock: 70 }
+    - { sku: "SKU-015", name: "Product 15", price: 159.99, stock: 40 }
+    - { sku: "SKU-016", name: "Product 16", price: 169.99, stock: 180 }
+    - { sku: "SKU-017", name: "Product 17", price: 179.99, stock: 55 }
+    - { sku: "SKU-018", name: "Product 18", price: 189.99, stock: 95 }
+    - { sku: "SKU-019", name: "Product 19", price: 199.99, stock: 35 }
+    - { sku: "SKU-020", name: "Product 20", price: 209.99, stock: 85 }
+
+# ============================================================================
+# Section 20: Additional Complex Structures
+# ============================================================================
+complex_matrix:
+  - [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  - [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+  - [21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+  - [31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
+  - [41, 42, 43, 44, 45, 46, 47, 48, 49, 50]
+  - [51, 52, 53, 54, 55, 56, 57, 58, 59, 60]
+  - [61, 62, 63, 64, 65, 66, 67, 68, 69, 70]
+  - [71, 72, 73, 74, 75, 76, 77, 78, 79, 80]
+  - [81, 82, 83, 84, 85, 86, 87, 88, 89, 90]
+  - [91, 92, 93, 94, 95, 96, 97, 98, 99, 100]
+
+nested_inline:
+  level1: { a: { b: { c: { d: { e: "deep" } } } } }
+  list_in_map: { items: [1, 2, { nested: [3, 4, 5] }] }
+  mixed: { str: "text", num: 42, bool: true, arr: [1, 2], obj: { x: 1 } }
+
+flow_sequences:
+  simple: [a, b, c, d, e]
+  numbers: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  mixed: [1, "two", 3.0, true, null, [nested, array]]
+  long: [item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, item11, item12, item13, item14, item15, item16, item17, item18, item19, item20]
+
+flow_mappings:
+  simple: {a: 1, b: 2, c: 3}
+  nested: {outer: {inner: {deep: value}}}
+  with_arrays: {arr1: [1, 2], arr2: [3, 4], arr3: [5, 6]}
+
+# ============================================================================
+# End of Benchmark File
+# ============================================================================

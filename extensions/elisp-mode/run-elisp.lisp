@@ -75,7 +75,7 @@
                                    :name "run-elisp"
                                    :output-callback 'output-callback))))
 
-(define-command elisp-eval-region (start end) ("r")
+(define-command elisp-eval-region (start end) (:region)
   (unless (alive-process-p)
     (editor-error "Emacs Lisp Terminal process doesn't exist."))
   (lem-process:process-send-input *process* 

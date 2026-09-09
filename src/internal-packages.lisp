@@ -1,10 +1,14 @@
 (defpackage :lem-core/display
   (:use)
   (:export
+   :wrap-line-character
+   :wrap-line-attribute
    :control-character-object
    :emoji-object
    :eol-cursor-object
    :eol-cursor-object-color
+   :eol-cursor-object-attribute
+   :eol-cursor-object-true-cursor-p
    :extend-to-eol-object
    :extend-to-eol-object-color
    :folder-object
@@ -21,6 +25,7 @@
    :text-object-surface
    :text-object-type
    :void-object
+   :make-letter-object
    :text-object))
 
 (uiop:define-package :lem-core
@@ -63,7 +68,7 @@
    :yank-from-clipboard-or-killring)
   ;; quicklisp-utils.lisp
   (:export
-   :maybe-quickload)
+   :maybe-load-systems)
   ;; config.lisp
   (:export
    :lem-home
@@ -90,7 +95,7 @@
    :key-ctrl
    :key-meta
    :key-super
-   :key-hypher
+   :key-hyper
    :key-shift
    :key-sym
    :match-key
@@ -129,6 +134,7 @@
    :define-attribute
    :cursor
    :region
+   :fold-attribute
    :modeline
    :modeline-inactive
    :truncate-attribute
@@ -142,6 +148,23 @@
    :syntax-variable-attribute
    :syntax-type-attribute
    :syntax-builtin-attribute
+   :document-header1-attribute
+   :document-header2-attribute
+   :document-header3-attribute
+   :document-header4-attribute
+   :document-header5-attribute
+   :document-header6-attribute
+   :document-bold-attribute
+   :document-italic-attribute
+   :document-underline-attribute
+   :document-link-attribute
+   :document-list-attribute
+   :document-code-block-attribute
+   :document-inline-code-attribute
+   :document-blockquote-attribute
+   :document-table-attribute
+   :document-task-list-attribute
+   :document-metadata-attribute
    :completion-attribute
    :non-focus-completion-attribute
    :attribute-image
@@ -149,7 +172,9 @@
    :attribute-height
    :attribute-font
    :cursor-attribute-p
-   :set-cursor-attribute)
+   :set-cursor-attribute
+   :display-dark-p
+   :display-light-p)
   ;; clipboard.lisp
   (:export
    :wsl-p
@@ -181,6 +206,9 @@
    :frame-floating-prompt-window
    :frame-prompt-window
    :frame-message-window
+   :frame-leftside-window
+   :frame-rightside-window
+   :frame-bottomside-window
    :notify-frame-redisplay-required
    :map-frame
    :get-frame
@@ -201,7 +229,10 @@
    :receive-mouse-wheel
    :set-hover-message
    :get-point-from-window-with-coordinates
-   :get-point-on-context-menu-open)
+   :get-point-on-context-menu-open
+   :handle-mouse-button-down
+   :handle-mouse-button-up
+   :handle-mouse-hover)
   ;; context-menu.lisp
   (:export
    :buffer-context-menu)
@@ -215,9 +246,12 @@
   ;; prompt.lisp
   (:export
    :*prompt-activate-hook*
+   :*prompt-after-activate-hook*
    :*prompt-deactivate-hook*
    :*prompt-buffer-completion-function*
    :*prompt-file-completion-function*
+   :*prompt-command-completion-function*
+   :*automatic-tab-completion*
    :caller-of-prompt-window
    :prompt-active-p
    :active-prompt-window
@@ -229,6 +263,7 @@
    :prompt-for-buffer
    :prompt-for-file
    :prompt-for-directory
+   :prompt-for-command
    :prompt-for-encodings
    :prompt-for-library)
   ;; buffer.lisp
@@ -245,7 +280,11 @@
    :*window-scroll-functions*
    :*window-size-change-functions*
    :*window-show-buffer-functions*
+   :*switch-to-buffer-hook*
+   :*switch-to-window-hook*
+   :*default-split-action*
    :window-parent
+   :window-border
    :scroll
    :window-view-point
    :window
@@ -254,12 +293,16 @@
    :window-x
    :window-y
    :window-width
+   :window-left-width
    :window-height
    :window-buffer
    :window-screen
    :window-view
    :window-point
    :window-cursor-invisible-p
+   :show-cursor
+   :hide-cursor
+   :window-buffer-switchable-p
    :set-last-print-cursor
    :last-print-cursor-x
    :last-print-cursor-y
@@ -296,6 +339,15 @@
    :floating-window-border-shape
    :floating-window-focusable-p
    :floating-window-p
+   :floating-window-pixel-x
+   :floating-window-pixel-y
+   :floating-window-pixel-width
+   :floating-window-pixel-height
+   :floating-window-set-pixel-position
+   :floating-window-set-pixel-size
+   :floating-window-pixel-bounds
+   :attached-window-p
+   :attach-buffer
    :update-on-display-resized
    :covered-with-floating-window-p
    :redraw-display
@@ -315,6 +367,7 @@
   ;; virtual-line
   (:export
    :window-recenter
+   :window-recenter-top-bottom
    :window-cursor-x
    :window-cursor-y
    :backward-line-wrap
@@ -326,12 +379,20 @@
    :window-scroll)
   ;; header-window.lisp
   (:export
-   :header-window)
+   :header-window
+   :header-window-height
+   :header-window-p)
   ;; side-window.lisp
   (:export
    :side-window
+   :side-window-p
    :make-leftside-window
-   :delete-leftside-window)
+   :delete-leftside-window
+   :make-rightside-window
+   :delete-rightside-window
+   :make-bottomside-window
+   :delete-bottomside-window
+   :resize-bottomside-window)
   ;; popup.lisp
   (:export
    :*default-popup-message-timeout*
@@ -354,8 +415,24 @@
    :modeline-write-info
    :modeline-name
    :modeline-mode-names
+   :modeline-major-mode
+   :modeline-minor-modes
    :modeline-position
    :modeline-posline
+   :modeline-name-attribute
+   :modeline-major-mode-attribute
+   :inactive-modeline-major-mode-attribute
+   :modeline-minor-modes-attribute
+   :inactive-modeline-minor-modes-attribute
+   :modeline-position-attribute
+   :inactive-modeline-position-attribute
+   :modeline-posline-attribute
+   :inactive-modeline-position-attribute
+   :inactive-modeline-name-attribute
+   :inactive-modeline-posline-attribute
+   :modeline-version
+   :modeline-version-attribute
+   :inactive-modeline-version-attribute
    :convert-modeline-element)
   ;; command.lisp
   (:export
@@ -375,6 +452,7 @@
   (:export
    :ensure-mode-object
    :major-mode
+   :mode
    :mode-name
    :mode-description
    :mode-keymap
@@ -384,6 +462,7 @@
    :mode-active-p
    :major-modes
    :minor-modes
+   :all-active-modes
    :find-mode
    :toggle-minor-mode
    :define-major-mode
@@ -393,29 +472,56 @@
    :change-global-mode-keymap
    :enable-minor-mode
    :disable-minor-mode
-   :current-global-mode)
+   :current-global-mode
+   :get-syntax-table-by-mode-name
+   :set-region-major-mode
+   :clear-region-major-mode
+   :major-mode-at-point
+   :current-major-mode-at-point
+   :with-major-mode
+   :paste-using-mode)
   ;; keymap.lisp
   (:export
-   :*keymaps*
    :keymap
-   :keymap-name
-   :keymap-parent
+   :prefix
+   :keymap*
+   :*root-keymap*
+   :prefix-active-p
+   :prefix-intermediate-p
+   :prefix-behavior
+   :keymap-prefixes
+   :keymap-children
+   :keymap-description
+   :keymap-properties
+   :keymap-base
+   :parse-keyspec
+   :prefix-properties
    :keymap-undef-hook
+   :keymap-activate
    :make-keymap
+   :make-prefix
+   :prefix-description
+   :prefix-key
+   :prefix-suffix
    :*global-keymap*
    :define-key
    :define-keys
+   :undefine-key
+   :undefine-keys
    :keyseq-to-string
    :find-keybind
    :insertion-key-p
    :lookup-keybind
-   :keymap-find-keybind
+   :keymap-find
    :*abort-key*
    :abort-key-p
    :with-special-keymap
    :traverse-keymap
    :compute-keymaps
-   :collect-command-keybindings)
+   :collect-command-keybindings
+   :keymap-add-child
+   :keymap-add-prefix
+   :prefix-invoke)
   ;; reexport common/timer
   (:export
    :timer
@@ -438,6 +544,7 @@
    :exit-editor
    :interactive-p
    :continue-flag
+   :nullify-last-flags
    :pop-up-backtrace
    :call-background-job
    :command-loop-counter
@@ -446,7 +553,9 @@
   ;; input.lisp
   (:export
    :*input-hook*
+   :meta-prefix-keys
    :last-read-key-sequence
+   :with-last-read-key-sequence
    :start-record-key
    :stop-record-key
    :key-recording-p
@@ -472,7 +581,9 @@
    :overlay-put
    :overlay-get
    :clear-overlays
-   :point-overlays)
+   :point-overlays
+   :buffer-overlays
+   :overlay-within-point-p)
   ;; streams.lisp
   (:export
    :buffer-input-stream
@@ -489,12 +600,15 @@
    :*file-completion-ignore-case*
    :completion
    :completion-test
-   :completion-hypheen
+   :completion-hyphen
    :completion-file
    :completion-strings
+   :completion-files
    :completion-buffer)
   ;; cursors.lisp
   (:export
+   :push-buffer-point
+   :pop-buffer-point
    :fake-cursor
    :cursor-saved-column
    :cursor-yank-start
@@ -526,7 +640,9 @@
    :find-editor-thread
    :init-at-build-time
    :lem
-   :main)
+   :launch
+   :main
+   :get-preferred-init-file-path)
   ;; command-advices.lisp
   (:export
    :movable-advice
@@ -539,15 +655,32 @@
    :highlight-line)
   ;; display/base.lisp
   (:export
+   :wrap-line-character
+   :wrap-line-attribute
    :inactive-window-background-color
    :redraw-buffer
-   :compute-left-display-area-content)
+   :compute-left-display-area-content
+   :compute-wrap-left-area-content)
+  ;; display/logical-line.lisp
+  (:export
+   :make-region-overlays-using-global-mode
+   :line-continuation-p
+   :invisible-overlay-covering
+   :move-point-out-of-overlay
+   :reveal-overlay-on-cursor-enter
+   :hide-overlay-on-cursor-leave
+   :overlays-with-cursor-hooks-covering
+   :place-region-placeholder-overlay)
   ;; interface.lisp
   (:export
    :with-implementation
    :implementation
    :redraw-after-modifying-floating-window
    :support-floating-window
+   :support-pixel-positioning-p
+   :html-support-p
+   :underline-color-support-p
+   :no-force-needed-p
    :set-foreground
    :set-background
    :display-width
@@ -557,14 +690,29 @@
    :attribute-foreground-color
    :attribute-background-color
    :attribute-foreground-with-reverse
-   :attribute-background-with-reverse)
+   :attribute-background-with-reverse
+   :cursor-type
+   :display-background-mode
+   :get-font
+   :set-font
+   :set-font-name
+   :set-font-size
+   :set-frame-color)
   ;; color-theme.lisp
   (:export
    :color-theme-names
    :define-color-theme
-   :load-theme)
+   :*after-load-theme-hook*
+   :load-theme
+   :current-theme
+   :find-color-theme
+   :color-theme
+   :get-color-theme-color
+   :foreground-color
+   :background-color)
   ;; region.lisp
   (:export
+   :*region-end-offset*
    :check-marked-using-global-mode
    :region-beginning-using-global-mode
    :region-end-using-global-mode
@@ -573,9 +721,34 @@
   ;; format.lisp
   (:export
    :*auto-format*
-   :register-formatter 
+   :register-formatter
    :register-formatters
-   :format-buffer))
+   :format-buffer)
+  ;; html-buffer.lisp
+  (:export
+   :html-buffer
+   :html-buffer-html
+   :make-html-buffer
+   :html-buffer-updated-p
+   :invalidate-html-buffer-updated
+   :js-eval)
+  ;; site-init.lisp
+  (:export
+   :*inits-directory-name*
+   :load-site-init)
+  ;; system.lisp
+  (:export 
+   :exec-path)
+  ;; command-line-arguments
+  (:export
+   :parse-args
+   :command-line-arguments-help
+   :command-line-arguments-debug
+   :command-line-arguments-version
+   :command-line-arguments-without-init-file
+   :command-line-arguments-log-filename
+   :command-line-arguments-interface
+   :command-line-arguments-filenames))
 #+sbcl
 (sb-ext:lock-package :lem-core)
 
@@ -609,6 +782,8 @@
    :set-display-title
    :display-fullscreen-p
    :set-display-fullscreen-p
+   :maximize-frame
+   :minimize-frame
    :make-view
    :view-width
    :view-height
@@ -616,6 +791,9 @@
    :clear
    :set-view-size
    :set-view-pos
+   :make-view-with-pixels
+   :set-view-pos-pixels
+   :set-view-size-pixels
    :redraw-view-before
    :redraw-view-after
    :will-update-display
@@ -631,16 +809,22 @@
    :display-context-menu
    :clipboard-paste
    :clipboard-copy
+   :update-screen-size
    :increase-font-size
    :decrease-font-size
+   :set-font-name
    :set-font-size
    :resize-display-before
    :get-font-list
+   :get-font-by-name-and-style
+   :get-font
    :get-mouse-position
    :get-char-width
    :get-char-height
    :clear-to-end-of-window
+   :js-eval
    :render-line
    :render-line-on-modeline
    :object-width
-   :object-height))
+   :object-height
+   :set-frame-color))

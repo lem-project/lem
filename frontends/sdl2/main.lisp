@@ -97,10 +97,24 @@
     (sdl2-ffi:+sdl-windowevent-resized+
      (display:update-texture display)
      (display:notify-required-redisplay display))
+    ;; SDL fires :size-changed on backing-pixel-size changes that do not
+    ;; correspond to a user resize — most notably when the window moves
+    ;; between displays with different DPI (Retina ↔ standard).  Re-derive
+    ;; the high-DPI scale, re-open the font, and resize the backing texture.
+    (sdl2-ffi:+sdl-windowevent-size-changed+
+     (display:handle-display-changed display))
+    ;; SDL ≥ 2.0.18 fires :display-changed when the window is dragged onto
+    ;; a different monitor.  On older SDL builds this constant is still
+    ;; defined by the FFI binding but the event simply never fires.
+    (sdl2-ffi:+sdl-windowevent-display-changed+
+     (display:handle-display-changed display))
     (sdl2-ffi:+sdl-windowevent-focus-gained+
      (setf (display:display-focus-p display) t))
     (sdl2-ffi:+sdl-windowevent-focus-lost+
      (setf (display:display-focus-p display) nil))))
+
+(defun on-filedrop (file)
+  (lem:send-event (lambda () (lem:find-file file))))
 
 (defun event-loop (display)
   (sdl2:with-event-loop (:method :wait)
@@ -124,6 +138,8 @@
      (on-mouse-motion display x y state))
     (:mousewheel (:x x :y y :which which :direction direction)
      (on-mouse-wheel display x y which direction))
+    (:dropfile (:file file)
+     (on-filedrop file))
     (:windowevent (:event event)
      (on-windowevent display event))))
 
@@ -147,15 +163,15 @@
            (sdl2:with-window (window :title "Lem"
                                      :w window-width
                                      :h window-height
-                                     :flags '(:shown :resizable #+darwin :allow-highdpi))
+                                     :flags '(:shown :resizable :allow-highdpi))
              (init-application-icon window)
              (sdl2:with-renderer (renderer window :index -1 :flags '(:accelerated))
-               (let* (#+darwin (renderer-size (multiple-value-list
+               (let* ((renderer-size (multiple-value-list
                                                (sdl2:get-renderer-output-size renderer)))
-                      #+darwin (renderer-width (first renderer-size))
-                      #+darwin(renderer-height (second renderer-size))
-                      (scale-x #-darwin 1 #+darwin (/ renderer-width window-width))
-                      (scale-y #-darwin 1 #+darwin (/ renderer-height window-height))
+                      (renderer-width (first renderer-size))
+                      (renderer-height (second renderer-size))
+                      (scale-x (/ renderer-width window-width))
+                      (scale-y (/ renderer-height window-height))
                       (texture (lem-sdl2/utils:create-texture renderer
                                                               (* scale-x window-width)
                                                               (* scale-y window-height)))
@@ -169,7 +185,6 @@
                                               :char-height (font-char-height font)
                                               :scale (list scale-x scale-y))))
                  (setf (display:current-display) display)
-                 #+darwin
                  (display:adapt-high-dpi-font-size display)
                  (sdl2:start-text-input)
                  (funcall function)
@@ -205,17 +220,21 @@
                      (if (lem:config :darwin-use-native-fullscreen) 1 0))
       ;; sdl2 should not install any signal handlers, since the lisp runtime already does so
       (sdl2:set-hint :no-signal-handlers 1)
-      (sdl2:make-this-thread-main (lambda ()
-                                    (handler-bind
-                                        (#+(and linux sbcl)
-                                         (sb-sys:interactive-interrupt
-                                           (lambda (c)
-                                             (declare (ignore c))
-                                             (invoke-restart 'sdl2::abort))))
-                                      (progn
-                                        (create-display #'thunk)
-                                        (when (sbcl-on-darwin-p)
-                                          (cffi:foreign-funcall "_exit")))))))))
+      ;; sdl2 should not disable the kwin compositor, since lem editor is not a game, and disable it will not bring noticeale performance improvement.
+      (sdl2:set-hint :video-x11-net-wm-bypass-compositor 0)
+
+      (tmt:with-body-in-main-thread ()
+        (sdl2:make-this-thread-main (lambda ()
+                                      (handler-bind
+                                          (#+(and linux sbcl)
+                                              (sb-sys:interactive-interrupt
+                                               (lambda (c)
+                                                 (declare (ignore c))
+                                                 (invoke-restart 'sdl2::abort))))
+                                        (progn
+                                          (create-display #'thunk)
+                                          (when (sbcl-on-darwin-p)
+                                            (cffi:foreign-funcall "_exit"))))))))))
 
 (defmethod lem-if:get-background-color ((implementation sdl2))
   (with-debug ("lem-if:get-background-color")
@@ -238,6 +257,11 @@
     (display:with-display (display)
       (setf (display:display-background-color display)
             (lem:parse-color color)))))
+
+(defmethod lem-if:update-cursor-shape ((implementation sdl2) cursor-type)
+  (with-debug ("lem-if:update-cursor-type")
+    (display:with-display (display)
+      (setf (display:display-cursor-type display) cursor-type))))
 
 (defmethod lem-if:display-width ((implementation sdl2))
   (with-debug ("lem-if:display-width")
@@ -278,6 +302,18 @@
           ;; always send :desktop over :fullscreen due to weird bugs on macOS
           (sdl2:set-window-fullscreen (display:display-window display)
                                       (if fullscreen-p :desktop)))))))
+
+(defmethod lem-if:maximize-frame ((implementation sdl2))
+  (with-debug ("lem-if:maximize-frame")
+    (sdl2:in-main-thread ()
+      (display:with-display (display)
+        (sdl2:maximize-window (lem-sdl2/display::display-window display))))))
+
+(defmethod lem-if:minimize-frame ((implementation sdl2))
+  (with-debug ("lem-if:minimize-frame")
+    (sdl2:in-main-thread ()
+      (display:with-display (display)
+        (sdl2:minimize-window (lem-sdl2/display::display-window display))))))
 
 (defmethod lem-if:make-view ((implementation sdl2) window x y width height use-modeline)
   (with-debug ("lem-if:make-view" window x y width height use-modeline)
@@ -336,6 +372,9 @@
   (with-debug ("will-update-display")
     (display:with-display (display)
       (display:with-renderer (display)
+        ;; Bound cache memory: full reset when cache exceeds threshold.
+        ;; Runs inside with-renderer so sdl2:destroy-texture is on the main thread.
+        (lem-sdl2/text-surface-cache:sweep-if-oversize)
         (sdl2:set-render-target (display:display-renderer display) (display:display-texture display))
         (display:set-render-color display (display:display-background-color display))
         (sdl2:render-clear (display:display-renderer display))))))
@@ -364,7 +403,11 @@
             (display:set-render-color display (display:display-background-color display))
             (sdl2:render-fill-rect (display:display-renderer display) rect)
             (sdl2:render-copy (display:display-renderer display) texture :dest-rect rect))
-          (sdl2:destroy-texture texture))))))
+          (sdl2:destroy-texture texture)
+          ;; Explicitly free the surface now instead of waiting for GC finalizer.
+          ;; Cancel the autocollect finalizer first to prevent double-free.
+          (trivial-garbage:cancel-finalization surface)
+          (sdl2:free-surface surface))))))
 
 (defmethod lem-if:update-display ((implementation sdl2))
   (with-debug ("lem-if:update-display")
@@ -399,10 +442,14 @@
 (defmethod lem-if:set-font-size ((implementation sdl2) size)
   (display:with-display (display)
     (display:with-renderer (display)
-      (let ((font-config (display:display-font-config display)))
-        (display:change-font 
-         display 
-         (change-size font-config size))))))
+      (let* ((font-config (display:display-font-config display))
+             (ratio (round (first (display:display-scale display))))
+             (scaled-size (* ratio size)))
+        (setf (lem:config :sdl2-font-size) size)
+        (display:change-font
+         display
+         (change-size font-config scaled-size)
+         nil)))))
 
 (defmethod lem-if:resize-display-before ((implementation sdl2))
   (with-debug ("resize-display-before")
@@ -446,7 +493,7 @@
   (lem-sdl2/log:with-debug ("clipboard-paste")
     (display:with-display (display)
       (display:with-renderer (display)
-        (sdl2-ffi.functions:sdl-get-clipboard-text)))))
+        (multiple-value-bind (str _) (sdl2-ffi.functions:sdl-get-clipboard-text) str)))))
 
 #+windows
 (defmethod lem-if:clipboard-paste ((implementation sdl2))
@@ -474,3 +521,45 @@
 (defun char-width () (display:display-char-width (display:current-display)))
 (defun char-height () (display:display-char-height (display:current-display)))
 (defun current-renderer () (display:display-renderer (display:current-display)))
+
+(defmethod lem-if:display-fullscreen-p ((implementation sdl2))
+  (with-debug ("lem-if:display-fullscreen-p")
+    (display:with-display (display)
+      (not (null (member :fullscreen (sdl2:get-window-flags (display:display-window display))))))))
+
+;;;; Toggle Display Borderless
+
+(defgeneric lem-if::display-borderless-p (implementation)
+  (:documentation
+   "Return `t' if FRAME is borderless, `nil' otherwise. 
+Default IMPLEMENTATION should return `t' as fallback. ")
+  (:method (implementation) t)
+  (:method ((implementation sdl2))
+    (with-debug ("display-borderless-p")
+      (display:with-display (display)
+        (not (null (member :borderless (sdl2:get-window-flags (display:display-window display)))))))))
+
+(defmethod (setf lem-if::display-borderless-p) (boolean implementation)
+  (declare (ignore boolean implementation)))
+
+(defmethod (setf lem-if::display-borderless-p) (boolean (implementation sdl2))
+  (declare (ignore implementation))
+  (with-debug ("(setf lem-if::display-borderless-p)")
+    (sdl2:in-main-thread ()
+      (display:with-display (display)
+        (sdl2-ffi.functions:sdl-set-window-bordered (display:display-window display) 
+                                                    (if boolean 0 1))))))
+
+(in-package :lem-core)
+
+(defun lem-core::display-borderless-p ()
+  "Get/Set current display if borderless. 
+Return `t' for borderless (no-titlebar), `nil' for otherwise. "
+  (lem-if::display-borderless-p (implementation)))
+
+(defun (setf lem-core::display-borderless-p) (boolean)
+  (setf (lem-if::display-borderless-p (implementation)) boolean))
+
+(define-command toggle-frame-borderless () ()
+  "Toggles frame borderless. "
+  (setf (display-borderless-p) (not (display-borderless-p))))

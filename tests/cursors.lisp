@@ -5,7 +5,9 @@
   (:import-from :lem/common/killring
                 :make-killring
                 :push-killring-item
-                :peek-killring-item))
+                :peek-killring-item)
+  (:export :all-positions
+           :positions-set-equal))
 (in-package :lem-tests/cursors)
 
 (defun make-testing-killring ()

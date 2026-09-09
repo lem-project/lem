@@ -23,15 +23,19 @@
 (define-key *multi-column-list-mode-keymap* 'keyboard-quit 'multi-column-list/quit)
 (define-key *multi-column-list-mode-keymap* 'escape 'multi-column-list/quit)
 (define-key *multi-column-list-mode-keymap* 'next-line 'multi-column-list/down)
+(define-key *multi-column-list-mode-keymap* "Tab" 'multi-column-list/down)
 (define-key *multi-column-list-mode-keymap* 'previous-line 'multi-column-list/up)
+(define-key *multi-column-list-mode-keymap* "Shift-Tab" 'multi-column-list/up)
 (define-key *multi-column-list-mode-keymap* 'move-to-end-of-buffer 'multi-column-list/last)
 (define-key *multi-column-list-mode-keymap* 'move-to-beginning-of-buffer 'multi-column-list/first)
 (define-key *multi-column-list-mode-keymap* "Return" 'multi-column-list/select)
 (define-key *multi-column-list-mode-keymap* "Space" 'multi-column-list/check-and-down)
 (define-key *multi-column-list-mode-keymap* "M-Space" 'multi-column-list/up-and-check)
 (define-key *multi-column-list-mode-keymap* "C-k" 'multi-column-list/delete-items)
+(define-key *multi-column-list-mode-keymap* "C-s" 'multi-column-list/save-items)
 (define-key *multi-column-list-mode-keymap* 'show-context-menu 'show-context-menu)
 (define-key *multi-column-list-mode-keymap* 'delete-previous-char 'multi-column-list/delete-previous-char)
+(define-key *multi-column-list-mode-keymap* "Backspace" 'multi-column-list/delete-previous-char)
 
 (define-command multi-column-list/default () ()
   (alexandria:when-let ((c (insertion-key-p (last-read-key-sequence))))
@@ -79,10 +83,14 @@
 (define-command multi-column-list/delete-items () ()
   (delete-checked-items (current-multi-column-list)))
 
+(define-command multi-column-list/save-items () ()
+  (save-checked-items (current-multi-column-list)))
+
 ;;
 (defgeneric select-item (component item))
 (defgeneric delete-item (component item))
 (defgeneric map-columns (component item))
+(defgeneric save-item (component item))
 
 (defclass multi-column-list-item ()
   ((checked :initform nil
@@ -108,6 +116,9 @@
 (defmethod delete-item :around (component (item default-multi-column-list-item))
   (call-next-method component (unwrap item)))
 
+(defmethod save-item :around (component (item default-multi-column-list-item))
+  (call-next-method component (unwrap item)))
+
 (defmethod map-columns :around (component (item default-multi-column-list-item))
   (call-next-method component (unwrap item)))
 
@@ -126,6 +137,9 @@
    (delete-callback :initarg :delete-callback
                     :initform nil
                     :accessor multi-column-list-delete-callback)
+   (save-callback :initarg :save-callback
+                  :initform nil
+                  :accessor multi-column-list-save-callback)
    (column-function :initarg :column-function
                     :initform nil
                     :accessor multi-column-list-column-function)
@@ -162,6 +176,10 @@
   (when (multi-column-list-delete-callback component)
     (funcall (multi-column-list-delete-callback component) component item)))
 
+(defmethod save-item ((component multi-column-list) item)
+  (when (multi-column-list-save-callback component)
+    (funcall (multi-column-list-save-callback component) component item)))
+
 (defmethod map-columns ((component multi-column-list) item)
   (if (multi-column-list-column-function component)
       (funcall (multi-column-list-column-function component) component item)
@@ -179,6 +197,24 @@
    (column-width-list :initarg :column-width-list
                       :reader print-spec-column-width-list)))
 
+(defun darken-color (color &key (factor 0.5))
+  (let ((color (parse-color color)))
+    (multiple-value-bind (h s v)
+        (rgb-to-hsv color)
+      (multiple-value-bind (r g b)
+          (hsv-to-rgb h
+                      s
+                      (* v (- 1 factor)))
+        (make-color r g b)))))
+
+(defun put-header-attribute (start end)
+  (put-text-property start
+                     end
+                     :attribute (make-attribute
+                                 :underline (if (underline-color-support-p (implementation))
+                                                (darken-color (foreground-color) :factor 0.6)
+                                                t))))
+
 (defmethod lem/popup-menu:write-header ((print-spec print-spec) point)
   (let* ((multi-column-list (print-spec-multi-column-list print-spec))
          (search-string (multi-column-list-search-string multi-column-list))
@@ -191,7 +227,7 @@
                              (1+ (loop :for width :in (print-spec-column-width-list print-spec)
                                        :sum (1+ width)))
                              t)
-             (put-text-property start point :attribute (make-attribute :underline t))))
+             (put-header-attribute start point)))
           (columns
            (with-point ((start point))
              (loop :for width :in (print-spec-column-width-list print-spec)
@@ -201,7 +237,7 @@
                          (insert-string point column-header)
                          (move-to-column point (+ column width) t)))
              (insert-string point " ")
-             (put-text-property start point :attribute (make-attribute :underline t)))))))
+             (put-header-attribute start point))))))
 
 (defmethod lem/popup-menu:apply-print-spec ((print-spec print-spec) point item)
   (check-type item multi-column-list-item)
@@ -351,10 +387,22 @@
   (mapcar #'unwrap (checked-items multi-column-list)))
 
 (defun delete-checked-items (multi-column-list)
+  "Delete all items from this multi-column list.
+
+  Typically used in M-x list-buffers."
   (let ((whole-items (multi-column-list-items multi-column-list)))
     (dolist (item (checked-items multi-column-list))
       (delete-item multi-column-list item)
       (setf whole-items
             (delete item whole-items)))
     (setf (multi-column-list-items multi-column-list) whole-items)
+    (update multi-column-list)))
+
+(defun save-checked-items (multi-column-list)
+  "Save all items from this multi-column list.
+
+  Typically used in M-x list-buffers."
+  (let ((whole-items (multi-column-list-items multi-column-list)))
+    (dolist (item (checked-items multi-column-list))
+      (save-item multi-column-list item))
     (update multi-column-list)))

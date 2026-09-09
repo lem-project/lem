@@ -24,7 +24,8 @@
 
 (defun checkpoint-buffer (buffer)
   (when (and (buffer-filename buffer)
-             (buffer-modified-p buffer))
+             (buffer-modified-p buffer)
+             (not (buffer-read-only-p buffer)))
     (when (mode-active-p buffer 'auto-save-mode)
       (unless (changed-disk-p buffer)
         (write-to-file buffer (buffer-filename buffer))

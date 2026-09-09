@@ -7,7 +7,8 @@
            :completion-item-detail
            :run-completion
            :completion-end
-           :completion-mode)
+           :completion-mode
+           :completion-refresh)
   #+sbcl
   (:lock t))
 (in-package :lem/completion-mode)
@@ -15,6 +16,7 @@
 (defparameter *limit-number-of-items* 100)
 
 (defvar *completion-context* nil)
+(defvar *completion-reverse* nil)
 
 (defclass completion-context ()
   ((spec
@@ -87,12 +89,16 @@
     :reader completion-item-focus-action
     :type (or null function))))
 
+(defmethod print-object ((obj completion-item) stream)
+  (print-unreadable-object (obj stream :type t)
+    (format stream "label: ~a" (completion-item-label obj))))
+
 (defun make-completion-item (&rest initargs
                              &key label chunks detail start end focus-action)
   (declare (ignore label chunks detail start end focus-action))
   (apply #'make-instance 'completion-item initargs))
 
-(defvar *completion-mode-keymap* (make-keymap :name '*completion-mode-keymap*
+(defvar *completion-mode-keymap* (make-keymap :description '*completion-mode-keymap*
                                               :undef-hook 'completion-self-insert))
 (define-minor-mode completion-mode
     (:name "completion"
@@ -110,6 +116,8 @@
 (define-key *completion-mode-keymap* "Space"    'completion-insert-space-and-cancel)
 (define-key *completion-mode-keymap* 'delete-previous-char 'completion-delete-previous-char)
 (define-key *completion-mode-keymap* 'backward-delete-word 'completion-backward-delete-word)
+(define-key *completion-mode-keymap* "Up" 'completion-previous-line)
+(define-key *completion-mode-keymap* "Down" 'completion-next-line)
 
 (define-attribute detail-attribute
   (t :foreground :base03))
@@ -184,19 +192,27 @@
           (t (unread-key-sequence (last-read-key-sequence))
              (completion-end)))))
 
-(define-command completion-delete-previous-char (n) ("p")
-  (delete-previous-char n)
-  (continue-completion *completion-context*))
+(defun completion-refresh ()
+  "This will refresh the contents of the completion window using any changes made in the interim"
+  (when *completion-context*
+    (continue-completion *completion-context*)))
 
-(define-command completion-backward-delete-word (n) ("p")
+(define-command completion-delete-previous-char (n) (:universal)
+  (delete-previous-char n)
+  (completion-refresh))
+
+(define-command completion-backward-delete-word (n) (:universal)
   (backward-delete-word n)
-  (continue-completion *completion-context*))
+  (completion-refresh))
 
 (define-command completion-next-line () ()
-  (popup-menu-down (context-popup-menu *completion-context*))
+  "Move selection to next line in completion window"
+  (alexandria:when-let ((popup (context-popup-menu *completion-context*)))
+    (popup-menu-down popup))
   (call-focus-action))
 
 (define-command completion-previous-line () ()
+  "Move selection to previous line in completion window"
   (popup-menu-up (context-popup-menu *completion-context*))
   (call-focus-action))
 
@@ -264,13 +280,18 @@
 
 (define-command completion-narrowing-down-or-next-line () ()
   (or (narrowing-down *completion-context* (context-last-items *completion-context*))
-      (completion-next-line)))
+      (if *completion-reverse*
+          (completion-previous-line)
+          (completion-next-line))))
 
 (defun limitation-items (items)
-  (if (and *limit-number-of-items*
-           (< *limit-number-of-items* (length items)))
-      (subseq items 0 *limit-number-of-items*)
-      items))
+  (let ((result (if (and *limit-number-of-items*
+                         (< *limit-number-of-items* (length items)))
+                    (subseq items 0 *limit-number-of-items*)
+                    items)))
+    (if *completion-reverse*
+        (reverse result)
+        result)))
 
 (defun compute-completion-items (context then)
   (flet ((update-items-and-then (items)
@@ -285,8 +306,9 @@
           (update-items-and-then (call-sync-function spec (current-point)))))))
 
 (defun start-completion (context items style)
+  "Open popup menu for completions in the context provided"
   (when items
-    (setf (context-popup-menu *completion-context*)
+    (setf (context-popup-menu context)
           (apply #'display-popup-menu
                  items
                  :action-callback (lambda (item)
@@ -297,6 +319,8 @@
     (completion-mode t)
     (unless (spec-async-p (context-spec context))
       (narrowing-down context items))
+    (when *completion-reverse*
+      (completion-end-of-buffer))
     (call-focus-action)))
 
 (defun continue-completion (context)
@@ -310,21 +334,39 @@
               (popup-menu-update (context-popup-menu *completion-context*)
                                  items
                                  :print-spec (make-print-spec items))
-              (call-focus-action)))))))
+              (call-focus-action))))))
+  (when *completion-reverse*
+    (ignore-errors (completion-end-of-buffer))))
 
-(defun run-completion (completion-spec &key style)
+(defun run-completion (completion-spec &key style then)
+  "Start a new completion using the completion-spec,
+creates a new completion-context and sets *completion-context*"
+  (when *completion-context*
+    (completion-end))
   (let* ((spec (ensure-completion-spec completion-spec))
          (context (make-instance 'completion-context :spec spec)))
     (setf *completion-context* context)
     (with-point ((before-point (current-point)))
-      (compute-completion-items
-       context
-       (if (spec-async-p (context-spec context))
-           (lambda (items)
-             (when (point= before-point (current-point))
-               (start-completion context items style)))
+      (if (spec-async-p (context-spec context))
+          (let ((spinner (lem/loading-spinner:start-loading-spinner :line
+                                                                    :point before-point)))
+            (compute-completion-items
+             context
+             (lambda (items)
+               (lem/loading-spinner:stop-loading-spinner spinner)
+               (when (and (eq context *completion-context*)
+                          (point= before-point (current-point)))
+                 (start-completion context items style)
+                 (when then
+                   (funcall then))))))
+          (compute-completion-items
+           context
            (lambda (items)
              (when items
-               (if (alexandria:length= items 1)
-                   (completion-insert (current-point) (first items))
-                   (start-completion context items style)))))))))
+               (cond
+                 ((alexandria:length= items 1)
+                  (completion-insert (current-point) (first items)))
+                 (t
+                  (start-completion context items style)
+                  (when then
+                    (funcall then)))))))))))

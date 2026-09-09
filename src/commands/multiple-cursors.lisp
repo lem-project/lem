@@ -1,6 +1,8 @@
 (defpackage :lem-core/commands/multiple-cursors
   (:use :cl :lem-core)
-  (:export :add-cursors-to-next-line))
+  (:export :add-cursors-to-next-line)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/multiple-cursors)
 
 (define-key *global-keymap* "M-C" 'add-cursors-to-next-line)

@@ -21,15 +21,15 @@
   (jsonrpc:make-client))
 
 (defun connected-p ()
-  (handler-case (null (jsonrpc/class::ensure-connected  *elisp-rpc-client*))
-    (error (c) 
+  (handler-case (null (jsonrpc/base:ensure-connected  *elisp-rpc-client*))
+    (error (c)
       (declare (ignore c))
       nil)))
 
-(defun connect-to-server (&key 
+(defun connect-to-server (&key
                           (client *elisp-rpc-client*)
                           (server-url *elisp-rpc-url*))
-  (jsonrpc:client-connect client 
+  (jsonrpc:client-connect client
                           :mode :http
                           :url server-url))
 
@@ -42,12 +42,12 @@
                         &key
                         (client *elisp-rpc-client*))
   "Returns a list of all the Emacs Lisp symbols defined."
-  (mapcar (lambda (i) (format nil "~a" i)) 
+  (mapcar (lambda (i) (format nil "~a" i))
           (jsonrpc:call client "lemmington-get-completion" (list prefix)
                         :basic-auth '("lem" . "lem"))))
 
 
-(defun get-symbol-location (symbol 
+(defun get-symbol-location (symbol
                             &key
                             (client *elisp-rpc-client*))
   "Returns the symbol location and absolute file position (location position)."
@@ -66,4 +66,3 @@
   "Returns a list of all the exported functions."
   (jsonrpc:call client "lemmington-exported-functions" nil
                 :basic-auth '("lem" . "lem")))
-

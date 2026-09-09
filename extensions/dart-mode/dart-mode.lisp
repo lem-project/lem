@@ -182,7 +182,7 @@ see : https://dart.dev/guides/language/language-tour
 
 ;; (define-key *dart-mode-keymap* "Tab" 'dart-insert-indent)
 
-(define-command dart-insert-indent (n) ("p")
+(define-command dart-insert-indent (n) (:universal)
   (with-point ((point (current-point)))
     (back-to-indentation point)
     (when (point< (current-point) point)

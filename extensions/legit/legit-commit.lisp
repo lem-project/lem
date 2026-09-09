@@ -20,12 +20,14 @@ Future:
 |#
 
 ;; major-mode for the commit buffer.
-(define-major-mode legit-commit-mode lem-markdown-mode:markdown-mode
+(define-major-mode legit-commit-mode ()
     (:name "legit-commit-mode"
-     :syntax-table lem-markdown-mode::*markdown-syntax-table*
      :keymap *legit-commit-mode-keymap*)
-  ;; no syntax highlihgt in fact.
+  ;; no syntax highlight in fact.
   (setf (variable-value 'enable-syntax-highlight) t))
+
+(define-file-associations legit-commit-mode
+  ((:file-namestring "COMMIT_EDITMSG")))
 
 ;; User parameters.
 (defparameter *prompt-to-abort-commit* t
@@ -86,21 +88,24 @@ two
   "If the commit message is non-empty, commit, kill the commit buffer and come back to the legit status window.
 
   Lines starting with '#' are ignored."
-  (let* ((message (buffer-text (make-buffer "*legit-commit*")))
+  ;; The commit buffer can be:
+  ;; - our *legit-commit* buffer
+  ;; - the .git/COMMIT_EDITMSG file
+  (let* ((message (buffer-text (current-buffer)))
          (cleaned-message (clean-commit-message message)))
     (cond
       ((str:blankp cleaned-message)
        (message "No commit message, do nothing."))
       (t
-       (with-current-project ()
+       (with-current-project (vcs)
          (run-function (lambda ()
-                         (lem/porcelain::commit cleaned-message))
+                         (lem/porcelain:commit vcs cleaned-message))
                        :message "commited")
-         (kill-buffer "*legit-commit*")
+         (kill-buffer (current-buffer))
          ;; come back on the status on  the left:
          (lem-core/commands/window:previous-window)
          ;; and refresh.
-         (legit-status))))))
+         (show-legit-status))))))
 
 (define-command commit-abort () ()
   (when (or (not *prompt-to-abort-commit*)
@@ -114,8 +119,12 @@ two
     (format s "Legit commit.~&")
     (format s "~%")
     (format s "Commands:~&")
-    (format s "Validate: C-Return, C-c C-c~&")
-    (format s "Stop and quit: Escape, M-q.~&")
+    (format s "Validate: ~{~A~^, ~}~&"
+            (or (lem/prompt-window:find-command-keybindings-in-keymap "commit-continue" *legit-commit-mode-keymap*)
+                " (unbound)"))
+    (format s "Stop and quit: ~{~A~^, ~}~&"
+            (lem/prompt-window:find-command-keybindings-in-keymap "commit-abort" *legit-commit-mode-keymap*))
     (format s "~%")
-    (format s "Show this help: C-x ? or ?, M-x legit-commit-help")
+    (format s "Show this help: Alt-x legit-commit-help (~{~A~^, ~})"
+            (lem/prompt-window:find-command-keybindings-in-keymap "commit-help" *legit-commit-mode-keymap*))
     ))

@@ -47,7 +47,7 @@
     (format stream "~A~2%" translated-text))
   buffer)
 
-(define-command deepl-translate-region (start end &optional is-replace) ("r" "P")
+(define-command deepl-translate-region (start end &optional is-replace) (:region :universal-nil)
   (let* ((source-text (points-to-string start end))
          (is-japanese (ja-text-p source-text))
          (translated-text (translate (ppcre:regex-replace-all "\\s+" source-text " ")

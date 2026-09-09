@@ -1,10 +1,10 @@
 (defsystem "lem-paredit-mode"
-  :depends-on ("lem")
+  :depends-on ("lem/core")
   :components ((:file "paredit-mode"))
   :in-order-to ((test-op (test-op "lem-paredit-mode/tests"))))
 
 (defsystem "lem-paredit-mode/tests"
-  :depends-on ("lem"
+  :depends-on ("lem/core"
                "lem-lisp-mode"
                "lem-lisp-syntax"
                "lem-paredit-mode"

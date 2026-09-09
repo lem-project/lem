@@ -14,16 +14,18 @@
         `(:sequence ,boundary ,alternation ,boundary)
         alternation)))
 
-(defun make-tmlanguage-xml ()
-  (let* ((patterns (make-tm-patterns
-                    (make-tm-block-comment-region "<!--" "-->")
-                    (make-tm-string-region "\"")
-                    (make-tm-string-region "'")
-                    (make-tm-match (tokens nil '("<" "</" "<?" ">" "/>" "?>" "="))
-                                   :name 'syntax-keyword-attribute))))
-    (make-tmlanguage :patterns patterns)))
+(defun make-tm-patterns-xml ()
+  (make-tm-patterns
+   (make-tm-block-comment-region "<!--" "-->")
+   (make-tm-string-region "\"")
+   (make-tm-string-region "'")
+   (make-tm-match (tokens nil '("<" "</" "<?" ">" "/>" "?>" "="))
+                  :name 'syntax-keyword-attribute)))
 
-(defvar *xml-syntax-table*
+(defun make-tmlanguage-xml ()
+  (make-tmlanguage :patterns (make-tm-patterns-xml)))
+
+(defun make-syntax-table-xml ()
   (let ((table (make-syntax-table
                 :space-chars '(#\space #\tab #\newline)
                 :paren-pairs '((#\< . #\>))
@@ -32,6 +34,8 @@
         (tmlanguage (make-tmlanguage-xml)))
     (set-syntax-parser table tmlanguage)
     table))
+
+(defvar *xml-syntax-table* (make-syntax-table-xml))
 
 (define-major-mode xml-mode language-mode
     (:name "XML"

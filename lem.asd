@@ -14,8 +14,7 @@
     ;;   ref. https://github.com/roswell/roswell/blob/5b267381a66d36a514e2eee7283543f828541a63/lisp/util-install-quicklisp.lisp#L146
     (set (intern (string :*local-project-directories*) :ql) local-project-dir)))
 
-(defsystem "lem"
-  :version "2.1.0"
+(defsystem "lem/core"
   :depends-on ("iterate"
                "closer-mop"
                "trivia"
@@ -32,10 +31,16 @@
                "split-sequence"
                "str"
                "dexador"
+               "cl-mustache"
                ;; "lem-encodings"
                #+sbcl
                sb-concurrency
-               "lem-mailbox")
+               "lem-mailbox"
+               ;; Disabled for Nix build due to QL-DIST dependency
+               #-nix-build
+               "lem-extension-manager"
+               #+sbcl
+               "sb-sprof")
   :pathname "src"
   :serial t
   :components ((:module "common"
@@ -48,6 +53,7 @@
                              (:file "queue")
                              (:file "hooks")
                              (:file "var")
+                             (:file "socket")
                              (:file "utils")
                              (:module "character"
                               :serial t
@@ -72,6 +78,7 @@
                                            (:file "point")
                                            (:file "edit")
                                            (:file "mark")
+                                           (:file "undo")
                                            (:file "buffer-insert")
                                            (:file "basic")
                                            (:file "syntax-predicates")
@@ -85,7 +92,7 @@
                              (:file "file")
                              (:file "indent")))
                (:file "internal-packages")
-               (:file "quicklisp-utils")
+               (:file "system-utils")
                (:file "version")
                (:file "config")
                (:file "errors")
@@ -96,6 +103,7 @@
                (:file "clipboard")
                (:file "save-excursion")
                (:file "killring")
+               (:file "named-point")
                (:file "file")
                (:file "frame")
                (:file "echo")
@@ -108,7 +116,8 @@
                              (:file "virtual-line")
                              (:file "floating-window")
                              (:file "header-window")
-                             (:file "side-window")))
+                             (:file "side-window")
+                             (:file "attached-window")))
                (:file "buffer-ext") ; TODO
                (:file "popup")
                (:file "modeline")
@@ -131,10 +140,21 @@
                (:file "command-advices")
                (:file "interface")
                (:file "highlight-line")
+               (:file "syntax-scanner")
+               (:file "html-buffer")
                (:file "site-init")
+               (:file "command-line-arguments")
+               (:file "tabbar-config")
                (:file "lem")
 
                (:file "color-theme")
+
+               (:module "display"
+                :serial t
+                :components ((:file "base")
+                             (:file "char-type")
+                             (:file "logical-line")
+                             (:file "physical-line")))
 
                (:module "commands"
                 :serial t
@@ -152,14 +172,8 @@
                              (:file "help")
                              (:file "font")
                              (:file "other" :depends-on ("file"))
-                             (:file "frame")))
-
-               (:module "display"
-                :serial t
-                :components ((:file "base")
-                             (:file "char-type")
-                             (:file "logical-line")
-                             (:file "physical-line")))
+                             (:file "frame")
+                             #+sbcl (:file "sprof")))
 
                (:file "external-packages")
 
@@ -172,12 +186,13 @@
                              (:file "multi-column-list")
                              (:file "context-menu")
                              (:file "list-buffers")
+                             (:file "loading-spinner")
                              (:file "completion-mode")
                              (:file "prompt-window")
                              (:file "tmlanguage")
                              (:file "button")
-                             (:file "loading-spinner")
                              (:file "listener-mode")
+                             (:file "interactive-mode")
                              (:file "universal-argument")
                              (:file "kbdmacro")
                              (:file "isearch")
@@ -192,16 +207,30 @@
                              (:file "link")
                              (:file "thingatp")
                              (:file "gtags")
-                             (:file "directory-mode")
+                             (:module "directory-mode"
+                              :serial t
+                              :components ((:file "file")
+                                           (:file "attributes")
+                                           (:file "mode")
+                                           (:file "internal")
+                                           (:file "commands")
+                                           (:file "keybinds")
+                                           (:file "main")))
                              (:file "abbrev")
                              (:file "rectangle")
                              (:file "auto-save")
-                             (:file "tabbar")
                              (:file "frame-multiplexer")
                              (:file "filer")
                              (:file "deepl")
                              (:file "themes")
-                             (:file "detective")))))
+                             (:file "detective")
+                             (:file "extension-commands" :if-feature :quicklisp)
+                             (:file "read-only-sources")
+                             (:file "image-buffer")))
+
+               (:module "ui"
+                :serial t
+                :components ((:file "theme-list")))))
 
 (defsystem "lem/extensions"
   :depends-on (#+sbcl
@@ -216,21 +245,28 @@
                "lem-swift-mode"
 
                "lem-c-mode"
-               "lem-xml-mode"
-               "lem-html-mode"
                "lem-python-mode"
                "lem-posix-shell-mode"
-               "lem-markdown-mode"
+               "lem-xml-mode"
                "lem-js-mode"
-               "lem-json-mode"
                "lem-css-mode"
+               "lem-html-mode"
+               "lem-vue-mode"
+               "lem-typescript-mode"
+               "lem-typst-mode"
+               "lem-json-mode"
                "lem-rust-mode"
+               "lem-zig-mode"
+               "lem-kotlin-mode"
                "lem-paredit-mode"
                "lem-nim-mode"
                #-clasp
                "lem-scheme-mode"
+               "lem-clojure-mode"
 
                "lem-patch-mode"
+               "lem-toml-mode"
+
                "lem-yaml-mode"
                "lem-review-mode"
                "lem-asciidoc-mode"
@@ -241,30 +277,50 @@
                "lem-haskell-mode"
                "lem-ocaml-mode"
                "lem-asm-mode"
+               "lem-wat-mode"
                "lem-makefile-mode"
                "lem-shell-mode"
                "lem-sql-mode"
                "lem-base16-themes"
                #+sbcl
                "lem-elixir-mode"
+               "lem-ruby-mode"
+               "lem-perl-mode"
+               "lem-erlang-mode"
                "lem-documentation-mode"
                "lem-elisp-mode"
-               "lem-color-preview"))
+               "lem-terraform-mode"
+               "lem-nix-mode"
+               "lem-markdown-mode"
+               "lem-color-preview"
+               "lem-lua-mode"
+               #-os-windows "lem-terminal"
+               "lem-legit"
+               "lem-tutor"
+               "lem-dashboard"
+               "lem-copilot"
+               "lem-claude-code"
+               "lem-bookmark"
+               "lem-mcp-server"
+               "lem-transient"
+               #+sbcl
+               "lem-living-canvas"
+               "lem-tree-sitter"
+               "lem-git-gutter"
+               "lem-skk-mode"
+               "lem-display-time-mode"
+               "lem-tramp"))
 
-(defsystem "lem/legit"
-  :serial t
-  :depends-on ("lem")
-  :components ((:module "extensions/legit"
-                :components ((:file "porcelain")
-                             (:file "peek-legit")
-                             (:file "legit")
-                             (:file "legit-rebase")
-                             (:file "legit-commit")))
-               (:module "scripts"
-                :components ((:static-file "dumbrebaseeditor.sh")))))
-
-(defsystem "lem/executable"
-  :build-operation program-op
+(defsystem "lem"
+  :version "2.3.0"
+  :defsystem-depends-on ("deploy")
+  :build-operation #+os-macosx "osx-app-deploy-op" #-os-macosx "deploy-op"
   :build-pathname "lem"
   :entry-point "lem:main"
-  :depends-on ("lem-ncurses"))
+  :depends-on ("lem-webview"
+               "lem-server"
+               #+(and os-unix (not os-macosx)) ; workaround: because (adf:make :lem) fails
+               "lem-ncurses")
+  :pathname "src"
+  :components ((:file "macosx" :if-feature :os-macosx)
+               (:file "windows" :if-feature :os-windows)))

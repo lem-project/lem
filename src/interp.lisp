@@ -50,6 +50,13 @@
     (push (cons flag t) *last-flags*)
     (push (cons flag t) *curr-flags*)))
 
+(defun nullify-last-flags (flag &rest more-flags)
+  "Set FLAG and MORE-FLAGS to nil in *LAST-FLAGS*."
+  (push (cons flag nil) *last-flags*)
+  (when more-flags
+    (dotimes (i (length more-flags))
+      (push (cons (nth i more-flags) nil) *last-flags*))))
+
 (defmacro do-command-loop ((&key interactive) &body body)
   (alexandria:once-only (interactive)
     `(loop :for *last-flags* := nil :then *curr-flags*
@@ -74,12 +81,13 @@
              (unless (or (eq cmd '<mouse-motion-event>)
                          (eq cmd '<mouse-event>))
                (message nil))
-             (call-command cmd nil)))
+             (when cmd
+               (call-command cmd nil))))
 
          (editor-abort-handler (c)
            (declare (ignore c))
-           (run-hooks *editor-abort-hook*)
            (buffer-mark-cancel (current-buffer)) ; TODO: define handler
+           (run-hooks *editor-abort-hook*)
            )
 
          (editor-condition-handler (c)
@@ -99,13 +107,9 @@
       (editor-condition (c)
         (restart-case (error c)
           (lem-restart:message ()
-            (typecase c
-              (editor-abort
-               (let ((message (princ-to-string c)))
-                 (unless (string= "" message)
-                   (message "~A" message))))
-              (otherwise
-               (message "~A" c))))
+            (let ((message (princ-to-string c)))
+              (unless (equal "" message)
+                (message "~A" message))))
           (lem-restart:call-function (fn)
             (funcall fn)))))))
 
@@ -149,7 +153,7 @@
   (signal 'exit-editor :report report))
 
 (defun call-background-job (function cont)
-  (bt:make-thread
+  (bt2:make-thread
    (lambda ()
      (let ((error-text))
        (handler-case

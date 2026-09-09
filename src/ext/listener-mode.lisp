@@ -9,6 +9,8 @@
    :listener-start
    :change-input-start-point
    :refresh-prompt
+   :clamp-cursor-to-input-area
+   :clear-listener-using-mode
    :clear-listener
    ;; editor variables
    :listener-prompt-attribute
@@ -20,6 +22,8 @@
    :listener-return
    :listener-previous-input
    :listener-next-input
+   :listener-previous-startswith-input
+   :listener-next-startswith-input
    :listener-previous-matching-input
    :listener-clear-buffer
    :listener-clear-input)
@@ -53,8 +57,8 @@
      :keymap *listener-mode-keymap*))
 
 (define-key *listener-mode-keymap* "Return" 'listener-return)
-(define-key *listener-mode-keymap* "M-p" 'listener-previous-input)
-(define-key *listener-mode-keymap* "M-n" 'listener-next-input)
+(define-key *listener-mode-keymap* "M-p" 'listener-previous-startswith-input)
+(define-key *listener-mode-keymap* "M-n" 'listener-next-startswith-input)
 (define-key *listener-mode-keymap* "M-r" 'listener-isearch-history)
 (define-key *listener-mode-keymap* "C-c M-o" 'listener-clear-buffer)
 (define-key *listener-mode-keymap* "C-c C-u" 'listener-clear-input)
@@ -67,11 +71,22 @@
     (add-hook (variable-value 'kill-buffer-hook :buffer (current-buffer))
               'save-history))
   (add-hook *exit-editor-hook* 'save-all-histories)
+  (add-hook *post-command-hook* 'clamp-cursor-to-input-area)
   (unless (input-start-point (current-buffer))
     (change-input-start-point (current-point))))
 
 (defun listener-buffer-p (buffer)
   (mode-active-p buffer 'listener-mode))
+
+(defun clamp-cursor-to-input-area ()
+  "Prevent the cursor from entering the read-only prompt region."
+  (let* ((buffer (current-buffer))
+         (start (input-start-point buffer)))
+    (when (and start
+               (listener-buffer-p buffer)
+               (same-line-p (current-point) start)
+               (point< (current-point) start))
+      (move-point (current-point) start))))
 
 (defun save-history (buffer)
   (assert (listener-buffer-p buffer))
@@ -101,7 +116,7 @@
     (when (input-start-point buffer)
       (delete-point (input-start-point buffer)))
     (set-input-start-point buffer
-                          (copy-point point :right-inserting))))
+                           (copy-point point :right-inserting))))
 
 (defun write-prompt (point)
   (let ((buffer (point-buffer point)))
@@ -129,6 +144,7 @@
     (change-input-start-point point)))
 
 (define-command listener-return () ()
+  "Validate the current input and let the listener execute the expression."
   (if (point< (current-point)
               (input-start-point (current-buffer)))
       (insert-character (current-point) #\newline)
@@ -167,7 +183,51 @@
     (when win
       (replace-textarea buffer str))))
 
+(defun %search-history-startswith-input (direction)
+  "Internal helper for history next and previous history navigation."
+  (let* ((buffer (current-buffer))
+         (point (buffer-point buffer))
+         (start (input-start-point buffer))
+         (prefix (points-to-string (input-start-point buffer) point))
+         (prefix-len (length prefix))
+         (step-fn (case direction 
+                    (:previous #'lem/common/history:previous-history)
+                    (:next #'lem/common/history:next-history))))
+    (backup-edit-string (current-buffer))
+    (loop :for steps :from 0
+          :do (multiple-value-bind (str found)
+                  (funcall step-fn (current-listener-history))
+                (cond
+                  ((and found (eql 0 (search prefix str :test #'string=)))
+                   (replace-textarea buffer str)
+                   (move-point point start)
+                   (character-offset point prefix-len)
+                   (return))
+                  ((not found)
+                   (ecase direction
+                     (:previous 
+                      (dotimes (i steps)
+                        (lem/common/history:next-history (current-listener-history))))
+                     (:next 
+                      (restore-edit-string buffer)
+                      (move-point point start)
+                      (character-offset point prefix-len)))
+                   (return)))))))
+
+(define-command listener-previous-startswith-input () ()
+  "Find the previous prompt starting with the current input.
+
+  See also `listener-previous-input`."
+  (%search-history-startswith-input :previous))
+
+(define-command listener-next-startswith-input () ()
+  "Find the next prompt starting with the current input.
+
+  See also `listener-next-input`."
+  (%search-history-startswith-input :next))
+
 (define-command listener-previous-input () ()
+  "Get and insert the previous REPL input."
   (backup-edit-string (current-buffer))
   (multiple-value-bind (str win)
       (lem/common/history:previous-history (current-listener-history))
@@ -175,6 +235,7 @@
       (replace-textarea (current-buffer) str))))
 
 (define-command listener-next-input () ()
+  "Get and insert the next REPL input."
   (backup-edit-string (current-buffer))
   (multiple-value-bind (str win)
       (lem/common/history:next-history (current-listener-history))
@@ -184,21 +245,28 @@
 
 (define-command listener-previous-matching-input (regexp)
     ((prompt-for-string "Previous element matching (regexp): "))
+  "Interactively prompt for a regexp and search previous inputs."
   (backup-edit-string (current-buffer))
   (multiple-value-bind (str win)
       (lem/common/history:previous-matching (current-listener-history) regexp)
     (when win
       (replace-textarea (current-buffer) str))))
 
-(defun clear-listener (buffer)
+(defmethod clear-listener-using-mode (mode buffer)
   (let ((*inhibit-read-only* t))
     (erase-buffer buffer))
   (refresh-prompt buffer))
 
+(defun clear-listener (buffer)
+  (clear-listener-using-mode (lem-core::get-active-modes-class-instance (current-buffer))
+                             buffer))
+
 (define-command listener-clear-buffer () ()
+  "Clear all listener's buffer."
   (clear-listener (current-buffer)))
 
 (define-command listener-clear-input () ()
+  "Clear the current prompt input."
   (delete-between-points (input-start-point (current-buffer))
                          (buffer-end-point (current-buffer))))
 
@@ -292,6 +360,7 @@
           :start-index (1+ *history-matched-index*)))))))
 
 (define-command listener-isearch-history () ()
+  "Interactively search a matching input in the listener input history."
   (let ((buffer (current-buffer)))
     (buffer-end (buffer-point buffer))
     (let ((*listener-buffer* buffer)
@@ -300,7 +369,7 @@
           (*history-matched-string* nil)
           (*listener-window* (current-window)))
       (unwind-protect
-           (progn
+           (let ((lem/prompt-window::*fill-width* nil))
              (prompt-for-string
               "(reverse-i-search) "
               :special-keymap *history-isearch-keymap*

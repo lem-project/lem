@@ -77,6 +77,7 @@
                                            (connection-implementation-version c)
                                            (connection-command c)))
                   :select-callback (lambda (menu c)
+                                     (declare (ignore menu))
                                      (change-current-connection c)))))
 
 (defun check-connection ()
@@ -120,7 +121,7 @@
       (buffer-package (current-buffer))
       (connection-package *connection*)))
 
-(defun current-swank-thread ()
+(defun current-micros-thread ()
   (or (buffer-value (current-buffer) 'thread)
       t))
 
@@ -144,7 +145,7 @@
 
 (defun scheme-rex (form &key
                         continuation
-                        (thread (current-swank-thread))
+                        (thread (current-micros-thread))
                         (package (current-package)))
   (emacs-rex *connection*
              form
@@ -154,7 +155,7 @@
 
 (defun scheme-eval-internal (emacs-rex-fun rex-arg package)
   (let ((tag (gensym))
-        (thread-id (current-swank-thread)))
+        (thread-id (current-micros-thread)))
     (catch tag
       (funcall emacs-rex-fun
                *connection*
@@ -196,7 +197,7 @@
                                    (unless *suppress-error-disp*
                                      (message "Evaluation aborted on ~A." condition))))
                                 (setf *suppress-error-disp* nil))
-                :thread (current-swank-thread)
+                :thread (current-micros-thread)
                 :package package)))
 
 (defun eval-with-transcript (form)
@@ -298,7 +299,7 @@
   (check-connection)
   (send-message-string
    *connection*
-   (format nil "(:emacs-interrupt ~A)" (current-swank-thread))))
+   (format nil "(:emacs-interrupt ~A)" (current-micros-thread))))
 
 (defun prompt-for-sexp (string &optional initial)
   (prompt-for-string string
@@ -328,6 +329,10 @@
         ;    (interactive-eval string))
         (interactive-eval string)
         ))))
+
+(define-command scheme-eval-buffer (&optional (buffer (current-buffer))) ()
+  (check-connection)
+  (interactive-eval (format nil "(begin ~a)" (buffer-text buffer))))
 
 (defun get-operator-name ()
   (with-point ((point (current-point)))
@@ -401,7 +406,7 @@
   (check-connection)
   (autodoc (lambda (buffer) (message-buffer buffer))))
 
-(define-command scheme-insert-space-and-autodoc (n) ("p")
+(define-command scheme-insert-space-and-autodoc (n) (:universal)
   (loop :repeat n :do (insert-character (current-point) #\space))
   (when (and (eq *use-scheme-autodoc* t)
              (connected-p))
@@ -504,7 +509,7 @@
     (scheme-eval-async `(swank:compile-file-for-emacs ,(write-string file) t)
                        #'compilation-finished)))
 
-(define-command scheme-compile-region (start end) ("r")
+(define-command scheme-compile-region (start end) (:region)
   (check-connection)
   (let ((string (points-to-string start end))
         (position `((:position ,(position-at-point start))
@@ -559,7 +564,7 @@
                            ;;   we decode escape sequence characters (\n \t).)
                            (with-input-from-string (in string)
                              (if (eql (peek-char t in nil) #\")
-                               (setf string (lem-scheme-mode.swank-protocol::read-string in))))
+                                 (setf string (lem-scheme-mode.swank-protocol::read-string in))))
 
                            (let ((buffer (make-buffer "*scheme-macroexpand*")))
                              (with-buffer-read-only buffer nil
@@ -609,7 +614,7 @@
     (when result
       (destructuring-bind (completions timeout-p) result
         (declare (ignore timeout-p))
-        (completion-hypheen str (mapcar (if fuzzy #'first #'identity) completions))))))
+        (completion-hyphen str (mapcar (if fuzzy #'first #'identity) completions))))))
 
 (defun prompt-for-symbol-name (prompt &optional (initial ""))
   (let ((package (current-package)))
@@ -725,7 +730,7 @@
   (check-connection)
   (let ((symbol-name
           (prompt-for-symbol-name "Describe symbol: "
-                            (or (symbol-string-at-point (current-point)) ""))))
+                                  (or (symbol-string-at-point (current-point)) ""))))
     (when (string= "" symbol-name)
       (editor-error "No symbol given"))
     (scheme-eval-describe `(swank:describe-symbol ,symbol-name))))
@@ -733,41 +738,41 @@
 (defvar *wait-message-thread* nil)
 
 (defun notify-change-connection-to-wait-message-thread ()
-  (bt:interrupt-thread *wait-message-thread*
+  (bt2:interrupt-thread *wait-message-thread*
                        (lambda () (error 'change-connection))))
 
 (defun start-thread ()
   (unless *wait-message-thread*
     (setf *wait-message-thread*
-          (bt:make-thread
+          (bt2:make-thread
            (lambda () (loop
                         :named exit
                         :do
-                        (handler-case
-                            (loop
+                           (handler-case
+                               (loop
 
-                              ;; workaround for windows
-                              ;;  (sleep seems to be necessary to receive
-                              ;;   change-connection event immediately)
-                              #+(and sbcl win32)
-                              (sleep 0.001)
+                                 ;; workaround for windows
+                                 ;;  (sleep seems to be necessary to receive
+                                 ;;   change-connection event immediately)
+                                    #+(and sbcl win32)
+                                    (sleep 0.001)
 
-                              (unless (connected-p)
-                                (setf *wait-message-thread* nil)
-                                (return-from exit))
-                              (when (message-waiting-p *connection* :timeout 1)
-                                (let ((barrior t))
-                                  (send-event (lambda ()
-                                                (unwind-protect (progn (pull-events)
-                                                                       (redraw-display))
-                                                  (setq barrior nil))))
-                                  (loop
                                     (unless (connected-p)
-                                      (return))
-                                    (unless barrior
-                                      (return))
-                                    (sleep 0.1)))))
-                          (change-connection ()))))
+                                      (setf *wait-message-thread* nil)
+                                      (return-from exit))
+                                    (when (message-waiting-p *connection* :timeout 1)
+                                      (let ((barrior t))
+                                        (send-event (lambda ()
+                                                      (unwind-protect (progn (pull-events)
+                                                                             (redraw-display))
+                                                        (setq barrior nil))))
+                                        (loop
+                                          (unless (connected-p)
+                                            (return))
+                                          (unless barrior
+                                            (return))
+                                          (sleep 0.1)))))
+                             (change-connection ()))))
            :name "scheme-wait-message"))))
 
 (define-command scheme-slime-connect (hostname port &optional (start-repl t))
@@ -897,7 +902,7 @@
        (go-to-location xref-location
                        (lambda (buffer)
                          (switch-to-window
-                               (pop-to-buffer buffer))))))))
+                          (pop-to-buffer buffer))))))))
 
 (defun source-location-to-xref-location (location &optional content no-errors)
   (alexandria:destructuring-ecase location
@@ -971,7 +976,7 @@
     (write-line "(loop (sleep most-positive-fixnum))" out)))
 
 (defun run-swank-server (command port &key (directory (buffer-directory)))
-  (bt:make-thread
+  (bt2:make-thread
    (lambda ()
      (with-input-from-string
          (input (initialize-forms-string port))
@@ -1004,8 +1009,8 @@
 (defun run-slime (command &key (directory (buffer-directory)))
   ;;(unless command
   ;;  (setf command (get-lisp-command :impl *impl-name*)))
-  (let ((port (or (lem-socket-utils:port-available-p *default-port*)
-                  (lem-socket-utils:random-available-port))))
+  (let ((port (or (lem/common/socket:port-available-p *default-port*)
+                  (lem/common/socket:random-available-port))))
 
     ;; for r7rs-swank (make command)
     (unless command
@@ -1019,7 +1024,7 @@
 
     (let ((thread (run-swank-server command port :directory directory)))
       (sleep 0.5)
-      (unless (bt:thread-alive-p thread)
+      (unless (bt2:thread-alive-p thread)
         (editor-error "Scheme swank server start error")))
 
     (let ((successp)

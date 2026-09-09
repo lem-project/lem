@@ -47,9 +47,14 @@
     :reader spec-mode)))
 
 (defun get-language-spec (major-mode)
+  "Return the registered language `spec' for MAJOR-MODE, or NIL when no
+spec has been registered.  Callers like `buffer-language-spec' already
+use `when-let' against this result and rely on a NIL return for modes
+that should not activate LSP -- for example REPL buffers whose major
+mode inherits from a parent mode that did register a spec."
   (let ((spec (get major-mode 'spec)))
-    (assert (typep spec 'spec))
-    spec))
+    (when (typep spec 'spec)
+      spec)))
 
 (defun register-language-spec (major-mode spec)
   (check-type spec spec)

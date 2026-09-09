@@ -64,7 +64,7 @@
                    (make-tm-match
                     `(:sequence
                       "("
-                      ,(wrap-symbol-names "define")
+                      ,(wrap-symbol-names "define" "def")
                       "("
                       (:greedy-repetition 0 1 (:register symbol)))
                     :captures (vector nil
@@ -73,7 +73,7 @@
                    (make-tm-match
                     `(:sequence
                       "("
-                      ,(wrap-symbol-names "define")
+                      ,(wrap-symbol-names "define" "def")
                       (:greedy-repetition 0 1 (:register symbol)))
                     :captures (vector nil
                                       (make-tm-name 'syntax-keyword-attribute)

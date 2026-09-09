@@ -4,8 +4,7 @@
         :lem/completion-mode
         :lem/language-mode
         :lem-scheme-mode.errors
-        :lem-scheme-mode.swank-protocol
-        :lem-socket-utils)
+        :lem-scheme-mode.swank-protocol)
   (:export
    ;; scheme-mode.lisp
    :scheme-mode

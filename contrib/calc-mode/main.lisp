@@ -19,10 +19,10 @@
 
 (defun calc-string (string)
   (unless (find-package :xyzzy-calc/calc)
-    #-ros.init(lem:maybe-quickload "xyzzy-calc"
-                                        :error-on-failure-p t)
-    #+ros.init(lem:maybe-quickload "snmsts//xyzzy-calc"
-                                   :error-on-failure-p t)
+    #-ros.init(lem:maybe-load-systems "xyzzy-calc"
+                                      :error-on-failure-p t)
+    #+ros.init(lem:maybe-load-systems "snmsts//xyzzy-calc"
+                                      :error-on-failure-p t)
     (assert (find-package :xyzzy-calc/calc)))
   (with-output-to-string (o)
     (format o "~%")
@@ -41,7 +41,7 @@
     (let* ((str (points-to-string start end))
            (pos (position #\$ str))
            (str (subseq str (1+ pos))))
-      (insert-string (current-point) 
+      (insert-string (current-point)
                      (calc-string str))))
   (insert-character (current-point) #\newline)
   (insert-string (current-point) "$ "))

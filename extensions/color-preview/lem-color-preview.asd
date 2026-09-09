@@ -1,4 +1,4 @@
 (defsystem "lem-color-preview"
-  :depends-on ()
+  :depends-on ("lem/core")
   :serial t
   :components ((:file "color-preview")))

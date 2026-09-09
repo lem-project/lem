@@ -8,7 +8,10 @@
            :collector-buffer
            :get-move-function
            :show-matched-line
-           :highlight-matched-line)
+           :highlight-matched-line
+           :peek-source-next
+           :peek-source-previous
+           :*peek-source-keymap*)
   #+sbcl
   (:lock t))
 (in-package :lem/peek-source)
@@ -32,7 +35,7 @@
 
 (defvar *peek-window*)
 (defvar *source-window*)
-(defvar *parent-window*)
+(defvar *parent-window* nil)
 
 (define-minor-mode peek-source-mode
     (:name "Peek"
@@ -43,6 +46,8 @@
 (define-key *peek-source-keymap* 'next-line 'peek-source-next)
 (define-key *peek-source-keymap* 'previous-line 'peek-source-previous)
 (define-key *peek-source-keymap* "Escape" 'peek-source-quit)  ;; also C-x 0 by default.
+(define-key *peek-source-keymap* "C-g" 'peek-source-quit)
+(define-key *peek-source-keymap* "q" 'peek-source-quit)
 (define-key *peek-source-keymap* "C-c C-k" 'peek-source-quit)
 (define-key *peek-source-keymap* "M-q" 'peek-source-quit)
 
@@ -61,13 +66,14 @@
 (defmethod compute-window-list ((current-window source-window))
   (list *source-window* *peek-window*))
 
-(defvar *is-finalzing* nil)
+(defvar *is-finalizing* nil)
 
 (defun finalize-peek-source ()
-  (unless *is-finalzing*
-    (let ((*is-finalzing* t))
-      (finalize-highlight-overlays)
+  (when (and *parent-window* (not *is-finalizing*))
+    (let ((*is-finalizing* t))
       (setf (current-window) *parent-window*)
+      (setf *parent-window* nil)
+      (finalize-highlight-overlays)
       (delete-window *source-window*)
       (delete-window *peek-window*))))
 
@@ -119,6 +125,8 @@
     (list peek-window source-window)))
 
 (defun display (collector)
+  (when *parent-window* ; Clear existing peek window
+    (peek-source-quit))
   (destructuring-bind (peek-window source-window)
       (make-two-side-by-side-windows (collector-buffer collector))
 
@@ -192,7 +200,8 @@
 
 (defmethod execute :after ((mode peek-source-mode) command argument)
   (when (eq (current-window) *peek-window*)
-    (show-matched-line)))
+    (start-timer (make-idle-timer (lambda () (show-matched-line)))
+                 100)))
 
 (defun highlight-matched-line (point)
   (let ((overlay (make-line-overlay point 'highlight)))
@@ -216,12 +225,7 @@
   (previous-move-point (current-point)))
 
 (define-command peek-source-quit () ()
-  (setf (current-window) *parent-window*)
-  (start-timer
-   (make-idle-timer (lambda ()
-                      (delete-window *peek-window*)
-                      (delete-window *source-window*)))
-   0))
+  (finalize-peek-source))
 
 ;;;
 (defvar *highlight-overlays* '())

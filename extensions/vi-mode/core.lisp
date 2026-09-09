@@ -14,17 +14,18 @@
            :vi-state
            :vi-mode
            :define-state
+           :ensure-state
            :current-state
-           :current-main-state
            :state=
-           :change-state
            :with-state
            :with-temporary-state
            :mode-specific-keymaps
            :pre-command-hook
            :post-command-hook
-           :state-enabled-hook
-           :state-disabled-hook
+           :state-changed-hook
+           :buffer-state
+           :buffer-state-enabled-hook
+           :buffer-state-disabled-hook
            :vi-this-command-keys
            :this-motion-command
            :vi-command
@@ -50,7 +51,16 @@
 
 (defvar *last-repeat-keys* '())
 
-(defvar *default-cursor-color* "#ffb472")
+(defvar *default-cursor-color*  "#ffffff")
+
+(defun get-cursor-theme-color ()
+  (let ((attribute (ensure-attribute 'cursor)))
+    (color-to-hex-string (attribute-background-color attribute))))
+
+(defun vi-load-theme-hook () 
+ (setf *default-cursor-color*  (get-cursor-theme-color)))
+
+(add-hook lem-core:*after-load-theme-hook* 'vi-load-theme-hook)
 
 (defvar *enable-hook* '())
 (defvar *disable-hook* '())
@@ -122,15 +132,22 @@
 (defgeneric post-command-hook (state)
   (:method ((state vi-state))))
 
-(defgeneric state-enabled-hook (state)
-  (:method ((state vi-state))))
+(defgeneric state-changed-hook (state))
 
-(defgeneric state-disabled-hook (state))
+(defgeneric buffer-state-enabled-hook (state buffer)
+  (:method ((state vi-state) buffer)))
 
-(defmethod state-disabled-hook ((state vi-state)))
+(defgeneric buffer-state-disabled-hook (state buffer)
+  (:method ((state vi-state) buffer)))
 
 (defun current-state ()
   *current-state*)
+
+(defun (setf current-state) (state-or-name)
+  (let ((state (ensure-state state-or-name)))
+    (setf *current-state* state)
+    (state-changed-hook state)
+    (update-cursor-styles state)))
 
 (defun current-main-state ()
   "Same as `current-state` except it returns the previous state insinde `with-temporary-state` macro."
@@ -166,20 +183,26 @@
   (lem-if:update-cursor-shape (lem:implementation)
                               (state-cursor-type state)))
 
-(defun change-state (name)
-  (and *current-state*
-       (state-disabled-hook *current-state*))
-  (let ((state (ensure-state name)))
-    (setf *current-state* state)
-    (state-enabled-hook state)
-    (update-cursor-styles state)))
+(defun buffer-state (&optional (buffer (current-buffer)))
+  (buffer-value buffer :vi-buffer-state))
+
+(defun (setf buffer-state) (state-or-name &optional (buffer (current-buffer)))
+  (let ((state (ensure-state state-or-name))
+        (old-state (buffer-state buffer)))
+    (when (not (equal state old-state))
+      (when old-state
+        (buffer-state-disabled-hook old-state buffer))
+      (buffer-state-enabled-hook state buffer)
+      (setf (buffer-value buffer :vi-buffer-state) state))
+    (when (eq buffer (current-buffer))
+      (setf (current-state) state))))
 
 (defmacro with-state (state &body body)
   (with-gensyms (old-state)
     `(let ((,old-state (current-state)))
-       (change-state ,state)
+       (setf (current-state) ,state)
        (unwind-protect (progn ,@body)
-         (change-state ,old-state)))))
+         (setf (current-state) ,old-state)))))
 
 (defmacro with-temporary-state (state &body body)
   `(let ((*current-main-state* *current-state*)
@@ -252,16 +275,14 @@
   `(let ((*vi-current-window* ,window))
      ,@body))
 
-(defstruct (vi-keymap (:include keymap)
-                      (:constructor %make-vi-keymap)))
+(defclass vi-keymap (keymap*)
+  ())
 
-(defun make-vi-keymap (&rest args &key undef-hook parent name)
-  (declare (ignore undef-hook parent name))
-  (let ((keymap (apply #'%make-vi-keymap args)))
-    (push keymap *keymaps*)
-    keymap))
+(defun make-vi-keymap (&rest args &key undef-hook base description)
+  (declare (ignore undef-hook base description))
+  (apply 'make-instance 'vi-keymap (alexandria:remove-from-plist args :base)))
 
-(defmacro define-keymap (name &key undef-hook parent)
-  `(defvar ,name (make-vi-keymap :name ',name
-                                 :undef-hook ,undef-hook
-                                 :parent ,parent)))
+(defmacro define-keymap (name &key undef-hook)
+  (declare (ignore parent))
+  `(defvar ,name (make-vi-keymap :description ',name
+                                 :undef-hook ,undef-hook)))

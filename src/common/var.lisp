@@ -23,15 +23,17 @@
   change-value-hook)
 
 (setf (documentation 'editor-variable 'type)
-      "`editor-variable`はエディタ内で使われる変数です。
-バッファローカルな変数や大域的な値を管理するために使います。")
+      "`editor-variable` is a variable used within the editor.
+It is used to manage variables with both local and global values.
+The scope of the variable is decided by the optional `scope`
+Parameter to `variable-value`.
+The `changed-value-hook` is only called on a global change.")
 
 (defmacro define-editor-variable (var &optional value documentation change-value-hook)
-  "エディタ変数`var`を定義します。
-`value`はそのエディタ変数に束縛されている大域的な値です。
-`documentation`はそのエディタ変数の文書文字列です。
-`change-value-hook`はそのエディタ変数の大域的な値が変更されるときに呼び出されるフック関数です。
-"
+  "Define editor-variable `var`
+`value` is the global value of the variable.
+`documentation` is the doc-string of the Variable
+`change-value-hook` is a hook function called when the global value changes"
   (check-type var symbol)
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (unless (get ',var 'editor-variable)
@@ -48,50 +50,63 @@
   (error "~A is not editor variable" symbol))
 
 (defun check-editor-variable (symbol)
+  "Errors if `symbol` is not an editor-variable."
   (unless (editor-variable-p (get symbol 'editor-variable))
     (editor-variable-error symbol)))
 
-(defgeneric variable-value-aux (var kind &optional where))
-(defgeneric (setf variable-value-aux) (value var kind &optional where))
+(defgeneric variable-value-aux (var scope &optional where)
+  (:documentation
+   "Generic funtion to get the value of the editor-variable `var`.
+Can be specialized for differend `scope`s."))
+(defgeneric (setf variable-value-aux) (value var scope &optional where)
+  (:documentation
+   "Generic function to set the value of the editor-variable `var`.
+Can be specialized for differend `scope`s"))
 
-(defmethod variable-value-aux ((var editor-variable) (kind (eql :global)) &optional (where nil wherep))
+(defmethod variable-value-aux ((var editor-variable) (scope (eql :global)) &optional (where nil wherep))
   (declare (ignore where wherep))
   (editor-variable-value var))
 
-(defun variable-value (symbol &optional (kind :default) (where nil wherep))
+(defun variable-value (symbol &optional (scope :default) (where nil wherep))
+  "Get the value of the editor-variable `symbol`.
+See `variable-value-aux`."
   (let ((var (get symbol 'editor-variable)))
     (unless (editor-variable-p var)
       (editor-variable-error symbol))
     (if wherep
-        (variable-value-aux var kind where)
-        (variable-value-aux var kind))))
+        (variable-value-aux var scope where)
+        (variable-value-aux var scope))))
 
-(defmethod (setf variable-value-aux) (value (var editor-variable) (kind (eql :global)) &optional (where nil wherep))
+(defmethod (setf variable-value-aux) (value (var editor-variable) (scope (eql :global)) &optional (where nil wherep))
   (declare (ignore where wherep))
   (let ((fn (editor-variable-change-value-hook var)))
     (when fn
       (funcall fn value)))
   (setf (editor-variable-value var) value))
 
-(defun (setf variable-value) (value symbol &optional (kind :default) (where nil wherep))
+(defun (setf variable-value) (value symbol &optional (scope :default) (where nil wherep))
+  "Set the value of the editor-variable `symbol`.
+See `setf variable-value-aux`."
   (let ((var (get symbol 'editor-variable)))
     (unless (editor-variable-p var)
       (editor-variable-error symbol))
     (if wherep
-        (setf (variable-value-aux var kind where) value)
-        (setf (variable-value-aux var kind) value))))
+        (setf (variable-value-aux var scope where) value)
+        (setf (variable-value-aux var scope) value))))
 
 (defun variable-documentation (symbol)
-  "エディタ変数`symbol`の文書文字列を返します。"
+  "Returns the doc-string of the editor variable `symbol`."
   (let ((var (get symbol 'editor-variable)))
     (unless (editor-variable-p var)
       (editor-variable-error symbol))
     (editor-variable-documentation var)))
 
 (defun editor-variables ()
+  "Returns a list of all defined editor-variables."
   *editor-variables*)
 
 (defun find-editor-variable (var)
+  "Find the editor-variable with name (string) `var`."
   (find var (editor-variables) :test 'string-equal))
 
 

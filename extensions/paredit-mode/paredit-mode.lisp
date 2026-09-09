@@ -11,9 +11,13 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
            :paredit-insert-paren
            :paredit-insert-doublequote
            :paredit-insert-vertical-line
+           :paredit-insert-bracket
+           :paredit-insert-brace
            :paredit-backward-delete
            :paredit-forward-delete
            :paredit-close-parenthesis
+           :paredit-close-bracket
+           :paredit-close-brace
            :paredit-kill
            :paredit-slurp
            :paredit-barf
@@ -24,13 +28,16 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
            :paredit-wrap-round
            :paredit-meta-doublequote
            :paredit-vertical-line-wrap
-           :*paredit-mode-keymap*))
+           :*paredit-mode-keymap*
+           :*remove-whitespace*))
 (in-package :lem-paredit-mode)
 
 (define-minor-mode paredit-mode
     (:name "paredit"
      :description "Helps to handle parentheses balanced in your Lisp code."
      :keymap *paredit-mode-keymap*))
+
+(defvar *remove-whitespace* nil "Aggressively remove whitespace on some actions")
 
 (defun move-to-word-end (q)
   (loop while (not (syntax-space-char-p (character-at q)))
@@ -57,14 +64,14 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
   (loop while (in-string-p point)
         do (character-offset point 1)))
 
-(define-command paredit-forward (&optional (n 1)) ("p")
+(define-command paredit-forward (&optional (n 1)) (:universal)
   (handler-case
       (forward-sexp n)
     (error ()
       (unless (end-buffer-p (current-point))
         (lem:forward-up-list (current-point))))))
 
-(define-command paredit-backward (&optional (n 1)) ("p")
+(define-command paredit-backward (&optional (n 1)) (:universal)
   (handler-case
       (backward-sexp n)
     (error ()
@@ -78,7 +85,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
   (let ((len (length (line-string point))))
     (or (zerop len)
         (>= (point-charpos point)
-             (1- len)))))
+            (1- len)))))
 
 (defun integer-char-p (char)
   (< (char-code #\0) (char-code char) (char-code #\9)))
@@ -100,10 +107,10 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
            (eql (character-at p -1) #\#)))))
 
 (defparameter *non-space-following-chars*
-  '(#\Space #\( #\' #\` #\,))
+  '(#\Space #\( #\' #\` #\, #\[ #\{))
 
 (defparameter *non-space-preceding-chars*
-  '(#\Space #\)))
+  '(#\Space #\) #\] #\}))
 
 (defun non-space-following-context-p (&optional (p (current-point)))
   (or (bolp p)
@@ -121,24 +128,30 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
       (sharp-n-literal-p #\A p)
       (sharp-n-literal-p #\= p)))
 
-(define-command paredit-insert-paren () ()
+(defun paredit-insert-pair (open close)
   (let ((p (current-point)))
-    (when (in-string-or-comment-p p)
-      (insert-character p #\()
-      (return-from paredit-insert-paren))
-    (when (syntax-escape-point-p p 0)
-      (insert-character p #\()
-      (return-from paredit-insert-paren))
-    (unless (non-space-following-context-p p)
-      (insert-character p #\Space))
-    (dolist (c '(#\( #\)))
-      (insert-character p c))
-    (unless (or (eolp p)
-                (eql (character-at p) #\Space)
-                (eql (character-at p) #\)))
-      (insert-character p #\Space)
-      (character-offset p -1))
-    (character-offset p -1)))
+    (cond ((in-string-or-comment-p p)
+           (insert-character p open))
+          ((syntax-escape-point-p p 0)
+           (insert-character p open))
+          (t
+           (unless (non-space-following-context-p p)
+             (insert-character p #\Space))
+           (insert-character p open)
+           (insert-character p close)
+           (unless (or (eolp p) (find (character-at p) *non-space-preceding-chars*))
+             (insert-character p #\Space)
+             (character-offset p -1))
+           (character-offset p -1)))))
+
+(define-command paredit-insert-paren () ()
+  (paredit-insert-pair #\( #\)))
+
+(define-command paredit-insert-bracket () ()
+  (paredit-insert-pair #\[ #\]))
+
+(define-command paredit-insert-brace () ()
+  (paredit-insert-pair #\{ #\}))
 
 (define-command paredit-insert-doublequote () ()
   (let ((p (current-point)))
@@ -171,7 +184,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
     (insert-character p #\| 2)
     (character-offset p -1)))
 
-(define-command paredit-backward-delete (&optional (n 1)) ("p")
+(define-command paredit-backward-delete (&optional (n 1)) (:universal)
   (when (< 0 n)
     (let ((p (current-point)))
       (cond
@@ -200,6 +213,18 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
              (progn (delete-next-char)
                     (delete-previous-char))
              (backward-char)))
+        ;; The previous char is #\[
+        ((eql (character-at p -1) #\[)
+         (if (eql (character-at p) #\])
+             (progn (delete-next-char)
+                    (delete-previous-char))
+             (backward-char)))
+        ;; The previous char is #\{
+        ((eql (character-at p -1) #\{)
+         (if (eql (character-at p) #\})
+             (progn (delete-next-char)
+                    (delete-previous-char))
+             (backward-char)))
         ;; The previous char is #\|
         ((eql (character-at p -1) #\|)
          (if (eql (character-at p) #\|)
@@ -208,6 +233,8 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
              (backward-char)))
         ;; Should not delete #\) nor #\" nor #\|
         ((or (eql (character-at p -1) #\))
+             (eql (character-at p -1) #\])
+             (eql (character-at p -1) #\})
              (eql (character-at p -1) #\")
              (eql (character-at p -1) #\|))
          (backward-char))
@@ -215,7 +242,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
          (delete-previous-char))))
     (paredit-backward-delete (1- n))))
 
-(define-command paredit-forward-delete (&optional (n 1)) ("p")
+(define-command paredit-forward-delete (&optional (n 1)) (:universal)
   (when (< 0 n)
     (let ((p (current-point)))
       (cond
@@ -246,6 +273,20 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
              (progn (delete-next-char)
                     (delete-previous-char))
              (forward-char)))
+        ;; The next char is #\}
+        ((eql (character-at p) #\})
+         (if (and (eql (character-at p -1) #\{)
+                  (not (syntax-escape-point-p p -1)))
+             (progn (delete-next-char)
+                    (delete-previous-char))
+             (forward-char)))
+        ;; The next char is #\]
+        ((eql (character-at p) #\])
+         (if (and (eql (character-at p -1) #\[)
+                  (not (syntax-escape-point-p p -1)))
+             (progn (delete-next-char)
+                    (delete-previous-char))
+             (forward-char)))
         ;; The next char is #\|
         ((eql (character-at p) #\|)
          (if (and (eql (character-at p -1) #\|)
@@ -255,6 +296,8 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
              (forward-char)))
         ;; Should not delete #\( nor #\" nor #\|
         ((or (eql (character-at p) #\()
+             (eql (character-at p) #\])
+             (eql (character-at p) #\})
              (eql (character-at p) #\")
              (eql (character-at p) #\|))
          (forward-char))
@@ -262,27 +305,37 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
          (delete-next-char))))
     (paredit-forward-delete (1- n))))
 
-(define-command paredit-close-parenthesis () ()
+(defun paredit-close-pair (c)
   (with-point ((p (current-point)))
-    (when (in-string-or-comment-p p)
-      (insert-character p #\))
-      (return-from paredit-close-parenthesis))
-    (case (character-at p)
-      (#\)
-       (if (syntax-escape-point-p p 0)
-           (insert-character p #\))
-           (forward-char)))
-      (otherwise
-       (handler-case (scan-lists p 1 1)
-         (error ()
-           (insert-character p #\))
-           (return-from paredit-close-parenthesis)))
-       (with-point ((new-p p))
-         (character-offset new-p -1)
-         (move-point (current-point) new-p)
-         (with-point ((p new-p))
-           (skip-whitespace-backward p)
-           (delete-between-points p new-p)))))))
+    (cond ((in-string-or-comment-p p)
+           (insert-character p c))
+          ((syntax-escape-point-p p 0)
+           (insert-character p c))
+          ((char= c (character-at p))
+           (when *remove-whitespace*
+             (with-point ((from p))
+               (skip-whitespace-backward from)
+               (delete-between-points from p)))
+           (character-offset (current-point) 1))
+          ((ignore-errors (or (scan-lists p 1 1)) t)
+           (with-point ((new-p p))
+             (character-offset new-p -1)
+             (move-point (current-point) new-p)
+             (with-point ((p new-p))
+               (skip-whitespace-backward p)
+               (delete-between-points p new-p)
+               (character-offset (current-point) 1))))
+          (t
+           (insert-character p c)))))
+
+(define-command paredit-close-parenthesis () ()
+  (paredit-close-pair #\)))
+
+(define-command paredit-close-bracket () ()
+  (paredit-close-pair #\]))
+
+(define-command paredit-close-brace () ()
+  (paredit-close-pair #\}))
 
 (define-command paredit-kill () ()
   (with-point ((origin (current-point))
@@ -324,6 +377,16 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
                    (return))))
        (kill-region origin kill-end)))))
 
+(defun is-inside-empty-parens (point)
+  (with-point ((left point)
+               (right point))
+    (skip-whitespace-backward left)
+    (character-offset left -1)
+    (skip-whitespace-forward right)
+    (and (syntax-open-paren-char-p (character-at left))
+         (syntax-closed-paren-char-p (character-at right))
+         (syntax-equal-paren-p left right))))
+
 (define-command paredit-slurp () ()
   (with-point ((origin (current-point))
                (kill-point (current-point)))
@@ -341,19 +404,27 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
          (move-point (current-point) origin)
          (indent-points origin yank-point)))
       (t
-       (scan-lists kill-point 1 1)
-       (character-offset kill-point -1)
-       (%skip-closed-parens-and-whitespaces-forward kill-point nil)
-       (character-offset kill-point -1)
-       (with-point ((yank-point kill-point :left-inserting))
-         (%skip-closed-parens-and-whitespaces-forward yank-point t)
-         (unless (end-buffer-p yank-point)
-           (let ((c (character-at kill-point)))
-             (form-offset yank-point 1)
-             (insert-character yank-point c)
-             (delete-character kill-point))
-           (move-point (current-point) origin)
-           (indent-points origin yank-point)))))))
+       (let ((remove-whitespace (and *remove-whitespace* (is-inside-empty-parens origin))))
+         (scan-lists kill-point 1 1)
+         (character-offset kill-point -1)
+         (%skip-closed-parens-and-whitespaces-forward kill-point nil)
+         (character-offset kill-point -1)
+         (with-point ((yank-point kill-point :left-inserting))
+           (%skip-closed-parens-and-whitespaces-forward yank-point t)
+           (unless (end-buffer-p yank-point)
+             (let ((c (character-at kill-point)))
+               (form-offset yank-point 1)
+               (insert-character yank-point c)
+               (delete-character kill-point))
+             (when remove-whitespace
+               (with-point ((from origin)
+                            (to origin))
+                 (skip-whitespace-backward from)
+                 (skip-whitespace-forward to)
+                 (delete-between-points from to)
+                 (setf origin from)))
+             (move-point (current-point) origin)
+             (indent-points origin yank-point))))))))
 
 (define-command paredit-barf () ()
   (with-point ((origin (current-point) :right-inserting)
@@ -491,6 +562,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 
 
 (defun %paredit-wrap (begin-char end-char)
+  ;; FIXME: the buffer-mark-p always be nil for marks that set by vi-mode. (The mark state in vi-mode and emacs-mode is not synced.)
   (if (buffer-mark-p (current-buffer))
       (with-point ((begin (region-beginning (current-buffer)))
                    (end (region-end (current-buffer))))
@@ -508,14 +580,30 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
                  (insert-character (current-point) end-char)
                  (insert-character (current-point) #\Space)
                  (move-point (current-point) (character-offset begin 1))))))
-      (with-point ((origin (current-point)))
-        (unless (in-string-or-comment-p origin)
-          (forward-sexp)
-          (insert-character origin begin-char)
-          (unless (non-space-following-context-p origin)
-            (insert-character origin #\Space))
-          (insert-character (current-point) end-char)
-          (move-point (current-point) (character-offset origin 1))))))
+      (with-point ((start (current-point))
+                   (end (current-point)))
+        (unless (in-string-or-comment-p start)
+          ;; Forward sexp to select the end, unless current-point it not at end-char. 
+          (unless (equal (character-at (current-point))
+                         end-char)
+            (forward-sexp))
+          (setf end (copy-point (current-point) :temporary))
+
+          ;; Backward sexp to select the start.
+          (backward-sexp)
+          (setf start (copy-point (current-point) :temporary))
+
+          ;; Insert the one `open-char` before `start`.
+          (insert-character start #\Space)
+          (insert-character start begin-char)
+
+          ;; Because we have inserted the one `space` and one `open-char`, the `end` should + 2.
+          (character-offset end 2)
+          (insert-character end end-char)
+
+          ;; Move current-point to the `inserted space char`.
+          (character-offset start 1)
+          (move-point (current-point) start)))))
 
 (define-command paredit-wrap-round () ()
   (%paredit-wrap #\( #\)))
@@ -524,13 +612,17 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
   (%paredit-wrap #\" #\"))
 
 (define-command paredit-vertical-line-wrap () ()
-  (lem-paredit-mode::%paredit-wrap #\| #\|))
+  (%paredit-wrap #\| #\|))
 
 (define-keys *paredit-mode-keymap*
   ('forward-sexp          'paredit-forward)
   ('backward-sexp         'paredit-backward)
   ("("                    'paredit-insert-paren)
+  ("["                    'paredit-insert-bracket)
+  ("{"                    'paredit-insert-brace)
   (")"                    'paredit-close-parenthesis)
+  ("]"                    'paredit-close-bracket)
+  ("}"                    'paredit-close-brace)
   ("\""                   'paredit-insert-doublequote)
   ("|"                    'paredit-insert-vertical-line)
   ('delete-previous-char  'paredit-backward-delete)
@@ -540,6 +632,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
   ("C-Left"               'paredit-barf)
   ("M-s"                  'paredit-splice)
   ("M-Up"                 'paredit-splice-backward)
+  ("M-Down"               'paredit-splice-forward)
   ("M-r"                  'paredit-raise)
   ("M-("                  'paredit-wrap-round)
   ("M-|"                  'paredit-vertical-line-wrap)

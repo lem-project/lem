@@ -17,7 +17,7 @@
            :change-element-by-state))
 (in-package :lem-vi-mode/modeline)
 
-(defvar *modeline-element*)
+(defvar *modeline-element* nil)
 
 (define-attribute state-modeline-white
   (t :foreground "white" :reverse t))
@@ -50,16 +50,18 @@
   (pushnew *modeline-element* (lem:variable-value 'lem:modeline-format :global)))
 
 (defun finalize-vi-modeline ()
-  (setf (lem:variable-value 'lem:modeline-format :global)
-        (remove-if #'vi-modeline-element-p
-                   (lem:variable-value 'lem:modeline-format :global)))
-  (lem:modeline-remove-status-list *modeline-element*)
+  (when *modeline-element*
+    (setf (lem:variable-value 'lem:modeline-format :global)
+          (remove-if #'vi-modeline-element-p
+                     (lem:variable-value 'lem:modeline-format :global)))
+    (lem:modeline-remove-status-list *modeline-element*))
   (set-attribute 'cursor :background *default-cursor-color*)
   (lem-if:update-cursor-shape (lem:implementation) :box))
 
 (defun change-element-by-state (state)
-  (setf (element-name *modeline-element*) (state-name state)
-        (element-attribute *modeline-element*) (state-modeline-color state)))
+  (when *modeline-element*
+    (setf (element-name *modeline-element*) (state-name state)
+          (element-attribute *modeline-element*) (state-modeline-color state))))
 
 (add-hook *enable-hook* 'initialize-vi-modeline 10)
 (add-hook *disable-hook* 'finalize-vi-modeline)

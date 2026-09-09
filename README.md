@@ -1,48 +1,96 @@
-# Lem is the editor/IDE well-tuned for Common Lisp.
-
-![](https://github.com/Shinmera/lem-icon/blob/gh-pages/icon-blue.svg)
+![](https://raw.githubusercontent.com/Shinmera/lem-icon/gh-pages/icon-blue.svg)
+# Lem: Editor Modules
 
 ![Build Status](https://github.com/lem-project/lem/workflows/CI/badge.svg)
 [![Backers on Open Collective](https://opencollective.com/lem/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/lem/sponsors/badge.svg)](#sponsors)
+[![GitHub Sponsors](https://img.shields.io/badge/-Sponsor-fafbfc?logo=GitHub-Sponsors)](https://github.com/sponsors/cxxxr)
+[![gitcgr](https://gitcgr.com/badge/lem-project/lem.svg)](https://gitcgr.com/lem-project/lem)
 
-After installing lem, you can start developing in Common Lisp at once.
 
-You can skip over writing tidy settings or installing many plugins as you do on Emacs.
 
-Lem supports other programming languages thanks to its built-in LSP
-client. You can choose between an Emacs and a Vim mode.
-
-Other Lem features include:
-
-- a **project explorer** tree view
-- project-aware commands
-- interactive **grep** and **git** interfaces
-- **multiple cursors**
-- tetris
-- and more…
+After installing lem, you can start developing and extend the editor while it runs.
 
 ## Install
 
-With Docker (ncurses version):
+### nightly build
 
-    $ docker build -t lem .
-    $ docker run --rm -it -v .:/shared lem
+Tested on Ubuntu 24.04 and macOS(apple silicon).
 
-### Lem-ncurses
-- [GNU/Linux](https://lem-project.github.io/installation/ncurses/linux/)
-- [MacOS](https://lem-project.github.io/installation/ncurses/macos/)
-- [Windows](https://lem-project.github.io/installation/ncurses/windows/)
+https://github.com/lem-project/lem/releases/tag/nightly-latest
 
-### Lem-sdl2
-- [GNU/Linux](https://lem-project.github.io//installation/sdl2/linux/)
-- [MacOS](https://lem-project.github.io//installation/sdl2/macos/)
-- [Windows](https://lem-project.github.io//installation/sdl2/windows/)
+### Nix
 
+    $ nix profile add github:lem-project/lem#
+    $ nix profile add github:lem-project/lem#lem-ncurses
+    $ nix profile add github:lem-project/lem#lem-webview
+    $ nix profile add github:lem-project/lem#lem-sdl2
 
-## Screenshots
-![Terminal](screenshots/terminal.png)　　
+Or run Lem temporarily (no install):
 
-![Sdl2](screenshots/sdl2.png)　　
+    $ nix run github:lem-project/lem#
+    $ nix run github:lem-project/lem#lem-ncurses
+    $ nix run github:lem-project/lem#lem-webview
+    $ nix run github:lem-project/lem#lem-sdl2
+
+Use the overlay when you already have a flake-based NixOS/home-manager config and
+want `pkgs.lem-ncurses` (and `apps.lem-ncurses`) available from your `nixpkgs` set.
+You can also consume `lem` as an overlay in `flake.nix`:
+
+    {
+      inputs = {
+        nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+        lem.url = "github:lem-project/lem";
+      };
+
+      outputs = { self, nixpkgs, lem, ... }: {
+        nixosConfigurations.example = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            { nixpkgs.overlays = [ lem.overlays.default ]; }
+            { environment.systemPackages = [ pkgs.lem-ncurses ]; }
+          ];
+        };
+      };
+    }
+
+### docker
+
+With Docker (terminal version):
+
+    $ docker run --rm -it ghcr.io/lem-project/lem:latest
+
+## Build
+
+Instructions to build Lem on GNU/Linux, Macos and Windows.
+
+### Terminal version
+https://lem-project.github.io/installation/ncurses/
+
+### Webview version
+https://lem-project.github.io/installation/webview/
+
+### SDL2 version
+https://lem-project.github.io/installation/sdl2/
+
+## Vision
+
+Lem brings the distance between code and its execution state as close to zero as possible.  
+Users can see the results of their program while editing, without breaking their flow, 
+and visually follow the behavior of the running code in real time.
+
+The interface is consistently simple and easy to use without confusion.  
+Moreover, Lem is fully customizable, and any extensions take effect immediately as they are written.
+
+### Goals
+- Instantly reflect executed code inline
+- Visualize running code in real time
+- Provide a consistent UI that feels effortless to use
+- Maintain documentation for beginners, extension developers, and core developers.
+- Offer an intuitive and consistent API for extensions
+- Deliver a comfortable environment right out of the box
+
+### Non-goals
+- Rather than imitating Emacs or Vim, Lem pursues its own unique approach
 
 ## Contributors
 

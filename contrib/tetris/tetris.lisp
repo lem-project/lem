@@ -25,6 +25,8 @@
                  (make-attribute :foreground color-name :reverse t))
        '("black" "cyan" "yellow" "green" "red" "blue" "white" "magenta")))
 
+(defvar *tetris-buffer*)
+
 (defvar *tetrimino-table*
   #(#(0 0 0 0
       0 0 0 0
@@ -64,6 +66,7 @@
 (defvar *point-y*)
 (defvar *current-tetrimino*)
 (defvar *next-tetrimino*)
+(defvar *hard-dropped*)
 
 (defvar *score*)
 (defvar *delete-nlines*)
@@ -88,7 +91,8 @@
   (setq *point-x* 4)
   (setq *point-y* -1)
   (setq *current-tetrimino* *next-tetrimino*)
-  (setq *next-tetrimino* (random-tetrimino)))
+  (setq *next-tetrimino* (random-tetrimino))
+  (setq *hard-dropped* nil))
 
 (defun init-field ()
   (setq *field*
@@ -150,7 +154,7 @@
         (incf i)))))
 
 (defun draw ()
-  (erase-buffer)
+  (erase-buffer *tetris-buffer*)
   (draw-next)
   (draw-field)
   (draw-score))
@@ -252,22 +256,29 @@
       (setq *current-tetrimino* tetrimino))))
 
 (define-command tetris-move-left () ()
-  (when *playing-p*
+  (when (and *playing-p* (not *hard-dropped*))
     (unless (override-p (1- *point-x*) *point-y*)
       (decf *point-x*)
       (draw))))
 
 (define-command tetris-move-right () ()
-  (when *playing-p*
+  (when (and *playing-p* (not *hard-dropped*))
     (unless (override-p (1+ *point-x*) *point-y*)
       (incf *point-x*)
       (draw))))
 
 (define-command tetris-move-down () ()
-  (when *playing-p*
+  (when (and *playing-p* (not *hard-dropped*))
     (unless (override-p *point-x* (1+ *point-y*))
       (incf *point-y*)
       (draw))))
+
+(define-command tetris-hard-drop () ()
+  (when *playing-p*
+    (loop :until (override-p *point-x* (1+ *point-y*))
+          :do (incf *point-y*))
+    (draw)
+    (setf *hard-dropped* t)))
 
 (define-command tetris-rotate () ()
   (when *playing-p*
@@ -281,6 +292,7 @@
 (define-key *tetris-mode-keymap* "Left" 'tetris-move-left)
 (define-key *tetris-mode-keymap* "Right" 'tetris-move-right)
 (define-key *tetris-mode-keymap* "Down" 'tetris-move-down)
+(define-key *tetris-mode-keymap* "Space" 'tetris-hard-drop)
 (define-key *tetris-mode-keymap* "Up" 'tetris-rotate)
 (define-key *tetris-mode-keymap* "q" 'tetris-quit)
 
@@ -295,16 +307,18 @@
            (tetris-move-down)))))
 
 (define-command tetris () ()
-  (let ((buffer (make-buffer "*tetris*")))
-    (switch-to-buffer buffer)
-    (tetris-mode)
-    (init-field)
-    (init-player)
-    (draw)
-    (setq *playing-p* t)
-    (setq *timer* (start-timer (make-timer (lambda () (update buffer))
-                                           :handle-function (lambda (condition)
-                                                              (pop-up-backtrace condition)
-                                                              (stop-timer *timer*)))
-                               1000
-                               :repeat t))))
+  (setf *tetris-buffer* (make-buffer "*tetris*"))
+  (switch-to-buffer *tetris-buffer*)
+  (tetris-mode)
+  (add-hook (variable-value 'kill-buffer-hook :buffer *tetris-buffer*)
+            #'(lambda (buffer) (declare (ignore buffer)) (tetris-quit)))
+  (init-field)
+  (init-player)
+  (draw)
+  (setq *playing-p* t)
+  (setq *timer* (start-timer (make-timer (lambda () (update *tetris-buffer*))
+                                         :handle-function (lambda (condition)
+                                                            (pop-up-backtrace condition)
+                                                            (stop-timer *timer*)))
+                             1000
+                             :repeat t)))

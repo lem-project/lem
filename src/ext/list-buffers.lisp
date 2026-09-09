@@ -19,9 +19,18 @@
     (delete-checked-items multi-column-list)))
 
 (defun save-buffers (window)
+  "Save all buffers from the current multi-column-list window."
   (let ((multi-column-list (multi-column-list-of-window window)))
     (mapc #'save-buffer (collect-checked-items multi-column-list))
     (update multi-column-list)))
+
+(defun buffer-attributes (buffer)
+  (cond ((buffer-read-only-p buffer)
+         (icon-string "lock"))
+        ((buffer-modified-p buffer)
+         (icon-string "bullet-point"))
+        (t
+         " ")))
 
 (define-command list-buffers () ()
   (display
@@ -29,7 +38,7 @@
                   :columns '("" "Buffer" "File")
                   :column-function (lambda (component buffer)
                                      (declare (ignore component))
-                                     (list (string-trim " " (buffer-attributes buffer))
+                                     (list (buffer-attributes buffer)
                                            (buffer-name buffer)
                                            (or (buffer-filename buffer) "")))
                   :items (buffer-list)
@@ -40,6 +49,9 @@
                   :delete-callback (lambda (component buffer)
                                      (declare (ignore component))
                                      (kill-buffer buffer))
+                  :save-callback (lambda (component buffer)
+                                   (declare (ignore component))
+                                   (save-buffer buffer))
                   :use-check t
                   :context-menu (make-instance
                                  'lem/context-menu:context-menu

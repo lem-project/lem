@@ -1,5 +1,5 @@
 (defsystem "lem-elisp-mode"
-  :depends-on ("lem"
+  :depends-on ("lem/core"
                "jsonrpc"
                "lem-lisp-mode"
                #+#.(cl:if (asdf:find-system :async-process cl:nil) '(and) '(or)) "lem-process")

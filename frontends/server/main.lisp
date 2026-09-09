@@ -376,10 +376,8 @@ returns true when one of them changed, since nothing already measured survives a
     (notify* jsonrpc
              "resize-view"
              (hash "viewInfo" (view-id-hash view)
-                   "width" width
-                   "height" height
-                   "pixelWidth" (view-px-width view)
-                   "pixelHeight" (view-px-height view)))))
+                   "width" (view-px-width view)
+                   "height" (view-px-height view)))))
 
 (defmethod lem-if:set-view-pos ((jsonrpc jsonrpc) view x y)
   (with-error-handler ()
@@ -387,10 +385,8 @@ returns true when one of them changed, since nothing already measured survives a
     (notify* jsonrpc
              "move-view"
              (hash "viewInfo" (view-id-hash view)
-                   "x" x
-                   "y" y
-                   "pixelX" (view-px-x view)
-                   "pixelY" (view-px-y view)))))
+                   "x" (view-px-x view)
+                   "y" (view-px-y view)))))
 
 (defmethod lem-if:make-view-with-pixels ((jsonrpc jsonrpc) window x y width height
                                          pixel-x pixel-y pixel-width pixel-height
@@ -424,10 +420,8 @@ returns true when one of them changed, since nothing already measured survives a
     (notify* jsonrpc
              "move-view"
              (hash "viewInfo" (view-id-hash view)
-                   "x" x
-                   "y" y
-                   "pixelX" (view-px-x view)
-                   "pixelY" (view-px-y view)))))
+                   "x" (view-px-x view)
+                   "y" (view-px-y view)))))
 
 (defmethod lem-if:set-view-size-pixels ((jsonrpc jsonrpc) view width height pixel-width pixel-height)
   (with-error-handler ()
@@ -435,10 +429,8 @@ returns true when one of them changed, since nothing already measured survives a
     (notify* jsonrpc
              "resize-view"
              (hash "viewInfo" (view-id-hash view)
-                   "width" width
-                   "height" height
-                   "pixelWidth" (view-px-width view)
-                   "pixelHeight" (view-px-height view)))))
+                   "width" (view-px-width view)
+                   "height" (view-px-height view)))))
 
 (defmethod lem-if:redraw-view-before ((jsonrpc jsonrpc) view)
   )
@@ -824,8 +816,8 @@ not `lem:attribute-background-with-reverse', which answers with the default back
                    (hash "viewInfo" (view-id-hash view)
                          "x" x
                          "y" y
-                         "pixelWidth" pw
-                         "pixelHeight" ph
+                         "width" pw
+                         "height" ph
                          ;; the visible part, from the image's top-left
                          "clipWidth" clip-width
                          "clipHeight" clip-height

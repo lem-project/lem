@@ -102,16 +102,11 @@ pixels. As in `move-view', passing no pixel size clears any earlier one."
   (yason:with-output (stream)
     (yason:with-object ()
       (yason:encode-object-element "id" (view-id view))
-      ;; the cell geometry the core laid this view out on
-      (yason:encode-object-element "x" (view-x view))
-      (yason:encode-object-element "y" (view-y view))
-      (yason:encode-object-element "width" (view-width view))
-      (yason:encode-object-element "height" (view-height view))
-      ;; and in pixels, always present, so the client never needs the cell size
-      (yason:encode-object-element "pixelX" (view-px-x view))
-      (yason:encode-object-element "pixelY" (view-px-y view))
-      (yason:encode-object-element "pixelWidth" (view-px-width view))
-      (yason:encode-object-element "pixelHeight" (view-px-height view))
+      ;; geometry in pixels, so the client never needs the cell size
+      (yason:encode-object-element "x" (view-px-x view))
+      (yason:encode-object-element "y" (view-px-y view))
+      (yason:encode-object-element "width" (view-px-width view))
+      (yason:encode-object-element "height" (view-px-height view))
       ;; Other existing fields
       (yason:encode-object-element "use_modeline" (view-use-modeline view))
       (yason:encode-object-element "kind" (view-kind view))

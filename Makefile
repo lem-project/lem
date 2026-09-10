@@ -8,6 +8,7 @@ ncurses:
 	$(LISP) --load .qlot/setup.lisp \
 		--load scripts/build-ncurses.lisp
 
+# The minimal-build does not include any of the extensions, and uses the ncurses frontend
 minimal-build:
 	qlot install
 	$(LISP) --load .qlot/setup.lisp \

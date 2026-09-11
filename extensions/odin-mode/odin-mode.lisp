@@ -73,12 +73,12 @@ built from are defined.")
      :keymap *odin-mode-keymap*
      :syntax-table *odin-syntax-table*
      :mode-hook *odin-mode-hook*
-     :formatter 'odin-format)
+     :formatter 'reformat-buffer)
   (setf (variable-value 'enable-syntax-highlight) t
-        (variable-value 'calc-indent-function) 'odin-calc-indent
+        (variable-value 'calc-indent-function) 'calc-indent
         (variable-value 'indent-tabs-mode) t
-        (variable-value 'beginning-of-defun-function) 'odin-beginning-of-defun
-        (variable-value 'end-of-defun-function) 'odin-end-of-defun
+        (variable-value 'beginning-of-defun-function) 'beginning-of-defun
+        (variable-value 'end-of-defun-function) 'end-of-defun
         (variable-value 'line-comment) "//"
         (variable-value 'insertion-line-comment) "// "
         (variable-value 'tab-width :buffer) 4))
@@ -87,7 +87,7 @@ built from are defined.")
 
 ;;; Navigation
 
-(defun odin-beginning-of-defun (point n)
+(defun beginning-of-defun (point n)
   "Move point backward across n declarations."
   (loop :repeat n
         :do (search-backward-regexp
@@ -95,32 +95,32 @@ built from are defined.")
              (format nil "^~A\\s*::\\s*(?:proc|struct|union|enum|bit_field)\\b"
                      *odin-identifier*))))
 
-(defun odin-end-of-defun (point n)
+(defun end-of-defun (point n)
   "Move point forward to the end of the current declaration."
   (if (minusp n)
-      (odin-beginning-of-defun point (- n))
+      (beginning-of-defun point (- n))
       (search-forward-regexp point "^\\}")))
 
 ;;; Indentation
 
-(defun odin-where-clause-line-p (point)
+(defun where-clause-line-p (point)
   "True when the line at point begins with a `where' clause."
   (with-point ((p point))
     (back-to-indentation p)
     (and (looking-at p "where\\b") t)))
 
-(defun odin-enclosing-block-column (point)
+(defun enclosing-block-column (point)
   "Column the block enclosing point is indented from, or NIL at top level.
 A brace opened on a `where' line is measured from the line above it."
   (with-point ((tmp point))
     (when (scan-lists tmp -1 1 t)
       (back-to-indentation tmp)
-      (when (and (odin-where-clause-line-p tmp)
+      (when (and (where-clause-line-p tmp)
                  (line-offset tmp -1))
         (back-to-indentation tmp))
       (point-column tmp))))
 
-(defun odin-calc-indent (point)
+(defun calc-indent (point)
   "Calculate the indentation of the line at point."
   (let ((tab-width (variable-value 'tab-width :default point)))
     (with-point ((p point))
@@ -135,9 +135,9 @@ A brace opened on a `where' line is measured from the line above it."
                (1+ (point-column start)))
              (point-column p)))
         ((member (character-at p) '(#\} #\] #\)))
-         (or (odin-enclosing-block-column p) 0))
+         (or (enclosing-block-column p) 0))
         (t
-         (let ((indent (alexandria:if-let ((column (odin-enclosing-block-column p)))
+         (let ((indent (alexandria:if-let ((column (enclosing-block-column p)))
                          (+ column tab-width)
                          0)))
            (cond ((looking-at p "case\\b")
@@ -149,7 +149,7 @@ A brace opened on a `where' line is measured from the line above it."
 
 ;;; Formatting
 
-(defun odin-run-formatter (command text directory)
+(defun run-formatter (command text directory)
   "Pipe text through COMMAND run in a given directory.
 Returns the formatted text, or NIL and a message describing the failure."
   (handler-case
@@ -167,14 +167,14 @@ Returns the formatted text, or NIL and a message describing the failure."
     (error (e)
       (values nil (princ-to-string e)))))
 
-(defun odin-replace-with-formatted (buffer)
+(defun replace-with-formatted (buffer)
   "Replace buffer with its odinfmt output, keeping the cursor on its line.
 Returns true on success, or NIL and a message describing the failure."
   (let* ((start (buffer-start-point buffer))
          (end (buffer-end-point buffer))
          (text (points-to-string start end)))
     (multiple-value-bind (formatted error-message)
-        (odin-run-formatter *odin-format-command* text (buffer-directory buffer))
+        (run-formatter *odin-format-command* text (buffer-directory buffer))
       (cond ((null formatted)
              (values nil error-message))
             (t
@@ -188,16 +188,16 @@ Returns true on success, or NIL and a message describing the failure."
                  (line-offset point 0 charpos)))
              (values t nil))))))
 
-(defun odin-format (buffer)
+(defun reformat-buffer (buffer)
   "Format buffer with odinfmt."
-  (multiple-value-bind (successp error-message) (odin-replace-with-formatted buffer)
+  (multiple-value-bind (successp error-message) (replace-with-formatted buffer)
     (unless successp
       (editor-error "odinfmt failed: ~A" error-message))
     (message "Formatted buffer with odinfmt.")))
 
 (define-command odin-format-buffer (buffer) ((current-buffer))
   "Format BUFFER with odinfmt, keeping the cursor on its current line."
-  (odin-format buffer))
+  (reformat-buffer buffer))
 
 ;;; Syntax Highlighting
 
@@ -213,7 +213,7 @@ Returns true on success, or NIL and a message describing the failure."
         (list :sequence boundary alternation boundary)
         alternation)))
 
-(defun odin-skip-block-comment (point)
+(defun skip-block-comment (point)
   "Move point past the block comment. In Odin block comments can nest."
   (character-offset point 2)
   (loop :with depth := 1
@@ -232,7 +232,7 @@ Returns true on success, or NIL and a message describing the failure."
             ;; Comments.
             (make-tm-match "/\\*"
                            :name 'syntax-comment-attribute
-                           :move-action #'odin-skip-block-comment)
+                           :move-action #'skip-block-comment)
             (make-tm-region "//" "$" :name 'syntax-comment-attribute)
             ;; Raw strings.
             (make-tm-region "`" "`" :name 'syntax-string-attribute)

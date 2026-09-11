@@ -1,5 +1,9 @@
 (in-package :lem-core)
 
+(defvar *config-file-name* "settings.sexp")
+(defvar *legacy-config-file-name* "config.lisp")
+(defvar *using-legacy-config-file-name* nil)
+
 (defun lem-home ()
   (let ((xdg-lem (uiop:xdg-config-home "lem/"))
 	(dot-lem (merge-pathnames ".lem/" (user-homedir-pathname))))
@@ -11,10 +15,41 @@
   (merge-pathnames "logs/" (lem-home)))
 
 (defun config-pathname ()
-  (merge-pathnames "config.lisp" (lem-home)))
+  (merge-pathnames *config-file-name* (lem-home)))
+
+(defun legacy-config-pathname ()
+  (merge-pathnames *legacy-config-file-name* (lem-home)))
+
+(defun use-legacy-config-file-p ()
+  "Returns t if legacy-config-file-name exists but config-file-name does not"
+  (let ((pathname (config-pathname))
+        (legacy-pathname (legacy-config-pathname)))
+    (and (uiop:file-exists-p legacy-pathname)
+         (not (uiop:file-exists-p pathname)))))
 
 (defun ensure-config-pathname ()
-  (ensure-directories-exist (config-pathname)))
+  (let ((pathname (config-pathname))
+        (legacy-pathname (legacy-config-pathname))
+        (ensure-directories-exist pathname))
+    (if (use-legacy-config-file-p) legacy-pathname pathname)))
+
+(defun attempt-automigrate-config-file ()
+  (let ((new-name (config-pathname))
+        (old-name (legacy-config-pathname)))
+
+    (when (and (uiop:file-exists-p old-name)
+               (prompt-for-y-or-n-p (format nil "Rename legacy '~a' to '~a'?" *legacy-config-file-name* *config-file-name*)))
+
+      ;; Ensure we don't overwrite any data
+      (when (uiop:file-exists-p new-name)
+        (with-open-file (fp new-name)
+          (when (not (zerop (file-length fp)))
+            (editor-error "Cannot rename '~a' to '~a' as '~a' already exists and it is not an empty file"
+                              *legacy-config-file-name* *config-file-name* *config-file-name*)
+            (return-from attempt-automigrate-config-file))))
+
+           
+      (rename-file old-name new-name))))
 
 (defun config-plist ()
   (let ((pathname (ensure-config-pathname)))

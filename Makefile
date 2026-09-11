@@ -143,6 +143,7 @@ lint:
 	.qlot/bin/sblint extensions/markdown-mode/lem-markdown-mode.asd
 	.qlot/bin/sblint extensions/nim-mode/lem-nim-mode.asd
 	.qlot/bin/sblint extensions/ocaml-mode/lem-ocaml-mode.asd
+	.qlot/bin/sblint extensions/odin-mode/lem-odin-mode.asd
 	.qlot/bin/sblint extensions/paredit-mode/lem-paredit-mode.asd
 	.qlot/bin/sblint extensions/patch-mode/lem-patch-mode.asd
 	.qlot/bin/sblint extensions/posix-shell-mode/lem-posix-shell-mode.asd

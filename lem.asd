@@ -259,6 +259,7 @@
                "lem-kotlin-mode"
                "lem-paredit-mode"
                "lem-nim-mode"
+               "lem-odin-mode"
                #-clasp
                "lem-scheme-mode"
                "lem-clojure-mode"

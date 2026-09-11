@@ -2,7 +2,6 @@
 
 (defvar *config-file-name* "settings.sexp")
 (defvar *legacy-config-file-name* "config.lisp")
-(defvar *using-legacy-config-file-name* nil)
 
 (defun lem-home ()
   (let ((xdg-lem (uiop:xdg-config-home "lem/"))

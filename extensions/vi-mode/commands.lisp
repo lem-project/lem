@@ -429,7 +429,7 @@ Move the cursor to the first non-blank character of the line."
                                 (char= (character-at end -1) #\Newline)))
         (column-start (point-column start))
         (column-end (point-column end)))
-    (delete-region start end :type type)
+    (delete-vi-region start end :type type)
     (when (and (eq type :line)
                (not ends-with-newline)
                (not (= (position-at-point start) 1)))

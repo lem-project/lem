@@ -27,7 +27,7 @@
 
 (defmethod check-marked-using-global-mode ((global-mode emacs-mode) buffer)
   (unless (buffer-mark buffer)
-    (editor-error "Not mark in this buffer")))
+    (editor-error "No region is active in this buffer")))
 
 (defun check-marked ()
   (check-marked-using-global-mode (current-global-mode) (current-buffer)))

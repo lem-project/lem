@@ -10,7 +10,7 @@
 (define-key *ctrl-h-keymap* "b" 'describe-bindings)
 (define-key *ctrl-h-keymap* "m" 'describe-mode)
 (define-key *ctrl-h-keymap* "a" 'apropos-command)
-(define-key *ctrl-h-keymap* "v" 'apropos-variable)
+(define-key *ctrl-h-keymap* "v" 'describe-lem-variable)
 ;; TODO add describe-function command for "f"
 
 (define-key *emacs-help-mode-keymap* "C-h" *ctrl-h-keymap*)

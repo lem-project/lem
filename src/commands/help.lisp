@@ -5,7 +5,7 @@
            :describe-mode
            :apropos-command
            :describe-command
-           :describe-variable
+           :describe-lem-variable
            :lem-version
            :list-modes
            :describe-all-modes
@@ -18,10 +18,14 @@
 
 (declaim (type (member nil :buffer :popup :message)
                *describe-output-type-override*))
-(defvar *describe-output-type-override* nil
+(defvar *documentation-output-style* nil
   "When non nil, describe commands will always
-   send their information to this type of output.
-   Acceptable values: (nil :buffer :popup :message) ")
+   send their information to this type of output, 
+   allowing the user to, for example, always output
+   documentation descriptions to a full buffer, rather
+   then just a temporary message or popup.
+
+   Acceptable values: (nil :buffer :popup :message)")
 
 (defun call-with-describe-output-stream (requested-output-type buffer-name function)
   (let ((chosen-output-type (or *describe-output-type-override* requested-output-type)))
@@ -205,7 +209,7 @@
   
 
 
-(define-command describe-variable () ()
+(define-command describe-lem-variable () ()
   "Describe a lem variable who's name matches a given string."
   (let* ((all-lem-variables (list-all-lem-variables))
          (str (prompt-for-string

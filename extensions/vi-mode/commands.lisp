@@ -198,16 +198,19 @@
 
 (define-command vi-forward-char (&optional (n 1)) (:universal)
   (let* ((p (current-point))
-         (max-offset (- (length (line-string p))
-                        (point-charpos p))))
+         (max-offset (with-point ((e p))
+                       (visual-line-end e)
+                       (count-characters p e))))
     (character-offset p (min n max-offset))))
 
 (define-command vi-backward-char (&optional (n 1)) (:universal)
   (let ((p (current-point)))
-    (dotimes (_ n)
-      (if (bolp p)
-          (return)
-          (character-offset p -1)))))
+    (with-point ((bol p))
+      (visual-line-beginning bol)
+      (dotimes (_ n)
+        (if (point<= p bol)
+            (return)
+            (character-offset p -1))))))
 
 (define-motion vi-next-line (&optional (n 1)) (:universal)
     (:type :line)
@@ -309,7 +312,7 @@
 
 (define-command vi-move-to-beginning-of-line () ()
   (with-point ((start (current-point)))
-    (line-start start)
+    (visual-line-beginning start)
     (or (text-property-at (current-point) :field -1)
         (previous-single-property-change (current-point)
                                          :field
@@ -318,7 +321,7 @@
 
 (define-command vi-move-to-end-of-line (&optional (n 1)) (:universal)
   (vi-line n)
-  (line-end (current-point)))
+  (visual-line-end (current-point)))
 
 (define-command vi-move-to-last-nonblank () ()
   (vi-move-to-end-of-line)

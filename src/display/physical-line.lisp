@@ -536,6 +536,7 @@ over the top-level spine and tolerant of improper (dotted) lists."
    (logical-line-end-of-line-cursor-attribute logical-line)
    (logical-line-extend-to-end logical-line)
    (logical-line-line-end-overlay logical-line)
+   (logical-line-virtual-items logical-line)
    scroll-start
    left-side-width))
 

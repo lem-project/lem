@@ -240,7 +240,9 @@ point is kept for manual/REPL use and tests."
 (defun create (&key (rows (alexandria:required-argument :rows))
                     (cols (alexandria:required-argument :cols))
                     (buffer (alexandria:required-argument :buffer))
-                    (directory (alexandria:required-argument :directory)))
+                    (directory (alexandria:required-argument :directory))
+                    (program nil)
+                    (argv nil))
   (declare (type (string) directory)
            (type (integer) rows)
            (type (integer) cols))
@@ -248,7 +250,9 @@ point is kept for manual/REPL use and tests."
          (terminal
            (make-instance 'terminal
                           :id id
-                          :viscus (ffi::terminal-new directory id rows cols)
+                          :viscus (ffi::terminal-new directory id rows cols
+                                                     :program program
+                                                     :argv argv)
                           :buffer buffer
                           :rows rows
                           :cols cols)))

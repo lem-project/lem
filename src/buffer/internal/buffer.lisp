@@ -224,7 +224,7 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
       (namestring (uiop:getcwd))))
 
 (defun (setf buffer-directory) (directory &optional (buffer (current-buffer)))
-  (let ((result (uiop:directory-exists-p directory)))
+  (let ((result (virtual-directory-exists-p directory)))
     (unless result
       (error 'directory-does-not-exist :directory directory))
     (setf (buffer-%directory buffer)

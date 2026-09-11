@@ -192,6 +192,9 @@
   (:light :foreground nil :background "#eedc82")
   (:dark :foreground nil :background "blue"))
 
+(define-attribute fold-attribute
+  (t :foreground :base04))
+
 (define-attribute modeline
   (t :bold t :background "#404040" :foreground "white"))
 

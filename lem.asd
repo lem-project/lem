@@ -149,6 +149,13 @@
 
                (:file "color-theme")
 
+               (:module "display"
+                :serial t
+                :components ((:file "base")
+                             (:file "char-type")
+                             (:file "logical-line")
+                             (:file "physical-line")))
+
                (:module "commands"
                 :serial t
                 :components ((:file "move")
@@ -167,13 +174,6 @@
                              (:file "other" :depends-on ("file"))
                              (:file "frame")
                              #+sbcl (:file "sprof")))
-
-               (:module "display"
-                :serial t
-                :components ((:file "base")
-                             (:file "char-type")
-                             (:file "logical-line")
-                             (:file "physical-line")))
 
                (:file "external-packages")
 
@@ -252,6 +252,7 @@
                "lem-html-mode"
                "lem-vue-mode"
                "lem-typescript-mode"
+               "lem-typst-mode"
                "lem-json-mode"
                "lem-rust-mode"
                "lem-zig-mode"
@@ -264,6 +265,7 @@
 
                "lem-patch-mode"
                "lem-toml-mode"
+
                "lem-yaml-mode"
                "lem-review-mode"
                "lem-asciidoc-mode"
@@ -293,6 +295,7 @@
                "lem-lua-mode"
                #-os-windows "lem-terminal"
                "lem-legit"
+               "lem-tutor"
                "lem-dashboard"
                "lem-copilot"
                "lem-claude-code"
@@ -305,7 +308,8 @@
                "lem-git-gutter"
                "lem-skk-mode"
                "lem-emacs-help-mode"
-               "lem-display-time-mode"))
+               "lem-display-time-mode"
+               "lem-tramp"))
 
 (defsystem "lem"
   :version "2.3.0"
@@ -318,4 +322,5 @@
                #+(and os-unix (not os-macosx)) ; workaround: because (adf:make :lem) fails
                "lem-ncurses")
   :pathname "src"
-  :components ((:file "macosx" :if-feature :os-macosx)))
+  :components ((:file "macosx" :if-feature :os-macosx)
+               (:file "windows" :if-feature :os-windows)))

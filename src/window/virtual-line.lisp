@@ -95,9 +95,30 @@ next line because it is at the end of width."
                                        #'inc)))
       offset)))
 
+(defun count-hidden-lines (start-point end-point)
+  "Number of hidden buffer lines between START-POINT and END-POINT."
+  (when (point< end-point start-point)
+    (rotatef start-point end-point))
+  (with-point ((p start-point)
+               (goal end-point))
+    (line-start p)
+    (line-start goal)
+    (loop :with count := 0
+          :until (same-line-p p goal)
+          :do (unless (line-offset p 1)
+                (return count))
+              (when (line-continuation-p p)
+                (incf count))
+          :finally (return count))))
+
 (defun window-cursor-y-not-wrapping (window)
-  (count-lines (window-buffer-point window)
-               (window-view-point window)))
+  "Number of screen rows between the view point and the cursor.
+excludes lines hidden by overlays with :invisible property because those lines dont occupy any
+vertical space."
+  (let ((view-point (window-view-point window))
+        (buffer-point (window-buffer-point window)))
+    (- (count-lines buffer-point view-point)
+       (count-hidden-lines view-point buffer-point))))
 
 (defun window-cursor-y (window)
   (if (point< (window-buffer-point window)

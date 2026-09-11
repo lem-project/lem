@@ -4,6 +4,7 @@
            :find-file-executor
            :execute-find-file
            :find-file
+           :open-init-file
            :find-file-recursively
            :read-file
            :add-newline-at-eof-on-writing-file
@@ -65,7 +66,7 @@
 
 (defun directory-for-file-or-lose (filename)
   (let ((directory (directory-namestring filename)))
-    (unless (or (uiop:directory-exists-p directory)
+    (unless (or (virtual-directory-exists-p directory)
                 (maybe-create-directory directory))
       (error 'editor-abort))
     directory))
@@ -105,6 +106,10 @@
                                           pathname)))
         (when (bufferp buffer)
           (switch-to-buffer buffer t nil))))))
+
+(define-command open-init-file () ()
+  "Opens the lem init file"
+  (find-file (lem-core:get-preferred-init-file-path)))
 
 (defmethod execute-find-file :before (executor mode pathname)
   (directory-for-file-or-lose pathname))

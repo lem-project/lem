@@ -34,6 +34,11 @@ NIL to append it to the key sequence normally.")
     :initform nil
     :documentation "extra metadata that a prefix may hold.")))
 
+(defmethod print-object ((object prefix) stream)
+  (print-unreadable-object (object stream :type t)
+    (when (slot-boundp object 'key)
+      (format stream ":KEY \"~a\"" (slot-value object 'key)))))
+
 (defgeneric prefix-key (prefix)
   (:method ((prefix prefix))
    (slot-value prefix 'key)))

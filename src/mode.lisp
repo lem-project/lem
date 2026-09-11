@@ -277,7 +277,12 @@
 (defconstant +active-modes-class-name+ '%active-modes-class)
 
 (defun buffer-mode-class-name (buffer)
-  (alexandria:symbolicate +active-modes-class-name+ '- (buffer-name buffer)))
+  ;; uninterned on purpose: interning a fresh symbol takes the package graph
+  ;; lock, and this runs on the editor thread during redisplay, which deadlocks
+  ;; when another thread holds that lock while waiting on the editor (micros
+  ;; parked in sldb-loop after a package-lock violation raised while reading).
+  ;; nothing looks the class up by name. the instance is cached per buffer.
+  (gensym (format nil "~A-~A-" +active-modes-class-name+ (buffer-name buffer))))
 
 (defun buffer-active-modes-class-cache (buffer)
   (buffer-value buffer 'mode-class-cache))

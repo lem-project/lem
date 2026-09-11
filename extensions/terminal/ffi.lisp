@@ -93,13 +93,19 @@
   (cb_sb_pushline :pointer)
   (cb_sb_popline :pointer))
 
-(defun terminal-new (directory id rows cols)
+(defun terminal-new (directory id rows cols &key program argv)
+  "Create a new terminal PTY running PROGRAM with ARGV.
+When PROGRAM/ARGV are not provided, defaults to the user's shell started
+in DIRECTORY (via 'cd <directory>; <shell>')."
   (let* ((shell (or (uiop:getenv "SHELL") "/bin/bash"))
-         (argv (list shell "-c" (concatenate 'string "cd " directory "; " shell))))
+         (program (or program shell))
+         (argv (or argv
+                   (list shell "-c"
+                         (concatenate 'string "cd " directory "; " shell)))))
     (%terminal-new id
                    rows
                    cols
-                   shell
+                   program
                    argv
                    (cffi:callback cb-damage)
                    (cffi:callback cb-moverect)

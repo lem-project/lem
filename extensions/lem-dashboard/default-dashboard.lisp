@@ -8,7 +8,31 @@
                                     "(setf productivity 'high)"
                                     "<M-x> load-library <RET> tetris"
                                     "Lem Editor Modules? Lisp EMacs? Lem's Not Emacs?"
-                                    "(cons 'fun 'programming)"))
+                                    "(cons 'fun 'programming)"
+                                    "Update Instance for Redefined Class"
+                                    "[L]ots of [I]rritating [S]uperfluous [P]arenthesis"
+                                    "(♡ (I) (Lisp))"
+                                    "Made with secret alien technology!"
+                                    "A monad is just a monoid in the category of endofunctors."
+                                    "Rest in Peace Dr. John McCarthy, 1927-2011"
+                                    "(> (SExpr) (XML)) -> t"
+                                    "I’d just like to interject for a moment"
+                                    "Ed, man! !man ed"
+                                    "Licensed under MIT"
+                                    "Common Lisp: Standardized Since 1994!"
+                                    "(hackable-p 'lem) -> t"
+                                    "Written in the Programmable Programming Language!"
+                                    "As Seen On IRC!"
+                                    "There are 10 kinds of people, those who understand binary and those who don't."
+                                    "Turing Complete!"
+                                    "(print \"Hello World\")"
+                                    "Technically Correct!"
+                                    "(eq 'p 'np)?"
+                                    "NP Complete!"
+                                    "(tagbody 10 (print :hello) (sleep 1) 20 (go 10))"
+                                    "Over 120 Contributors!"
+                                    "Symbolic!"
+                                    "Alien Technology Inside!"))
 
 (defvar *default-splash* '("
  ----------------------- 
@@ -54,8 +78,18 @@
                                :file-count file-count
                                :bottom-margin 1)
                 (make-instance 'dashboard-command
+                               :display-text "⚒ Tutorial (t)"
+                               :action-command 'lem-tutor:tutorial
+                               :item-attribute 'document-header2-attribute
+                               :bottom-margin 1)
+                (make-instance 'dashboard-command
                                :display-text " New Lisp Scratch Buffer (l)"
                                :action-command 'lem-lisp-mode:lisp-scratch
+                               :item-attribute 'document-header2-attribute
+                               :bottom-margin 1)
+                (make-instance 'dashboard-command
+                               :display-text "⚒ Open Lem Init File (i)"
+                               :action-command 'lem-core/commands/file:open-init-file
                                :item-attribute 'document-header2-attribute
                                :bottom-margin 2))))
     (unless hide-links
@@ -82,5 +116,7 @@
 (define-key *dashboard-mode-keymap* "r" 'dashboard-move-to-recent-projects)
 (define-key *dashboard-mode-keymap* "f" 'dashboard-move-to-recent-files)
 (define-key *dashboard-mode-keymap* "l" 'lem-lisp-mode/internal:lisp-scratch)
+(define-key *dashboard-mode-keymap* "t" 'lem-tutor:tutorial)
+(define-key *dashboard-mode-keymap* "i" 'lem-core/commands/file:open-init-file)
 
 (set-default-dashboard)

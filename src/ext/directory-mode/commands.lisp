@@ -315,7 +315,7 @@ With prefix argument ARG, unmark all those files."
 
     ;; Follow file name.
     (when (and path (str:non-blank-string-p (file-namestring path)))
-      (search-filename-and-recenter (file-namestring path)))))
+      (search-filename-and-recenter (display-name path)))))
 
 (define-command make-directory (filename) ((:new-file "Make directory: "))
   (setf filename (uiop:ensure-directory-pathname filename))
@@ -333,8 +333,7 @@ With prefix argument ARG, unmark all those files."
       (t
        (switch-to-buffer
         (find-file-buffer (lem-core/commands/file::directory-for-file-or-lose (buffer-directory))))
-       (let ((filename (file-namestring fullpath)))
-         (search-filename-and-recenter (file-namestring filename)))))))
+       (search-filename-and-recenter (display-name fullpath))))))
 
 (define-command directory-mode-kill-lines () ()
   "Delete the marked lines from the directory-mode buffer.

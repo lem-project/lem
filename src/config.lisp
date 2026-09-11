@@ -27,17 +27,18 @@
          (not (uiop:file-exists-p pathname)))))
 
 (defun ensure-config-pathname ()
-  (let ((pathname (config-pathname))
-        (legacy-pathname (legacy-config-pathname))
-        (ensure-directories-exist pathname))
-    (if (use-legacy-config-file-p) legacy-pathname pathname)))
-
+  (let ((pathname (config-pathname)))
+    (ensure-directories-exist pathname)))
+ 
 (defun attempt-automigrate-config-file ()
   (let ((new-name (config-pathname))
         (old-name (legacy-config-pathname)))
 
     (when (and (uiop:file-exists-p old-name)
                (prompt-for-y-or-n-p (format nil "Rename legacy '~a' to '~a'?" *legacy-config-file-name* *config-file-name*)))
+
+      ;; Redraw display is needed because otherwise the prompt doesn't disappear
+      (redraw-display)
 
       ;; Ensure we don't overwrite any data
       (when (uiop:file-exists-p new-name)
@@ -47,11 +48,12 @@
                               *legacy-config-file-name* *config-file-name* *config-file-name*)
             (return-from attempt-automigrate-config-file))))
 
-           
       (rename-file old-name new-name))))
 
 (defun config-plist ()
   (let ((pathname (ensure-config-pathname)))
+    (when (use-legacy-config-file-p) 
+      (setf pathname (legacy-config-pathname)))
     (if (uiop:file-exists-p pathname)
         (ignore-errors (uiop:read-file-form pathname))
         '())))

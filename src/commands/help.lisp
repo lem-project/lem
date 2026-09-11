@@ -9,7 +9,7 @@
            :lem-version
            :list-modes
            :describe-all-modes
-           :*describe-output-type-override*)
+           :*documentation-output-style*)
   #+sbcl
   (:lock t))
 (in-package :lem-core/commands/help)
@@ -17,7 +17,7 @@
 (define-key *global-keymap* "C-x ?" 'describe-key)
 
 (declaim (type (member nil :buffer :popup :message)
-               *describe-output-type-override*))
+               *documentation-output-style*))
 (defvar *documentation-output-style* nil
   "When non nil, describe commands will always
    send their information to this type of output, 
@@ -28,7 +28,7 @@
    Acceptable values: (nil :buffer :popup :message)")
 
 (defun call-with-describe-output-stream (requested-output-type buffer-name function)
-  (let ((chosen-output-type (or *describe-output-type-override* requested-output-type)))
+  (let ((chosen-output-type (or *documentation-output-style* requested-output-type)))
     (case chosen-output-type
       ((:message)
        (let ((stream (make-string-output-stream)))
@@ -47,14 +47,14 @@
              (insert-string (buffer-point output-buffer) (get-output-stream-string stream))
              (pop-to-buffer output-buffer)))))
       (otherwise
-       (editor-error "Invalid describe-output-type: ~a" chosen-output-type)))))
+       (editor-error "Invalid documentation-output-style ~a" chosen-output-type)))))
 
 (defmacro with-describe-output-stream
     ((var requested-output-type &optional (buffer-name "*Description*"))
      &body body)
   "Executes body in a lexical context where a documentation output stream called
    'var' has been established. The documentation output stream type will be either
-   a :message, a :popup, or a :buffer. If *describe-output-type-override* is set,
+   a :message, a :popup, or a :buffer. If *documentation-output-style* is set,
    then its value will override the requested-output-type, allowing the user to,
    for example, always output documentation descriptions to a full buffer, rather
    then just a temporary message or popup"

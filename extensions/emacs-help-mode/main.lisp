@@ -4,7 +4,6 @@
 
 (defvar *emacs-help-mode-keymap* (make-keymap))
 (defvar *ctrl-h-keymap* (make-keymap))
-(defvar *previous-describe-output-override* nil)
 
 (define-key *ctrl-h-keymap* "k" 'describe-key)
 (define-key *ctrl-h-keymap* "b" 'describe-bindings)
@@ -17,18 +16,14 @@
 
 (defun enable ()
   "Enables emacs help mode"
+  (when lem-core/commands/help:*documentation-output-style*
+    (lem:editor-error "Warning: Overwriting *documentation-output-style*"))
 
-  ;; TODO, figure out a more functional way to overwrite this
-  ;; variable which does not cause mutable global state
-  (setf *previous-describe-output-override*
-        lem-core/commands/help:*describe-output-type-override*)
-  (setf lem-core/commands/help:*describe-output-type-override* :buffer))
+  (setf lem-core/commands/help:*documentation-output-style* :buffer))
 
 (defun disable ()
   "Disables emacs help mode"
-  (setf lem-core/commands/help:*describe-output-type-override*
-        *previous-describe-output-override*)
-  (setf *previous-describe-output-override* nil))
+  (setf lem-core/commands/help:*documentation-output-style* nil))
 
 (define-minor-mode emacs-help-mode
     (:name "EHelp"

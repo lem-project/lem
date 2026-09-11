@@ -23,7 +23,7 @@
            :macro-register-p
            :downcase-char
            :yank-region
-           :delete-region
+           :delete-vi-region
            :paste-yank))
 (in-package :lem-vi-mode/registers)
 
@@ -244,7 +244,7 @@
           (line-number-at-point end))
        (not (member type '(:line :block)))))
 
-(defun delete-region (start end &key type)
+(defun delete-vi-region (start end &key type)
   (let ((small (small-deletion-p start end type)))
     (with-killring-context (:options (case type
                                        (:line :vi-line)

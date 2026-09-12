@@ -301,20 +301,24 @@ relayouts windows.  Called when SDL fires `:size-changed' or
 `:display-changed' for the window \u2014 i.e. the window moved to a
 monitor with a different backing scale (Retina \u2194 standard DPI).
 Unlike `notify-required-redisplay' this runs the DPI adaptation
-unconditionally, since by the time the event fires the window has
-already been rendered at least once on the previous display.
+unconditionally, since the event can arrive without a redisplay having
+been requested.  The frame-scoped half is skipped when there is no
+current frame: SDL also fires `:size-changed' when the window is
+mapped, and the event loop can pump that before the editor thread has
+run `setup-first-frame'.
 
 `update-texture' grabs the display mutex non-recursively, so it must
 be called outside the `with-renderer' block (matching the `:resized'
 event handler pattern in `on-windowevent')."
   (update-texture display)
-  (with-renderer (display)
-    #+darwin
-    (adapt-high-dpi-display-scale display)
-    #+darwin
-    (adapt-high-dpi-font-size display)
-    (run-post-display-change-hooks display)
-    (lem:update-on-display-resized)))
+  (when (lem:current-frame)
+    (with-renderer (display)
+      #+darwin
+      (adapt-high-dpi-display-scale display)
+      #+darwin
+      (adapt-high-dpi-font-size display)
+      (run-post-display-change-hooks display)
+      (lem:update-on-display-resized))))
 
 (defmethod render-fill-rect ((display display) x y width height &key color)
   (let ((x (* x (display-char-width display)))

@@ -624,7 +624,8 @@
    :make-fake-cursor
    :delete-fake-cursor
    :merge-cursor-killrings
-   :clear-cursors)
+   :clear-cursors
+   :when-real-cursor)
   ;; typeout.lisp
   (:export
    :*typeout-mode-keymap*

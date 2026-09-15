@@ -370,10 +370,12 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
          patch)))))
 
-(defun run-function (fn &key message)
+(defun run-function (fn &key message on-success)
   "Run this function and show `message` and standard output
   to the user on success as a tooltip message,
   or show the external command's error output on a popup window.
+
+  Optionally also execute the :on-success function.
 
   The function FN returns up to three values:
 
@@ -387,9 +389,16 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
       (funcall fn)
     (cond
       ((zerop exit-code)
+       ;; Show message:
        (let ((msg (str:join #\newline (remove-if #'null (list message output)))))
          (when (str:non-blank-string-p msg)
-           (message msg))))
+           (message msg)))
+       ;; Maybe execute the :on-success function:
+       (when on-success
+         (handler-case
+             (funcall on-success)
+           (error (c)
+             (pop-up-message (format nil "The command ran sucessfully, but we couldn't run its post-success function:~&~%~a" c))))))
       (t
        (when error-output
          (pop-up-message error-output))))))

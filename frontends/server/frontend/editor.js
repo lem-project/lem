@@ -284,6 +284,7 @@ class BaseSurface {
     this.editor = editor;
     this.mainDOM = null;
     this.wrapper = null;
+    this.wrapperHasBorder = false;
   }
 
   delete() {
@@ -297,8 +298,9 @@ class BaseSurface {
   setupDOM({ dom, isFloating, border, cssClassName }) {
     this.mainDOM = dom;
 
-    if (isFloating && border) {
+    if (isFloating) {
       this.wrapper = document.createElement('div');
+      this.wrapperHasBorder = Boolean(border);
       if (cssClassName) this.wrapper.className = cssClassName;
       this.wrapper.style.position = 'absolute';
       this.wrapper.style.backgroundColor = this.editor.option.background;
@@ -319,10 +321,12 @@ class BaseSurface {
     const left = (pixelX != null) ? Math.floor(x0 + pixelX) : Math.floor(x0 + x * this.editor.option.fontWidth);
     const top = (pixelY != null) ? Math.floor(y0 + pixelY) : Math.floor(y0 + y * this.editor.option.fontHeight);
     if (this.wrapper) {
-      this.wrapper.style.left = left - borderOffsetX + 'px';
-      this.wrapper.style.top = top - borderOffsetY + 'px';
-      this.mainDOM.style.left = borderOffsetX + 'px';
-      this.mainDOM.style.top = borderOffsetY + 'px';
+      const offsetX = this.wrapperHasBorder ? borderOffsetX : 0;
+      const offsetY = this.wrapperHasBorder ? borderOffsetY : 0;
+      this.wrapper.style.left = left - offsetX + 'px';
+      this.wrapper.style.top = top - offsetY + 'px';
+      this.mainDOM.style.left = offsetX + 'px';
+      this.mainDOM.style.top = offsetY + 'px';
     } else {
       this.mainDOM.style.left = left + 'px';
       this.mainDOM.style.top = top + 'px';
@@ -339,8 +343,10 @@ class BaseSurface {
     this.mainDOM.style.width = actualWidth + 'px';
     this.mainDOM.style.height = actualHeight + 'px';
     if (this.wrapper) {
-      this.wrapper.style.width = actualWidth + borderOffsetX * 2 + 'px';
-      this.wrapper.style.height = actualHeight + borderOffsetY * 2 + 'px';
+      const offsetX = this.wrapperHasBorder ? borderOffsetX : 0;
+      const offsetY = this.wrapperHasBorder ? borderOffsetY : 0;
+      this.wrapper.style.width = actualWidth + offsetX * 2 + 'px';
+      this.wrapper.style.height = actualHeight + offsetY * 2 + 'px';
     }
   }
 
@@ -887,6 +893,8 @@ class View {
       height: 1,
       editor: this.editor,
       view: this,
+      isFloating: this.kind === 'floating',
+      border: 0,
       styles: { zIndex: zindex('modeline') },
       cssClassName: 'lem-editor__mode-line',
     });

@@ -22,7 +22,7 @@ function isWideChar(c) {
   }
 }
 
-function isMacOS() {
+export function isMacOS() {
   return window.navigator.userAgent.indexOf('Mac OS X') !== -1;
 }
 

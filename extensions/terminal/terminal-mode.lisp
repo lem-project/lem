@@ -26,6 +26,16 @@
     lem-core::<mouse-event>
     lem/frame-multiplexer:frame-multiplexer-advice))
 
+(defun %remote-terminal-command (path)
+  "If PATH is a TRAMP-style remote path, return (values program argv) for
+launching a terminal on the remote host.  Returns nil for non-TRAMP paths.
+Looks up lem-tramp:tramp-terminal-command at runtime so no compile-time
+dependency on the TRAMP extension is needed."
+  (let* ((pkg (find-package :lem-tramp))
+         (fn (and pkg (find-symbol "TRAMP-TERMINAL-COMMAND" pkg))))
+    (when fn
+      (funcall (symbol-function fn) path))))
+
 (define-major-mode terminal-mode ()
     (:name "Terminal"
      :keymap *terminal-mode-keymap*)
@@ -81,14 +91,44 @@
     (resize-terminal (buffer-terminal buffer) window)
     (setf (current-window) window)))
 
+(defun create-terminal-with-command (program argv &key (name "*Terminal*"))
+  "Create a terminal buffer running PROGRAM with ARGV (a list of strings).
+Unlike `create-terminal', this launches an arbitrary command instead of the
+user's shell started in a directory."
+  (declare (type (string) program))
+  (let* ((buffer (make-buffer (unique-buffer-name name) :enable-undo-p nil))
+         (terminal (terminal:create :cols 80 :rows 24 :buffer buffer
+                                    :directory ""
+                                    :program program :argv argv)))
+    (setf (buffer-terminal buffer) terminal)
+    (change-buffer-mode buffer 'terminal-mode)
+    (let ((window (pop-to-buffer buffer)))
+      (resize-terminal (buffer-terminal buffer) window)
+      (setf (current-window) window))))
+
 (define-command terminal (always-create-terminal-p) (:universal-nil)
-  (labels ((new-terminal ()
-             (create-terminal (buffer-directory (current-buffer)))))
-    (if always-create-terminal-p
-        (new-terminal)
-        (alexandria:if-let (buffer (terminal:find-terminal-buffer))
-          (setf (current-window) (pop-to-buffer buffer))
-          (new-terminal)))))
+  "Open a terminal buffer.  When the current buffer visits a TRAMP path
+\(e.g. /sudo::/etc or /ssh:user@host:/var/log), the terminal is opened
+on the remote host with appropriate privileges.
+
+With a universal argument, always create a new terminal buffer."
+  (let* ((buf (current-buffer))
+         ;; Check both buffer-filename (file buffers) and buffer-directory
+         ;; (directory-mode buffers) for a potential TRAMP path.
+         (path (or (buffer-filename buf) (buffer-directory buf))))
+    (multiple-value-bind (program argv)
+        (%remote-terminal-command path)
+      (cond
+        ;; TRAMP/remote path: always create a dedicated terminal
+        ((and program argv)
+         (create-terminal-with-command program argv))
+        ;; Local: reuse or create
+        (always-create-terminal-p
+         (create-terminal (buffer-directory buf)))
+        (t
+         (alexandria:if-let (buffer (terminal:find-terminal-buffer))
+           (setf (current-window) (pop-to-buffer buffer))
+           (create-terminal (buffer-directory buf))))))))
 
 (defun get-current-terminal ()
   (buffer-terminal (current-buffer)))

@@ -3,7 +3,7 @@
                "cl-charms"
                "cl-setlocale"
                "lem/core"
-               "lem/extensions")
+               (:feature (:not :lem-minimal-build) "lem/extensions"))
   :serial t
   :components (#+pdcurses(:file "cl-charms-pdcurseswin32")
                (:file "config")

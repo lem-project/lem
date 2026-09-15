@@ -36,7 +36,7 @@
            :line-substring
            :insert-string
            :insert-newline
-           :delete-region
+           :delete-line-region
            :merge-with-next-line))
 (in-package :lem/buffer/line)
 
@@ -419,7 +419,7 @@ call it from code that participates in normal editing.")
     (let ((next (make-line line (line-next line) after-string)))
       (line-property-insert-newline line next position))))
 
-(defun delete-region (line &key start end)
+(defun delete-line-region (line &key start end)
   (line-delete-property-region line start end)
   (set-line-string (concatenate 'string
                                 (line-substring line :start 0 :end start)

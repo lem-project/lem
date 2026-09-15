@@ -13,6 +13,7 @@
                "lem-wat-mode"
                "lem-nix-mode"
                "lem-clojure-mode"
+               "lem-typst-mode"
                "cl-ansi-text"
                "trivial-package-local-nicknames"
                "rove"
@@ -72,6 +73,7 @@
                (:file "wat-mode")
                (:file "nix-mode")
                (:file "clojure-mode")
+               (:file "typst-mode")
                (:file "completion")
                (:file "command-line-arguments")
                (:file "window")

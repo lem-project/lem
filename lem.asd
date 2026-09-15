@@ -252,18 +252,21 @@
                "lem-html-mode"
                "lem-vue-mode"
                "lem-typescript-mode"
+               "lem-typst-mode"
                "lem-json-mode"
                "lem-rust-mode"
                "lem-zig-mode"
                "lem-kotlin-mode"
                "lem-paredit-mode"
                "lem-nim-mode"
+               "lem-odin-mode"
                #-clasp
                "lem-scheme-mode"
                "lem-clojure-mode"
 
                "lem-patch-mode"
                "lem-toml-mode"
+
                "lem-yaml-mode"
                "lem-review-mode"
                "lem-asciidoc-mode"
@@ -305,7 +308,8 @@
                "lem-tree-sitter"
                "lem-git-gutter"
                "lem-skk-mode"
-               "lem-display-time-mode"))
+               "lem-display-time-mode"
+               "lem-tramp"))
 
 (defsystem "lem"
   :version "2.3.0"

@@ -12,6 +12,8 @@
                              (:file "legit-rebase")
                              (:file "legit-commit")
                              (:file "legit-utils")
-                             (:file "legit-browse")))
+                             (:file "legit-browse")
+                             (:file "legit-clone"))
+                )
                (:module "scripts"
                 :components ((:static-file "dumbrebaseeditor.sh")))))

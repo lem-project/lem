@@ -1,20 +1,40 @@
+
 (defpackage :lem-dockerfile-mode
   (:use :cl :lem :lem/language-mode :lem/language-mode-tools)
   (:export :*dockerfile-mode-hook*
-           :dockerfile-mode
+   :dockerfile-mode
            :*dockerfile-syntax-table*
-           :*dockerfile-mode-keymap*))
+   :*dockerfile-mode-keymap*))
 
 (in-package :lem-dockerfile-mode)
 
 
 (defparameter *docker-keywords*
-   '("FROM" "RUN" "CMD" "LABEL" "MAINTAINER" "EXPOSE" "ENV" "ADD" "COPY"
-                              "ENTRYPOINT" "VOLUME" "USER" "WORKDIR" "ARG" "ONBUILD" "STOPSIGNAL"
-                              "HEALTHCHECK" "SHELL" "AS" "CROSS_BUILD"
-                              "from" "maintainer" "run" "cmd" "expose" "env" "arg"
-                              "add" "copy" "entrypoint" "volume" "user" "workdir" "onbuild"
-                              "label" "stopsignal" "shell" "healthcheck" "as" "cross_build" ))
+  '("FROM" "RUN" "CMD" "LABEL" "MAINTAINER" "EXPOSE" "ENV" "ADD" "COPY"
+    "ENTRYPOINT" "VOLUME" "USER" "WORKDIR" "ARG" "ONBUILD" "STOPSIGNAL"
+    "HEALTHCHECK" "SHELL" "AS" "CROSS_BUILD"
+    "from" "maintainer" "run" "cmd" "expose" "env" "arg"
+    "add" "copy" "entrypoint" "volume" "user" "workdir" "onbuild"
+    "label" "stopsignal" "shell" "healthcheck" "as" "cross_build" ))
+
+
+(defvar *dockerfile-syntax-table*
+  (let ((table (make-syntax-table
+                :space-chars '(#\space #\tab #\newline)
+                :symbol-chars '(#\_ #\- #\$ #\/ #\. #\: #\= #\@)
+                :paren-pairs '((#\( . #\))
+                               (#\[ . #\])
+                               (#\{ . #\}))
+                :string-quote-chars '(#\" #\')
+                :escape-chars '(#\\)
+                :expr-prefix-chars '(#\$)
+                :line-comment-string "#"
+                :block-comment-pairs nil))
+        (tmlanguage (make-tmlanguage-dockerfile)))
+    (set-syntax-parser table tmlanguage)
+    table)
+  "Syntax table for Dockerfile mode.")
+
 
 (defun tokens (boundary strings)
   "Create a regex alternation pattern from STRINGS, optionally wrapped with BOUNDARY."
@@ -52,39 +72,22 @@
             ;; line continuation
             (make-tm-match "\\\\$"
                            :name 'syntax-escape-attribute))))
-            
 
-       
+
+
     (make-tmlanguage :patterns patterns)))
 
 
-(defvar *dockerfile-syntax-table*
-  (let ((table (make-syntax-table
-                :space-chars '(#\space #\tab #\newline)
-                :symbol-chars '(#\_ #\- #\$ #\/ #\. #\: #\= #\@)
-                :paren-pairs '((#\( . #\))
-                               (#\[ . #\])
-                               (#\{ . #\}))
-                :string-quote-chars '(#\" #\')
-                :escape-chars '(#\\)
-                :expr-prefix-chars '(#\$)
-                :line-comment-string "#"
-                :block-comment-pairs nil))
-        (tmlanguage (make-tmlanguage-dockerfile)))
-    (set-syntax-parser table tmlanguage)
-    table)
-  "Syntax table for Dockerfile mode.")
-
 
 (defun tree-sitter-query-path ()
-    "Return the path to the tree-sitter highlight query for dockerfile."
-    (asdf:system-relative-pathname :lem-dockerfile-mode "tree-sitter/highlights.scm"))
+  "Return the path to the tree-sitter highlight query for dockerfile."
+  (asdf:system-relative-pathname :lem-dockerfile-mode "tree-sitter/highlights.scm"))
 
 (define-major-mode dockerfile-mode language-mode
-    (:name "Dockerfile"
-     :keymap *dockerfile-mode-keymap*
-     :syntax-table *dockerfile-syntax-table*
-     :mode-hook *dockerfile-mode-hook*)
+  (:name "Dockerfile"
+   :keymap *dockerfile-mode-keymap*
+   :syntax-table *dockerfile-syntax-table*
+   :mode-hook *dockerfile-mode-hook*)
   "Major mode for writing/modifying dockerfiles"
   (let ((query-path (tree-sitter-query-path)))
     (when (and query-path (probe-file query-path))
@@ -101,7 +104,7 @@
 
 (define-file-type ("dockerfile" "Dockerfile" "containerfile") dockerfile-mode)
 (define-file-associations dockerfile-mode
-  ((:file-namestring "Dockerfile")
-   (:file-namestring "dockerfile")
-   (:file-namestring "containerfile")
-   (:file-namestring "Containerfile")))
+    ((:file-namestring "Dockerfile")
+     (:file-namestring "dockerfile")
+     (:file-namestring "containerfile")
+     (:file-namestring "Containerfile")))

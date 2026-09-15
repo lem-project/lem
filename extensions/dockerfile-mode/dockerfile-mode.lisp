@@ -17,25 +17,6 @@
     "add" "copy" "entrypoint" "volume" "user" "workdir" "onbuild"
     "label" "stopsignal" "shell" "healthcheck" "as" "cross_build" ))
 
-
-(defvar *dockerfile-syntax-table*
-  (let ((table (make-syntax-table
-                :space-chars '(#\space #\tab #\newline)
-                :symbol-chars '(#\_ #\- #\$ #\/ #\. #\: #\= #\@)
-                :paren-pairs '((#\( . #\))
-                               (#\[ . #\])
-                               (#\{ . #\}))
-                :string-quote-chars '(#\" #\')
-                :escape-chars '(#\\)
-                :expr-prefix-chars '(#\$)
-                :line-comment-string "#"
-                :block-comment-pairs nil))
-        (tmlanguage (make-tmlanguage-dockerfile)))
-    (set-syntax-parser table tmlanguage)
-    table)
-  "Syntax table for Dockerfile mode.")
-
-
 (defun tokens (boundary strings)
   "Create a regex alternation pattern from STRINGS, optionally wrapped with BOUNDARY."
   (let ((alternation
@@ -77,6 +58,23 @@
 
     (make-tmlanguage :patterns patterns)))
 
+
+(defvar *dockerfile-syntax-table*
+  (let ((table (make-syntax-table
+                :space-chars '(#\space #\tab #\newline)
+                :symbol-chars '(#\_ #\- #\$ #\/ #\. #\: #\= #\@)
+                :paren-pairs '((#\( . #\))
+                               (#\[ . #\])
+                               (#\{ . #\}))
+                :string-quote-chars '(#\" #\')
+                :escape-chars '(#\\)
+                :expr-prefix-chars '(#\$)
+                :line-comment-string "#"
+                :block-comment-pairs nil))
+        (tmlanguage (make-tmlanguage-dockerfile)))
+    (set-syntax-parser table tmlanguage)
+    table)
+  "Syntax table for Dockerfile mode.")
 
 
 (defun tree-sitter-query-path ()

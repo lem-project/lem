@@ -298,6 +298,7 @@
                "lem-legit"
                "lem-tutor"
                "lem-dashboard"
+               "lem-dockerfile-mode"
                "lem-copilot"
                "lem-claude-code"
                "lem-bookmark"

@@ -159,3 +159,5 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
                   (insert-string (buffer-point buffer) warning)
                   (insert-character (buffer-point buffer) #\newline))
                 (pop-to-buffer buffer)))))
+
+(add-hook *after-init-hook* (lambda () (send-event #'attempt-automigrate-config-file)))

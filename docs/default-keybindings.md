@@ -189,14 +189,17 @@ Supported modes include: c-mode with clang-format, go-mode with gofmt, js-mode a
 | [pipe-command](https://github.com/lem-project/lem/blob/main/src/commands/process.lisp#L45)  | C-x @        | Run a command and displays the output.                                                |
 
 ## Help
-| Command                                                                                      | Key bindings | Documentation                                                                |
-|----------------------------------------------------------------------------------------------|--------------|------------------------------------------------------------------------------|
-| [describe-key](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L15)      | C-x ?        | Tell what is the command associated to a keybinding.                         |
-| [describe-bindings](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L44) |              | Describe the bindings of the buffer's current major mode.                    |
-| [list-modes](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L66)        |              | Output all available major and minor modes.                                  |
-| [describe-mode](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L87)     |              | Show information about current major mode and enabled minor modes.           |
-| [apropos-command](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L113)  |              | Find all symbols in the running Lisp image whose names match a given string. |
-| [lem-version](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L124)      |              | Display Lem's version.                                                       |
+| Command                                                                                           | Key bindings | Documentation                                                                 |
+|---------------------------------------------------------------------------------------------------|--------------|-------------------------------------------------------------------------------|
+| [describe-key](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L65)           | C-x ?        | Tell what is the command associated to a keybinding.                          |
+| [describe-bindings](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L95)      |              | Describe the bindings of the buffer's current major mode.                     |
+| [list-modes](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L117)            |              | Output all available major and minor modes.                                   |
+| [describe-all-modes](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L138)    |              | Alias for list-modes                                                          |
+| [describe-mode](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L142)         |              | Show information about current major mode and enabled minor modes.            |
+| [apropos-command](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L168)       |              | Find all commands in the running Lisp image whose names match a given string. |
+| [describe-command](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L179)      |              | Alias for apropos-command                                                     |
+| [describe-lem-variable](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L212) |              | Describe a lem variable who's name matches a given string.                    |
+| [lem-version](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L234)           |              | Display Lem's version.                                                        |
 
 ## Font
 | Command                                                                                       | Key bindings | Documentation                                                        |

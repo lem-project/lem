@@ -20,15 +20,15 @@
   (merge-pathnames *legacy-config-file-name* (lem-home)))
 
 (defun use-legacy-config-file-p ()
-  "Returns t if legacy-config-file-name exists but config-file-name does not"
-  (let ((pathname (config-pathname))
-        (legacy-pathname (legacy-config-pathname)))
-    (and (uiop:file-exists-p legacy-pathname)
-         (not (uiop:file-exists-p pathname)))))
+  "Returns t if legacy-config-pathname exists"
+  (uiop:file-exists-p (legacy-config-pathname)))
 
 (defun ensure-config-pathname ()
   (let ((pathname (config-pathname)))
-    (ensure-directories-exist pathname)))
+    (ensure-directories-exist pathname)
+    (if (use-legacy-config-file-p)
+        (legacy-config-pathname)
+        pathname)))
  
 (defun attempt-automigrate-config-file ()
   (let ((new-name (config-pathname))
@@ -43,17 +43,14 @@
       ;; Ensure we don't overwrite any data
       (when (uiop:file-exists-p new-name)
         (with-open-file (fp new-name)
-          (when (not (zerop (file-length fp)))
-            (editor-error "Cannot rename '~a' to '~a' as '~a' already exists and it is not an empty file"
-                              *legacy-config-file-name* *config-file-name* *config-file-name*)
+          (when (and (not (zerop (file-length fp)))
+                     (not (prompt-for-y-or-n-p (format nil "~a is not an empty file, overwrite anyways?" *legacy-config-file-name*))))
             (return-from attempt-automigrate-config-file))))
 
       (rename-file old-name new-name))))
 
 (defun config-plist ()
   (let ((pathname (ensure-config-pathname)))
-    (when (use-legacy-config-file-p) 
-      (setf pathname (legacy-config-pathname)))
     (if (uiop:file-exists-p pathname)
         (ignore-errors (uiop:read-file-form pathname))
         '())))

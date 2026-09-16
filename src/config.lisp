@@ -44,8 +44,13 @@
       (when (uiop:file-exists-p new-name)
         (with-open-file (fp new-name)
           (when (and (not (zerop (file-length fp)))
-                     (not (prompt-for-y-or-n-p (format nil "~a is not an empty file, overwrite anyways?" *legacy-config-file-name*))))
+                     (not (prompt-for-y-or-n-p (format nil "~a is not an empty file, overwrite anyways?" *config-file-name*))))
+            ;; Redraw display is needed because otherwise the prompt doesn't disappear
+            (redraw-display)
             (return-from attempt-automigrate-config-file))))
+
+      ;; Redraw display is needed because otherwise the prompt doesn't disappear
+      (redraw-display)
 
       (rename-file old-name new-name))))
 

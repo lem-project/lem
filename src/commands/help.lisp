@@ -4,23 +4,74 @@
            :describe-bindings
            :describe-mode
            :apropos-command
+           :describe-command
+           :describe-lem-variable
            :lem-version
-           :list-modes)
+           :list-modes
+           :describe-all-modes
+           :*documentation-output-style*)
   #+sbcl
   (:lock t))
 (in-package :lem-core/commands/help)
 
 (define-key *global-keymap* "C-x ?" 'describe-key)
 
+(declaim (type (member nil :buffer :popup :message)
+               *documentation-output-style*))
+(defvar *documentation-output-style* nil
+  "When non nil, describe commands will always
+   send their information to this type of output, 
+   allowing the user to, for example, always output
+   documentation descriptions to a full buffer, rather
+   then just a temporary message or popup.
+
+   Acceptable values: (nil :buffer :popup :message)")
+
+(defun call-with-describe-output-stream (requested-output-type buffer-name function)
+  (let ((chosen-output-type (or *documentation-output-style* requested-output-type)))
+    (case chosen-output-type
+      ((:message)
+       (let ((stream (make-string-output-stream)))
+         (unwind-protect
+              (funcall function stream)
+           (show-message (get-output-stream-string stream)))))
+      ((:popup)
+       (with-pop-up-typeout-window (stream (make-buffer buffer-name) :erase t)
+         (funcall function stream)))
+      ((:buffer)
+       (let ((stream (make-string-output-stream)))
+         (unwind-protect
+              (funcall function stream)
+           (let ((output-buffer (make-buffer buffer-name)))
+             (erase-buffer output-buffer)
+             (insert-string (buffer-point output-buffer) (get-output-stream-string stream))
+             (pop-to-buffer output-buffer)))))
+      (otherwise
+       (editor-error "Invalid documentation-output-style ~a" chosen-output-type)))))
+
+(defmacro with-describe-output-stream
+    ((var requested-output-type &optional (buffer-name "*Description*"))
+     &body body)
+  "Executes body in a lexical context where a documentation output stream called
+   'var' has been established. The documentation output stream type will be either
+   a :message, a :popup, or a :buffer. If *documentation-output-style* is set,
+   then its value will override the requested-output-type, allowing the user to,
+   for example, always output documentation descriptions to a full buffer, rather
+   then just a temporary message or popup"
+  `(call-with-describe-output-stream ,requested-output-type ,buffer-name
+                                     (lambda (,var)
+                                       ,@body)))
+  
 (define-command describe-key () ()
   "Tell what is the command associated to a keybinding."
   (show-message "describe-key: ")
   (redraw-display)
   (let* ((kseq (read-key-sequence))
          (cmd (find-keybind kseq)))
-    (show-message (format nil "describe-key: ~a ~(~a~)"
-                          (keyseq-to-string kseq)
-                          cmd))))
+    (with-describe-output-stream (s :message)
+      (format s "describe-key: ~a ~(~a~)"
+              (keyseq-to-string kseq)
+              cmd))))
 
 (defun describe-bindings-internal (s name keymap &optional first-p)
   (unless first-p
@@ -45,7 +96,7 @@
   "Describe the bindings of the buffer's current major mode."
   (let ((buffer (current-buffer))
         (firstp t))
-    (with-pop-up-typeout-window (s (make-buffer "*bindings*") :erase t)
+    (with-describe-output-stream (s :popup "*bindings*")
       (describe-bindings-internal s
                                   (mode-name (buffer-major-mode buffer))
                                   (setf firstp (mode-keymap (buffer-major-mode buffer)))
@@ -65,7 +116,7 @@
 
 (define-command list-modes () ()
   "Output all available major and minor modes."
-  (with-pop-up-typeout-window (s (make-buffer "*all-modes*") :erase t)
+  (with-describe-output-stream (s :popup "*all-modes*")
     (let ((major-modes (major-modes))
           (minor-modes (minor-modes)))
       (labels ((is-technical-mode (mode)
@@ -84,6 +135,10 @@
         (print-modes "Major modes" major-modes)
         (print-modes "Minor modes" minor-modes)))))
 
+(define-command describe-all-modes () ()
+  "Alias for list-modes"
+  (call-command 'list-modes nil))
+
 (define-command describe-mode () ()
   "Show information about current major mode and enabled minor modes."
   (let* ((buffer (current-buffer))
@@ -93,7 +148,7 @@
                                    :when (and (mode-active-p buffer mode)
                                               (not (find mode minor-modes)))
                                    :collect mode)))
-    (with-pop-up-typeout-window (s (make-buffer "*modes*") :erase t)
+    (with-describe-output-stream (s :popup "*modes*")
       (format s "Major mode is: ~A~@[ – ~A~]~%"
               (mode-name major-mode)
               (mode-description major-mode))
@@ -111,24 +166,80 @@
                   (mode-description mode)))))))
 
 (define-command apropos-command () ()
-  "Find all symbols in the running Lisp image whose names match a given string."
+  "Find all commands in the running Lisp image whose names match a given string."
   (let ((str (prompt-for-string
               "Apropos: "
               :completion-function
               (lambda (str) (completion str (all-command-names))))))
-    (with-pop-up-typeout-window (out (make-buffer "*Apropos*") :erase t)
+    (with-describe-output-stream (out :popup "*Apropos*")
       (dolist (name (all-command-names))
         (when (search str name)
           (describe (command-name (find-command name)) out))))))
 
+(define-command describe-command () ()
+  "Alias for apropos-command"
+  (call-command 'apropos-command nil))
+
+(defun lem-symbol-p (symbol)
+  (let* ((pkg (symbol-package symbol))
+         (name (package-name pkg)))
+    (string-equal "LEM" (subseq name 0 3))))
+
+(defun lem-variable-p (symbol)
+  "Returns true if the symbol is a lem variable or an editor variable"
+  (or (lem/common/var:editor-variable-p (get symbol 'editor-variable))
+      (and (lem-symbol-p symbol)
+           (boundp symbol)
+           (not (constantp symbol)))))
+
+(defun list-all-lem-variables ()
+  "Returns a list of all strings that represent lem variables"
+  (loop
+    :for pkg :in (list-all-packages)
+    :appending 
+       (loop
+         :for sym :being :the external-symbols :of (find-package pkg)
+         :when (lem-variable-p sym)
+         :collect (string-downcase
+                   (format nil "~a:~a"
+                           (package-name (find-package pkg))
+                           (symbol-name sym))))
+    :into syms
+    :finally (return syms)))
+  
+
+
+(define-command describe-lem-variable () ()
+  "Describe a lem variable who's name matches a given string."
+  (let* ((all-lem-variables (list-all-lem-variables))
+         (str (prompt-for-string
+              "Enter Variable: "
+              :completion-function
+              (lambda (str) (completion str all-lem-variables)))))
+    (with-describe-output-stream (out :popup "*variable-description*")
+      ;; TODO get a better description than just describe
+      (let* ((sym (read-from-string str))
+             (editor-variable (get sym 'editor-variable)))
+        (cond
+          ((lem/common/var:editor-variable-p editor-variable)
+           (format
+            out
+            "~a is an EDITOR VARIABLE bound to the following value: ~%~%" sym)
+           (describe editor-variable out))
+          ((lem-variable-p sym)
+           (describe sym out))
+          (t 
+           (format out "~a does not describe any variable" sym)))))))
+
 (define-command lem-version () ()
   "Display Lem's version."
   (let ((version (get-version-string)))
-    (show-message (princ-to-string version))))
+    (with-describe-output-stream (s :message "*Version*")
+      (format s "~a" version))))
 
 (define-command help () ()
   "Show some help."
-  (with-pop-up-typeout-window (s (make-buffer "*Help*") :erase t)
+  (with-describe-output-stream (s :popup "*Help*")
     (format s "Welcome to Lem.~&")
     (format s "You are running ~a.~&" (get-version-string))
     (format s "~%")

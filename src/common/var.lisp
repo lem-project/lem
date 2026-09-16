@@ -11,6 +11,7 @@
    :variable-documentation
    :find-editor-variable
    :editor-variables
+   :editor-variable-p
    :with-global-variable-value))
 (in-package :lem/common/var)
 

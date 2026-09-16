@@ -309,6 +309,7 @@
                "lem-tree-sitter"
                "lem-git-gutter"
                "lem-skk-mode"
+               "lem-emacs-help-mode"
                "lem-display-time-mode"
                "lem-tramp"))
 

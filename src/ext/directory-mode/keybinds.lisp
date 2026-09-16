@@ -10,6 +10,16 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (sb-ext:lock-package :lem/directory-mode/keybinds))
 
+(defvar *directory-mode-sort-keymap*
+  (make-keymap)
+  "keymap for directory-mode file sort commands.")
+
+;; set :show-p to make this transient always show when its invoked
+(setf (getf (keymap-properties *directory-mode-sort-keymap*) :show-p) t)
+(define-key *directory-mode-sort-keymap* "n" 'directory-mode-sort-by-name)
+(define-key *directory-mode-sort-keymap* "t" 'directory-mode-sort-by-time)
+(define-key *directory-mode-sort-keymap* "s" 'directory-mode-sort-by-size)
+
 (define-key *global-keymap* "C-x C-j" 'find-file-directory)
 
 (define-key *directory-mode-keymap* "q" 'quit-active-window)
@@ -38,6 +48,6 @@
 (define-key *directory-mode-keymap* "C" 'directory-mode-copy-files)
 (define-key *directory-mode-keymap* "R" 'directory-mode-rename-files)
 (define-key *directory-mode-keymap* "r" 'directory-mode-rename-file)
-(define-key *directory-mode-keymap* "s" 'directory-mode-sort-files)
+(define-key *directory-mode-keymap* "s" *directory-mode-sort-keymap*)
 (define-key *directory-mode-keymap* "+" 'make-directory)
 (define-key *directory-mode-keymap* "C-k" 'directory-mode-kill-lines)

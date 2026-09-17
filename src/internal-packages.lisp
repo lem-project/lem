@@ -14,9 +14,31 @@
    :folder-object
    :icon-object
    :image-object
+   :image-object-attribute
    :image-object-height
    :image-object-image
    :image-object-width
+   :image-object-visible-width
+   :image-object-ascent
+   :image-draw-width
+   :image-draw-height
+   :object-ascent
+   :object-height
+   :object-width
+   :row-metrics-of-objects
+   :layout-row
+   :translate-row
+   :row
+   :row-top
+   :row-height
+   :row-baseline
+   :row-placements
+   :row-fill-x
+   :row-fill-color
+   :placement
+   :placement-object
+   :placement-x
+   :placement-top
    :line-end-object
    :line-end-object-offset
    :text-object
@@ -680,6 +702,7 @@
    :support-pixel-positioning-p
    :html-support-p
    :underline-color-support-p
+   :image-support-p
    :no-force-needed-p
    :set-foreground
    :set-background
@@ -819,12 +842,16 @@
    :get-font-by-name-and-style
    :get-font
    :get-mouse-position
-   :get-char-width
-   :get-char-height
+   :cell-width
+   :cell-height
+   :cell-pixel-size
+   :font-em-pixels
    :clear-to-end-of-window
    :js-eval
-   :render-line
-   :render-line-on-modeline
+   :render-row
+   :render-modeline-row
    :object-width
    :object-height
+   :object-ascent
+   :image-natural-size
    :set-frame-color))

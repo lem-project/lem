@@ -36,6 +36,7 @@ function computeFontSize(font) {
   return [
     Math.floor(textMetrics.width),
     Math.round(textMetrics.fontBoundingBoxAscent + textOffsetY + (textMetrics.emHeightDescent || 0)),
+    Math.round(textMetrics.fontBoundingBoxAscent + textOffsetY),
   ];
 }
 
@@ -80,11 +81,12 @@ class Option {
 
   setFont(fontName, fontSize) {
     const font = fontSize + 'px ' + fontName;
-    const [width, height] = computeFontSize(font);
+    const [width, height, ascent] = computeFontSize(font);
     this.fontName = fontName;
     this.fontSize = fontSize;
     this.fontWidth = width;
     this.fontHeight = height;
+    this.fontAscent = ascent;
     this.font = font;
   }
 }
@@ -315,11 +317,11 @@ class BaseSurface {
     }
   }
 
-  move(x, y, pixelX, pixelY) {
+  // every coordinate and size in this class and its subclasses use pixels as a unit (not cells)
+  move(x, y) {
     const [x0, y0] = this.editor.getDisplayRectangle();
-    // Use pixel coordinates if provided, otherwise calculate from character coordinates
-    const left = (pixelX != null) ? Math.floor(x0 + pixelX) : Math.floor(x0 + x * this.editor.option.fontWidth);
-    const top = (pixelY != null) ? Math.floor(y0 + pixelY) : Math.floor(y0 + y * this.editor.option.fontHeight);
+    const left = Math.floor(x0 + x);
+    const top = Math.floor(y0 + y);
     if (this.wrapper) {
       const offsetX = this.wrapperHasBorder ? borderOffsetX : 0;
       const offsetY = this.wrapperHasBorder ? borderOffsetY : 0;
@@ -333,25 +335,27 @@ class BaseSurface {
     }
   }
 
-  _resize(width, height, pixelWidth, pixelHeight) {
+  _resize(width, height) {
     const ratio = window.devicePixelRatio || 1;
-    // Use pixel dimensions if provided, otherwise calculate from character dimensions
-    const actualWidth = (pixelWidth != null) ? pixelWidth : width * this.editor.option.fontWidth;
-    const actualHeight = (pixelHeight != null) ? pixelHeight : height * this.editor.option.fontHeight;
-    this.mainDOM.width = actualWidth * ratio;
-    this.mainDOM.height = actualHeight * ratio;
-    this.mainDOM.style.width = actualWidth + 'px';
-    this.mainDOM.style.height = actualHeight + 'px';
+    this.mainDOM.width = width * ratio;
+    this.mainDOM.height = height * ratio;
+    this.mainDOM.style.width = width + 'px';
+    this.mainDOM.style.height = height + 'px';
     if (this.wrapper) {
       const offsetX = this.wrapperHasBorder ? borderOffsetX : 0;
       const offsetY = this.wrapperHasBorder ? borderOffsetY : 0;
-      this.wrapper.style.width = actualWidth + offsetX * 2 + 'px';
-      this.wrapper.style.height = actualHeight + offsetY * 2 + 'px';
+      this.wrapper.style.width = width + offsetX * 2 + 'px';
+      this.wrapper.style.height = height + offsetY * 2 + 'px';
     }
   }
 
+  // drawing coordinates are relative to the surface's own top-left corner.
   drawBlock(x, y, width, height, color) { }
-  drawText(x, y, text, textWidth, attribute) { }
+  drawText(x, y, text, textWidth, attribute, font, backgroundY, backgroundHeight) { }
+  drawImage(x, y, width, height, clipWidth, clipHeight, url) { }
+
+  clearImages(yStart, yEnd) { }
+  clearAllImages() { }
 
   touch() {
     return;
@@ -363,7 +367,8 @@ class BaseSurface {
 }
 
 class CanvasSurface extends BaseSurface {
-  constructor({ editor, view, x, y, width, height, styles, isFloating, border, cssClassName }) {
+  constructor({ editor, view, x, y, width, height,
+                styles, isFloating, border, cssClassName }) {
     super({ editor });
 
     const canvas = this.setupCanvas(styles);
@@ -387,44 +392,52 @@ class CanvasSurface extends BaseSurface {
     return canvas;
   }
 
-  resize(width, height, pixelWidth, pixelHeight) {
-    this._resize(width, height, pixelWidth, pixelHeight);
+  resize(width, height) {
+    this._resize(width, height);
     const ratio = window.devicePixelRatio || 1;
     const ctx = this.mainDOM.getContext('2d');
     ctx.scale(ratio, ratio);
   }
 
+  move(x, y) {
+    super.move(x, y);
+    if (this.imageEls) {
+      for (const [, entry] of this.imageEls) this.positionImage(entry);
+    }
+  }
+
+  delete() {
+    this.clearAllImages();
+    super.delete();
+  }
+
   drawBlock(x, y, width, height, color) {
-    const option = this.editor.option;
     this.drawingQueue.push(function(ctx) {
-      drawBlock({
-        ctx,
-        x: x * option.fontWidth,
-        y: y * option.fontHeight,
-        width: width * option.fontWidth,
-        height: height * option.fontHeight,
-        style: color,
-      })
+      drawBlock({ ctx, x, y, width, height, style: color })
     });
   }
 
-  drawText(x, y, text, textWidth, attribute, font) {
+  // the background is filled first, then the text over it. it covers the row the text sits on,
+  // which an image can make taller, and defaults to one line at the text's own y.
+  drawText(x, y, text, textWidth, attribute, font, backgroundY, backgroundHeight) {
     const option = this.editor.option;
+    const blockY = backgroundY == null ? y : backgroundY;
+    const blockHeight = backgroundHeight == null ? option.fontHeight : backgroundHeight;
     this.drawingQueue.push(function(ctx) {
       font = font ? `${option.fontSize}px ${font}` : option.font;
       if (!attribute) {
         drawBlock({
           ctx,
-          x: x * option.fontWidth,
-          y: y * option.fontHeight,
-          width: textWidth * option.fontWidth,
-          height: option.fontHeight,
+          x: x,
+          y: blockY,
+          width: textWidth,
+          height: blockHeight,
           style: option.background,
         });
         drawText({
           ctx,
-          x: x * option.fontWidth,
-          y: y * option.fontHeight,
+          x: x,
+          y: y,
           text: text,
           style: option.foreground,
           font: font,
@@ -448,20 +461,18 @@ class CanvasSurface extends BaseSurface {
           // when the cursor overlay blinks off.
           background = option.background;
         }
-        const gx = x * option.fontWidth;
-        const gy = y * option.fontHeight;
         drawBlock({
           ctx,
-          x: gx,
-          y: gy,
-          width: textWidth * option.fontWidth,
-          height: option.fontHeight,
+          x: x,
+          y: blockY,
+          width: textWidth,
+          height: blockHeight,
           style: background,
         });
         drawText({
           ctx,
-          x: gx,
-          y: gy,
+          x: x,
+          y: y,
           text: text,
           style: foreground,
           font: bold ? ('bold ' + font) : font,
@@ -470,15 +481,84 @@ class CanvasSurface extends BaseSurface {
         if (underline) {
           drawHorizontalLine({
             ctx,
-            x: gx,
-            y: gy + option.fontHeight - 2,
-            width: textWidth * option.fontWidth,
+            x: x,
+            y: y + option.fontHeight - 2,
+            width: textWidth,
             style: typeof (underline) === 'string' ? underline : foreground,
             lineWidth: 2
           });
         }
       }
     });
+  }
+
+  // images are rendered as DOM <img> elements on a layer above the canvas rather than into it.
+  imageBaseLeft() { return parseFloat(this.mainDOM.style.left) || 0; }
+  imageBaseTop() { return parseFloat(this.mainDOM.style.top) || 0; }
+
+  drawImage(x, y, width, height, clipWidth, clipHeight, url) {
+    if (!this.imageEls)
+      // mapping "x,y" to { el, url, x, y, width, height, clipWidth, clipHeight }
+      this.imageEls = new Map();
+    const key = x + ',' + y;
+    let entry = this.imageEls.get(key);
+    if (entry && entry.url !== url) {
+      entry.el.remove();
+      this.imageEls.delete(key);
+      entry = null;
+    }
+    if (!entry) {
+      const el = document.createElement('img');
+      el.style.position = 'absolute';
+      el.style.pointerEvents = 'none';
+      // above the surface's own canvas but below the modeline/floating windows.
+      el.style.zIndex = '1';
+      el.src = url;
+      this.mainDOM.parentNode.appendChild(el);
+      entry = { el, url };
+      this.imageEls.set(key, entry);
+    }
+    entry.x = x;
+    entry.y = y;
+    entry.width = width;
+    entry.height = height;
+    entry.clipWidth = clipWidth;
+    entry.clipHeight = clipHeight;
+    this.positionImage(entry);
+  }
+
+  positionImage(entry) {
+    entry.el.style.left = (this.imageBaseLeft() + entry.x) + 'px';
+    entry.el.style.top = (this.imageBaseTop() + entry.y) + 'px';
+    entry.el.style.width = entry.width + 'px';
+    entry.el.style.height = entry.height + 'px';
+    // show only the part the server said is visible. the element keeps its full size and
+    // clip-path hides the rest, since shrinking it would squash the picture.
+    const clipRight = entry.clipWidth == null
+          ? 0 : Math.max(0, entry.width - entry.clipWidth);
+    const clipBottom = entry.clipHeight == null
+          ? 0 : Math.max(0, entry.height - entry.clipHeight);
+    entry.el.style.clipPath = (clipRight > 0 || clipBottom > 0)
+      ? `inset(0px ${clipRight}px ${clipBottom}px 0px)`
+      : '';
+  }
+
+  // remove image elements whose vertical span intersects [yStart, yEnd).
+  clearImages(yStart, yEnd) {
+    if (!this.imageEls) return;
+    for (const [key, entry] of this.imageEls) {
+      const bottom = entry.y + (entry.height || 0);
+      if (entry.y < yEnd && bottom > yStart) {
+        entry.el.remove();
+        this.imageEls.delete(key);
+      }
+    }
+  }
+
+  clearAllImages() {
+    if (!this.imageEls) return;
+    for (const [, entry] of this.imageEls) entry.el.remove();
+    this.imageEls.clear();
   }
 
   touch() {
@@ -499,7 +579,8 @@ class CanvasSurface extends BaseSurface {
 }
 
 class HTMLSurface extends BaseSurface {
-  constructor({ editor, x, y, width, height, styles, option, isFloating, border, html }) {
+  constructor({ editor, x, y, width, height,
+                styles, option, isFloating, border, html }) {
     super({ editor });
 
     const iframe = document.createElement('iframe');
@@ -521,8 +602,8 @@ class HTMLSurface extends BaseSurface {
     this.resize(width, height);
   }
 
-  resize(width, height, pixelWidth, pixelHeight) {
-    this._resize(width, height, pixelWidth, pixelHeight);
+  resize(width, height) {
+    this._resize(width, height);
   }
 
   update(content) {
@@ -539,13 +620,14 @@ class HTMLSurface extends BaseSurface {
   }
 }
 
+// x, y and height are in pixels.
 class VerticalBorder {
   constructor({ x, y, height, option, editor }) {
     this.option = option;
     this.editor = editor;
     this.line = document.createElement('div');
     this.line.className = 'lem-editor__vertical-border';
-    this.line.style.height = height * option.fontHeight + 'px';
+    this.line.style.height = height + 'px';
     this.line.style.position = 'absolute';
     this.line.style.zIndex = zindex('vertical-border');
 
@@ -567,22 +649,23 @@ class VerticalBorder {
 
   move(x, y) {
     const [x0, y0] = this.editor.getDisplayRectangle();
-    this.line.style.left = Math.floor(x0 + x * this.option.fontWidth - this.option.fontWidth / 2) + 'px';
-    this.line.style.top = (y0 + y * this.option.fontHeight) + 'px';
+    this.line.style.left = Math.floor(x0 + x - this.option.fontWidth / 2) + 'px';
+    this.line.style.top = (y0 + y) + 'px';
   }
 
   resize(height) {
-    this.line.style.height = height * this.option.fontHeight + 'px';
+    this.line.style.height = height + 'px';
   }
 }
 
+// x, y and width are in pixels.
 class HorizontalBorder {
   constructor({ x, y, width, option, editor }) {
     this.option = option;
     this.editor = editor;
     this.line = document.createElement('div');
     this.line.className = 'lem-editor__horizontal-border';
-    this.line.style.width = width * option.fontWidth + 'px';
+    this.line.style.width = width + 'px';
     this.line.style.position = 'absolute';
     this.line.style.zIndex = zindex('horizontal-border');
 
@@ -604,12 +687,12 @@ class HorizontalBorder {
 
   move(x, y) {
     const [x0, y0] = this.editor.getDisplayRectangle();
-    this.line.style.left = (x0 + x * this.option.fontWidth) + 'px';
-    this.line.style.top = Math.floor(y0 + y * this.option.fontHeight - 4) + 'px';
+    this.line.style.left = (x0 + x) + 'px';
+    this.line.style.top = Math.floor(y0 + y - 4) + 'px';
   }
 
   resize(width) {
-    this.line.style.width = (width * this.option.fontWidth) + 'px';
+    this.line.style.width = width + 'px';
   }
 }
 
@@ -634,10 +717,6 @@ class View {
     y,
     width,
     height,
-    pixelX,
-    pixelY,
-    pixelWidth,
-    pixelHeight,
     useModeline,
     kind,
     type,
@@ -653,10 +732,6 @@ class View {
     this.y = y;
     this.width = width;
     this.height = height;
-    this.pixelX = pixelX;
-    this.pixelY = pixelY;
-    this.pixelWidth = pixelWidth;
-    this.pixelHeight = pixelHeight;
     this.useModeline = useModeline;
     this.kind = kind;
     this.type = type;
@@ -673,14 +748,15 @@ class View {
         this.leftSideBar = new VerticalBorder({
           x: x,
           y: y,
-          height: height + (useModeline ? 1 : 0),
+          height: height + (useModeline ? option.fontHeight : 0),
           option: option,
           editor: editor,
         });
         if (!useModeline) {
           this.bottomBar = new HorizontalBorder({
             x: x,
-            y: y + height - 1,
+            // along the last row of the view, not below it.
+            y: y + height - option.fontHeight,
             width: width,
             option: option,
             editor: editor,
@@ -705,11 +781,6 @@ class View {
     }
 
     this.modelineSurface = useModeline ? this.makeModelineSurface() : null;
-
-    // For floating windows with pixel coordinates, reposition using pixel coordinates
-    if (kind === 'floating' && (pixelX != null || pixelY != null)) {
-      this.move(x, y, pixelX, pixelY);
-    }
   }
 
   delete() {
@@ -725,19 +796,13 @@ class View {
     }
   }
 
-  move(x, y, pixelX, pixelY) {
+  move(x, y) {
     this.x = x;
     this.y = y;
-    this.pixelX = pixelX;
-    this.pixelY = pixelY;
 
-    this.mainSurface.move(x, y, pixelX, pixelY);
+    this.mainSurface.move(x, y);
     if (this.modelineSurface) {
-      // Calculate modeline pixel position if pixel coordinates are provided
-      const modelinePixelY = (pixelY != null && this.pixelHeight != null)
-        ? pixelY + this.pixelHeight
-        : null;
-      this.modelineSurface.move(x, y + this.height, pixelX, modelinePixelY);
+      this.modelineSurface.move(x, y + this.height);
     }
     if (this.leftSideBar) {
       this.leftSideBar.move(x, y);
@@ -747,27 +812,16 @@ class View {
     }
   }
 
-  resize(width, height, pixelWidth, pixelHeight) {
+  resize(width, height) {
     this.width = width;
     this.height = height;
-    this.pixelWidth = pixelWidth;
-    this.pixelHeight = pixelHeight;
-    this.mainSurface.resize(width, height, pixelWidth, pixelHeight);
+    this.mainSurface.resize(width, height);
     if (this.modelineSurface) {
-      // Calculate modeline pixel position if pixel coordinates are provided
-      const modelinePixelY = (this.pixelY != null && pixelHeight != null)
-        ? this.pixelY + pixelHeight
-        : null;
-      this.modelineSurface.move(
-        this.x,
-        this.y + this.height,
-        this.pixelX,
-        modelinePixelY,
-      );
-      this.modelineSurface.resize(width, 1);
+      this.modelineSurface.move(this.x, this.y + height);
+      this.modelineSurface.resize(width, this.option.fontHeight);
     }
     if (this.leftSideBar) {
-      this.leftSideBar.resize(height + (this.modelineSurface ? 1 : 0));
+      this.leftSideBar.resize(height + (this.modelineSurface ? this.option.fontHeight : 0));
     }
     if (this.bottomBar) {
       this.bottomBar.resize(width);
@@ -782,16 +836,19 @@ class View {
       this.height,
       this.option.background,
     );
+    this.mainSurface.clearImages(0, this.height);
   }
 
-  clearEol(x, y) {
+  clearEol(x, y, height) {
+    if (height == null) height = this.option.fontHeight;
     this.mainSurface.drawBlock(
       x,
       y,
       this.width - x,
-      1,
+      height,
       this.option.background,
     );
+    this.mainSurface.clearImages(y, y + height);
   }
 
   clearEob(x, y) {
@@ -802,9 +859,10 @@ class View {
       this.height - y,
       this.option.background,
     );
+    this.mainSurface.clearImages(y, this.height);
   }
 
-  print(x, y, text, textWidth, attribute, font) {
+  print(x, y, text, textWidth, attribute, font, backgroundY, backgroundHeight) {
     this.mainSurface.drawText(
       x,
       y,
@@ -812,10 +870,28 @@ class View {
       textWidth,
       attribute,
       font,
+      backgroundY,
+      backgroundHeight,
     );
   }
 
-  printToModeline(x, y, text, textWidth, attribute) {
+  // a fill of its own, for a rectangle that is not one line of text tall. a missing color is the
+  // editor's default background, as an attribute with no background of its own would be.
+  drawBlock(x, y, width, height, color) {
+    this.mainSurface.drawBlock(x, y, width, height, color || this.option.background);
+  }
+
+  drawBlockOnModeline(x, y, width, height, color) {
+    if (this.modelineSurface) {
+      this.modelineSurface.drawBlock(x, y, width, height, color || this.option.background);
+    }
+  }
+
+  printImage(x, y, width, height, clipWidth, clipHeight, url) {
+    this.mainSurface.drawImage(x, y, width, height, clipWidth, clipHeight, url);
+  }
+
+  printToModeline(x, y, text, textWidth, attribute, backgroundY, backgroundHeight) {
     if (this.modelineSurface) {
       this.modelineSurface.drawText(
         x,
@@ -823,6 +899,9 @@ class View {
         text,
         textWidth,
         attribute,
+        null,
+        backgroundY,
+        backgroundHeight,
       );
     }
   }
@@ -890,7 +969,7 @@ class View {
       x: this.x,
       y: this.y + this.height,
       width: this.width,
-      height: 1,
+      height: this.option.fontHeight,
       editor: this.editor,
       view: this,
       isFloating: this.kind === 'floating',
@@ -1174,7 +1253,10 @@ export class Editor {
       'clear-eol': this.clearEol.bind(this),
       'clear-eob': this.clearEob.bind(this),
       'put': this.put.bind(this),
+      'put-image': this.putImage.bind(this),
       'modeline-put': this.modelinePut.bind(this),
+      'draw-block': this.drawBlock.bind(this),
+      'modeline-draw-block': this.modelineDrawBlock.bind(this),
       'update-display': this.updateDisplay.bind(this),
       'move-cursor': this.moveCursor.bind(this),
       'change-view': this.changeView.bind(this),
@@ -1238,13 +1320,20 @@ export class Editor {
     }
   }
 
+  // the server draws in pixels, so it needs our cell size. sent with every redraw, which is how a
+  // font change reaches it.
+  redrawParams() {
+    return {
+      size: this.getDisplaySize(),
+      fontWidth: this.option.fontWidth,
+      fontHeight: this.option.fontHeight,
+      fontAscent: this.option.fontAscent,
+      fontSize: this.option.fontSize,
+    };
+  }
+
   handleResize(event) {
-    const canResize = true;
-    if (canResize) {
-      this.jsonrpc.notify('redraw', { size: this.getDisplaySize() });
-    } else {
-      this.jsonrpc.notify('redraw');
-    }
+    this.jsonrpc.notify('redraw', this.redrawParams());
   }
 
   focusHiddenInput() {
@@ -1288,6 +1377,10 @@ export class Editor {
       size: this.getDisplaySize(),
       foreground: this.option.foreground,
       background: this.option.background,
+      fontWidth: this.option.fontWidth,
+      fontHeight: this.option.fontHeight,
+      fontAscent: this.option.fontAscent,
+      fontSize: this.option.fontSize,
     }, (response) => {
       this.updateForeground(response.foreground);
       this.updateBackground(response.background);
@@ -1297,7 +1390,7 @@ export class Editor {
         }
       }
 
-      this.jsonrpc.notify('redraw', { size: this.getDisplaySize() });
+      this.jsonrpc.notify('redraw', this.redrawParams());
     });
   }
 
@@ -1315,7 +1408,7 @@ export class Editor {
     element.style.backgroundColor = color;
   }
 
-  makeView({ id, x, y, width, height, pixelX, pixelY, pixelWidth, pixelHeight, use_modeline, kind, type, content, border, border_shape }) {
+  makeView({ id, x, y, width, height, use_modeline, kind, type, content, border, border_shape }) {
     const view = new View({
       option: this.option,
       id: id,
@@ -1323,10 +1416,6 @@ export class Editor {
       y: y,
       width: width,
       height: height,
-      pixelX: pixelX,
-      pixelY: pixelY,
-      pixelWidth: pixelWidth,
-      pixelHeight: pixelHeight,
       useModeline: use_modeline,
       kind: kind,
       type: type,
@@ -1344,19 +1433,19 @@ export class Editor {
     this.viewMap.delete(id);
   }
 
-  resize({ viewInfo: { id }, width, height, pixelWidth, pixelHeight }) {
+  resize({ viewInfo: { id }, width, height }) {
     const view = this.findViewById(id);
     if (view) {
-      view.resize(width, height, pixelWidth, pixelHeight);
+      view.resize(width, height);
     } else {
       console.warn(`resize: view not found for id ${id}`);
     }
   }
 
-  move({ viewInfo: { id }, x, y, pixelX, pixelY }) {
+  move({ viewInfo: { id }, x, y }) {
     const view = this.findViewById(id);
     if (view) {
-      view.move(x, y, pixelX, pixelY);
+      view.move(x, y);
     } else {
       console.warn(`move: view not found for id ${id}`);
     }
@@ -1372,9 +1461,9 @@ export class Editor {
     view.clear();
   }
 
-  clearEol({ viewInfo: { id }, x, y }) {
+  clearEol({ viewInfo: { id }, x, y, height }) {
     const view = this.findViewById(id);
-    view.clearEol(x, y);
+    view.clearEol(x, y, height);
   }
 
   clearEob({ viewInfo: { id }, x, y }) {
@@ -1382,14 +1471,29 @@ export class Editor {
     view.clearEob(x, y);
   }
 
-  put({ viewInfo: { id }, x, y, text, textWidth, attribute, font }) {
+  put({ viewInfo: { id }, x, y, text, textWidth, attribute, font, backgroundY, backgroundHeight }) {
     const view = this.findViewById(id);
-    view.print(x, y, text, textWidth, attribute, font);
+    view.print(x, y, text, textWidth, attribute, font, backgroundY, backgroundHeight);
   }
 
-  modelinePut({ viewInfo: { id }, x, y, text, textWidth, attribute }) {
+  drawBlock({ viewInfo: { id }, x, y, width, height, color }) {
     const view = this.findViewById(id);
-    view.printToModeline(x, y, text, textWidth, attribute);
+    view.drawBlock(x, y, width, height, color);
+  }
+
+  modelineDrawBlock({ viewInfo: { id }, x, y, width, height, color }) {
+    const view = this.findViewById(id);
+    view.drawBlockOnModeline(x, y, width, height, color);
+  }
+
+  putImage({ viewInfo: { id }, x, y, width, height, clipWidth, clipHeight, url }) {
+    const view = this.findViewById(id);
+    view.printImage(x, y, width, height, clipWidth, clipHeight, url);
+  }
+
+  modelinePut({ viewInfo: { id }, x, y, text, textWidth, attribute, backgroundY, backgroundHeight }) {
+    const view = this.findViewById(id);
+    view.printToModeline(x, y, text, textWidth, attribute, backgroundY, backgroundHeight);
   }
 
   updateDisplay() {
@@ -1398,8 +1502,9 @@ export class Editor {
   moveCursor({ viewInfo: { id }, x, y, color, cursorText, cursorForeground }) {
     const view = this.findViewById(id);
     const [x0, y0] = this.getDisplayRectangle();
-    const left = view.x * this.option.fontWidth + x * this.option.fontWidth;
-    const top = view.y * this.option.fontHeight + y * this.option.fontHeight;
+    // x and y are pixels within the view. the view's own origin is in pixels too.
+    const left = view.x + x;
+    const top = view.y + y;
     this.input.move(left, top);
 
     const cursorColor = color || this.option.foreground;
@@ -1511,6 +1616,11 @@ export class Editor {
       fontName || this.option.fontName,
       fontSize || this.option.fontSize,
     );
+    this.cursorOverlay.style.width = this.option.fontWidth + 'px';
+    this.cursorOverlay.style.height = this.option.fontHeight + 'px';
+    // the cell size is the unit the server draws in, so nothing on screen is still correct,
+    // send the new params and let the server lay the display out again.
+    this.jsonrpc.notify('redraw', this.redrawParams());
   }
 
   getFont() {

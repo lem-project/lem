@@ -36,6 +36,7 @@
            :directory-mode-copy-files
            :directory-mode-rename-files
            :directory-mode-rename-file
+           :directory-mode-sort-files
            :directory-mode-sort-by-name
            :directory-mode-sort-by-time
            :directory-mode-sort-by-size
@@ -309,6 +310,21 @@ With prefix argument ARG, unmark all those files."
 
 (define-command directory-mode-sort-by-size () ()
   (sort-files-by :size))
+
+(define-command directory-mode-sort-files () ()
+  "Sort files: by name, by last modification time, then by size.
+
+  Each new directory buffer first uses the default sort method (`lem/directory-mode:*default-sort-method*')"
+  (cond
+    ((eql (buffer-value (current-buffer) :sort-method) :mtime)
+     (message "Sorting by size")
+     (sort-files-by :size))
+    ((eql (buffer-value (current-buffer) :sort-method) :size)
+     (message "Sorting by name")
+     (sort-files-by :pathname))
+    (t
+     (message "Sorting by last modification time")
+     (sort-files-by :mtime))))
 
 (define-command make-directory (filename) ((:new-file "Make directory: "))
   (setf filename (uiop:ensure-directory-pathname filename))

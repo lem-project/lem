@@ -64,7 +64,7 @@
 (define-editor-variable root-uri-patterns '())
 (define-editor-variable detective-search nil)
 (define-editor-variable enable-tab-fold
-  t
+  nil
   "When T, the Tab key attempts to fold/unfold defuns and falls back to
 `indent-line-and-complete-symbol', otherwise it just invokes the latter.")
 (define-editor-variable fold-region-function

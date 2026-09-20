@@ -44,6 +44,8 @@ validation:
           Only flag violations when elements appear OUT OF ORDER (e.g., key bindings AFTER functions, or defvar AFTER functions).
           Key bindings appearing BEFORE functions is correct and expected.
 
+          Exception: In major-mode files (e.g., *-mode.lisp), flexible ordering is acceptable when it follows established patterns from similar modes (e.g., clojure-mode, python-mode).
+
       # === Style ===
       - name: loop_keywords_rule
         prompt: |
@@ -93,12 +95,13 @@ validation:
         prompt: |
           Prefer explicit function arguments over dynamic variables.
           Avoid using `defvar` for state passed between functions.
-          Exception: Well-documented cases like `*current-buffer*`.
+          Exception: Well-documented cases like `*current-buffer*`, constants, and configuration variables (not meant to be modified at runtime).
 
       - name: dynamic_symbol_call_rule
         prompt: |
           Avoid `uiop:symbol-call`. Rethink architecture instead.
-          If unavoidable, document the reason.
+          Exception: Acceptable in extensions when following patterns established in other major-mode extensions (e.g., for optional dependency loading or plugin systems).
+          If used, document the reason.
 
       # === Libraries ===
       - name: alexandria_usage_rule
@@ -116,3 +119,5 @@ validation:
             `(call-with-foo (lambda () ,@body)))
           ```
           Prefer `list` over backquote outside macros.
+
+          Exception: In major-mode files, macro patterns that are standard in other major-modes (e.g., clojure-mode, python-mode) are acceptable.

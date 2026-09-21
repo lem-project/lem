@@ -6,8 +6,17 @@
   "a display-only string fragment injected at a character position within a logical line."
   ;; 0-based position in the line's string where this fragment is inserted
   charpos
-  string
-  attribute)
+  ;; list of (string attribute) runs, drawn in order. see `virtual-text-runs'.
+  runs)
+
+(defun virtual-text-runs (spec)
+  "an overlay's :before-string / :after-string as a list of (string attribute) runs.
+SPEC is a bare string, a single (string attribute) pair, or a list of such pairs"
+  (cond ((stringp spec) (list (list spec nil)))
+        ((not (consp spec)) nil)
+        ((stringp (first spec)) (list (list (first spec) (second spec))))
+        (t (loop :for (run-string run-attribute) :in spec
+                 :collect (list run-string run-attribute)))))
 
 (defstruct logical-line
   string
@@ -378,18 +387,14 @@ several folds that each hide arbitrary character ranges across multiple buffer l
                     :for before-str := (overlay-get overlay :before-string)
                     :for after-str := (overlay-get overlay :after-string)
                     :do (when (and before-str (start-in-line-p overlay))
-                          (let ((bs (alexandria:ensure-list before-str)))
-                            (push (make-virtual-item :charpos (overlay-start-charpos overlay)
-                                                     :string (first bs)
-                                                     :attribute (second bs))
-                                  virtual-items)))
+                          (push (make-virtual-item :charpos (overlay-start-charpos overlay)
+                                                   :runs (virtual-text-runs before-str))
+                                virtual-items))
                         (when (and after-str (end-in-line-p overlay))
-                          (let ((as (alexandria:ensure-list after-str)))
-                            (push (make-virtual-item :charpos (or (overlay-end-charpos overlay)
-                                                                  (length string))
-                                                     :string (first as)
-                                                     :attribute (second as))
-                                  virtual-items))))
+                          (push (make-virtual-item :charpos (or (overlay-end-charpos overlay)
+                                                                (length string))
+                                                   :runs (virtual-text-runs after-str))
+                                virtual-items)))
               ;; markers were positioned in raw coordinates; remap them into the
               ;; spliced string so several folds on one visual line stay anchored.
               (dolist (vi virtual-items)
@@ -409,8 +414,7 @@ several folds that each hide arbitrary character ranges across multiple buffer l
                               :when (>= (virtual-item-charpos vi) charpos)
                                 :collect (make-virtual-item
                                           :charpos (- (virtual-item-charpos vi) charpos)
-                                          :string (virtual-item-string vi)
-                                          :attribute (virtual-item-attribute vi))))))
+                                          :runs (virtual-item-runs vi))))))
               (make-logical-line
                :string string
                :attributes attributes
@@ -439,6 +443,10 @@ several folds that each hide arbitrary character ranges across multiple buffer l
   text
   attribute
   offset)
+
+;; a newline inside virtual text (an overlay's :before-string / :after-string): ends the screen row
+;; without touching the buffer line.
+(defstruct virtual-line-break-item)
 
 (defmethod item-string ((item string-with-attribute-item))
   (string-with-attribute-item-string item))
@@ -518,12 +526,21 @@ VIRTUAL-ITEMS arrive in draw order (from `create-logical-line')."
          (items))
     (flet ((add-virtuals-at (pos)
              (loop :while (and pending (= (virtual-item-charpos (first pending)) pos))
-                   :do (let ((vi (pop pending)))
-                         (setf items (add-or-merge-item
-                                      (make-string-with-attribute-item
-                                       :string (virtual-item-string vi)
-                                       :attribute (virtual-item-attribute vi))
-                                      items))))))
+                   ;; runs follow one another on the same row, each keeping its own attribute.
+                   :do (loop :for (run-string run-attribute) :in (virtual-item-runs (pop pending))
+                             ;; a newline ends the screen row rather than being drawn, so the
+                             ;; segments around it become items with a break between them.
+                             :do (loop :for segment :in (uiop:split-string
+                                                         run-string
+                                                         :separator '(#\newline))
+                                       :for firstp := t :then nil
+                                        :do (unless firstp
+                                              (setf items (cons (make-virtual-line-break-item) items)))
+                                           (setf items (add-or-merge-item
+                                                        (make-string-with-attribute-item
+                                                         :string segment
+                                                         :attribute run-attribute)
+                                                        items)))))))
       ;; walk segments between break positions, injecting virtual items at each boundary
       (loop :for (pos . rest) :on positions
             :while rest
@@ -618,12 +635,19 @@ VIRTUAL-ITEMS arrive in draw order (from `create-logical-line')."
            (*active-modes* active-modes))
       (loop :for logical-line := (create-logical-line point overlays active-modes)
             :do (when logical-line
-                  (funcall function logical-line))
+                  (funcall function logical-line point))
                 (loop
                   (unless (line-offset point 1)
                     (return-from call-do-logical-line))
                   (unless (line-continuation-p point)
                     (return)))))))
 
-(defmacro do-logical-line ((logical-line window) &body body)
-  `(call-do-logical-line ,window (lambda (,logical-line) ,@body)))
+(defmacro do-logical-line ((logical-line window &optional point) &body body)
+  "Run BODY for each logical line of WINDOW, in draw order.
+POINT, when named, is bound to the start of the line. It is one point reused for every line and
+moved on to the next once BODY returns, so BODY must `copy-point' it to hold on to it."
+  (let ((point-var (or point (gensym "POINT"))))
+    `(call-do-logical-line ,window
+                           (lambda (,logical-line ,point-var)
+                             (declare (ignorable ,point-var))
+                             ,@body))))

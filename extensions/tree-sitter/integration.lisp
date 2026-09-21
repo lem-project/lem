@@ -164,9 +164,22 @@ INDENT-QUERY-PATH: Path to indents.scm for tree-sitter based indentation."
 
 ;;;; Utility Functions
 
+(defun ts-wrapper-available-p ()
+  "Check if the libts-wrapper C library is loaded.
+
+Tree-sitter's C API returns TSNode structs by value, which CFFI cannot
+handle, so every node-level call (ts:tree-root-node, ts:node-*, query
+cursors) goes through libts-wrapper. The library is loaded lazily, so
+trigger the load attempt here and then check one of its symbols."
+  (tree-sitter/ffi:ensure-ts-wrapper-loaded)
+  (and (cffi:foreign-symbol-pointer "ts_tree_root_node_out") t))
+
 (defun tree-sitter-available-p ()
-  "Check if tree-sitter is available."
-  (ts:tree-sitter-available-p))
+  "Check if tree-sitter is available.
+The core library alone is not enough: without libts-wrapper node accessors
+are undefined and syntax scanning would signal an error."
+  (and (ts:tree-sitter-available-p)
+       (ts-wrapper-available-p)))
 
 ;;;; Enable tree-sitter for existing modes
 

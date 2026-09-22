@@ -508,6 +508,7 @@
    :define-keys
    :undefine-key
    :undefine-keys
+   :undefine-all-keys
    :keyseq-to-string
    :find-keybind
    :insertion-key-p

@@ -501,13 +501,9 @@
                                     command))))
 
          (filter-items (items)
-           (if (find #\- string)
-               (completion-hyphen string
-                                  items
-                                  :key #'lem/completion-mode:completion-item-label)
-               (completion string
+           (completion string
                            items
-                           :key #'lem/completion-mode:completion-item-label))))
+                           :key #'lem/completion-mode:completion-item-label)))
 
     (let* ((all-items (collect-items (sort (all-command-names) #'string<)))
            (candidate-items (collect-items candidates))
@@ -516,7 +512,22 @@
                    :test #'equal
                    :key #'lem/completion-mode:completion-item-label
                    :from-end t)))
-      (filter-items items))))
+      ;; completion-items: Return issue
+      ;; (filter-items items)
+
+      ;; only strings: ok, but not taking on "proj ws" grrr
+       ;; (completion string
+                  ;; (subseq  ;; TODO vince ONGOING
+                   ;; (remove-duplicates
+                          ;; (append candidates (all-command-names))
+                          ;; :from-end t :test #'equal)
+                          ;; 0 200)
+      ;; )
+
+      ;; same as above but with completion-item objects: display issue after Return.
+      (completion string items :key #'lem/completion-mode:completion-item-label)
+
+      )))
 
 (setf *prompt-file-completion-function* 'prompt-file-completion)
 (setf *prompt-buffer-completion-function* 'prompt-buffer-completion)

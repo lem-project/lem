@@ -94,15 +94,19 @@
   (sort (copy-list pathnames)
         test :key key))
 
-(defun sort-files-with-method (files &key (sort-method :pathname))
-  "Sort files with a sort method, one of :pathname and :mtime."
-  (cond
-    ((eql sort-method :mtime)
-     (sort-files files :test #'> :key #'file-mtime))
-    ((eql sort-method :size)
-     (sort-files files :test #'> :key #'file-size))
-    (t
-     (sort-files files))))
+(defun sort-files-with-method (files &key (sort-method :pathname) reverse)
+  "Sort files with a sort method, one of :pathname (default), :mtime and :size, by descending order."
+  (let ((sorted
+          (cond
+            ((eql sort-method :mtime)
+             (sort-files files :test #'> :key #'file-mtime))
+            ((eql sort-method :size)
+             (sort-files files :test #'> :key #'file-size))
+            (t
+             (sort-files files :test #'string< :key #'namestring)))))
+    (if reverse
+        (reverse sorted)
+        sorted)))
 
 (defun directory-files (pathspec)
   (%call-virtual-handlers *virtual-directory-files-functions*
@@ -114,15 +118,17 @@
                       (directory pathspec))
               (list pathspec))))))
 
-(defun list-directory (directory &key directory-only (sort-method :pathname))
+(defun list-directory (directory &key directory-only (sort-method :pathname) sort-reverse)
   (delete nil
           (mapcar (lambda (x) (and (virtual-probe-file x directory) x))
                   (append (sort-files-with-method
                            (copy-list (uiop:subdirectories directory))
-                           :sort-method sort-method)
+                           :sort-method sort-method
+                           :reverse sort-reverse)
                           (unless directory-only
                             (sort-files-with-method (uiop:directory-files directory)
-                                                    :sort-method sort-method))))))
+                                                    :sort-method sort-method
+                                                    :reverse sort-reverse))))))
 
 (defun file-size (pathname)
   (or (loop :for f :in *virtual-file-metadata-functions*

@@ -231,14 +231,15 @@
 (defun insert-directories-and-files (point
                                      directory
                                      &key (sort-method *default-sort-method*)
+                                          sort-reverse
                                           (without-parent-directory t))
   (unless without-parent-directory
     (alexandria:when-let (pathname (probe-file (merge-pathnames "../" directory)))
       (insert-pathname point (make-item :directory directory :pathname pathname :content ".."))))
-  (dolist (pathname (list-directory directory :sort-method sort-method))
+  (dolist (pathname (list-directory directory :sort-method sort-method :sort-reverse sort-reverse))
     (insert-pathname point (make-item :directory directory :pathname pathname))))
 
-(defun update-buffer (buffer &key (sort-method *default-sort-method*))
+(defun update-buffer (buffer &key (sort-method *default-sort-method*) sort-reverse)
   "Update this directory buffer content."
   (with-buffer-read-only buffer nil
     (let ((*inhibit-read-only* t))
@@ -250,6 +251,7 @@
         (insert-string p (format nil "~A~2%" directory) :attribute 'current-directory-attribute)
         (insert-directories-and-files p directory
                                       :sort-method sort-method
+                                      :sort-reverse sort-reverse
                                       :without-parent-directory nil)
         (move-to-line p line-number)))))
 

@@ -40,6 +40,7 @@
            :directory-mode-sort-by-name
            :directory-mode-sort-by-time
            :directory-mode-sort-by-size
+           :directory-mode-sort-reverse
            :make-directory
            :find-file-directory
            :directory-mode-kill-lines))
@@ -294,10 +295,13 @@ With prefix argument ARG, unmark all those files."
                (setf (buffer-filename old-buffer) new-file)))
         (directory-mode-update-buffer)))))
 
-(defun sort-files-by (method)
+(defun sort-files-by (method &key reverse)
+  "Sort files by the given method (:pathname, :name, :msize),
+  and move the cursor on the current file's line."
   (let ((path (get-pathname (current-point))))
     (setf (buffer-value (current-buffer) :sort-method) method)
-    (update-buffer (current-buffer) :sort-method method)
+    (setf (buffer-value (current-buffer) :sort-reverse) reverse)
+    (update-buffer (current-buffer) :sort-method method :sort-reverse reverse)
     ;; Follow file name.
     (when (and path (str:non-blank-string-p (file-namestring path)))
       (search-filename-and-recenter (display-name path)))))
@@ -325,6 +329,12 @@ With prefix argument ARG, unmark all those files."
     (t
      (message "Sorting by last modification time")
      (sort-files-by :mtime))))
+
+(define-command directory-mode-sort-reverse () ()
+  "Reverse the current sort order."
+  (let ((method (buffer-value (current-buffer) :sort-method))
+        (reversed (buffer-value (current-buffer) :sort-reverse)))
+    (sort-files-by method :reverse (not reversed))))
 
 (define-command make-directory (filename) ((:new-file "Make directory: "))
   (setf filename (uiop:ensure-directory-pathname filename))

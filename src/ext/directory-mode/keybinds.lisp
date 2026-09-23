@@ -16,9 +16,10 @@
 
 ;; set :show-p to make this transient always show when its invoked
 (setf (getf (keymap-properties *directory-mode-sort-keymap*) :show-p) t)
-(define-key *directory-mode-sort-keymap* "n" 'directory-mode-sort-by-name)
+(define-key *directory-mode-sort-keymap* "r" 'directory-mode-sort-reverse)
 (define-key *directory-mode-sort-keymap* "t" 'directory-mode-sort-by-time)
 (define-key *directory-mode-sort-keymap* "s" 'directory-mode-sort-by-size)
+(define-key *directory-mode-sort-keymap* "n" 'directory-mode-sort-by-name)
 
 (define-key *global-keymap* "C-x C-j" 'find-file-directory)
 

@@ -40,6 +40,7 @@
            :directory-mode-sort-by-name
            :directory-mode-sort-by-time
            :directory-mode-sort-by-size
+           :directory-mode-sort-by-extension
            :directory-mode-sort-reverse
            :make-directory
            :find-file-directory
@@ -314,6 +315,9 @@ With prefix argument ARG, unmark all those files."
 
 (define-command directory-mode-sort-by-size () ()
   (sort-files-by :size))
+
+(define-command directory-mode-sort-by-extension () ()
+  (sort-files-by :extension))
 
 (define-command directory-mode-sort-files () ()
   "Sort files: by name, by last modification time, then by size.

@@ -95,13 +95,25 @@
         test :key key))
 
 (defun sort-files-with-method (files &key (sort-method :pathname) reverse)
-  "Sort files with a sort method, one of :pathname (default), :mtime and :size, by descending order."
+  "Sort files with a SORT-METHOD, one of :pathname (default), :mtime, :size and :extension.
+
+  For :pathname sort from A to Z, otherwise by descending order (biggest files first, most recent files first).
+
+  REVERSE: boolean."
   (let ((sorted
           (cond
             ((eql sort-method :mtime)
              (sort-files files :test #'> :key #'file-mtime))
             ((eql sort-method :size)
              (sort-files files :test #'> :key #'file-size))
+            ((eql sort-method :extension)
+             (sort-files files :test
+                         #+sbcl
+                         #'sb-unicode:unicode<
+                         #-sbcl
+                         #'string<
+                         :key (lambda (x)
+                                (or (pathname-type x) ""))))
             (t
              (let ((pathname-test
                      ;; Correctly sort words starting with an uppercase letter or an accent.

@@ -1,4 +1,5 @@
 
+- <2026-09-23> directory mode: added `reverse` key, sort with `sb-unicode` (for uppercase and accents)
 - <2026-04-24> added `lem-transient`.
   - define transients with `lem/transient:define-transient`
   - use `*transient-always-show*` to show keybindings.

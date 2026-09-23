@@ -103,7 +103,14 @@
             ((eql sort-method :size)
              (sort-files files :test #'> :key #'file-size))
             (t
-             (sort-files files :test #'string< :key #'namestring)))))
+             (let ((pathname-test
+                     ;; Correctly sort words starting with an uppercase letter or an accent.
+                     #+sbcl
+                     #'sb-unicode:unicode<
+                     ;; Uppercased words appear first, an accent is sorted last.
+                     #-sbcl
+                     #'string<))
+               (sort-files files :test pathname-test :key #'namestring))))))
     (if reverse
         (reverse sorted)
         sorted)))

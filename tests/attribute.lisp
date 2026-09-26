@@ -64,3 +64,36 @@
     (ng (lem:attribute-underline-style attribute))
     (lem:set-attribute-strikethrough attribute t)
     (ok (lem:attribute-strikethrough attribute))))
+
+(lem:define-attribute test-linked-attribute
+  (t :underline t :link "https://example.com"))
+
+(deftest a-link-is-carried-merged-and-compared
+  (let* ((look (lem:make-attribute :foreground "#aabbcc" :underline t))
+         (link (lem:make-attribute :link "https://example.com"))
+         (merged (lem:merge-attribute look link)))
+    (ok (equal "https://example.com" (lem:attribute-link merged)))
+    (ok (equal "#aabbcc" (lem:attribute-foreground merged)) "the look is kept")
+    (ok (lem:attribute-equal merged (lem:merge-attribute look (lem:make-attribute :link "https://example.com")))
+        "equal URLs, equal attributes")
+    (ng (lem:attribute-equal look merged) "linked text is not merged into plain text")
+    (ng (lem:attribute-equal merged (lem:merge-attribute look (lem:make-attribute :link "https://example.org"))))
+    ;; ITEM-CONTENT-HASH is internal to lem-core, and not exported on
+    ;; purpose: it is the line fingerprint that decides whether a line is
+    ;; redrawn. A slot it does not hash leaves a line whose only change is
+    ;; that slot stale on screen, and nothing public shows that without a
+    ;; frontend, so the test checks it directly, as
+    ;; tests/display-cache.lisp does.
+    (ng (= (lem-core::item-content-hash merged)
+           (lem-core::item-content-hash
+            (lem:merge-attribute look (lem:make-attribute :link "https://example.org"))))
+        "a line whose link changed is redrawn")))
+
+(deftest a-theme-keeps-a-link-it-does-not-name
+  (let ((attribute (lem:ensure-attribute 'test-linked-attribute)))
+    (lem:set-attribute attribute :foreground "#000000" :underline t)
+    (ok (equal "https://example.com" (lem:attribute-link attribute)) "only colours named")
+    (lem:set-attribute attribute :link nil)
+    (ng (lem:attribute-link attribute) "named, so set")
+    (lem:set-attribute-link attribute "https://example.org")
+    (ok (equal "https://example.org" (lem:attribute-link attribute)))))

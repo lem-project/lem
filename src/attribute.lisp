@@ -2,6 +2,11 @@
 
 (defvar *attributes* '())
 
+(defgeneric attribute-link (attribute)
+  (:documentation "The URL ATTRIBUTE's text links to, or NIL. Not drawn by
+itself: a frontend that can make the text a hyperlink does, and others
+ignore it."))
+
 (defclass attribute ()
   ((foreground
     :initarg :foreground
@@ -39,6 +44,10 @@
     :initform nil
     :reader attribute-dim
     :documentation "Whether the text is drawn dim (faint).")
+   (link
+    :initarg :link
+    :initform nil
+    :reader attribute-link)
    (cache
     :initform nil
     :accessor attribute-cache)
@@ -70,7 +79,7 @@
   (setf (getf (attribute-plist attribute) key) value))
 
 (defun make-attribute (&key foreground background reverse bold underline
-                            underline-style italic strikethrough dim plist)
+                            underline-style italic strikethrough dim link plist)
   (make-instance 'attribute
                  :foreground (or (ensure-color foreground) nil)
                  :background (or (ensure-color background) nil)
@@ -81,6 +90,7 @@
                  :italic italic
                  :strikethrough strikethrough
                  :dim dim
+                 :link link
                  :plist plist))
 
 (defun ensure-attribute (x &optional (errorp t))
@@ -113,6 +123,8 @@
                                      (attribute-strikethrough under))
                   :dim (or (attribute-dim over)
                            (attribute-dim under))
+                  :link (or (attribute-link over)
+                            (attribute-link under))
                   :plist (append (attribute-plist over)
                                  (attribute-plist under))))
 
@@ -138,7 +150,9 @@
              (eq (attribute-strikethrough attribute1)
                  (attribute-strikethrough attribute2))
              (eq (attribute-dim attribute1)
-                 (attribute-dim attribute2))))))
+                 (attribute-dim attribute2))
+             (equal (attribute-link attribute1)
+                    (attribute-link attribute2))))))
 
 (defun set-attribute (attribute &key (foreground nil foregroundp)
                                      (background nil backgroundp)
@@ -146,11 +160,12 @@
                                      (underline-style nil underline-style-p)
                                      (italic nil italicp)
                                      (strikethrough nil strikethroughp)
-                                     (dim nil dimp))
+                                     (dim nil dimp)
+                                     (link nil linkp))
   "Set ATTRIBUTE's look, as a color theme does. REVERSE, BOLD and UNDERLINE
 are always set. The others are set only when given, so a theme that names
-only an attribute's colors keeps the font styles its definition gives it:
-`apply-theme' rebuilds each attribute from its definition first."
+only an attribute's colors keeps the font styles and link its definition
+gives it: `apply-theme' rebuilds each attribute from its definition first."
   (let ((attribute (ensure-attribute attribute t)))
     (setf (attribute-cache attribute) nil)
     (when foregroundp
@@ -167,7 +182,9 @@ only an attribute's colors keeps the font styles its definition gives it:
     (when strikethroughp
       (setf (slot-value attribute 'strikethrough) strikethrough))
     (when dimp
-      (setf (slot-value attribute 'dim) dim))))
+      (setf (slot-value attribute 'dim) dim))
+    (when linkp
+      (setf (slot-value attribute 'link) link))))
 
 (macrolet ((def (setter slot-name)
              `(defun ,setter (attribute value)
@@ -186,7 +203,8 @@ every attribute from its definition." slot-name)
   (def set-attribute-underline-style underline-style)
   (def set-attribute-italic italic)
   (def set-attribute-strikethrough strikethrough)
-  (def set-attribute-dim dim))
+  (def set-attribute-dim dim)
+  (def set-attribute-link link))
 
 (defun clear-all-attribute-cache ()
   (dolist (attribute *attributes*)

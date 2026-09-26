@@ -129,6 +129,7 @@
    :set-attribute-italic
    :set-attribute-strikethrough
    :set-attribute-dim
+   :set-attribute-link
    :attribute-foreground
    :attribute-background
    :attribute-reverse
@@ -138,6 +139,7 @@
    :attribute-italic
    :attribute-strikethrough
    :attribute-dim
+   :attribute-link
    :get-attribute-cache
    :define-attribute
    :cursor

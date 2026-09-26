@@ -81,6 +81,7 @@
                (:file "filer")
                (:file "listener-mode")
                (:file "interface")
+               (:file "attribute")
                (:file "display-cache")
                (:file "visual-line"))
   :perform (test-op (o c)

@@ -481,7 +481,11 @@ fingerprint consistent with ATTRIBUTE-EQUAL and avoids stale glyphs
          (mix (attribute-background item))
          (mix (attribute-reverse item))
          (mix (attribute-bold item))
-         (mix (attribute-underline item)))
+         (mix (attribute-underline item))
+         (mix (attribute-underline-style item))
+         (mix (attribute-italic item))
+         (mix (attribute-strikethrough item))
+         (mix (attribute-dim item)))
        hash))
     (lem/common/color:color
      (logand most-positive-fixnum

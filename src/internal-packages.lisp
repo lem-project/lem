@@ -125,11 +125,19 @@
    :set-attribute-reverse
    :set-attribute-bold
    :set-attribute-underline
+   :set-attribute-underline-style
+   :set-attribute-italic
+   :set-attribute-strikethrough
+   :set-attribute-dim
    :attribute-foreground
    :attribute-background
    :attribute-reverse
    :attribute-bold
    :attribute-underline
+   :attribute-underline-style
+   :attribute-italic
+   :attribute-strikethrough
+   :attribute-dim
    :get-attribute-cache
    :define-attribute
    :cursor

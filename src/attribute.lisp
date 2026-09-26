@@ -18,6 +18,27 @@
    (underline
     :initarg :underline
     :reader attribute-underline)
+   (underline-style
+    :initarg :underline-style
+    :initform nil
+    :reader attribute-underline-style
+    :documentation "How an underline is drawn: NIL or :straight, :curly, :dotted,
+:dashed or :double. A frontend that cannot draw a style draws it straight.")
+   (italic
+    :initarg :italic
+    :initform nil
+    :reader attribute-italic
+    :documentation "Whether the text is drawn in italic.")
+   (strikethrough
+    :initarg :strikethrough
+    :initform nil
+    :reader attribute-strikethrough
+    :documentation "Whether the text is drawn struck through.")
+   (dim
+    :initarg :dim
+    :initform nil
+    :reader attribute-dim
+    :documentation "Whether the text is drawn dim (faint).")
    (cache
     :initform nil
     :accessor attribute-cache)
@@ -28,12 +49,16 @@
 
 (defmethod print-object ((attribute attribute) stream)
   (print-unreadable-object (attribute stream :type t :identity t)
-    (format stream "(~A ~A)~:[~; reverse~]~:[~; bold~]~:[~; underline~]"
+    (format stream "(~A ~A)~:[~; reverse~]~:[~; bold~]~:[~; underline~]~@[ ~(~A~)~]~:[~; italic~]~:[~; strikethrough~]~:[~; dim~]"
             (or (attribute-foreground attribute) "")
             (or (attribute-background attribute) "")
             (attribute-reverse attribute)
             (attribute-bold attribute)
-            (attribute-underline attribute))))
+            (attribute-underline attribute)
+            (attribute-underline-style attribute)
+            (attribute-italic attribute)
+            (attribute-strikethrough attribute)
+            (attribute-dim attribute))))
 
 (defun attribute-p (x)
   (typep x 'attribute))
@@ -44,13 +69,18 @@
 (defun (setf attribute-value) (value attribute key)
   (setf (getf (attribute-plist attribute) key) value))
 
-(defun make-attribute (&key foreground background reverse bold underline plist)
+(defun make-attribute (&key foreground background reverse bold underline
+                            underline-style italic strikethrough dim plist)
   (make-instance 'attribute
                  :foreground (or (ensure-color foreground) nil)
                  :background (or (ensure-color background) nil)
                  :reverse reverse
                  :bold bold
                  :underline (or (ensure-color underline) underline)
+                 :underline-style underline-style
+                 :italic italic
+                 :strikethrough strikethrough
+                 :dim dim
                  :plist plist))
 
 (defun ensure-attribute (x &optional (errorp t))
@@ -75,6 +105,14 @@
                                (attribute-reverse under))
                   :underline (or (attribute-underline over)
                                  (attribute-underline under))
+                  :underline-style (or (attribute-underline-style over)
+                                       (attribute-underline-style under))
+                  :italic (or (attribute-italic over)
+                              (attribute-italic under))
+                  :strikethrough (or (attribute-strikethrough over)
+                                     (attribute-strikethrough under))
+                  :dim (or (attribute-dim over)
+                           (attribute-dim under))
                   :plist (append (attribute-plist over)
                                  (attribute-plist under))))
 
@@ -92,11 +130,27 @@
              (equal (attribute-bold attribute1)
                     (attribute-bold attribute2))
              (equal (attribute-underline attribute1)
-                    (attribute-underline attribute2))))))
+                    (attribute-underline attribute2))
+             (eq (attribute-underline-style attribute1)
+                 (attribute-underline-style attribute2))
+             (eq (attribute-italic attribute1)
+                 (attribute-italic attribute2))
+             (eq (attribute-strikethrough attribute1)
+                 (attribute-strikethrough attribute2))
+             (eq (attribute-dim attribute1)
+                 (attribute-dim attribute2))))))
 
 (defun set-attribute (attribute &key (foreground nil foregroundp)
                                      (background nil backgroundp)
-                                     reverse bold underline)
+                                     reverse bold underline
+                                     (underline-style nil underline-style-p)
+                                     (italic nil italicp)
+                                     (strikethrough nil strikethroughp)
+                                     (dim nil dimp))
+  "Set ATTRIBUTE's look, as a color theme does. REVERSE, BOLD and UNDERLINE
+are always set. The others are set only when given, so a theme that names
+only an attribute's colors keeps the font styles its definition gives it:
+`apply-theme' rebuilds each attribute from its definition first."
   (let ((attribute (ensure-attribute attribute t)))
     (setf (attribute-cache attribute) nil)
     (when foregroundp
@@ -105,10 +159,22 @@
       (setf (slot-value attribute 'background) background))
     (setf (slot-value attribute 'reverse) reverse)
     (setf (slot-value attribute 'bold) bold)
-    (setf (slot-value attribute 'underline) underline)))
+    (setf (slot-value attribute 'underline) underline)
+    (when underline-style-p
+      (setf (slot-value attribute 'underline-style) underline-style))
+    (when italicp
+      (setf (slot-value attribute 'italic) italic))
+    (when strikethroughp
+      (setf (slot-value attribute 'strikethrough) strikethrough))
+    (when dimp
+      (setf (slot-value attribute 'dim) dim))))
 
 (macrolet ((def (setter slot-name)
              `(defun ,setter (attribute value)
+                ,(format nil "Set ATTRIBUTE's ~(~A~) (see `attribute-~:*~(~A~)') to VALUE; ATTRIBUTE is
+an attribute or its name.
+Like `set-attribute', this lasts until the next theme load, which rebuilds
+every attribute from its definition." slot-name)
                 (let ((attribute (ensure-attribute attribute t)))
                   (setf (attribute-cache attribute) nil)
                   (setf (slot-value attribute ',slot-name) value)))))
@@ -116,7 +182,11 @@
   (def set-attribute-background background)
   (def set-attribute-reverse reverse)
   (def set-attribute-bold bold)
-  (def set-attribute-underline underline))
+  (def set-attribute-underline underline)
+  (def set-attribute-underline-style underline-style)
+  (def set-attribute-italic italic)
+  (def set-attribute-strikethrough strikethrough)
+  (def set-attribute-dim dim))
 
 (defun clear-all-attribute-cache ()
   (dolist (attribute *attributes*)
@@ -207,7 +277,7 @@
   (t :foreground "red"))
 
 (define-attribute compiler-note-attribute
-  (t :underline "red"))
+  (t :underline "red" :underline-style :curly))
 
 (define-attribute syntax-warning-attribute
   (t :foreground "red"))
@@ -271,8 +341,8 @@
   (t :bold t))
 
 (define-attribute document-italic-attribute
-  (:light :foreground "#8B4513")
-  (:dark :foreground "#DEB887"))
+  (:light :foreground "#8B4513" :italic t)
+  (:dark :foreground "#DEB887" :italic t))
 
 (define-attribute document-underline-attribute
   (t :underline t))

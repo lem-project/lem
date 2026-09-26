@@ -675,16 +675,16 @@ Use this when lsp-mode has side effects that you want to avoid."
 ;; - versionSupport
 
 (define-attribute diagnostic-error-attribute
-  (t :foreground :base08 :underline t))
+  (t :foreground :base08 :underline t :underline-style :curly))
 
 (define-attribute diagnostic-warning-attribute
-  (t :foreground :base09 :underline t))
+  (t :foreground :base09 :underline t :underline-style :curly))
 
 (define-attribute diagnostic-information-attribute
-  (t :foreground :base04 :underline t))
+  (t :foreground :base04 :underline t :underline-style :curly))
 
 (define-attribute diagnostic-hint-attribute
-  (t :foreground :base0A :underline t))
+  (t :foreground :base0A :underline t :underline-style :curly))
 
 (defun diagnostic-severity-attribute (diagnostic-severity)
   (switch (diagnostic-severity :test #'=)

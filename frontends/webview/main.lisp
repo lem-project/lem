@@ -3,7 +3,8 @@
   (:import-from :lem-webview/darwin
    :set-window-appearance
    :dispatch-set-window-appearance)
-  (:export :main
+  (:export :*webview-handle*
+           :main
            :webview-main
            :webview))
 (in-package :lem-webview)

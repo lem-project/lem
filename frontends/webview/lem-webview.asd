@@ -4,4 +4,5 @@
                "lem-server")
   :serial t
   :components ((:file "darwin")
-               (:file "main")))
+               (:file "main")
+               (:file "browser")))

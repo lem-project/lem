@@ -1519,7 +1519,6 @@ export class Editor {
         overlay.textContent = '';
         overlay.style.color = '';
         overlay.style.font = '';
-        overlay.style.paddingTop = '';
         break;
       case 'underline':
         overlay.style.left = (x0 + left) + 'px';
@@ -1530,7 +1529,6 @@ export class Editor {
         overlay.textContent = '';
         overlay.style.color = '';
         overlay.style.font = '';
-        overlay.style.paddingTop = '';
         break;
       case 'box':
       default:
@@ -1540,7 +1538,6 @@ export class Editor {
         overlay.style.height = this.option.fontHeight + 'px';
         overlay.style.backgroundColor = cursorColor;
         overlay.style.font = this.option.font;
-        overlay.style.paddingTop = textOffsetY + 'px';
         overlay.textContent = cursorText || '';
         overlay.style.color = cursorFg;
         break;

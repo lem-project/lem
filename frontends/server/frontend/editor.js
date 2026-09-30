@@ -4,8 +4,6 @@ import { JSONRPC } from './jsonrpc.js';
 import * as keyevent from './keyevent.js';
 import * as meaw from 'meaw';
 
-const textOffsetY = 5;
-
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 function isWideChar(c) {
@@ -35,8 +33,8 @@ function computeFontSize(font) {
 
   return [
     Math.floor(textMetrics.width),
-    Math.round(textMetrics.fontBoundingBoxAscent + textOffsetY + (textMetrics.emHeightDescent || 0)),
-    Math.round(textMetrics.fontBoundingBoxAscent + textOffsetY),
+    Math.round(textMetrics.fontBoundingBoxAscent + (textMetrics.emHeightDescent || 0)),
+    Math.round(textMetrics.fontBoundingBoxAscent),
   ];
 }
 
@@ -46,7 +44,6 @@ function drawBlock({ ctx, x, y, width, height, style }) {
 }
 
 function drawText({ ctx, x, y, text, font, style, option }) {
-  y += Math.round(textOffsetY); // 少しずらしておかないと上の部分が現在行からはみ出して、その行だけ再描画しても描画跡が残ってしまう
   ctx.fillStyle = style;
   ctx.font = font;
   ctx.textBaseline = 'top';
@@ -1522,7 +1519,6 @@ export class Editor {
         overlay.textContent = '';
         overlay.style.color = '';
         overlay.style.font = '';
-        overlay.style.paddingTop = '';
         break;
       case 'underline':
         overlay.style.left = (x0 + left) + 'px';
@@ -1533,7 +1529,6 @@ export class Editor {
         overlay.textContent = '';
         overlay.style.color = '';
         overlay.style.font = '';
-        overlay.style.paddingTop = '';
         break;
       case 'box':
       default:
@@ -1543,7 +1538,6 @@ export class Editor {
         overlay.style.height = this.option.fontHeight + 'px';
         overlay.style.backgroundColor = cursorColor;
         overlay.style.font = this.option.font;
-        overlay.style.paddingTop = textOffsetY + 'px';
         overlay.textContent = cursorText || '';
         overlay.style.color = cursorFg;
         break;

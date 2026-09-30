@@ -16,11 +16,13 @@
 
 (defclass drawing-object ()
   ;; where `object-width' caches its result. `width' is left free for subclasses like `image-object'.
-  ((occupied-width :initform nil :accessor drawing-object-width)))
+  ((occupied-width :initform nil :accessor drawing-object-width)
+   ;; the range (x . y) in the original buffer that this item corresponds to.
+   (source :initarg :source :initform nil :accessor drawing-object-source)))
 
 (defclass void-object (drawing-object) ())
 
-;; from a `virtual-line-break-item', consumed while splitting a line into rows, so it never reaches a
+;; from a `logical-virtual-line-break', consumed while splitting a line into rows, so it never reaches a
 ;; frontend.
 (defclass virtual-line-break-object (void-object) ())
 
@@ -147,6 +149,7 @@ frontend can report one (`lem-if:image-natural-size'), otherwise one cell wide."
                  :width (image-object-width object)
                  :height (image-object-height object)
                  :attribute (image-object-attribute object)
+                 :source (drawing-object-source object)
                  :columns (image-object-columns object)
                  :visible-width (alexandria:if-let ((visible (image-object-visible-width object)))
                                   (min width visible)
@@ -218,7 +221,21 @@ frontend can report one (`lem-if:image-natural-size'), otherwise one cell wide."
        (eq (text-object-type drawing-object-1)
            (text-object-type drawing-object-2))
        (eq (text-object-within-cursor-p drawing-object-1)
-           (text-object-within-cursor-p drawing-object-2))))
+           (text-object-within-cursor-p drawing-object-2))
+       ;; merging must keep the source mapping correct.
+       (let ((s1 (drawing-object-source drawing-object-1))
+             (s2 (drawing-object-source drawing-object-2)))
+         (cond ((and (null s1)
+                     (null s2))
+                t)
+               ((or (null s1)
+                    (null s2))
+                nil)
+               (t (and (eql (cdr s1) (car s2))
+                       (= (length (text-object-string drawing-object-1))
+                          (- (cdr s1) (car s1)))
+                       (= (length (text-object-string drawing-object-2))
+                          (- (cdr s2) (car s2)))))))))
 
 (defmethod drawing-object-mergable-p ((drawing-object-1 eol-cursor-object) (drawing-object-2 eol-cursor-object))
   (equal (eol-cursor-object-color drawing-object-1)
@@ -244,6 +261,11 @@ frontend can report one (`lem-if:image-natural-size'), otherwise one cell wide."
   (setf (slot-value drawing-object-1 'string)
         (str:concat (text-object-string drawing-object-1)
                     (text-object-string drawing-object-2)))
+  (let ((s1 (drawing-object-source drawing-object-1))
+        (s2 (drawing-object-source drawing-object-2)))
+    (setf (drawing-object-source drawing-object-1)
+          (when (and s1 s2)
+            (cons (car s1) (cdr s2)))))
   ;; Reset cached width and surface since string changed.  The surface is the
   ;; frontend-rendered glyph bitmap; leaving the pre-merge surface in place
   ;; makes draw-time render only the original (shorter) string and drop the
@@ -263,6 +285,12 @@ frontend can report one (`lem-if:image-natural-size'), otherwise one cell wide."
   (setf (slot-value drawing-object-1 'string)
         (str:concat (text-object-string drawing-object-1)
                     (text-object-string drawing-object-2)))
+  (let ((s1 (drawing-object-source drawing-object-1))
+        (s2 (drawing-object-source drawing-object-2)))
+    (setf (drawing-object-source drawing-object-1)
+          (when (and s1 s2)
+            (cons (car s1)
+                  (cdr s2)))))
   (setf (drawing-object-width drawing-object-1) nil)
   (setf (text-object-surface drawing-object-1) nil)
   drawing-object-1)
@@ -307,18 +335,28 @@ pixels wide.")
                   :finally (push (cons type (subseq string start pos)) items))
         :finally (return (nreverse items))))
 
-(defun make-line-end-object (string attribute type offset)
+(defun make-line-end-object (string attribute type offset &optional source)
   (let ((attribute (and attribute (ensure-attribute attribute nil))))
     (make-instance 'line-end-object
                    :offset offset
                    :string string
                    :attribute attribute
-                   :type type)))
+                   :type type
+                   :source source)))
+
+(defun object-source-for-run (source start length pure-p)
+  "Which part of SOURCE a run covers: the slice at string offset START with LENGTH. e.g.
+offset 1, length 3 of pure text on (10 . 15) gives (11 . 14). tab expansions give the whole range,
+since their inner columns are padding rather than buffer positions. sourceless runs give nil."
+  (cond ((null source) nil)
+        (pure-p (cons (+ (car source) start)
+                      (+ (car source) start length)))
+        (t source)))
 
 ;;; Split make-instance calls by class name so SBCL can cache each constructor
 ;;; independently (compile-time-known class name → inlined CTOR, bypassing
 ;;; the generic ENSURE-CACHED-CTOR lookup on every call).
-(defun make-object-with-type (string attribute type)
+(defun make-object-with-type (string attribute type &optional source)
   (let* ((attribute (and attribute (ensure-attribute attribute nil)))
          (within-cursor (and attribute (cursor-attribute-p attribute)))
          (resolved-string (case type
@@ -337,61 +375,82 @@ pixels wide.")
       (:folder
        (make-instance 'folder-object
                       :string resolved-string :attribute resolved-attribute
-                      :type type :within-cursor within-cursor))
+                      :type type :within-cursor within-cursor :source source))
       (:icon
        (make-instance 'icon-object
                       :string resolved-string :attribute resolved-attribute
-                      :type type :within-cursor within-cursor))
+                      :type type :within-cursor within-cursor :source source))
       (:emoji
        (make-instance 'emoji-object
                       :string resolved-string :attribute resolved-attribute
-                      :type type :within-cursor within-cursor))
+                      :type type :within-cursor within-cursor :source source))
       (:control
        (make-instance 'control-character-object
                       :string resolved-string :attribute resolved-attribute
-                      :type type :within-cursor within-cursor))
+                      :type type :within-cursor within-cursor :source source))
       (otherwise
        (make-instance 'text-object
                       :string resolved-string :attribute resolved-attribute
-                      :type type :within-cursor within-cursor)))))
+                      :type type :within-cursor within-cursor :source source)))))
 
 (defun create-drawing-object (item)
-  (cond ((and *line-wrap* (typep item 'eol-cursor-item))
+  (cond ((and *line-wrap* (typep item 'logical-eol-cursor))
          (list (make-instance 'eol-cursor-object
-                              :attribute (eol-cursor-item-attribute item)
+                              :attribute (logical-eol-cursor-attribute item)
                               :color (parse-color
                                       (attribute-background
-                                       (eol-cursor-item-attribute item)))
-                              :true-cursor-p (eol-cursor-item-true-cursor-p item))))
-        ((typep item 'extend-to-eol-item)
-         (list (make-instance 'extend-to-eol-object :color (extend-to-eol-item-color item))))
-        ((typep item 'virtual-line-break-item)
+                                       (logical-eol-cursor-attribute item)))
+                              :true-cursor-p (logical-eol-cursor-true-cursor-p item))))
+        ((typep item 'logical-extend-to-eol)
+         (list (make-instance 'extend-to-eol-object :color (logical-extend-to-eol-color item))))
+        ((typep item 'logical-virtual-line-break)
          (list (make-instance 'virtual-line-break-object)))
-        ((typep item 'line-end-item)
-         (let ((string (line-end-item-text item))
-               (attribute (line-end-item-attribute item)))
-           (loop :for (type . string) :in (split-string-by-character-type string)
-                 :unless (alexandria:emptyp string)
-                 :collect (make-line-end-object string
-                                                attribute
-                                                type
-                                                (line-end-item-offset item)))))
+        ((typep item 'logical-line-end)
+         (let ((string (logical-line-end-string item))
+               (attribute (logical-line-end-attribute item))
+               (source (logical-item-source item))
+               (pure (logical-item-pure-p item)))
+           (loop :with pos := 0
+                 :for (type . run) :in (split-string-by-character-type string)
+                 :unless (alexandria:emptyp run)
+                 :collect (let ((object (make-line-end-object
+                                         run
+                                         attribute
+                                         type
+                                         (logical-line-end-offset item)
+                                         (object-source-for-run source pos (length run) pure))))
+                            (incf pos (length run))
+                            object))))
         (t
          (let ((string (item-string item))
-               (attribute (item-attribute item)))
-           (cond ((alexandria:emptyp string)
-                  (list (make-instance 'void-object)))
-                 ((and attribute (attribute-image attribute))
-                  (list (make-instance 'image-object
-                                       :image (attribute-image attribute)
-                                       :width (attribute-width attribute)
-                                       :height (attribute-height attribute)
-                                       :attribute attribute
-                                       :columns (string-width string))))
-                 (t
-                  (loop :for (type . string) :in (split-string-by-character-type string)
-                        :unless (alexandria:emptyp string)
-                        :collect (make-object-with-type string attribute type))))))))
+               (attribute (item-attribute item))
+               (source (and (typep item 'logical-item) (logical-item-source item))))
+           (let ((pure (and source (logical-item-pure-p item))))
+             (cond ((alexandria:emptyp string)
+                    (list (make-instance 'void-object)))
+                   ((and attribute (attribute-image attribute))
+                    (list (make-instance 'image-object
+                                         :image (attribute-image attribute)
+                                         :width (attribute-width attribute)
+                                         :height (attribute-height attribute)
+                                         :attribute attribute
+                                         :columns (string-width string)
+                                         :source source)))
+                   (t
+                    (loop :with pos := 0
+                          :for (type . run) :in (split-string-by-character-type string)
+                          :unless (alexandria:emptyp run)
+                          :collect (let ((object (make-object-with-type
+                                                  run
+                                                  attribute
+                                                  type
+                                                  (object-source-for-run
+                                                   source
+                                                   pos
+                                                   (length run)
+                                                   pure))))
+                                     (incf pos (length run))
+                                     object)))))))))
 
 (defun create-drawing-objects (logical-line)
   (multiple-value-bind (items line-end-item)
@@ -415,14 +474,28 @@ what turning a row back into a buffer position needs to know."
   (flet ((explode-object (text-object)
            (check-type text-object text-object)
            (let* ((string (text-object-string text-object))
+                  (source (drawing-object-source text-object))
+                  ;; a string 'item' is pure when it maps 1:1 onto source. its important to
+                  ;; distinguish this kind of strings because they're the ones that are used to
+                  ;; resolve cursor click positions. it doesnt make much sense for string items
+                  ;; that have a display string of a length that is different from the one
+                  ;; that they originate from.
+                  ;; e.g. consider the string 'hello' displayed as 'hey', we dont consider this
+                  ;; a 'pure' string. because what should we do when the 'y' in 'hey' is clicked?
+                  ;; where is the cursor supposed to be placed?
+                  ;; so we just resolve the cursor properly for pure strings, for the case above,
+                  ;; the cursor is just placed at the beginning of the impure string, on the
+                  ;; letter 'h' in the word 'hello'.
+                  (pure (and source (= (length string) (- (cdr source) (car source)))))
                   (char-type (char-type (char string 0)))
                   (n (floor (length string) 2)))
-             (loop :for part-string :in (list (subseq string 0 n)
-                                              (subseq string n))
+             (loop :for (start part-string) :in (list (list 0 (subseq string 0 n))
+                                                      (list n (subseq string n)))
                    :unless (alexandria:emptyp part-string)
-                   :collect (make-object-with-type
-                             part-string
-                             (text-object-attribute text-object) char-type)))))
+                     :collect (make-object-with-type
+                               part-string
+                               (text-object-attribute text-object) char-type
+                               (object-source-for-run source start (length part-string) pure))))))
     (let ((wrap-line-character (variable-value 'wrap-line-character :default buffer))
           (wrap-line-attribute (variable-value 'wrap-line-attribute :default buffer)))
       (loop :with total-width := 0
@@ -753,6 +826,23 @@ fingerprint consistent with ATTRIBUTE-EQUAL and avoids stale glyphs
                         (setf hash (logand most-positive-fixnum
                                            (+ (* hash 33) (item-content-hash x))))))
        hash))
+    (logical-item
+     (let ((hash (sxhash (type-of item))))
+       (declare (type fixnum hash))
+       (flet ((mix (x)
+                (setf hash (logand most-positive-fixnum
+                                   (+ (* hash 33) (item-content-hash x))))))
+         (mix (logical-item-source item))
+         (when (typep item 'logical-string)
+           (mix (logical-string-string item))
+           (mix (logical-string-attribute item)))
+         (when (typep item 'logical-line-end)
+           (mix (logical-line-end-offset item)))
+         (when (typep item 'logical-eol-cursor)
+           (mix (logical-eol-cursor-attribute item)))
+         (when (typep item 'logical-extend-to-eol)
+           (mix (logical-extend-to-eol-color item))))
+       hash))
     (t (sxhash item))))
 
 (defun djb2 (hash item)
@@ -782,12 +872,10 @@ over the top-level spine and tolerant of improper (dotted) lists."
 (defun compute-line-fingerprint (logical-line scroll-start left-side-width)
   "Compute a cheap fingerprint for a logical line's display state."
   (mix-hashes
-   (logical-line-string logical-line)
-   (logical-line-attributes logical-line)
+   (logical-line-items logical-line)
    (logical-line-end-of-line-cursor-attribute logical-line)
    (logical-line-extend-to-end logical-line)
    (logical-line-line-end-overlay logical-line)
-   (logical-line-virtual-items logical-line)
    scroll-start
    left-side-width))
 
@@ -850,6 +938,66 @@ something not one cell wide."
     ;; this to the line's end.
     (+ column (floor (max 0 (- x right)) (lem-if:cell-width (implementation))))))
 
+(defun drawing-object-source-at-column (object subcol)
+  "Which buffer offset appears at cell SUBCOL of OBJECT. e.g. cell 2 of text showing buffer
+10-15 gives 12, and either half of a wide character gives its offset. tab expansions and images
+give their start, virtual text gives nil."
+  (let ((source (drawing-object-source object)))
+    (cond ((null source)
+           nil)
+          ((not (typep object 'text-object))
+           (car source))
+          (t (let ((string (text-object-string object)))
+               (if (= (length string) (- (cdr source) (car source)))
+                   (loop :with w := 0 :and i := 0
+                         :for c :across string
+                         :for cw := (string-width (string c))
+                         :while (<= (+ w cw) subcol)
+                         :do (incf w cw)
+                             (incf i)
+                         :finally (return (+ (car source) i)))
+                   (car source)))))))
+
+(defun screen-row-source-at-column (screen-row column)
+  "Which buffer offset is displayed at column COLUMN of SCREEN-ROW. reads the drawn objects
+left to right instead of the buffer, so folds, tabs, and virtual text give exact positions.
+clicks on virtual text give the end of the preceding real text. gives NIL for clicks past the
+line's end, or on leading virtual text with nothing real before it."
+  (let ((col 0)
+        (source))
+    (dolist (placement (row-placements (screen-row-row screen-row)))
+      (let ((object (placement-object placement)))
+        (when (<= (screen-row-left-width screen-row) (placement-x placement))
+          (let ((w (object-columns object)))
+            (when (< column (+ col w))
+              (return-from screen-row-source-at-column
+                (or (drawing-object-source-at-column object (- column col))
+                    source)))
+            (incf col w)
+            (alexandria:when-let ((s (drawing-object-source object)))
+              (setf source (cdr s)))))))))
+
+(defun move-point-to-joined-offset (point line-number offset)
+  "Move POINT to OFFSET, counted in buffer characters from the start of LINE-NUMBER's line
+and continuing onto following lines, each newline counting as one. returns T, or NIL when
+the line is gone."
+  (when (move-to-line point line-number)
+    (loop :for len := (length (line-string point))
+          :while (> offset len)
+          :do (decf offset (1+ len))
+              (unless (line-offset point 1)
+                (line-end point)
+                (return-from move-point-to-joined-offset t)))
+    (line-offset point 0 (min offset (length (line-string point))))
+    t))
+
+(defun move-point-to-row-source (point window column row-index)
+  "Move POINT to the buffer position displayed at column COLUMN of WINDOW's screen row ROW-INDEX.
+returns T on success, NIL when the row wasn't drawn or the column shows no buffer text."
+  (alexandria:when-let ((row (window-screen-row-at-index window row-index)))
+    (alexandria:when-let ((offset (screen-row-source-at-column row column)))
+      (move-point-to-joined-offset point (screen-row-line-number row) offset))))
+
 (defun check-line-fingerprint (window y fingerprint)
   "Check if the fingerprint for line at Y matches. Returns the cached list of rows, or NIL.
 One entry per row, so a line taken from the cache still contributes its rows to
@@ -903,11 +1051,14 @@ ROWS is one `screen-row' per screen row the line drew, as the redraw functions c
                             left-side-characters)))))
         (let ((rows)
               (wrap-index 0)
-              (objects first-line-objects))
+              (objects first-line-objects)
+              (first-row-p t))
           (loop
             ;; an empty row is still a row when more of the line follows, which is what a break at
-            ;; the very start of the virtual text asks for.
-            (unless (or objects rest-line-objects) (return))
+            ;; the very start of the virtual text asks for. an empty line is also one row, so the
+            ;; first iteration always draws, even when there is nothing to draw.
+            (unless (or first-row-p objects rest-line-objects) (return))
+            (setf first-row-p nil)
             (let ((row (render-row-with-caching window y (append left-side-objects objects))))
               (incf y (row-height row))
               (setq left-side-objects wrapped-left-side-objects)
@@ -1080,7 +1231,7 @@ creating zero temporary letter-objects."
           (let* ((left-side-objects
                    (alexandria:when-let (content (logical-line-left-content logical-line))
                      (mapcan #'create-drawing-object
-                             (compute-items-from-string-and-attributes
+                             (items-from-string-and-attributes
                               (lem/buffer/line:content-string content)
                               (lem/buffer/line:content-attributes content))))))
             (setf left-side-width
@@ -1126,14 +1277,16 @@ creating zero temporary letter-objects."
                         ((:right)
                          (alexandria:nconcf
                           right-objects
-                          (create-drawing-object
-                           (make-string-with-attribute-item :string string
-                                                            :attribute attribute))))
+                           (create-drawing-object
+                            (make-logical-string :string string
+                                                 :attribute attribute
+                                                 :source nil))))
                         (otherwise
                          (alexandria:nconcf left-objects
-                                            (create-drawing-object
-                                             (make-string-with-attribute-item :string string
-                                                                              :attribute attribute))))))
+                                             (create-drawing-object
+                                              (make-logical-string :string string
+                                                                   :attribute attribute
+                                                                   :source nil))))))
                     default-attribute)
     (values left-objects
             right-objects)))

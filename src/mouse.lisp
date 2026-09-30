@@ -112,15 +112,19 @@ that was not drawn, or whose line the buffer no longer has."
 
 (defun get-point-from-window-with-coordinates (window x y &optional (allow-overflow-column t))
   (with-point ((point (buffer-point (window-buffer window))))
-    (move-point-to-screen-row point window y)
-    (let ((moved (move-to-virtual-line-column point x window)))
-      (when (or moved allow-overflow-column)
-        point))))
+    (cond ((move-point-to-row-source point window x y)
+           point)
+          (t
+           (move-point-to-screen-row point window y)
+           (let ((moved (move-to-virtual-line-column point x window)))
+             (when (or moved allow-overflow-column)
+               point))))))
 
 (defun move-current-point-to-x-y-position (window x y)
   (switch-to-window window)
-  (move-point-to-screen-row (current-point) window y)
-  (move-to-virtual-line-column (current-point) x))
+  (or (move-point-to-row-source (current-point) window x y)
+      (progn (move-point-to-screen-row (current-point) window y)
+             (move-to-virtual-line-column (current-point) x))))
 
 (defvar *last-mouse-event*)
 (defun last-mouse-event () *last-mouse-event*)

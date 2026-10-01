@@ -4,8 +4,6 @@ import { JSONRPC } from './jsonrpc.js';
 import * as keyevent from './keyevent.js';
 import * as meaw from 'meaw';
 
-const textOffsetY = 5;
-
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 function isWideChar(c) {
@@ -35,7 +33,7 @@ function computeFontSize(font) {
 
   return [
     Math.floor(textMetrics.width),
-    Math.round(textMetrics.fontBoundingBoxAscent + textOffsetY + (textMetrics.emHeightDescent || 0)),
+    Math.round(textMetrics.fontBoundingBoxAscent + textMetrics.fontBoundingBoxDescent),
   ];
 }
 
@@ -45,7 +43,6 @@ function drawBlock({ ctx, x, y, width, height, style }) {
 }
 
 function drawText({ ctx, x, y, text, font, style, option }) {
-  y += Math.round(textOffsetY); // 少しずらしておかないと上の部分が現在行からはみ出して、その行だけ再描画しても描画跡が残ってしまう
   ctx.fillStyle = style;
   ctx.font = font;
   ctx.textBaseline = 'top';

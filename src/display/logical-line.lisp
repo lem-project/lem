@@ -65,9 +65,6 @@ source range. used for resolving cursor click position."
 (defmethod item-string ((item logical-string))
   (logical-string-string item))
 
-(defmethod item-string ((item logical-cursor))
-  (logical-cursor-string item))
-
 (defmethod item-string ((item logical-eol-cursor))
   " ")
 
@@ -76,9 +73,6 @@ source range. used for resolving cursor click position."
 
 (defmethod item-attribute ((item logical-string))
   (logical-string-attribute item))
-
-(defmethod item-attribute ((item logical-cursor))
-  (logical-cursor-attribute item))
 
 (defmethod item-attribute ((item logical-eol-cursor))
   (logical-eol-cursor-attribute item))
@@ -94,31 +88,6 @@ source range. used for resolving cursor click position."
                    point)
       (same-line-p (overlay-end overlay)
                    point)))
-
-(defun expand-tab (string attributes tab-width)
-  (setf attributes (copy-tree attributes))
-  (if (not (find #\tab string))
-      (values string attributes)
-      ;; TODO: optimize
-      (values (with-output-to-string (out)
-                (loop :with i := 0
-                      :for c :across string
-                      :do (cond ((char= c #\tab)
-                                 (let ((n (- tab-width (mod i tab-width))))
-                                   (loop :for elt :in attributes
-                                         :do (cond ((< i (first elt))
-                                                    (incf (first elt) (1- n))
-                                                    (incf (second elt) (1- n)))
-                                                   ((and (< i (second elt))
-                                                         (not (cursor-attribute-p (third elt))))
-                                                    (incf (second elt) (1- n)))))
-                                   (loop :repeat n
-                                         :do (write-char #\space out))
-                                   (incf i n)))
-                                (t
-                                 (write-char c out)
-                                 (incf i)))))
-              attributes)))
 
 (defun line-fully-invisible-p (point overlays)
   "T if an :invisible overlay spans POINT's line without either endpoint on it."
@@ -286,7 +255,7 @@ sourceless (virtual) items are left alone. returns the updated list."
                       start
                       end
                       (lambda (it)
-                        (when (and (logical-item-source it)
+                        (when (and (not (logical-item-virtual-p it))
                                    (typep it 'logical-string))
                           (setf (logical-string-attribute it)
                                 (merge-item-attribute (logical-string-attribute it)
@@ -313,7 +282,7 @@ returns the updated list."
    start
    end
    (lambda (it)
-     (cond ((null (logical-item-source it))
+     (cond ((logical-item-virtual-p it)
             it)
            ((typep it 'logical-cursor)
             (setf (logical-string-attribute it)

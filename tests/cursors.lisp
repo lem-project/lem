@@ -111,3 +111,41 @@
                      nil)
         (ok (positions-set-equal '((2 12) (3 10) (4 10))
                                  (all-positions buffer)))))))
+
+(defun count-logged-messages (text)
+  (let ((buffer (lem:get-buffer "*Messages*")))
+    (if buffer
+        (count text
+               (uiop:split-string (lem:buffer-text buffer) :separator '(#\Newline))
+               :test #'string=)
+        0)))
+
+(defun call-with-fake-cursors (command-class function)
+  "Execute COMMAND-CLASS in a buffer with two fake cursors, then call
+FUNCTION with the buffer while the buffer and *Messages* are still live."
+  (lem-fake-interface:with-fake-interface ()
+    (lem/common/timer:with-timer-manager (make-instance 'lem/common/timer:timer-manager)
+      (let ((lem-core::*killring* (lem/common/killring:make-killring 10)))
+        (with-testing-buffer (buffer (make-text-buffer (lines "abc" "def" "ghi")))
+          (lem:switch-to-buffer buffer)
+          (make-testing-fake-cursors (lem:buffer-point buffer) 2)
+          (lem:execute (lem:buffer-major-mode buffer)
+                       (make-instance command-class)
+                       nil)
+          (funcall function buffer))))))
+
+(deftest multiple-cursors-message-once
+  (testing "mark-set marks every cursor but reports once"
+    (call-with-fake-cursors
+     'lem:mark-set
+     (lambda (buffer)
+       (ok (every (lambda (cursor)
+                    (lem:mark-active-p (lem-core::cursor-mark cursor)))
+                  (lem-core::buffer-cursors buffer)))
+       (ok (= 1 (count-logged-messages "Mark set"))))))
+  (testing "yank-pop without a preceding yank reports once"
+    (call-with-fake-cursors
+     'lem:yank-pop
+     (lambda (buffer)
+       (declare (ignore buffer))
+       (ok (= 1 (count-logged-messages "Previous command was not a yank")))))))

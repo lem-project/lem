@@ -2,6 +2,12 @@
 
 (defparameter *message-timeout* 2)
 
+(defvar *inhibit-message* nil
+  "When true, `message` and `message-without-log` do nothing.
+
+`process-each-cursors` binds this around the fake-cursor passes, so a command
+that runs once per cursor reports its message once, from the real cursor.")
+
 (defgeneric show-message (string &key timeout style &allow-other-keys))
 (defgeneric clear-message ())
 
@@ -27,10 +33,12 @@ This function does not write into the `*Messages*` buffer.
 
 The first argument is a format control string, and the rest are data to be
 formatted under control of the string."
-  (if (null string)
-      (clear-message)
-      (show-message (apply #'format nil string args)
-                    :timeout *message-timeout*)))
+  (cond (*inhibit-message*)
+        ((null string)
+         (clear-message))
+        (t
+         (show-message (apply #'format nil string args)
+                       :timeout *message-timeout*))))
 
 (defun message (string &rest args)
   "Print a message.
@@ -40,8 +48,9 @@ Return t if success.
 
 The first argument is a format control string, and the rest are data to be
 formatted under control of the string."
-  (log-message string args)
-  (apply #'message-without-log string args)
+  (unless *inhibit-message*
+    (log-message string args)
+    (apply #'message-without-log string args))
   (values))
 
 (defun message-buffer (buffer)

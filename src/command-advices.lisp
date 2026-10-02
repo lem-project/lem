@@ -12,7 +12,8 @@
         (with-current-killring (fake-cursor-killring point)
           (handler-case
               (save-continue-flags
-                (funcall function))
+                (let ((*inhibit-message* t))
+                  (funcall function)))
             (move-cursor-error ())))))
     (funcall function)))
 

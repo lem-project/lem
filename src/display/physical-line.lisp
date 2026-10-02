@@ -1137,11 +1137,17 @@ creating zero temporary letter-objects."
                        (incf char-x per-char-width))
              ;; Create one text-object for the visible substring
              (when start-idx
-               (push (make-object-with-type
-                      (subseq string start-idx end-idx)
-                      (text-object-attribute object)
-                      (text-object-type object))
-                     result))))
+               (let ((source (drawing-object-source object)))
+                 (push (make-object-with-type
+                        (subseq string start-idx end-idx)
+                        (text-object-attribute object)
+                        (text-object-type object)
+                        (object-source-for-run source
+                                               start-idx
+                                               (- end-idx start-idx)
+                                               (and source
+                                                    (= len (- (cdr source) (car source))))))
+                       result)))))
           ;; an image crossing the right edge is cut down to what fits. the left edge is not, since
           ;; that needs an offset into the image and an image-object carries only a visible width.
           ((and (typep object 'image-object) (< x end-x) (< end-x obj-end))

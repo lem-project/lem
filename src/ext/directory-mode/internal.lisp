@@ -265,7 +265,7 @@
 
 (defun directory-buffer (filename)
   (setf filename (uiop:directory-exists-p
-                  (expand-file-name (namestring filename)
+                  (expand-file-name filename
                                     (buffer-directory))))
   (let* ((name (pathname-directory-last-name filename))
          (buffer (get-buffer name)))

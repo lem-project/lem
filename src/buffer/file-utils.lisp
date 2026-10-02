@@ -38,7 +38,7 @@
             :do (return
                   (if (= start (length filename))
                       (make-pathname :directory path :host host)
-                      (let ((name (subseq filename start)))
+                      (let ((name (uiop:parse-native-namestring (subseq filename start))))
                         (make-pathname :name (pathname-name name)
                                        :type (pathname-type name)
                                        :directory path
@@ -55,8 +55,9 @@
                         (t
                          (setf path (append path (list name))))))))))
 
+;; FILENAME is a native path (pathname or unescaped string), the result is a lisp namestring.
 (defun expand-file-name (filename &optional (directory (uiop:getcwd)))
-  (when (pathnamep filename) (setf filename (namestring filename)))
+  (when (pathnamep filename) (setf filename (uiop:native-namestring filename)))
   (%call-virtual-handlers *virtual-expand-file-name-functions*
       (list filename directory)
     (lambda ()

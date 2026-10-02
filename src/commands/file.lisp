@@ -98,7 +98,7 @@
                     :existing nil))
                   ((or (pathnamep arg)
                        (uiop:absolute-pathname-p arg))
-                   (namestring arg)))))
+                   arg))))
       (let (buffer)
         (dolist (pathname (expand-files* filename))
           (setf buffer (execute-find-file *find-file-executor*
@@ -246,10 +246,8 @@
 
 (define-command read-file (filename) ((:new-file "Read File: "))
   "Open the file as a read-only."
-  (when (pathnamep filename)
-    (setf filename (namestring filename)))
   (dolist (pathname (expand-files* filename))
-    (let ((buffer (find-file-buffer (namestring pathname))))
+    (let ((buffer (find-file-buffer pathname)))
       (setf (buffer-read-only-p buffer) t)
       (switch-to-buffer buffer t nil)))
   t)

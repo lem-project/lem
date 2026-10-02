@@ -46,8 +46,7 @@ function resetImage() {
   (let ((buffer (lem:make-buffer
                  (file-namestring pathname)
                  :directory (lem:expand-file-name
-                             (namestring (uiop:pathname-directory-pathname
-                                          pathname))))))
+                             (uiop:pathname-directory-pathname pathname)))))
     (change-class buffer
                   'image-buffer
                   :html

@@ -33,8 +33,6 @@ SPEC is a bare string, a single (string attribute) pair, or a list of such pairs
   string
   attribute)
 
-(defstruct (logical-image (:include logical-item)))
-
 (defstruct (logical-cursor (:include logical-string)))
 
 (defstruct (logical-eol-cursor (:include logical-item))
@@ -88,13 +86,6 @@ source range. used for resolving cursor click position."
                    point)
       (same-line-p (overlay-end overlay)
                    point)))
-
-(defun line-fully-invisible-p (point overlays)
-  "T if an :invisible overlay spans POINT's line without either endpoint on it."
-  (loop :for overlay :in overlays
-        :thereis (and (overlay-get overlay :invisible)
-                      (not (same-line-p (overlay-start overlay) point))
-                      (not (same-line-p (overlay-end overlay) point)))))
 
 (defun invisible-overlay-covering (point &optional (overlays (buffer-overlays (point-buffer point))))
   "Return the :invisible overlay covering POINT."

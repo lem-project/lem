@@ -12,7 +12,6 @@
                (:file "style")
                (:file "key")
                (:file "attribute")
-               (:file "drawing-object")
                (:file "view")
                (:file "render")
                (:file "input")

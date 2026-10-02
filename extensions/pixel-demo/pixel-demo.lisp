@@ -64,8 +64,8 @@
 (defun animation-step ()
   "Perform one animation step."
   (when (and *demo-window* (eq *demo-mode* :animate))
-    (let* ((char-width (lem-if:get-char-width (implementation)))
-           (char-height (lem-if:get-char-height (implementation)))
+    (let* ((char-width (lem-if:cell-width (implementation)))
+           (char-height (lem-if:cell-height (implementation)))
            (display-width (* (display-width) char-width))
            (display-height (* (display-height) char-height))
            (win-width (or (floating-window-pixel-width *demo-window*)
@@ -177,8 +177,8 @@ A floating window follows your mouse cursor at pixel precision."
   "Update coordinate debug display."
   (when (and *demo-window* (eq *demo-mode* :debug))
     (let* ((mouse-event (lem-core::last-mouse-event))
-           (char-width (lem-if:get-char-width (implementation)))
-           (char-height (lem-if:get-char-height (implementation))))
+           (char-width (lem-if:cell-width (implementation)))
+           (char-height (lem-if:cell-height (implementation))))
       (multiple-value-bind (win-px win-py win-pw win-ph)
           (floating-window-pixel-bounds *demo-window*)
         (let ((content
@@ -230,8 +230,8 @@ Shows real-time pixel and character coordinate information."
 (defun compare-animation-step ()
   "Animate both windows for comparison."
   (when (eq *demo-mode* :compare)
-    (let* ((char-width (lem-if:get-char-width (implementation)))
-           (char-height (lem-if:get-char-height (implementation)))
+    (let* ((char-width (lem-if:cell-width (implementation)))
+           (char-height (lem-if:cell-height (implementation)))
            (display-width (* (display-width) char-width))
            (display-height (* (display-height) char-height))
            (win-width (* 20 char-width)))

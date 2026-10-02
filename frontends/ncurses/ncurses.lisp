@@ -85,28 +85,31 @@
 (defmethod lem-if:view-height ((implementation ncurses) view)
   (lem-ncurses/view:view-height view))
 
-(defmethod lem-if:render-line ((implementation ncurses)
-                               view x y objects height)
-  (lem-ncurses/render:render-line view x y objects))
+(defmethod lem-if:render-row ((implementation ncurses) view row)
+  (lem-ncurses/render:render-row view row))
 
-(defmethod lem-if:render-line-on-modeline ((implementation ncurses)
-                                           view
-                                           left-objects
-                                           right-objects
-                                           default-attribute
-                                           height)
-  (lem-ncurses/render:render-line-on-modeline view left-objects right-objects default-attribute))
+(defmethod lem-if:render-modeline-row ((implementation ncurses) view row default-attribute)
+  (lem-ncurses/render:render-modeline-row view row default-attribute))
 
-(defmethod lem-if:object-width ((implementation ncurses) drawing-object)
-  (lem-ncurses/drawing-object:object-width drawing-object))
+(defmethod lem-if:object-width ((implementation ncurses)
+                                (drawing-object lem-core/display:image-object))
+  0)
 
-(defmethod lem-if:object-height ((implementation ncurses) drawing-object)
-  (lem-ncurses/drawing-object:object-height drawing-object))
+(defmethod lem-if:object-height ((implementation ncurses)
+                                 (drawing-object lem-core/display:image-object))
+  1)
+
+(defmethod lem-if:object-ascent ((implementation ncurses)
+                                 (drawing-object lem-core/display:image-object))
+  1)
 
 (defmethod lem-if:clear-to-end-of-window ((implementation ncurses) view y)
   (lem-ncurses/render:clear-to-end-of-window view y))
 
-(defmethod lem-if:get-char-width ((implementation ncurses))
+(defmethod lem-if:cell-width ((implementation ncurses))
+  1)
+
+(defmethod lem-if:cell-height ((implementation ncurses))
   1)
 
 ;; for mouse control

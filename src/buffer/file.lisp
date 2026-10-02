@@ -69,15 +69,13 @@
     encoding))
 
 (defun find-file-buffer (filename &key temporary (enable-undo-p t) (syntax-table nil syntax-table-p))
-  (when (pathnamep filename)
-    (setf filename (namestring filename)))
   (setf filename (expand-file-name filename))
   (unless (virtual-directory-exists-p (directory-namestring filename))
     (error 'directory-does-not-exist :directory (directory-namestring filename)))
   (alexandria:when-let (it (virtual-probe-file filename)) (setf filename (namestring it)))
   (cond ((uiop:directory-pathname-p filename)
          (if *find-directory-function*
-             (funcall *find-directory-function* filename)
+             (funcall *find-directory-function* (pathname filename))
              (editor-error "~A is a directory" filename)))
         ((and (not temporary)
               (find filename (buffer-list) :key #'buffer-filename :test #'equal)))

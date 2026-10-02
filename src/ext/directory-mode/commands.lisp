@@ -216,7 +216,9 @@ With prefix argument ARG, unmark all those files."
 
 (define-command directory-mode-delete-files () ()
   (let ((files (selected-files (current-point))))
-    (when (prompt-for-y-or-n-p (format nil "Really delete files~%~{- ~A~%~}" files))
+    (when (prompt-for-y-or-n-p (format nil
+                                       "Really delete files~%~{- ~A~%~}"
+                                       (mapcar #'uiop:native-namestring files)))
       (dolist (file files)
         (delete-file* file))
       (update-all-buffers))))
@@ -341,7 +343,7 @@ With prefix argument ARG, unmark all those files."
        (switch-to-buffer (find-file-buffer (uiop:getcwd))))
       (t
        (switch-to-buffer
-        (find-file-buffer (lem-core/commands/file::directory-for-file-or-lose (buffer-directory))))
+        (find-file-buffer (pathname (lem-core/commands/file::directory-for-file-or-lose (buffer-directory)))))
        (search-filename-and-recenter (display-name fullpath))))))
 
 (define-command directory-mode-kill-lines () ()

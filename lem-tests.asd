@@ -55,6 +55,7 @@
                              (:file "file-conversion")))
                (:module "tree-sitter"
                 :components ((:file "main")))
+               (:file "language-mode")
                (:file "killring")
                (:file "string-width-utils")
                (:file "syntax-test")

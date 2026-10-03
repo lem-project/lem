@@ -23,6 +23,7 @@
    :*file-conversion-map*
    ;; lisp-mode.lisp
    :lisp-mode
+   :asdf-root-file-p
    :load-file-functions
    :before-compile-functions
    :before-eval-functions

@@ -2,12 +2,6 @@
 
 (defparameter *message-timeout* 2)
 
-(defvar *inhibit-message* nil
-  "When true, `message` and `message-without-log` do nothing.
-
-`process-each-cursors` binds this around the fake-cursor passes, so a command
-that runs once per cursor reports its message once, from the real cursor.")
-
 (defgeneric show-message (string &key timeout style &allow-other-keys))
 (defgeneric clear-message ())
 
@@ -32,8 +26,11 @@ formatted under control of the string."
 This function does not write into the `*Messages*` buffer.
 
 The first argument is a format control string, and the rest are data to be
-formatted under control of the string."
-  (cond (*inhibit-message*)
+formatted under control of the string.
+
+Does nothing while a command runs for a fake cursor, so a command that runs
+once per cursor reports once, from the real cursor."
+  (cond ((fake-cursor-p (current-point)))
         ((null string)
          (clear-message))
         (t
@@ -47,8 +44,11 @@ The message goes into the `*Messages*` buffer and shows besides cursor.
 Return t if success.
 
 The first argument is a format control string, and the rest are data to be
-formatted under control of the string."
-  (unless *inhibit-message*
+formatted under control of the string.
+
+Does nothing while a command runs for a fake cursor, so a command that runs
+once per cursor reports once, from the real cursor."
+  (unless (fake-cursor-p (current-point))
     (log-message string args)
     (apply #'message-without-log string args))
   (values))

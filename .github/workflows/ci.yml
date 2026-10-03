@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       include_optional:
-        description: 'Include optional targets (SDL2, Intel Mac)'
+        description: 'Include optional targets (SDL2)'
         type: boolean
         default: false
 
@@ -33,8 +33,7 @@ jobs:
             // Check if optional targets should be included
             // (Only strictly when triggered via workflow_dispatch with the flag set to true)
             if (context.payload.inputs && context.payload.inputs.include_optional === 'true') {
-              console.log("Adding optional targets (SDL2, Intel Mac)...");
-              osList.push("macos-15-intel");
+              console.log("Adding optional targets (SDL2)...");
               backendList.push("lem-sdl2");
             }
 

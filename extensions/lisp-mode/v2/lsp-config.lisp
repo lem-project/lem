@@ -9,7 +9,7 @@
 
 (define-language-spec (lisp-spec lem-lisp-mode:lisp-mode)
   :language-id "lisp"
-  :root-uri-patterns '(".asd")
+  :root-uri-patterns (list #'lem-lisp-mode:asdf-root-file-p)
   :command (lambda (port)
              (assert (not *self-connection*))
              `("lem-language-server"

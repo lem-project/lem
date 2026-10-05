@@ -64,7 +64,7 @@
 (define-editor-variable root-uri-patterns '())
 (define-editor-variable detective-search nil)
 (define-editor-variable enable-tab-fold
-  nil
+  t
   "When T, the Tab key attempts to fold/unfold defuns and falls back to
 `indent-line-and-complete-symbol', otherwise it just invokes the latter.")
 (define-editor-variable fold-region-function
@@ -96,7 +96,8 @@
 
 (define-key *language-mode-keymap* "C-M-a" 'beginning-of-defun)
 (define-key *language-mode-keymap* "C-M-e" 'end-of-defun)
-(define-key *language-mode-keymap* "Tab" 'fold-or-indent-or-complete)
+(define-key *language-mode-keymap* "C-Tab" 'fold-or-indent-or-complete)
+(define-key *language-mode-keymap* "Tab" 'indent-line-and-complete-symbol)
 (define-key *global-keymap* "C-j" 'newline-and-indent)
 (define-key *global-keymap* "M-j" 'newline-and-indent)
 (define-key *language-mode-keymap* "C-M-\\" 'indent-region)

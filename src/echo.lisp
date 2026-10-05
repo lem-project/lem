@@ -26,11 +26,16 @@ formatted under control of the string."
 This function does not write into the `*Messages*` buffer.
 
 The first argument is a format control string, and the rest are data to be
-formatted under control of the string."
-  (if (null string)
-      (clear-message)
-      (show-message (apply #'format nil string args)
-                    :timeout *message-timeout*)))
+formatted under control of the string.
+
+Does nothing while a command runs for a fake cursor, so a command that runs
+once per cursor reports once, from the real cursor."
+  (cond ((fake-cursor-p (current-point)))
+        ((null string)
+         (clear-message))
+        (t
+         (show-message (apply #'format nil string args)
+                       :timeout *message-timeout*))))
 
 (defun message (string &rest args)
   "Print a message.
@@ -39,9 +44,13 @@ The message goes into the `*Messages*` buffer and shows besides cursor.
 Return t if success.
 
 The first argument is a format control string, and the rest are data to be
-formatted under control of the string."
-  (log-message string args)
-  (apply #'message-without-log string args)
+formatted under control of the string.
+
+Does nothing while a command runs for a fake cursor, so a command that runs
+once per cursor reports once, from the real cursor."
+  (unless (fake-cursor-p (current-point))
+    (log-message string args)
+    (apply #'message-without-log string args))
   (values))
 
 (defun message-buffer (buffer)

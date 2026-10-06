@@ -96,7 +96,7 @@
 
 (define-key *language-mode-keymap* "C-M-a" 'beginning-of-defun)
 (define-key *language-mode-keymap* "C-M-e" 'end-of-defun)
-(define-key *language-mode-keymap* "C-Tab" 'fold-or-indent-or-complete)
+(define-key *language-mode-keymap* "C-c Tab" 'fold-or-indent-or-complete)
 (define-key *language-mode-keymap* "Tab" 'indent-line-and-complete-symbol)
 (define-key *global-keymap* "C-j" 'newline-and-indent)
 (define-key *global-keymap* "M-j" 'newline-and-indent)

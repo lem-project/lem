@@ -52,13 +52,14 @@ leave this unset and dynamic-link against the system libvterm."
 (defun libvterm-prefix ()
   "Resolve the libvterm install prefix for static linking on macOS, where the
 archive must be passed by path. Honors LIBVTERM_PREFIX, then `brew --prefix
-libvterm`, then the default Homebrew location."
+ libvterm`, then MacPorts, then the default Homebrew location."
   (or (uiop:getenv "LIBVTERM_PREFIX")
       (ignore-errors
        (let ((p (string-trim '(#\Space #\Tab #\Newline #\Return)
                              (uiop:run-program '("brew" "--prefix" "libvterm")
                                                :output :string))))
          (when (plusp (length p)) p)))
+      (when (probe-file "/opt/local/lib/libvterm.a") "/opt/local")
       "/opt/homebrew/opt/libvterm"))
 
 ;; libvterm linker fragment, selected by platform and static/dynamic mode.
@@ -71,7 +72,8 @@ libvterm`, then the default Homebrew location."
       #+darwin (let ((prefix (libvterm-prefix)))
                  (format nil "-I~A/include ~A/lib/libvterm.a" prefix prefix))
       #-darwin "-Wl,-Bstatic -lvterm -Wl,-Bdynamic -lutil"
-      #+darwin "-I/opt/homebrew/include -L/opt/homebrew/lib -lvterm"
+      #+darwin (let ((prefix (libvterm-prefix)))
+                 (format nil "-I~A/include -L~A/lib -lvterm" prefix prefix))
       #-darwin "-lvterm -lutil"))
 
 (defun build-command (source lib)

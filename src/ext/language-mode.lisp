@@ -610,6 +610,7 @@ nothing to fold."
     (string (search pattern file))))
 
 (defun filesystem-root-p (directory)
+  "Return true if DIRECTORY is its own parent directory."
   (uiop:pathname-equal
    directory
    (uiop:pathname-parent-directory-pathname directory)))

@@ -286,6 +286,7 @@
                "lem-elixir-mode"
                "lem-ruby-mode"
                "lem-perl-mode"
+               "lem-prolog"
                "lem-erlang-mode"
                "lem-documentation-mode"
                "lem-elisp-mode"

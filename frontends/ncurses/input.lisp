@@ -31,20 +31,25 @@
     ((<= #xf0 c #xf4) 4)
     (t 1)))
 
+(defun read-multibyte-char (code nbytes)
+  (let ((vec (make-array nbytes :element-type '(unsigned-byte 8))))
+    (setf (aref vec 0) code)
+    (with-getch-input-timeout (100)
+      (loop :for i :from 1 :below nbytes
+            :do (setf (aref vec i) (getch))))
+    (handler-case (schar (babel:octets-to-string vec :encoding :utf-8) 0)
+      (babel-encodings:character-decoding-error ()
+        (code-char code)))))
+
 (defun get-key (code)
-  (let* ((char (let ((nbytes (utf8-bytes code)))
-                 (if (= nbytes 1)
-                     (code-char code)
-                     (let ((vec (make-array nbytes :element-type '(unsigned-byte 8))))
-                       (setf (aref vec 0) code)
-                       (with-getch-input-timeout (100)
-                         (loop :for i :from 1 :below nbytes
-                               :do (setf (aref vec i) (getch))))
-                       (handler-case (schar (babel:octets-to-string vec) 0)
-                         (babel-encodings:invalid-utf8-continuation-byte ()
-                           (code-char code)))))))
-         (key (char-to-key char)))
-    key))
+  (let ((nbytes (utf8-bytes code)))
+    (if (= nbytes 1)
+        (char-to-key (code-char code))
+        ;; A multibyte sequence is always a character, never an ncurses
+        ;; keycode, so skip *keycode-table*: its KEY_ values (258-567)
+        ;; collide with Latin Extended code points such as č (269 = [f5])
+        ;; and š (353 = [btab]). See #656.
+        (make-key :sym (string (read-multibyte-char code nbytes))))))
 
 (defun csi\[1 ()
   (or (case (getch)

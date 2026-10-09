@@ -13,6 +13,11 @@
 (defparameter *default-port* 4005)
 (defparameter *localhost* "127.0.0.1")
 
+(defun asdf-root-file-p (name)
+  "Return non-NIL when NAME has the .asd file extension.
+Other extensions, such as .BACK in foo.asd.BACK, must not match."
+  (equal (pathname-type name) "asd"))
+
 (set-syntax-parser lem-lisp-syntax:*syntax-table*
                    (make-tmlanguage-lisp))
 
@@ -38,7 +43,8 @@
   (setf (variable-value 'completion-spec)
         (make-completion-spec 'completion-symbol-async :async t))
   (setf (variable-value 'idle-function) 'lisp-idle-function)
-  (setf (variable-value 'root-uri-patterns) '(".asd"))
+  (setf (variable-value 'root-uri-patterns)
+        (list #'asdf-root-file-p))
   (setf (variable-value 'detective-search)
         (make-instance 'lem/detective:search-regex
                        :function-regex

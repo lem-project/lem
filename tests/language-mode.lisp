@@ -182,8 +182,10 @@
            (lem/language-mode:find-root-directory
             project
             (list (lambda (name)
+                    ;; Inspect all direct entries regardless of listing order.
                     (push name names)
-                    (string= name "sentinel"))))))
+                    nil)
+                  "sentinel"))))
       (ok (member "" names :test #'string=)
           "directory entries should still be passed as an empty file-namestring")
       (ok (member "sentinel" names :test #'string=)
@@ -214,16 +216,24 @@
           (format nil "invalid root pattern should signal an error: ~S"
                   pattern)))))
 
-(deftest lisp-asd-root-pattern-remains-compatible
+(deftest lisp-asd-root-pattern-matches-exact-extension
   (with-test-directory (base)
     (let* ((project (uiop:subpathname base "project/"))
-           (src (uiop:subpathname project "src/")))
-      (touch-file (uiop:subpathname project "sample.asd"))
+           (src (uiop:subpathname project "src/"))
+           (patterns (list #'lem-lisp-mode:asdf-root-file-p)))
+      (touch-file (uiop:subpathname base "parent.asd"))
+      (touch-file (uiop:subpathname project "sample.asd.BACK"))
       (ensure-test-directory src)
       (ok (same-path-p
+           base
+           (lem/language-mode:find-root-directory src patterns))
+          "backup file must not be treated as an ASDF system")
+      (touch-file (uiop:subpathname project "sample.asd"))
+      (ok (same-path-p
            project
-           (lem/language-mode:find-root-directory
-            src
-            (list #'lem-lisp-mode:asdf-root-file-p))))
-      ;; Preserve the previous SEARCH-based behavior during the migration.
-      (ok (lem-lisp-mode:asdf-root-file-p "sample.asd.bak")))))
+           (lem/language-mode:find-root-directory src patterns))
+          ".asd file must identify the nearest project root")
+      (ok (lem-lisp-mode:asdf-root-file-p "sample.asd"))
+      (ok (not (lem-lisp-mode:asdf-root-file-p "sample.asd.BACK")))
+      (ok (not (lem-lisp-mode:asdf-root-file-p "sample.asd.bak")))
+      (ok (not (lem-lisp-mode:asdf-root-file-p "README"))))))

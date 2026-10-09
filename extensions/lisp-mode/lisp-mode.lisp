@@ -14,8 +14,9 @@
 (defparameter *localhost* "127.0.0.1")
 
 (defun asdf-root-file-p (name)
-  "Return non-NIL when NAME matches the legacy .asd root pattern."
-  (search ".asd" name))
+  "Return non-NIL when NAME has the .asd file extension.
+Other extensions, such as .BACK in foo.asd.BACK, must not match."
+  (equal (pathname-type name) "asd"))
 
 (set-syntax-parser lem-lisp-syntax:*syntax-table*
                    (make-tmlanguage-lisp))

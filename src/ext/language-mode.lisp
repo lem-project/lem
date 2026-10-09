@@ -605,6 +605,8 @@ nothing to fold."
               (newline-and-indent 1))))))
 
 (defun valid-root-path-pattern-p (pattern)
+  "Return non-NIL for a valid relative root-marker path.
+Reject empty paths, parent traversal, and wildcards; allow a trailing slash."
   (labels ((valid-component-p (component)
              (and (plusp (length component))
                   (not (string= component "."))
@@ -623,6 +625,8 @@ nothing to fold."
          (walk 0))))
 
 (defun match-string-root-pattern-p (pattern directory)
+  "Return the pathname if PATTERN exists as a file or directory under DIRECTORY.
+Check the exact relative path instead of matching substrings of entry names."
   (unless (valid-root-path-pattern-p pattern)
     (error "Invalid root URI pattern ~S. Expected a non-empty relative path without . or .. components or wildcards."
            pattern))
@@ -630,10 +634,14 @@ nothing to fold."
    (uiop:subpathname directory pattern)))
 
 (defun match-function-root-pattern-p (pattern pathnames)
+  "Return non-NIL if PATTERN matches an entry in PATHNAMES.
+For compatibility, pass the FILE-NAMESTRING of each direct entry to PATTERN."
   (loop :for pathname :in pathnames
         :thereis (funcall pattern (file-namestring pathname))))
 
 (defun match-root-patterns-p (directory patterns)
+  "Return non-NIL when any root marker matches DIRECTORY.
+List direct entries only when a function pattern needs them."
   (let ((pathnames nil)
         (pathnames-loaded-p nil))
     (labels ((pathnames ()
@@ -650,6 +658,8 @@ nothing to fold."
           (return t))))))
 
 (defun find-root-directory-1 (directory patterns)
+  "Return the nearest matching ancestor or NIL if none is found.
+Check the home directory for markers before stopping the upward search."
   (labels ((recursive (directory)
              (cond ((match-root-patterns-p directory patterns) directory)
                    ((uiop:pathname-equal directory (user-homedir-pathname)) nil)
@@ -661,9 +671,9 @@ nothing to fold."
 
 String patterns name concrete relative paths below each candidate directory;
 empty paths, . or .. path components, and wildcard characters are invalid.
-Function patterns are called with the FILE-NAMESTRING of each direct entry.  If ROOT-URI-PATTERNS is
-NIL, use .git as the default marker.  If the search terminates without finding
-a marker, return DIRECTORY."
+Function patterns receive the FILE-NAMESTRING of each direct entry.
+If ROOT-URI-PATTERNS is NIL, use .git as the default marker.
+If no marker is found before stopping at HOME, return DIRECTORY."
   (or (find-root-directory-1 directory
                              (or root-uri-patterns
                                  '(".git")))

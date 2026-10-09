@@ -111,7 +111,7 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
                  :debug
                  :info))))
     (t
-     (log:config :sane :daily (merge-pathnames "debug.log" (lem-home)) :info)))
+     (log:config :sane :daily (merge-pathnames "debug.log" (lem-logdir-pathname)) :info)))
 
   (when (command-line-arguments-help args)
     (show-help)

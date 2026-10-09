@@ -246,8 +246,8 @@ Hash-table based key binding storage with hierarchical lookup through mode keyma
 
 ### Logging
 - Framework: log4cl
-- Default log file: `~/.lem/debug.log` (`src/lem.lisp:124`)
-- Configurable via `--log` command-line argument
+- Default log file: `logs/debug.log` in the Lem home directory, e.g. `~/.lem/logs/debug.log` (`src/lem.lisp:114`)
+- Configurable via `--log-filename` command-line argument
 
 ## 10. Risks & Improvements
 

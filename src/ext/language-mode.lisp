@@ -609,6 +609,12 @@ nothing to fold."
     (function (funcall pattern file))
     (string (search pattern file))))
 
+(defun filesystem-root-p (directory)
+  "Return true if DIRECTORY is its own parent directory."
+  (uiop:pathname-equal
+   directory
+   (uiop:pathname-parent-directory-pathname directory)))
+
 (defun find-root-directory-1 (directory patterns)
   (labels ((matchp (directory)
              (dolist (pathname (list-directory directory))
@@ -618,6 +624,7 @@ nothing to fold."
            (recursive (directory)
              (cond ((matchp directory) directory)
                    ((uiop:pathname-equal directory (user-homedir-pathname)) nil)
+                   ((filesystem-root-p directory) nil)
                    (t (recursive (uiop:pathname-parent-directory-pathname directory))))))
     (recursive directory)))
 

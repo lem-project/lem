@@ -372,6 +372,13 @@ Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
   (invalidate-keybinding-cache keymap)
   (values))
 
+(defun undefine-all-keys (keymap)
+  "Clears all bindings from the keymap"
+  (setf (keymap-prefixes keymap) nil)
+  (setf (keymap-function-table keymap) (make-hash-table :test 'eq))
+  (invalidate-keybinding-cache keymap)
+  (values))
+
 (defmacro undefine-keys (keymap &body bindings)
   `(progn ,@(mapcar
              (lambda (binding)

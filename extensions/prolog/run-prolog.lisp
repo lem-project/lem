@@ -319,6 +319,14 @@ Return POINT on success, nil otherwise."
   (prolog-send-string session (format nil "~a~%" query))
   (%prolog-toplevel session))
 
+(defun prolog-set-query-prefix (session groups)
+  "Set SESSION's indentation and output prefix from query-regexp GROUPS."
+  (setf (prolog-session-indent-prefix session) (aref groups 0)
+        (prolog-session-prefix session)
+        (if (string= (aref groups 1) "")
+            ""
+            (prolog-session-variable-value session 'prolog-default-prefix))))
+
 (defun prolog-query (session)
   "If point is on a query, send it to the process of SESSION and start interaction.
 Return true if point was on a query."
@@ -328,11 +336,7 @@ Return true if point was on a query."
       (multiple-value-bind (match groups)
           (looking-at p "([\\t ]*)(%*)[\\t ]*[:?]- *")
         (when match
-          (setf (prolog-session-indent-prefix session) (aref groups 0)
-                (prolog-session-prefix session)
-                (if (string= (aref groups 1) "")
-                    ""
-                    (prolog-session-variable-value session 'prolog-default-prefix)))
+          (prolog-set-query-prefix session groups)
           (character-offset p (length match))
           (let ((qstart (copy-point p :temporary)))
             (unless (prolog-find-query-end p)

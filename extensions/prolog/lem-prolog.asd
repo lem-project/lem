@@ -6,3 +6,10 @@
   :serial t
   :components ((:file "prolog-mode")
                (:file "run-prolog")))
+
+(defsystem "lem-prolog/tests"
+  :depends-on ("lem-prolog" "rove")
+  :components ((:module "tests"
+                :components ((:file "main"))))
+  :perform (test-op (op c)
+             (symbol-call :rove '#:run c)))

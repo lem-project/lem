@@ -528,23 +528,24 @@ Refuses to run when SESSION's prefix is empty, since it would match every line."
 
 (defun %prolog-dwim (session arg)
   "Dispatch on the prefix argument ARG of `prolog-dwim' for SESSION."
-  (cond ((null arg)
-         (unless (prolog-query session)
-           (%prolog-consult session nil)))
-        ((= arg 0)
-         (unless (prolog-running-p session)
-           (editor-error "No Prolog process running"))
-         (prolog-kill-process session)
-         (message "Prolog process killed."))
-        ((= arg 1) (%prolog-consult session nil))
-        ((= arg 2) (%prolog-consult session t))
-        ((= arg 7)
-         (unless (prolog-more-solutions-p session)
-           (editor-error "No query in progress"))
-         (%prolog-toplevel session))
-        ((= arg 4) (%prolog-consult session nil) (prolog-query session))
-        ((= arg 16) (%prolog-consult session t) (prolog-query session))
-        (t (%prolog-remove-interactions session))))
+  (case arg
+    ((nil)
+     (unless (prolog-query session)
+       (%prolog-consult session nil)))
+    (0
+     (unless (prolog-running-p session)
+       (editor-error "No Prolog process running"))
+     (prolog-kill-process session)
+     (message "Prolog process killed."))
+    (1 (%prolog-consult session nil))
+    (2 (%prolog-consult session t))
+    (7
+     (unless (prolog-more-solutions-p session)
+       (editor-error "No query in progress"))
+     (%prolog-toplevel session))
+    (4 (%prolog-consult session nil) (prolog-query session))
+    (16 (%prolog-consult session t) (prolog-query session))
+    (otherwise (%prolog-remove-interactions session))))
 
 (define-command prolog-dwim (arg) (:universal-nil)
   "Load current buffer into Prolog or post query (Do What I Mean).

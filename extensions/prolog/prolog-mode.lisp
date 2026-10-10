@@ -1,17 +1,10 @@
 (defpackage :lem-prolog
-  (:use :cl :lem :lem/language-mode :lem/language-mode-tools :lem-process)
-  (:export :prolog-dwim
-           :prolog-toplevel
-           :prolog-consult
-           :prolog-kill-prolog
-           :prolog-remove-interactions
-           :prolog-localize
-           :prolog-unlocalize
-           :prolog-mode
+  (:use :cl :lem :lem/language-mode :lem/language-mode-tools)
+  (:export :prolog-mode
            :*prolog-mode-hook*
            :*prolog-mode-keymap*
            :*prolog-syntax-table*)
-  (:documentation "Prolog major mode and interaction with a Prolog process.
+  (:documentation "Prolog major mode.
 The interaction is a port of Markus Triska's ediprolog 2.5-alpha1
 (https://www.metalevel.at/ediprolog/)."))
 

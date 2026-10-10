@@ -1,4 +1,13 @@
-(in-package :lem-prolog)
+(defpackage :lem-prolog.run-prolog
+  (:use :cl :lem :lem-process)
+  (:export :prolog-dwim
+           :prolog-toplevel
+           :prolog-consult
+           :prolog-kill-prolog
+           :prolog-remove-interactions
+           :prolog-localize
+           :prolog-unlocalize))
+(in-package :lem-prolog.run-prolog)
 
 (define-editor-variable prolog-program "scryer-prolog"
   "Program name of the Scryer Prolog executable.")

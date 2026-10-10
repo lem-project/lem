@@ -26,6 +26,8 @@
     (,sdl2-ffi:+sdlk-pageup+ "PageUp" nil)
     (,sdl2-ffi:+sdlk-pagedown+ "PageDown" nil)
     (,sdl2-ffi:+sdlk-escape+ "Escape" nil)
+    (,sdl2-ffi:+sdlk-application+ "ContextMenu" nil)
+    (,sdl2-ffi:+sdlk-menu+ "ContextMenu" nil)
     (,sdl2-ffi:+sdlk-left+ "Left" nil)
     (,sdl2-ffi:+sdlk-right+ "Right" nil)
     (,sdl2-ffi:+sdlk-up+ "Up" nil)
@@ -94,8 +96,8 @@
 
 (defun right-alt-is-meta (on)
   (let ((val (if on
-                  `(:meta ,sdl2-ffi:+kmod-lalt+ ,sdl2-ffi:+kmod-ralt+)
-                  `(:meta ,sdl2-ffi:+kmod-lalt+))))
+                 `(:meta ,sdl2-ffi:+kmod-lalt+ ,sdl2-ffi:+kmod-ralt+)
+                 `(:meta ,sdl2-ffi:+kmod-lalt+))))
     (unless (equal (assoc :meta *modifier-code-table*) val)
       (setf *modifier-code-table* (cons val *modifier-code-table*)))))
 

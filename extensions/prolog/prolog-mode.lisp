@@ -5,6 +5,8 @@
            :prolog-consult
            :prolog-kill-prolog
            :prolog-remove-interactions
+           :prolog-localize
+           :prolog-unlocalize
            :prolog-mode
            :*prolog-mode-hook*
            :*prolog-mode-keymap*

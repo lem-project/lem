@@ -1,7 +1,5 @@
 (in-package :lem-prolog)
 
-(define-key *global-keymap* "F10" 'prolog-dwim)
-
 (define-editor-variable prolog-program "scryer-prolog"
   "Program name of the Scryer Prolog executable.")
 
@@ -29,10 +27,23 @@ Only used for queries written with %?- or %:-; queries without a % get no prefix
   (indent-prefix "")
   (prefix "")
   (output "")
-  (history-buffer nil))
+  (history-buffer nil)
+  (buffer nil))
 
-(defvar *prolog-session* (make-prolog-session)
-  "The editor-wide Prolog session used by the prolog commands.")
+(defvar *default-prolog-session* (make-prolog-session)
+  "The shared Prolog session used unless a buffer is localized.")
+
+(defun prolog-session-for-buffer (&optional (buffer (current-buffer)))
+  "Return BUFFER's local Prolog session, or the shared default session."
+  (or (buffer-value buffer 'prolog-session)
+      *default-prolog-session*))
+
+(defun prolog-session-variable-value (session variable)
+  "Return VARIABLE's value for SESSION, respecting local settings."
+  (let ((buffer (prolog-session-buffer session)))
+    (if buffer
+        (variable-value variable :default buffer)
+        (variable-value variable :global))))
 
 (defvar *prolog-escape-scanner*
   (ppcre:create-scanner (concatenate 'string (string #\Esc)
@@ -86,11 +97,14 @@ not yet complete (an escape sequence split across output chunks)."
 
 (defun prolog-log (session str)
   "Append STR to the *prolog-history* buffer of SESSION, truncating if too large."
-  (let ((max (variable-value 'prolog-max-history :global)))
+  (let ((max (prolog-session-variable-value session 'prolog-max-history)))
     (when (and max (plusp (length str)))
       (unless (prolog-session-history-buffer session)
         (setf (prolog-session-history-buffer session)
-              (make-buffer "*prolog-history*")))
+              (make-buffer (if (prolog-session-buffer session)
+                               (format nil "*prolog-history*: ~a"
+                                       (buffer-name (prolog-session-buffer session)))
+                               "*prolog-history*"))))
       (let ((history (prolog-session-history-buffer session)))
         (insert-string (buffer-end-point history) str)
         (let ((size (position-at-point (buffer-end-point history))))
@@ -125,7 +139,9 @@ partial escape sequence or a partial prompt is held back until the next
 chunk, because it may be completed there.  Newlines right before the prompt
 are dropped, since they would otherwise leave a bare prefix line; other
 trailing newlines are held back until more output shows what follows them."
-  (declare (ignore process))
+  ;; Ignore callbacks queued by a process that has since been killed or replaced.
+  (unless (eq process (prolog-session-process session))
+    (return-from prolog-filter))
   ;; Once the prompt has been seen, ignore stray input/echo from the process.
   (when (prolog-session-seen-prompt session)
     (prolog-log session string)
@@ -220,8 +236,8 @@ The process runs with TERM=dumb: async-process runs the child on a pty, and
 with a normal TERM the toplevel uses its line editor and floods the output
 with redraws and ANSI sequences, and a redraw's \"?- \" prefix can be mistaken
 for the real prompt.  TERM=dumb gives a clean stream of prompts and answers."
-  (let* ((program (variable-value 'prolog-program :global))
-         (switches (or (variable-value 'prolog-program-switches :global) '()))
+  (let* ((program (prolog-session-variable-value session 'prolog-program))
+         (switches (or (prolog-session-variable-value session 'prolog-program-switches) '()))
          (proc (run-process (append (list "env" "TERM=dumb" program) switches)
                             :name "prolog"
                             :directory (or (buffer-directory (current-buffer))
@@ -245,19 +261,24 @@ for the real prompt.  TERM=dumb gives a clean stream of prompts and answers."
       (editor-error "No prompt from: ~a" program))))
 
 (defun prolog-kill-process (session)
-  "Kill the Prolog process of SESSION."
-  (when (prolog-running-p session)
-    (delete-process (prolog-session-process session))
-    (let ((marker (prolog-session-marker session)))
-      (when (and marker (alive-point-p marker))
-        (delete-point marker)))
+  "Kill the Prolog process of SESSION and clear its process state."
+  (let ((process (prolog-session-process session))
+        (marker (prolog-session-marker session)))
+    (when (and process (process-alive-p process))
+      (delete-process process))
+    (when (and marker (alive-point-p marker))
+      (delete-point marker))
     (setf (prolog-session-process session) nil
           (prolog-session-process-buffer session) nil
           (prolog-session-marker session) nil
           (prolog-session-accum session) ""
+          (prolog-session-output session) ""
           (prolog-session-seen-prompt session) nil
-          (prolog-session-read-term session) nil)
-    (prolog-log session (format nil "~a: process killed.~%" (prolog-time-string)))))
+          (prolog-session-read-term session) nil
+          (prolog-session-interrupted session) nil
+          (prolog-session-consulting-p session) nil)
+    (when process
+      (prolog-log session (format nil "~a: process killed.~%" (prolog-time-string))))))
 
 
 (defun prolog-find-query-end (point)
@@ -283,6 +304,8 @@ Return POINT on success, nil otherwise."
     (unless (and marker
                  (alive-point-p marker)
                  (eq (point-buffer marker) (prolog-session-process-buffer session)))
+      (when (and marker (alive-point-p marker))
+        (delete-point marker))
       (setf (prolog-session-marker session) (make-buffer-point (current-point)))))
   (prolog-send-string session (format nil "~a~%" query))
   (%prolog-toplevel session))
@@ -300,7 +323,7 @@ Return true if point was on a query."
                 (prolog-session-prefix session)
                 (if (string= (aref groups 1) "")
                     ""
-                    (variable-value 'prolog-default-prefix :global)))
+                    (prolog-session-variable-value session 'prolog-default-prefix)))
           (character-offset p (length match))
           (let ((qstart (copy-point p :temporary)))
             (unless (prolog-find-query-end p)
@@ -416,7 +439,12 @@ With NEW-PROCESS non-nil, start a new process first."
           (message "~a consulted." (if region-p "Region" "Buffer"))
           (let ((output (prolog-session-output session)))
             (when (prolog-consult-output-display-p output)
-              (with-pop-up-typeout-window (out (make-buffer "*prolog-consult*") :erase t)
+              (with-pop-up-typeout-window
+                  (out (make-buffer (if (prolog-session-buffer session)
+                                        (format nil "*prolog-consult*: ~a"
+                                                (buffer-name (prolog-session-buffer session)))
+                                        "*prolog-consult*"))
+                   :erase t)
                 (write-string output out))))
           (prolog-goto-first-error session buffer source-start previous-point))))))
 
@@ -474,6 +502,30 @@ Refuses to run when SESSION's prefix is empty, since it would match every line."
                      (delete-between-points line-start-point line-end-point))))))))
     (message "Interactions removed.")))
 
+(defun prolog-kill-buffer-session (buffer)
+  "Kill the localized Prolog process when BUFFER is killed."
+  (let ((session (buffer-value buffer 'prolog-session)))
+    (when session
+      (prolog-kill-process session))))
+
+(defun prolog-localize-buffer (buffer)
+  "Give BUFFER a private Prolog session and detach it from the shared session."
+  (let ((shared-session *default-prolog-session*))
+    (when (and (prolog-running-p shared-session)
+               (not (prolog-session-seen-prompt shared-session)))
+      (editor-error "Cannot localize while the shared Prolog query is in progress"))
+    (when (eq (prolog-session-process-buffer shared-session) buffer)
+      (let ((marker (prolog-session-marker shared-session)))
+        (when (and marker (alive-point-p marker))
+          (delete-point marker)))
+      (setf (prolog-session-process-buffer shared-session) nil
+            (prolog-session-marker shared-session) nil))
+    (let ((session (make-prolog-session :buffer buffer)))
+      (setf (buffer-value buffer 'prolog-session) session)
+      (add-hook (variable-value 'kill-buffer-hook :buffer buffer)
+                #'prolog-kill-buffer-session)
+      session)))
+
 (defun %prolog-dwim (session arg)
   "Dispatch on the prefix argument ARG of `prolog-dwim' for SESSION."
   (cond ((null arg)
@@ -507,24 +559,65 @@ process. With prefix 7, equivalent to `prolog-toplevel'. With just
 C-u, first consult the buffer and then, if point is on a query,
 evaluate it. Analogously, C-u C-u for consult with a new process.
 With other prefix arguments, remove all interactions."
-  (%prolog-dwim *prolog-session* arg))
+  (%prolog-dwim (prolog-session-for-buffer) arg))
 
 (define-command prolog-toplevel () ()
   "Start or resume Prolog toplevel interaction in the buffer."
-  (%prolog-toplevel *prolog-session*))
+  (%prolog-toplevel (prolog-session-for-buffer)))
 
 (define-command prolog-kill-prolog () ()
   "Kill the Prolog process."
-  (unless (prolog-running-p *prolog-session*)
+  (unless (prolog-running-p (prolog-session-for-buffer))
     (editor-error "No Prolog process running"))
-  (prolog-kill-process *prolog-session*))
+  (prolog-kill-process (prolog-session-for-buffer)))
 
 (define-command prolog-remove-interactions () ()
   "Remove all lines starting with the prefix of the latest query from the buffer."
-  (%prolog-remove-interactions *prolog-session*))
+  (%prolog-remove-interactions (prolog-session-for-buffer)))
 
 (define-command prolog-consult (&optional new-process) ()
   "Load current buffer (or region, if active) into the Prolog process.
 With NEW-PROCESS non-nil, start a new process. In case of errors, point
 is moved to the line of the first error."
-  (%prolog-consult *prolog-session* new-process))
+  (%prolog-consult (prolog-session-for-buffer) new-process))
+
+(defun prolog-clear-local-variable (buffer variable)
+  "Remove VARIABLE's buffer-local value from BUFFER."
+  (let ((editor-variable (get variable 'lem/common/var:editor-variable)))
+    (when editor-variable
+      (buffer-unbound
+       buffer
+       (lem/common/var:editor-variable-local-indicator editor-variable)))))
+
+(define-command prolog-localize () ()
+  "Give the current buffer its own Prolog process and interaction state.
+Other buffers continue using the shared default Prolog session."
+  (let ((buffer (current-buffer)))
+    (when (buffer-value buffer 'prolog-session)
+      (editor-error "This buffer already has a local Prolog session"))
+    (prolog-localize-buffer buffer)
+    (dolist (variable '(prolog-program
+                        prolog-program-switches
+                        prolog-default-prefix
+                        prolog-max-history))
+      (setf (variable-value variable :buffer buffer)
+            (variable-value variable :default buffer)))
+    (message "Prolog session localized to this buffer.")))
+
+(define-command prolog-unlocalize () ()
+  "Discard this buffer's local Prolog process and return to the shared session."
+  (let* ((buffer (current-buffer))
+         (session (buffer-value buffer 'prolog-session)))
+    (if session
+        (progn
+          (prolog-kill-process session)
+          (remove-hook (variable-value 'kill-buffer-hook :buffer buffer)
+                       #'prolog-kill-buffer-session)
+          (setf (buffer-value buffer 'prolog-session) nil)
+          (dolist (variable '(prolog-program
+                              prolog-program-switches
+                              prolog-default-prefix
+                              prolog-max-history))
+            (prolog-clear-local-variable buffer variable))
+          (message "Using the shared Prolog session again."))
+        (message "This buffer already uses the shared Prolog session."))))

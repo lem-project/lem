@@ -3,7 +3,9 @@
         :lem
         :lem/directory-mode/commands)
   (:import-from :lem/directory-mode/mode
-                :*directory-mode-keymap*))
+                :*directory-mode-keymap*)
+  (:import-from :lem/directory-mode/wdired
+                :wdired-change-to-wdired-mode))
 (in-package :lem/directory-mode/keybinds)
 
 #+sbcl
@@ -54,3 +56,4 @@
 (define-key *directory-mode-keymap* "S" *directory-mode-sort-keymap*)
 (define-key *directory-mode-keymap* "+" 'make-directory)
 (define-key *directory-mode-keymap* "C-k" 'directory-mode-kill-lines)
+(define-key *directory-mode-keymap* "C-x C-q" 'wdired-change-to-wdired-mode)

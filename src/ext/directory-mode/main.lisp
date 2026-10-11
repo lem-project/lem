@@ -2,6 +2,7 @@
   (:use :cl)
   (:use-reexport :lem/directory-mode/commands)
   (:use-reexport :lem/directory-mode/mode)
+  (:use-reexport :lem/directory-mode/wdired)
   (:import-from :lem/directory-mode/internal
                 :*default-sort-method*
                 :*file-entry-inserters*

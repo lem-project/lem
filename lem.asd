@@ -214,6 +214,7 @@
                                            (:file "mode")
                                            (:file "internal")
                                            (:file "commands")
+                                           (:file "wdired")
                                            (:file "keybinds")
                                            (:file "main")))
                              (:file "abbrev")

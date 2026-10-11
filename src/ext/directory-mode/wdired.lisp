@@ -130,9 +130,7 @@ being renamed only partially."
     (let ((count 0))
       (loop
         (cond ((file-entry-p line)
-               (incf count))
-              ((line-file-region-p line)
-               (editor-error "A file name was split onto several lines; press C-c C-k to abort")))
+               (incf count)))
         (unless (line-offset line 1) (return)))
       (unless (= count entry-count)
         (editor-error "The number of listed files changed; press C-c C-k to abort")))))

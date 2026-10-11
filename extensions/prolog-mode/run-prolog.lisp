@@ -54,30 +54,6 @@ Only used for queries written with %?- or %:-; queries without a % get no prefix
         (variable-value variable :default buffer)
         (variable-value variable :global))))
 
-(defvar *prolog-escape-scanner*
-  (ppcre:create-scanner (concatenate 'string (string #\Esc)
-                                      "\\[[0-9;?=]*[A-Za-z]"))
-  "Matches ANSI CSI control sequences.  On a PTY with a normal TERM,
-Scryer's line editor can redraw its prompt using cursor/erase controls
-(e.g. ESC[K and ESC[3C); these do not color the prompt.")
-
-(defvar *prolog-partial-escape-scanner*
-  (ppcre:create-scanner (concatenate 'string (string #\Esc)
-                                      "\\[[0-9;?=]*(?=" (string #\Esc) ")"))
-  "Matches an incomplete CSI sequence immediately followed by another
-ESC, i.e. an abandoned partial sequence split across chunks.")
-
-(defvar *prolog-escape-end-scanner*
-  (ppcre:create-scanner (concatenate 'string (string #\Esc)
-                                      "(?:\\[[0-9;?=?]*)$"))
-  "Matches a string ending in a possibly-incomplete CSI sequence.")
-
-(defun prolog-partial-escape-p (part)
-  "True if PART ends with what may be an ANSI escape sequence that is
-not yet complete (an escape sequence split across output chunks)."
-  (and (find #\Esc part)
-       (ppcre:scan *prolog-escape-end-scanner* part)))
-
 (defun prolog-prompt ()
   "Prompt of the Scryer Prolog toplevel."
   "?- ")
@@ -126,9 +102,9 @@ not yet complete (an escape sequence split across output chunks)."
 (defun prolog-insert-output (session str)
   "Insert STR at the marker of SESSION, preceding each line with indentation and prefix.
 
-Output arrives in fragments (line editor redraws), so the prefix is only
-added when a fragment starts a line: prefixing a mid-line fragment would
-corrupt the buffer."
+Output arrives in chunks that can split anywhere, so the prefix is only
+added when a chunk starts at the beginning of a line: prefixing a
+mid-line chunk would corrupt the buffer."
   (let ((marker (prolog-session-marker session)))
     (when (and marker (alive-point-p marker))
       (let* ((prefix (str:concat (prolog-session-indent-prefix session)
@@ -144,12 +120,12 @@ corrupt the buffer."
 (defun prolog-filter (session process string)
   "Output callback of the Prolog process: SESSION receives the output.
 
-ANSI CSI sequences are removed before prompt detection because a
-PTY-backed line editor may emit cursor/redraw controls around the prompt.  A
-trailing partial escape sequence or a partial prompt is held back until the
-next chunk, because it may be completed there.  Newlines right before the
-prompt are dropped, since they would otherwise leave a bare prefix line;
-other trailing newlines are held back until more output shows what follows them."
+The process runs with TERM=dumb, so Scryer's line editor emits no redraw
+or cursor control sequences.  A trailing partial prompt is held back until
+the next chunk, because it may be completed there.  Newlines right before
+the prompt are dropped, since they would otherwise leave a bare prefix
+line; other trailing newlines are held back until more output shows what
+follows them."
   ;; Ignore callbacks queued by a process that has since been killed or replaced.
   (unless (eq process (prolog-session-process session))
     (return-from prolog-filter))
@@ -164,8 +140,6 @@ other trailing newlines are held back until more output shows what follows them.
       session
     (setf string (remove #\Return string))
     (setf accum (str:concat accum string))
-    (setf accum (ppcre:regex-replace-all *prolog-partial-escape-scanner* accum ""))
-    (setf accum (ppcre:regex-replace-all *prolog-escape-scanner* accum ""))
     (when process-buffer
       (multiple-value-bind (start end) (ppcre:scan "(?m)^\\|: $" accum)
         (declare (ignore end))
@@ -185,9 +159,8 @@ other trailing newlines are held back until more output shows what follows them.
              (prompt (prolog-prompt))
              (hold-back-p
                (and (plusp (length part))
-                    (or (and (<= (length part) (length prompt))
-                             (string= part prompt :end2 (length part)))
-                        (prolog-partial-escape-p part)))))
+                    (<= (length part) (length prompt))
+                    (string= part prompt :end2 (length part)))))
         (unless (and hold-back-p (zerop tail-start))
           (let* ((insertable (if hold-back-p
                                  (subseq accum 0 tail-start)
@@ -244,9 +217,11 @@ directly.  Replace them if lem-process ever exports process-pid."
   "Start a Prolog process for SESSION and wait for its prompt.
 
 The process runs with TERM=dumb.  async-process runs the child on a PTY;
-with a normal TERM, Scryer's line editor emits redraws with ANSI cursor
-controls, whose repeated \"?- \" can be mistaken for the actual prompt.
-TERM=dumb gives a clean stream of prompts and answers."
+with a normal TERM, Scryer's line editor (rustyline) redraws the prompt
+with ANSI cursor controls, whose repeated \"?- \" can be mistaken for the
+actual prompt.  TERM=dumb makes rustyline read plain lines, so the
+process emits a clean stream of prompts and answers without escape
+sequences."
   (let* ((program (prolog-session-variable-value session 'prolog-program))
          (switches (or (prolog-session-variable-value session 'prolog-program-switches) '()))
          (proc (run-process (append (list "env" "TERM=dumb" program) switches)

@@ -218,6 +218,9 @@ applied completely or not at all."
   "Make the file names of the current directory buffer editable."
   (when (mode-active-p (current-buffer) 'directory-mode)
     (setf (buffer-read-only-p (current-buffer)) nil)
+    ;; directory buffers are created without undo, since the listing was never
+    ;; meant to be edited, but editing file names has to be undoable
+    (buffer-enable-undo (current-buffer))
     (setf (buffer-value (current-buffer) :wdired-entry-count)
           (count-file-entries (current-buffer)))
     (make-file-names-editable (current-buffer))
@@ -227,10 +230,15 @@ applied completely or not at all."
   "List the current directory buffer read-only again."
   (when (mode-active-p (current-buffer) 'directory-mode)
     (setf (buffer-read-only-p (current-buffer)) t)
+    ;; the listing below is rewritten in full, so undoing into the listing as
+    ;; it was edited would only corrupt it: drop the history and leave the
+    ;; buffer the way `create-directory-buffer' created it.
+    (buffer-disable-undo (current-buffer))
     (update-buffer (current-buffer)
                    :sort-method (or (buffer-value (current-buffer) :sort-method)
                                     *default-sort-method*)
-                   :sort-reverse (buffer-value (current-buffer) :sort-reverse))))
+                   :sort-reverse (buffer-value (current-buffer) :sort-reverse))
+    (buffer-unmark (current-buffer))))
 
 ;;; commands
 

@@ -57,9 +57,9 @@ Only used for queries written with %?- or %:-; queries without a % get no prefix
 (defvar *prolog-escape-scanner*
   (ppcre:create-scanner (concatenate 'string (string #\Esc)
                                       "\\[[0-9;?=]*[A-Za-z]"))
-  "Matches ANSI CSI escape sequences.  The Prolog process runs on a pty,
-so Scryer colorizes its prompt (e.g. \e[K?- \e[3C) and readline-based
-processes emit terminal control sequences; strip them all.")
+  "Matches ANSI CSI control sequences.  On a PTY with a normal TERM,
+Scryer's line editor can redraw its prompt using cursor/erase controls
+(e.g. ESC[K and ESC[3C); these do not color the prompt.")
 
 (defvar *prolog-partial-escape-scanner*
   (ppcre:create-scanner (concatenate 'string (string #\Esc)
@@ -131,23 +131,25 @@ added when a fragment starts a line: prefixing a mid-line fragment would
 corrupt the buffer."
   (let ((marker (prolog-session-marker session)))
     (when (and marker (alive-point-p marker))
-      (let* ((prefix (format nil "~A~A" (prolog-session-indent-prefix session)
-                             (prolog-session-prefix session)))
+      (let* ((prefix (str:concat (prolog-session-indent-prefix session)
+                                 (prolog-session-prefix session)))
              (start-of-line-p (start-line-p marker)))
         (when start-of-line-p
           (insert-string marker prefix))
         (insert-string marker
-                       (ppcre:regex-replace-all (string #\Newline) str
-                                                (format nil "~%~A" prefix)))))))
+                       (str:replace-all (string #\Newline)
+                                        (str:concat (string #\Newline) prefix)
+                                        str))))))
 
 (defun prolog-filter (session process string)
   "Output callback of the Prolog process: SESSION receives the output.
 
-Escape sequences are removed, since Scryer colorizes its prompt.  A trailing
-partial escape sequence or a partial prompt is held back until the next
-chunk, because it may be completed there.  Newlines right before the prompt
-are dropped, since they would otherwise leave a bare prefix line; other
-trailing newlines are held back until more output shows what follows them."
+ANSI CSI sequences are removed before prompt detection because a
+PTY-backed line editor may emit cursor/redraw controls around the prompt.  A
+trailing partial escape sequence or a partial prompt is held back until the
+next chunk, because it may be completed there.  Newlines right before the
+prompt are dropped, since they would otherwise leave a bare prefix line;
+other trailing newlines are held back until more output shows what follows them."
   ;; Ignore callbacks queued by a process that has since been killed or replaced.
   (unless (eq process (prolog-session-process session))
     (return-from prolog-filter))
@@ -161,7 +163,7 @@ trailing newlines are held back until more output shows what follows them."
                    (seen-prompt prolog-session-seen-prompt))
       session
     (setf string (remove #\Return string))
-    (setf accum (concatenate 'string accum string))
+    (setf accum (str:concat accum string))
     (setf accum (ppcre:regex-replace-all *prolog-partial-escape-scanner* accum ""))
     (setf accum (ppcre:regex-replace-all *prolog-escape-scanner* accum ""))
     (when process-buffer
@@ -198,10 +200,10 @@ trailing newlines are held back until more output shows what follows them."
                               (subseq insertable (length body)))))
             (when (plusp (length body))
               (setf (prolog-session-output session)
-                    (concatenate 'string (prolog-session-output session) body))
+                    (str:concat (prolog-session-output session) body))
               (unless (prolog-session-consulting-p session)
                 (prolog-insert-output session body)))
-            (setf accum (concatenate 'string pending (if hold-back-p part "")))))))
+            (setf accum (str:concat pending (if hold-back-p part "")))))))
     (prolog-log session string)))
 
 (defun prolog-wait-for-prompt (session)
@@ -241,10 +243,10 @@ directly.  Replace them if lem-process ever exports process-pid."
 (defun prolog-run-prolog (session)
   "Start a Prolog process for SESSION and wait for its prompt.
 
-The process runs with TERM=dumb: async-process runs the child on a pty, and
-with a normal TERM the toplevel uses its line editor and floods the output
-with redraws and ANSI sequences, and a redraw's \"?- \" prefix can be mistaken
-for the real prompt.  TERM=dumb gives a clean stream of prompts and answers."
+The process runs with TERM=dumb.  async-process runs the child on a PTY;
+with a normal TERM, Scryer's line editor emits redraws with ANSI cursor
+controls, whose repeated \"?- \" can be mistaken for the actual prompt.
+TERM=dumb gives a clean stream of prompts and answers."
   (let* ((program (prolog-session-variable-value session 'prolog-program))
          (switches (or (prolog-session-variable-value session 'prolog-program-switches) '()))
          (proc (run-process (append (list "env" "TERM=dumb" program) switches)

@@ -1,16 +1,18 @@
-
 (defpackage :lem/legit
   (:use :cl
         :lem)
   (:export :legit-status
-           :*prompt-for-commit-abort-p*
+           :legit-refresh
+           :legit-quit
+           :*prompt-to-abort-commit*
            :*ignore-all-space*
            :*show-stashes*
            :*vcs-existence-order*
-	   :*peek-legit-keymap*
+           :*peek-legit-keymap*
            :peek-legit-discard-file
            :peek-legit-previous
-           :peek-legit-next)
+           :peek-legit-next
+           :run-function)
   (:documentation "Display version control data of the current project in an interactive two-panes window.
 
   This package in particular defines the right window of the legit interface and the user-level commands.

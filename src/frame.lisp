@@ -10,6 +10,10 @@
   ((window-left-margin
     :initarg :window-left-margin
     :reader frame-window-left-margin)
+   (enable-modeline-per-window
+    :initarg :enable-modeline-per-window
+    :initform t
+    :reader frame-enable-window-modeline-per-window)
    (current-window
     :initarg :current-window
     :initform nil
@@ -69,7 +73,15 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
     :accessor frame-leftside-window)
    (rightside-window
     :initform nil
-    :accessor frame-rightside-window)))
+    :accessor frame-rightside-window)
+   (bottomside-window
+    :initform nil
+    :accessor frame-bottomside-window)))
+
+(defmethod frame-window-bottom-margin ((frame frame))
+  (if (frame-enable-window-modeline-per-window frame)
+      0
+      (window-bottom-margin (implementation))))
 
 (defmethod notify-floating-window-modified ((frame frame))
   (set-frame-modified-floating-windows t frame))
@@ -96,7 +108,9 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
     (prompt-active-p prompt)))
 
 (defun make-frame (&optional (old-frame (current-frame)))
-  (let ((frame (make-instance 'frame :window-left-margin (window-left-margin (implementation)))))
+  (let ((frame (make-instance 'frame
+                              :window-left-margin (window-left-margin (implementation))
+                              :enable-modeline-per-window t)))
     (push frame *frames*)
     (when old-frame
       (dolist (window (frame-header-windows old-frame))
@@ -138,7 +152,8 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
             (find window (frame-floating-windows frame))
             (find window (frame-header-windows frame))
             (eq window (frame-leftside-window frame))
-            (eq window (frame-rightside-window frame)))
+            (eq window (frame-rightside-window frame))
+            (eq window (frame-bottomside-window frame)))
     t))
 
 (defun get-frame-of-window (window)
@@ -169,7 +184,10 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
 
 
 (defun topleft-window-y (frame)
-  (length (frame-header-windows frame)))
+  "Return the Y coordinate where the topmost editor window begins.
+This is the sum of all header window heights in FRAME."
+  (loop :for w :in (frame-header-windows frame)
+        :sum (header-window-height w)))
 
 (defun topleft-window-x (frame)
   (if (null (frame-leftside-window frame))
@@ -187,7 +205,10 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
 
 (defun max-window-height (frame)
   (- (display-height)
-     (topleft-window-y frame)))
+     (topleft-window-y frame)
+     (if (frame-bottomside-window frame)
+         (window-height (frame-bottomside-window frame))
+         0)))
 
 
 (defun within-window-p (window x y)
@@ -203,11 +224,13 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
                           ;; リストの後ろにあるウィンドウほど手前に出てくるという前提
                           (reverse (frame-floating-windows frame))
                           (window-list frame)))
-    (when (within-window-p window x y)
-      (let ((overlay-x-offset (window-left-width window)))
-        (return (values window
-                        (- x (window-x window) overlay-x-offset)
-                        (- y (window-y window))))))))
+    (dolist (target (list (window-attached-window window) window))
+      (when (and target (within-window-p target x y))
+        (let ((overlay-x-offset (window-left-width target)))
+          (return-from focus-window-position
+            (values target
+                    (- x (window-x target) overlay-x-offset)
+                    (- y (window-y target)))))))))
 
 (defun focus-separator-position (frame x y)
   (when (and (frame-leftside-window frame)

@@ -4,7 +4,7 @@
 support Git operations, but it also has preliminary support for other
 VCSs (Fossil, Mercurial).
 
-We can currently open a **status** window, **stage** and unstage files or diff hunks, **commit** our changes or again start an **interactive rebase**.
+We can currently open a **status** window, **stage** and unstage files or diff hunks, **commit** our changes or again start an **interactive rebase**. We can **clone** a given URL and open the destination directory.
 
 Its main source of inspiration is, obviously, Magit.
 
@@ -148,6 +148,12 @@ NOTE: the interactive rebase is currently Unix only. This is due to the short sh
 
 In any `legit` window, type `r a` to abort a rebase process (if it was
 started by you inside Lem or by another process), `r c` to call `git rebase --continue` and `r s` to call `git rebase --skip`.
+
+## Clone
+
+As of today, only with git: use `Alt-x git-clone-and-open`. The
+command asks for an URL, a destination directory, then clones the
+project and opens the destination directory.
 
 
 ## Fossil

@@ -36,7 +36,11 @@
                #+sbcl
                sb-concurrency
                "lem-mailbox"
-               "lem-extension-manager")
+               ;; Disabled for Nix build due to QL-DIST dependency
+               #-nix-build
+               "lem-extension-manager"
+               #+sbcl
+               "sb-sprof")
   :pathname "src"
   :serial t
   :components ((:module "common"
@@ -112,7 +116,8 @@
                              (:file "virtual-line")
                              (:file "floating-window")
                              (:file "header-window")
-                             (:file "side-window")))
+                             (:file "side-window")
+                             (:file "attached-window")))
                (:file "buffer-ext") ; TODO
                (:file "popup")
                (:file "modeline")
@@ -135,12 +140,21 @@
                (:file "command-advices")
                (:file "interface")
                (:file "highlight-line")
+               (:file "syntax-scanner")
                (:file "html-buffer")
                (:file "site-init")
                (:file "command-line-arguments")
+               (:file "tabbar-config")
                (:file "lem")
 
                (:file "color-theme")
+
+               (:module "display"
+                :serial t
+                :components ((:file "base")
+                             (:file "char-type")
+                             (:file "logical-line")
+                             (:file "physical-line")))
 
                (:module "commands"
                 :serial t
@@ -158,14 +172,8 @@
                              (:file "help")
                              (:file "font")
                              (:file "other" :depends-on ("file"))
-                             (:file "frame")))
-
-               (:module "display"
-                :serial t
-                :components ((:file "base")
-                             (:file "char-type")
-                             (:file "logical-line")
-                             (:file "physical-line")))
+                             (:file "frame")
+                             #+sbcl (:file "sprof")))
 
                (:file "external-packages")
 
@@ -178,12 +186,13 @@
                              (:file "multi-column-list")
                              (:file "context-menu")
                              (:file "list-buffers")
+                             (:file "loading-spinner")
                              (:file "completion-mode")
                              (:file "prompt-window")
                              (:file "tmlanguage")
                              (:file "button")
-                             (:file "loading-spinner")
                              (:file "listener-mode")
+                             (:file "interactive-mode")
                              (:file "universal-argument")
                              (:file "kbdmacro")
                              (:file "isearch")
@@ -210,7 +219,6 @@
                              (:file "abbrev")
                              (:file "rectangle")
                              (:file "auto-save")
-                             (:file "tabbar")
                              (:file "frame-multiplexer")
                              (:file "filer")
                              (:file "deepl")
@@ -235,24 +243,31 @@
                #+sbcl
                "lem-go-mode"
                "lem-swift-mode"
-
+               "lem-ansible-mode"
                "lem-c-mode"
-               "lem-xml-mode"
-               "lem-html-mode"
                "lem-python-mode"
                "lem-posix-shell-mode"
+               "lem-xml-mode"
                "lem-js-mode"
+               "lem-css-mode"
+               "lem-html-mode"
                "lem-vue-mode"
                "lem-typescript-mode"
+               "lem-typst-mode"
                "lem-json-mode"
-               "lem-css-mode"
                "lem-rust-mode"
+               "lem-zig-mode"
+               "lem-kotlin-mode"
                "lem-paredit-mode"
                "lem-nim-mode"
+               "lem-odin-mode"
                #-clasp
                "lem-scheme-mode"
+               "lem-clojure-mode"
 
                "lem-patch-mode"
+               "lem-toml-mode"
+
                "lem-yaml-mode"
                "lem-review-mode"
                "lem-asciidoc-mode"
@@ -263,6 +278,7 @@
                "lem-haskell-mode"
                "lem-ocaml-mode"
                "lem-asm-mode"
+               "lem-wat-mode"
                "lem-makefile-mode"
                "lem-shell-mode"
                "lem-sql-mode"
@@ -270,6 +286,7 @@
                #+sbcl
                "lem-elixir-mode"
                "lem-ruby-mode"
+               "lem-perl-mode"
                "lem-erlang-mode"
                "lem-documentation-mode"
                "lem-elisp-mode"
@@ -280,18 +297,33 @@
                "lem-lua-mode"
                #-os-windows "lem-terminal"
                "lem-legit"
+               "lem-tutor"
                "lem-dashboard"
-               "lem-copilot"))
+               "lem-dockerfile-mode"
+               "lem-copilot"
+               "lem-claude-code"
+               "lem-bookmark"
+               "lem-mcp-server"
+               "lem-transient"
+               #+sbcl
+               "lem-living-canvas"
+               "lem-tree-sitter"
+               "lem-git-gutter"
+               "lem-skk-mode"
+               "lem-emacs-help-mode"
+               "lem-display-time-mode"
+               "lem-tramp"))
 
 (defsystem "lem"
   :version "2.3.0"
   :defsystem-depends-on ("deploy")
   :build-operation #+os-macosx "osx-app-deploy-op" #-os-macosx "deploy-op"
   :build-pathname "lem"
-  :entry-point "lem-webview:main"
+  :entry-point "lem:main"
   :depends-on ("lem-webview"
                "lem-server"
                #+(and os-unix (not os-macosx)) ; workaround: because (adf:make :lem) fails
                "lem-ncurses")
   :pathname "src"
-  :components ((:file "macosx" :if-feature :os-macosx)))
+  :components ((:file "macosx" :if-feature :os-macosx)
+               (:file "windows" :if-feature :os-windows)))

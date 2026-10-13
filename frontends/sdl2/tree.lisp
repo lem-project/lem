@@ -135,48 +135,66 @@
     (lem-sdl2/display:display-font-config
      (lem-sdl2/display:current-display)))))
 
+(defun free-tree-surfaces (drawables)
+  "Explicitly free SDL2 surfaces held by text-node instances.
+Cancels autocollect finalizers first to prevent double-free."
+  (dolist (drawable drawables)
+    (when (typep drawable 'text-node)
+      (let ((surface (text-node-surface drawable)))
+        (when surface
+          (handler-case
+              (progn
+                (trivial-garbage:cancel-finalization surface)
+                (sdl2:free-surface surface))
+            (error () nil)))))))
+
 (defun draw (buffer node)
+  ;; Free surfaces from previous tree before creating new ones.
+  (when (slot-boundp buffer 'drawables)
+    (free-tree-surfaces (tree-view-buffer-drawables buffer)))
   (let ((drawables '())
         (font (load-font)))
-    (labels ((recursive (node current-x)
-               (let* ((y (round (* (tree-view-buffer-margin-y buffer) (node-y node))))
-                      (surface (sdl2-ttf:render-utf8-blended font
-                                                             (princ-to-string (node-name node))
-                                                             255
-                                                             255
-                                                             255
-                                                             0))
-                      (node-width (sdl2:surface-width surface))
-                      (node-height (sdl2:surface-height surface)))
-                 (push (make-instance 'text-node
-                                      :surface surface
-                                      :x current-x
-                                      :y y
-                                      :width node-width
-                                      :height node-height
-                                      :node node)
-                       drawables)
-                 (dolist (child (node-children node))
-                   (multiple-value-bind (child-x child-y child-width child-height)
-                       (recursive child (+ (tree-view-buffer-margin-x buffer)
-                                           (+ current-x node-width)))
-                     (declare (ignore child-width))
-                     (push (make-instance 'line-edge
-                                          :color (lem:make-color 255 255 255)
-                                          :x0 (+ current-x (sdl2:surface-width surface))
-                                          :y0 (+ y (round (sdl2:surface-height surface) 2))
-                                          :x1 child-x
-                                          :y1 (+ child-y (round child-height 2)))
-                           drawables)))
-                 (values current-x
-                         y
-                         (sdl2:surface-width surface)
-                         (sdl2:surface-height surface)))))
-      (recursive node 0)
-      (setf (tree-view-buffer-drawables buffer) drawables)
-      (setf (tree-view-buffer-width buffer) (compute-width drawables))
-      (setf (tree-view-buffer-height buffer) (compute-height drawables))
-      (values))))
+    (unwind-protect
+         (labels ((recursive (node current-x)
+                    (let* ((y (round (* (tree-view-buffer-margin-y buffer) (node-y node))))
+                           (surface (sdl2-ttf:render-utf8-blended font
+                                                                  (princ-to-string (node-name node))
+                                                                  255
+                                                                  255
+                                                                  255
+                                                                  0))
+                           (node-width (sdl2:surface-width surface))
+                           (node-height (sdl2:surface-height surface)))
+                      (push (make-instance 'text-node
+                                           :surface surface
+                                           :x current-x
+                                           :y y
+                                           :width node-width
+                                           :height node-height
+                                           :node node)
+                            drawables)
+                      (dolist (child (node-children node))
+                        (multiple-value-bind (child-x child-y child-width child-height)
+                            (recursive child (+ (tree-view-buffer-margin-x buffer)
+                                                (+ current-x node-width)))
+                          (declare (ignore child-width))
+                          (push (make-instance 'line-edge
+                                               :color (lem:make-color 255 255 255)
+                                               :x0 (+ current-x (sdl2:surface-width surface))
+                                               :y0 (+ y (round (sdl2:surface-height surface) 2))
+                                               :x1 child-x
+                                               :y1 (+ child-y (round child-height 2)))
+                                drawables)))
+                      (values current-x
+                              y
+                              (sdl2:surface-width surface)
+                              (sdl2:surface-height surface)))))
+           (recursive node 0)
+           (setf (tree-view-buffer-drawables buffer) drawables)
+           (setf (tree-view-buffer-width buffer) (compute-width drawables))
+           (setf (tree-view-buffer-height buffer) (compute-height drawables))
+           (values))
+      (sdl2-ttf:close-font font))))
 
 (defmethod render ((text-node text-node) buffer)
   (when (<= (tree-view-buffer-scroll-y buffer)

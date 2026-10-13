@@ -97,3 +97,47 @@
                        (window-height window))
       (balance-windows)
       t)))
+
+(defclass bottomside-window (side-window) ())
+
+(defun make-bottomside-window (buffer &key (height 10))
+  "create a bottom-side window displaying BUFFER with the given HEIGHT.
+
+if a bottom-side window already exists, switch its buffer instead."
+  (let ((frame (current-frame)))
+    (cond ((frame-bottomside-window frame)
+           (let ((window (frame-bottomside-window frame)))
+             (set-window-buffer window buffer)
+             window))
+          (t
+           (let* ((y (- (display-height) height))
+                  (window (make-instance 'bottomside-window
+                                         :buffer buffer
+                                         :x (topleft-window-x frame)
+                                         :y y
+                                         :width (max-window-width frame)
+                                         :height height
+                                         :use-modeline-p nil
+                                         :background-color nil
+                                         :border 0)))
+             (setf (frame-bottomside-window frame) window)
+             (balance-windows)
+             window)))))
+
+(defun delete-bottomside-window ()
+  "delete the bottom-side window."
+  (let ((frame (current-frame)))
+    (when (frame-bottomside-window frame)
+      (delete-window (frame-bottomside-window frame))
+      (setf (frame-bottomside-window frame) nil)
+      (balance-windows))))
+
+(defun resize-bottomside-window (window height)
+  "resize the bottom-side WINDOW to HEIGHT lines and reposition it."
+  (check-type window bottomside-window)
+  (let ((frame (current-frame)))
+    (window-set-size window (max-window-width frame) height)
+    (window-set-pos window
+                    (topleft-window-x frame)
+                    (- (display-height) height))
+    (balance-windows)))

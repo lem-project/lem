@@ -14,4 +14,5 @@
                (:file "mouse")
                (:file "icon")
                (:file "main")
+               (:file "tabbar")
                (:file "color-picker")))

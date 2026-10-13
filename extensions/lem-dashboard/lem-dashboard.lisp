@@ -11,13 +11,18 @@
   (:local-nicknames (:button :lem/button)
                     (:history :lem/common/history)
                     (:project :lem-core/commands/project)
-                    (:file :lem-core/commands/file)))
+                    (:file :lem-core/commands/file))
+  (:documentation "The dashboard is composed of multiple DASHBOARD-ITEM of different kinds (a list of files, a URL, a clickable link… see them in dashboard-items.lisp).
+
+   The default dashboard is defined in default-dashboard.lisp.
+
+   To change the layout, pass SET-DASHBOARD a list of items (which eventually sets *dashboard-layout*). See also REDRAW-DASHBOARD."))
 
 (in-package :lem-dashboard)
 
 (defvar *dashboard-buffer-name* "*dashboard*")
 (defvar *dashboard-enable* t)
-(defvar *dashboard-mode-keymap* (make-keymap :name '*dashboard-mode-keymap* :parent *global-keymap*))
+(defvar *dashboard-mode-keymap* (make-keymap :description '*dashboard-mode-keymap*))
 (defvar *dashboard-layout* nil
   "List of dashboard-item instances; will be drawn in order.")
 
@@ -93,6 +98,7 @@
          (old-column (point-column (buffer-point buffer)))
          (window (or (first (get-buffer-windows (get-buffer *dashboard-buffer-name*)))
                      (current-window))))
+    (assert (not (deleted-window-p window)))
     (with-current-window window
       (with-buffer-read-only buffer nil
         (erase-buffer buffer)
@@ -100,6 +106,14 @@
           (dolist (item *dashboard-layout*)
             (draw-dashboard-item item point)))
         (change-buffer-mode buffer 'dashboard-mode)
+        ;; Show the Lem version in the modeline for the dashboard buffer only
+        (setf (variable-value 'modeline-format :buffer buffer)
+              '("  " modeline-write-info modeline-name
+                (modeline-posline nil :right)
+                (modeline-position nil :right)
+                (modeline-minor-modes nil :right)
+                (modeline-major-mode nil :right)
+                (modeline-version nil :right)))
         (move-to-line (buffer-point buffer) old-line)
         (move-to-column (buffer-point buffer) old-column)))))
 

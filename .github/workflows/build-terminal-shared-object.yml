@@ -1,43 +1,59 @@
-name: Build terminal.so
+name: Verify terminal.so builds
+
+# Verifies that the lem-terminal native helper (terminal.so) still compiles
+# from extensions/terminal/terminal.c via `make terminal-lib`. The prebuilt
+# .so binaries are no longer committed to the repository (see #1964), so this
+# job guards the from-source build path instead of re-committing artifacts.
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'extensions/terminal/terminal.c'
+      - 'extensions/terminal/ffi.lisp'
+      - 'scripts/build-terminal.lisp'
+      - '.github/workflows/build-terminal-shared-object.yml'
+  pull_request:
+    paths:
+      - 'extensions/terminal/terminal.c'
+      - 'extensions/terminal/ffi.lisp'
+      - 'scripts/build-terminal.lisp'
+      - '.github/workflows/build-terminal-shared-object.yml'
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: macos-latest
+    name: Build terminal.so (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Install Homebrew
-      run: |
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      - name: Install SBCL and libvterm (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sbcl libvterm-dev
 
-    - name: Install vterm
-      run: brew install libvterm
+      - name: Install SBCL and libvterm (macOS)
+        if: runner.os == 'macOS'
+        run: brew install sbcl libvterm
 
-    - name: compile
-      run: |
-        cd extensions/terminal
-        gcc terminal.c -I/opt/homebrew/include -L/opt/homebrew/lib -lvterm -o terminal.so -shared -fPIC
-        mv terminal.so lib/macosx/arm64/terminal.so
+      - name: Build terminal.so
+        run: make terminal-lib
 
-    - name: Commit and push changes
-      run: |
-        git config --global user.name 'github-actions[bot]'
-        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-        git add .
-
-    - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v6  
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        commit-message: Add terminal.so
-        branch: update-terminal-so-macosx-arm64
-        title: Add terminal.so file
-        body: Update terminal.so on macosx/arm64
+      - name: Assert the shared library was produced
+        run: |
+          found="$(find extensions/terminal/lib -name 'terminal.so' -print -quit)"
+          if [ -z "$found" ]; then
+            echo "::error::terminal.so was not produced by 'make terminal-lib'" >&2
+            exit 1
+          fi
+          echo "Built: $found"
+          file "$found"

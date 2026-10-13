@@ -11,3 +11,7 @@ git jsonrpc https://github.com/cxxxr/jsonrpc.git
 git cl-template https://github.com/alpha123/cl-template
 git lem-extension-manager https://github.com/lem-project/lem-extension-manager.git
 git webview https://github.com/lem-project/webview.git
+git named-readtables https://github.com/melisgl/named-readtables.git
+git lem-extension-manager https://github.com/lem-project/lem-extension-manager.git
+git webview https://github.com/lem-project/webview.git
+git tree-sitter-cl https://github.com/lem-project/tree-sitter-cl.git

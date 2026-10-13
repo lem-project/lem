@@ -2,6 +2,7 @@
 
 (defclass html-buffer (text-buffer)
   ((html :initarg :html
+         :initform ""
          :reader html-buffer-html)
    (updated :initform nil
             :reader html-buffer-updated-p)))

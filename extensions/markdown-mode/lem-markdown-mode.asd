@@ -8,7 +8,8 @@
                "lem-lisp-mode"
                "lem-elisp-mode"
                "lem-posix-shell-mode"
-               "lem-json-mode")
+               "lem-json-mode"
+               "lem-tree-sitter")
   :serial t
   :components ((:file "internal")
                (:file "languages")

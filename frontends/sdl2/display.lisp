@@ -16,6 +16,8 @@
            :display-window
            :display-char-width
            :display-char-height
+           :display-font-ascent
+           :display-font-descent
            :display-focus-p
            :create-view-texture
            :display-renderer
@@ -37,12 +39,29 @@
            :display-height
            :display-window-width
            :adapt-high-dpi-font-size
+           :handle-display-changed
+           :*post-display-change-hooks*
+           :add-post-display-change-hook
            :change-font
            :with-renderer
-           :with-display-render-target))
+           :with-display-render-target
+           :display-scratch-rect
+           :call-with-scratch-rect
+           :with-scratch-rect))
 (in-package :lem-sdl2/display)
 
 (defvar *display*)
+
+(defvar *post-display-change-hooks* '()
+  "Hook variable (analogous to Lem's other `*...-hooks*' registries): a list
+of one-argument functions (DISPLAY) called after a DPI-driven font/char-metrics
+change has been applied, before `update-on-display-resized'.
+`lem-sdl2/view' registers a hook here to recreate per-view textures
+whose pixel sizes depend on `display-char-width' / `display-char-height';
+without it, the old view textures — sized at the *old* char metrics —
+leak through as scaled/clipped artifacts (most visibly the buffer
+occupying only the upper-left quarter of the window when moving from
+Retina to a 1x display).")
 
 (defun current-display ()
   *display*)
@@ -87,7 +106,34 @@
                          :accessor display-redraw-at-least-once-p)
    (scale :initform '(1 1)
           :initarg :scale
-          :accessor display-scale)))
+          :accessor display-scale)
+   (scratch-rect :initform (sdl2:make-rect 0 0 0 0)
+                 :reader display-scratch-rect
+                 :documentation
+                 "Pre-allocated SDL_Rect reused across all render calls to
+avoid heap-allocating a new rect + Lisp wrapper on every draw-rect,
+fill-to-end-of-line, render-texture, etc.  Mutated in-place by
+`call-with-scratch-rect' / `with-scratch-rect'; do not rely on its
+contents outside the dynamic extent of that call.")))
+
+(declaim (inline call-with-scratch-rect))
+(defun call-with-scratch-rect (display x y w h function)
+  "Set the display's scratch SDL_Rect to (X Y W H) and call FUNCTION with it.
+Single mutation + funcall — no heap allocation.  Used by
+`with-scratch-rect'; expose the underlying function so callers that
+want to pass a closure directly can skip the macro."
+  (let ((rect (display-scratch-rect display)))
+    (setf (sdl2:rect-x rect) x
+          (sdl2:rect-y rect) y
+          (sdl2:rect-width rect) w
+          (sdl2:rect-height rect) h)
+    (funcall function rect)))
+
+(defmacro with-scratch-rect ((var display-form x y w h) &body body)
+  "Bind VAR to the display's pre-allocated SDL_Rect with fields set to X Y W H.
+The rect is mutated in-place — no heap allocation occurs.  Thin wrapper
+over `call-with-scratch-rect'."
+  `(call-with-scratch-rect ,display-form ,x ,y ,w ,h (lambda (,var) ,@body)))
 
 (defmethod display-latin-font ((display display))
   (font:font-latin-normal-font (display-font display)))
@@ -106,6 +152,16 @@
 
 (defmethod display-braille-font ((display display))
   (font:font-braille-font (display-font display)))
+
+(defmethod display-font-ascent ((display display))
+  "Latin-normal-font ascent in pixels (always positive). Defines the row's
+target baseline relative to the cell top."
+  (font:font-ascent (display-font display)))
+
+(defmethod display-font-descent ((display display))
+  "Latin-normal-font descent in pixels (SDL_ttf convention: negative number,
+e.g. -3 for NotoSansMono at 12pt). |descent| pixels sit below the baseline."
+  (font:font-descent (display-font display)))
 
 (defmethod display-background-color ((display display))
   (or (lem:parse-color lem-if:*background-color-of-drawing-window*)
@@ -213,6 +269,15 @@
                                      (* ratio (lem:config :sdl2-font-size (font:default-font-size))))
                    nil))))
 
+(defun add-post-display-change-hook (function)
+  "Register FUNCTION (a one-arg fn of DISPLAY) on `*post-display-change-hooks*'.
+Idempotent."
+  (pushnew function *post-display-change-hooks*))
+
+(defun run-post-display-change-hooks (display)
+  (dolist (hook *post-display-change-hooks*)
+    (funcall hook display)))
+
 (defmethod notify-required-redisplay ((display display))
   (with-renderer (display)
     (when (display-redraw-at-least-once-p display)
@@ -224,6 +289,35 @@
       (adapt-high-dpi-display-scale display)
       #+darwin
       (adapt-high-dpi-font-size display)
+      (run-post-display-change-hooks display)
+      (lem:update-on-display-resized))))
+
+(defun handle-display-changed (display)
+  "Handle a backing-size or display change for DISPLAY.
+Re-creates the texture at the new drawable size, re-derives the
+high-DPI scale, re-opens the font at the new scale, runs
+`*post-display-change-hooks*' (which refresh per-view textures), and
+relayouts windows.  Called when SDL fires `:size-changed' or
+`:display-changed' for the window \u2014 i.e. the window moved to a
+monitor with a different backing scale (Retina \u2194 standard DPI).
+Unlike `notify-required-redisplay' this runs the DPI adaptation
+unconditionally, since the event can arrive without a redisplay having
+been requested.  The frame-scoped half is skipped when there is no
+current frame: SDL also fires `:size-changed' when the window is
+mapped, and the event loop can pump that before the editor thread has
+run `setup-first-frame'.
+
+`update-texture' grabs the display mutex non-recursively, so it must
+be called outside the `with-renderer' block (matching the `:resized'
+event handler pattern in `on-windowevent')."
+  (update-texture display)
+  (when (lem:current-frame)
+    (with-renderer (display)
+      #+darwin
+      (adapt-high-dpi-display-scale display)
+      #+darwin
+      (adapt-high-dpi-font-size display)
+      (run-post-display-change-hooks display)
       (lem:update-on-display-resized))))
 
 (defmethod render-fill-rect ((display display) x y width height &key color)
@@ -231,7 +325,7 @@
         (y (* y (display-char-height display)))
         (width (* width (display-char-width display)))
         (height (* height (display-char-height display))))
-    (sdl2:with-rects ((rect x y width height))
+    (with-scratch-rect (rect display x y width height)
       (set-render-color display color)
       (sdl2:render-fill-rect (display-renderer display) rect))))
 
@@ -240,7 +334,7 @@
   (sdl2:render-draw-line (display-renderer display) x1 y1 x2 y2))
 
 (defmethod render-fill-rect-by-pixels ((display display) x y width height &key color)
-  (sdl2:with-rects ((rect x y width height))
+  (with-scratch-rect (rect display x y width height)
     (set-render-color display color)
     (sdl2:render-fill-rect (display-renderer display) rect)))
 
@@ -249,7 +343,7 @@
          (y1 (- (* y (display-char-height display)) (floor (display-char-height display) 2)))
          (x2 (1- (+ x1 (* (+ w 1) (display-char-width display)))))
          (y2 (+ y1 (* (+ h 1) (display-char-height display)))))
-    (sdl2:with-rects ((rect x1 y1 (- x2 x1) (- y2 y1)))
+    (with-scratch-rect (rect display x1 y1 (- x2 x1) (- y2 y1))
       (set-render-color display (display-background-color display))
       (sdl2:render-fill-rect (display-renderer display) rect))
     (sdl2:with-points ((upleft x1 y1)

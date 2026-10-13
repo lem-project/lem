@@ -4,6 +4,7 @@
            :find-file-executor
            :execute-find-file
            :find-file
+           :open-init-file
            :find-file-recursively
            :read-file
            :add-newline-at-eof-on-writing-file
@@ -65,7 +66,7 @@
 
 (defun directory-for-file-or-lose (filename)
   (let ((directory (directory-namestring filename)))
-    (unless (or (uiop:directory-exists-p directory)
+    (unless (or (virtual-directory-exists-p directory)
                 (maybe-create-directory directory))
       (error 'editor-abort))
     directory))
@@ -97,7 +98,7 @@
                     :existing nil))
                   ((or (pathnamep arg)
                        (uiop:absolute-pathname-p arg))
-                   (namestring arg)))))
+                   arg))))
       (let (buffer)
         (dolist (pathname (expand-files* filename))
           (setf buffer (execute-find-file *find-file-executor*
@@ -105,6 +106,10 @@
                                           pathname)))
         (when (bufferp buffer)
           (switch-to-buffer buffer t nil))))))
+
+(define-command open-init-file () ()
+  "Opens the lem init file"
+  (find-file (lem-core:get-preferred-init-file-path)))
 
 (defmethod execute-find-file :before (executor mode pathname)
   (directory-for-file-or-lose pathname))
@@ -241,10 +246,8 @@
 
 (define-command read-file (filename) ((:new-file "Read File: "))
   "Open the file as a read-only."
-  (when (pathnamep filename)
-    (setf filename (namestring filename)))
   (dolist (pathname (expand-files* filename))
-    (let ((buffer (find-file-buffer (namestring pathname))))
+    (let ((buffer (find-file-buffer pathname)))
       (setf (buffer-read-only-p buffer) t)
       (switch-to-buffer buffer t nil)))
   t)
@@ -329,7 +332,9 @@
     (when arg (insert-string (current-point) "\""))))
 
 (define-command save-some-buffers (&optional save-silently-p) (:universal-nil)
-  "Save some files in the open buffer."
+  "For all modified files, interactively ask to save it.
+
+  With a prefix argument, don't ask interactively."
   (let ((prev-buffer (current-buffer)))
     (dolist (buffer (buffer-list))
       (when (and (buffer-modified-p buffer)

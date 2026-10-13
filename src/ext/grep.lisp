@@ -3,6 +3,7 @@
         :lem)
   (:export
    :grep
+   :project-grep
    :change-grep-command
    :*grep-command*
    :*grep-args*)
@@ -182,8 +183,8 @@
                                   "")))
     (format s "~%")))
 
-(defvar *peek-grep-mode-keymap* (make-keymap :name '*peek-grep-mode-keymap* 
-                                             :parent lem/peek-source:*peek-source-keymap*))
+(defvar *peek-grep-mode-keymap* (make-keymap :description '*peek-grep-mode-keymap*
+                                             :base lem/peek-source:*peek-source-keymap*))
 (define-minor-mode peek-grep-mode
     (:name "Peek"
      :keymap *peek-grep-mode-keymap*))

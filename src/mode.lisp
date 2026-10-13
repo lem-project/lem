@@ -112,8 +112,8 @@
 (defun all-active-modes (buffer)
   (mapcar #'ensure-mode-object
           (append (buffer-minor-modes buffer)
-                  (active-global-minor-modes)
                   (list (buffer-major-mode buffer))
+                  (active-global-minor-modes)
                   (list (current-global-mode)))))
 
 (defun mode-active-p (buffer mode)
@@ -149,8 +149,8 @@
        ,@(when mode-hook
            `((defvar ,mode-hook '())))
        ,@(when keymap
-           `((defvar ,keymap (make-keymap :name ',keymap
-                                          :parent ,(when parent-mode
+           `((defvar ,keymap (make-keymap :description ',keymap
+                                          :base ,(when parent-mode
                                                      `(mode-keymap ',parent-mode))))))
        (define-command (,major-mode (:class ,command-class-name)) () ()
          (clear-editor-local-variables (current-buffer))
@@ -205,7 +205,7 @@
   (let ((command-class-name (make-mode-command-class-name minor-mode)))
     `(progn
        ,@(when keymapp
-           `((defvar ,keymap (make-keymap :name ',keymap))))
+           `((defvar ,keymap (make-keymap :description ',keymap))))
        (define-command (,minor-mode (:class ,command-class-name)) (&optional (arg nil arg-p)) (:universal)
          (cond ((not arg-p)
                 (toggle-minor-mode ',minor-mode))
@@ -252,8 +252,8 @@
       `(progn
          ,@(when keymap
              `((defvar ,keymap
-                 (make-keymap :name ',keymap
-                              :parent (alexandria:when-let ((,parent-mode
+                 (make-keymap :description ',keymap
+                              :base (alexandria:when-let ((,parent-mode
                                                              ,(when parent
                                                                 `(get-mode-object ',parent))))
                                         (mode-keymap ,parent-mode))))))
@@ -277,7 +277,12 @@
 (defconstant +active-modes-class-name+ '%active-modes-class)
 
 (defun buffer-mode-class-name (buffer)
-  (alexandria:symbolicate +active-modes-class-name+ '- (buffer-name buffer)))
+  ;; uninterned on purpose: interning a fresh symbol takes the package graph
+  ;; lock, and this runs on the editor thread during redisplay, which deadlocks
+  ;; when another thread holds that lock while waiting on the editor (micros
+  ;; parked in sldb-loop after a package-lock violation raised while reading).
+  ;; nothing looks the class up by name. the instance is cached per buffer.
+  (gensym (format nil "~A-~A-" +active-modes-class-name+ (buffer-name buffer))))
 
 (defun buffer-active-modes-class-cache (buffer)
   (buffer-value buffer 'mode-class-cache))

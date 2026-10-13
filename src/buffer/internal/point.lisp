@@ -12,7 +12,12 @@
     :type fixnum)
    (line
     :accessor point-line
-    :type line)
+    :type line
+    :documentation "Underlying `lem/buffer/line:line' object the point references.
+
+`point-line' is exported as a fast-path accessor for renderers that
+walk the buffer's line list directly (via `line:line-next') instead of
+moving points around — e.g. the terminal extension's per-row redraw.")
    (charpos
     :accessor point-charpos
     :type fixnum)

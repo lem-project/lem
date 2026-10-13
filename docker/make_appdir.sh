@@ -19,6 +19,19 @@ chmod +x AppDir/usr/bin/run-lem
 # 共有ライブラリは usr/lib に
 cp bin/*.so* AppDir/usr/lib/  || true
 
+# lem-terminal の native helper (terminal.so) が同梱されたか確認する。
+# deploy が bin/ に置いたものを上の cp が拾う。欠けていると terminal 拡張が
+# 静かに無効化されるため、フォールバックでコピーした上で存在を検証する。
+if [ ! -f AppDir/usr/lib/terminal.so ]; then
+  found="$(find extensions/terminal/lib -name terminal.so -print -quit 2>/dev/null || true)"
+  [ -n "$found" ] && cp "$found" AppDir/usr/lib/terminal.so
+fi
+if [ ! -f AppDir/usr/lib/terminal.so ]; then
+  echo "error: terminal.so was not bundled into the AppImage." >&2
+  echo "       Ensure 'make terminal-lib' ran with libvterm available." >&2
+  exit 1
+fi
+
 # .desktop / icon（Exec を run-lem に）
 sed -E 's/^Exec=.*/Exec=run-lem %F/' resources/lem.desktop > AppDir/lem.desktop
 cp resources/lem.png AppDir/lem.png

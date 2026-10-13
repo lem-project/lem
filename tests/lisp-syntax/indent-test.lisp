@@ -48,6 +48,27 @@
             y))
 ")
 
+(deftest defpackage-use-clause-not-affected-by-use-macro
+  ;; A user-defined macro named USE must not influence the indentation of
+  ;; the :USE clause keyword in DEFPACKAGE. The package prefix of a
+  ;; package-qualified symbol may be stripped to look up its indentation,
+  ;; but a keyword such as :USE has no package prefix and must be left alone.
+  (let ((lem-lisp-mode/test-api:*disable-self-connect* t))
+    (lem-lisp-syntax.indent:set-indentation "use" '(&body))
+    (unwind-protect
+         (run-indent-test "defpackage-use-clause-not-affected-by-use-macro"
+"
+(defpackage :foo
+  (:use :cl
+        :bar))
+"
+"
+(defpackage :foo
+  (:use :cl
+        :bar))
+")
+      (lem-lisp-syntax.indent:set-indentation "use" nil))))
+
 (defun get-location-from-buffer-point (point pathname)
   (format nil "~A:~D:~A" pathname (lem:line-number-at-point point) (lem:line-string point)))
 

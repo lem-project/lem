@@ -81,7 +81,8 @@
              (unless (or (eq cmd '<mouse-motion-event>)
                          (eq cmd '<mouse-event>))
                (message nil))
-             (call-command cmd nil)))
+             (when cmd
+               (call-command cmd nil))))
 
          (editor-abort-handler (c)
            (declare (ignore c))

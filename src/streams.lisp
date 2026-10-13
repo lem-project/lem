@@ -67,11 +67,10 @@
     :initarg :point
     :accessor buffer-stream-point)))
 
-(defun make-buffer-output-stream (&optional (point (current-point))
-                                            interactive-update-p)
+(defun make-buffer-output-stream (point &key interactive)
   (make-instance 'buffer-output-stream
                  :point (copy-point point :left-inserting)
-                 :interactive-update-p interactive-update-p))
+                 :interactive-update-p interactive))
 
 (defmethod trivial-gray-streams::close ((stream buffer-output-stream) &key abort)
   (declare (ignore abort))
@@ -88,9 +87,9 @@
   (when (buffer-output-stream-interactive-update-p stream)
     (let ((buffer (point-buffer (buffer-stream-point stream)))
           (point (buffer-stream-point stream)))
-      (pop-to-buffer buffer)
       (dolist (window (get-buffer-windows buffer))
-        (move-point (buffer-point (window-buffer window)) point))
+        (move-point (buffer-point (window-buffer window)) point)
+        (window-see window))
       (redraw-display)))
   nil)
 

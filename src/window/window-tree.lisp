@@ -165,7 +165,12 @@
                                               x
                                               y
                                               width
-                                              child-height)
+                                              (if (null rest-children)
+                                                  child-height
+                                                  (- child-height
+                                                     (if (frame-enable-window-modeline-per-window (current-frame))
+                                                         0
+                                                         (frame-window-bottom-margin (current-frame))))))
                                          (incf y child-height)
                                          (decf rest-height child-height))))))))))))
     (rec (convert-window-n-tree window-tree)

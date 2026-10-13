@@ -1,6 +1,8 @@
 "use strict";
 
-const modifierKeys = ["Shift", "Control", "Alt", "Meta"];
+import { isMacOS } from './editor.js';
+
+const modifierKeys = ["Shift", "Control", "Alt", "Meta", "CapsLock"];
 
 const convertKeyTable = {
   Enter: "Return",
@@ -106,7 +108,7 @@ const convertKeyTable = {
 };
 
 function getKey(e) {
-  if (e.altKey) {
+  if (e.altKey && isMacOS()) {
     return (
       convertKeyTable[e.key] ||
       (e.code.startsWith('Key') ? e.code[3].toLowerCase() : null) ||

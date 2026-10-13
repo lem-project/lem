@@ -25,6 +25,25 @@
     :reader process-output-callback-type)))
 
 (defun run-process (command &key name output-callback output-callback-type directory)
+  "Runs an external program as a separate thread.
+- `command`: can simply be a string naming the command to run.  If you need to
+  pass arguments to the command, then `command` must be a list of strings.  Each string will be its own
+  arg.  These args are not parsed by a shell, so you cannot combine tokens, such as a flag and its value.
+
+  for example, `find ~ -iname \"lem\"` would be represented as
+  '(\"find\" \"~\" \"-iname\" \"\\\"lem\\\"\")
+
+- `name`: You can supply a detailed name.  The command name is used by default.
+
+- `output-callback`: if `output-callback-type` is `:process-input`, then `output-callback`
+  must be a function with the lambda list `(process string)`.  Otherwise, it must only take 
+  a single argument (string).  This is called whenever the process sends input to its stdout.
+  The process output can also be retrieved by `lem-process:get-process-output-string`.
+
+- `output-callback-type`: If set to `:process-input`, `output-callback` takes `(process string)`.
+  otherwise, it takes `(string)`
+
+- `directory`: Specifies where to look for `command`.  if not specified, PATH is used."
   (setf command (uiop:ensure-list command))
   (let ((buffer-stream (make-string-output-stream)))
     (let* ((pointer (async-process:create-process command :nonblock nil :directory directory))
@@ -53,16 +72,20 @@
   (get-output-stream-string (process-buffer-stream process)))
 
 (defun write-to-buffer (process string)
-  (let ((buffer-stream (process-buffer-stream process))
-        (output-callback (process-output-callback process))
+  (let ((output-callback (process-output-callback process))
         (output-callback-type (process-output-callback-type process)))
-    (write-string string buffer-stream)
-    (when output-callback
-      (case output-callback-type
-        (:process-input
-         (funcall output-callback process string))
-        (otherwise
-         (funcall output-callback string))))))
+    (if output-callback
+        ;; When a callback is present, dispatch directly to it.
+        ;; Skip writing to buffer-stream to avoid duplicating all
+        ;; output in an ever-growing string stream.
+        (case output-callback-type
+          (:process-input
+           (funcall output-callback process string))
+          (otherwise
+           (funcall output-callback string)))
+        ;; No callback — accumulate in buffer-stream so callers can
+        ;; retrieve output via get-process-output-string.
+        (write-string string (process-buffer-stream process)))))
 
 (defun delete-process (process)
   (when (bt2:thread-alive-p (process-read-thread process))

@@ -10,8 +10,8 @@
               (lem-core::command-line-arguments-debug arg1))
        (equal (lem-core::command-line-arguments-version arg2)
               (lem-core::command-line-arguments-version arg1))
-       (equal (lem-core::command-line-arguments-no-init-file arg2)
-              (lem-core::command-line-arguments-no-init-file arg1))
+       (equal (lem-core::command-line-arguments-without-init-file arg2)
+              (lem-core::command-line-arguments-without-init-file arg1))
        (equal (lem-core::command-line-arguments-log-filename arg2)
               (lem-core::command-line-arguments-log-filename arg1))
        (equal (lem-core::command-line-arguments-interface arg2)
@@ -87,12 +87,12 @@
        (lem-core::parse-args '("-q"))
        (lem-core::make-command-line-arguments
         :filenames '()
-        :no-init-file t)))
+        :without-init-file t)))
   (ok (command-line-arguments-equal
-       (lem-core::parse-args '("--no-init-file"))
+       (lem-core::parse-args '("--without-init-file"))
        (lem-core::make-command-line-arguments
         :filenames '()
-        :no-init-file t)))
+        :without-init-file t)))
   (ok (command-line-arguments-equal
        (lem-core::parse-args '("--log-filename" "test.log"))
        (lem-core::make-command-line-arguments
@@ -114,11 +114,11 @@
         :filenames '()
         :interface :sdl2)))
   (ok (command-line-arguments-equal
-       (lem-core::parse-args '("--debug" "--no-init-file" "foo.txt"))
+       (lem-core::parse-args '("--debug" "--without-init-file" "foo.txt"))
        (lem-core::make-command-line-arguments
         :filenames '("foo.txt")
         :debug t
-        :no-init-file t)))
+        :without-init-file t)))
   (ok (command-line-arguments-equal
        (lem-core::parse-args '("-h" "-v" "--debug"))
        (lem-core::make-command-line-arguments

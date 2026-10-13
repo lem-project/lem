@@ -2,7 +2,7 @@
 
 (defvar *named-key-syms*
   '("Backspace" "Insert" "Delete" "Down" "End" "Escape" "F0" "F1" "F10" "F11" "F12" "F13" "F14" "F15" "F16" "F17" "F18" "F19" "F2" "F20" "F21" "F22" "F23" "F24" "F3" "F4" "F5" "F6" "F7" "F8" "F9"
-    "Home" "Left" "NopKey" "PageDown" "PageUp" "Return" "Right" "Space" "Tab" "Up"))
+    "Home" "Left" "ContextMenu" "NopKey" "PageDown" "PageUp" "Return" "Right" "Space" "Tab" "Up"))
 
 (defun named-key-sym-p (key-sym)
   (find key-sym *named-key-syms* :test #'string=))

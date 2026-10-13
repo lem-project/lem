@@ -25,7 +25,7 @@
                 (editor-error "~A does not exists" filename))
               (lem/language-mode:make-xref-location
                :filespec (probe-file filename)
-               :position (let ((buffer (find-file-buffer filename
+               :position (let ((buffer (find-file-buffer (pathname filename)
                                                          :temporary t
                                                          :enable-undo-p nil)))
                            (with-point ((point (buffer-point buffer)))

@@ -52,7 +52,9 @@ Descriptors (old char in parenthesis):
                            (:buffer
                             `(list (prompt-for-buffer
                                     ,(second arg-descriptor)
-                                    :default (buffer-name (current-buffer))
+                                    :default (if (attached-buffer-p (current-buffer))
+                                                 (buffer-name (attached-buffer-parent-buffer (current-buffer)))
+                                                 (buffer-name (current-buffer)))
                                     :existing t)))
                            (:other-buffer
                             `(list (prompt-for-buffer ,(second arg-descriptor)

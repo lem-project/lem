@@ -9,14 +9,53 @@ cd "$parent_dir"
 
 # ===== 1) ビルド =====
 qlot install
+
+# Build the lem-terminal native helper with libvterm statically linked so the
+# bundled terminal.so has no external libvterm dependency. It must exist before
+# `asdf:make :lem` so that lem-terminal/ffi.lisp loads it at build time and the
+# deploy library bundles it into Lem.app/Contents/MacOS and reloads it at boot.
+LEM_TERMINAL_STATIC=1 make terminal-lib
+
 qlot exec sbcl --eval '(ql:quickload :lem)' --eval '(asdf:make :lem)'
 
-# アイコン（存在しなくても続行）
-cp resources/lem.png bin/lem.app/Contents/Resources/ || true
+# Confirm the deploy library actually bundled terminal.so into the app; a
+# missing helper means the terminal extension would silently disable itself.
+if ! find bin/lem.app -name 'terminal.so' -print -quit | grep -q .; then
+  echo "error: terminal.so was not bundled into the app by deploy." >&2
+  echo "       Ensure libvterm is installed so it loads at build time." >&2
+  exit 1
+fi
+
+# Rename the deploy output (lem.app) to use the user-facing name (Lem.app).
+# The asdf system is named "lem" so the deploy library produces lem.app; we
+# rename the bundle, executable, and Info.plist fields here so Finder, the
+# Dock, and the menu bar show "Lem".
+#
+# APFS (and HFS+) are case-insensitive but case-preserving by default, so
+# `mv lem.app Lem.app` is a no-op (same path) and `rm -rf bin/Lem.app`
+# would delete the bundle we just built. Force a case change by going
+# through a uniquely-named intermediate.
+mv bin/lem.app bin/__lem_renaming__.app
+mv bin/__lem_renaming__.app bin/Lem.app
+mv bin/Lem.app/Contents/MacOS/lem bin/Lem.app/Contents/MacOS/__lem_renaming__
+mv bin/Lem.app/Contents/MacOS/__lem_renaming__ bin/Lem.app/Contents/MacOS/Lem
+PLIST="bin/Lem.app/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleName Lem"        "$PLIST"
+/usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName Lem" "$PLIST"
+/usr/libexec/PlistBuddy -c "Set :CFBundleExecutable Lem"  "$PLIST"
+/usr/libexec/PlistBuddy -c "Set :CFBundleIconFile Lem"    "$PLIST"
+
+# アイコン（.icns for macOS dock/taskbar icon, .png as fallback）
+# Generate the .icns first so a missing icon is a hard failure rather than
+# silently shipping an iconless .app. The bundle is now Lem.app, and
+# CFBundleIconFile is "Lem", so the icon must be named Lem.icns.
+make icns
+cp resources/lem.icns bin/Lem.app/Contents/Resources/Lem.icns
+cp resources/lem.png  bin/Lem.app/Contents/Resources/Lem.png || true
 
 # ===== 2) OpenSSL を同梱し、参照先を @loader_path 化 =====
-APP="bin/lem.app"
-EXE="$APP/Contents/MacOS/lem"
+APP="bin/Lem.app"
+EXE="$APP/Contents/MacOS/Lem"
 LIBDIR="$APP/Contents/MacOS"
 
 if [[ ! -x "$EXE" ]]; then
@@ -76,15 +115,15 @@ fi
 
 # ===== 5) 配布用 ZIP =====
 README_PATH="bin/README.md"
-echo "The following command must be executed for lem.app to start.
+echo "The following command must be executed for Lem.app to start.
 ```
-xattr -dr com.apple.quarantine lem.app/
+xattr -dr com.apple.quarantine Lem.app/
 ```
 " > "$README_PATH"
 
 rm -f lem-macos.zip
 (
   cd bin
-  zip -r ../lem-macos.zip "lem.app" "README.md"
+  zip -r ../lem-macos.zip "Lem.app" "README.md"
 )
 echo "Packaged: $(pwd)/lem-macos.zip"

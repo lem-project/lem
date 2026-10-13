@@ -18,7 +18,7 @@ Try to not use `alexandria:curry` and prefer higher-order functions.
 
 ## Dynamic bindings, functional style
 
-Avoid dynamic symbol calls (`uiop:symbol-call`) but rething your architecture instead.
+Avoid dynamic symbol calls (`uiop:symbol-call`) but rethink your architecture instead.
 
 Use `defvar` and `defparameter` for user-facing variables, but avoid
 using them as global variables that store state and that are used from
@@ -105,7 +105,8 @@ Loop keywords are written as keywords, with the `:`:
 
 Don't write long macros, use the "call-with-" pattern.
 
-Don't define lists with backquote and comma, use the `list` constructor.
+Avoid defining lists with quote, backquote and comma, only do it when
+you know you need them. Prefer using the `list` constructor.
 
 
 ## User-visible variables names

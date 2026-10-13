@@ -236,11 +236,6 @@
       (connect-to-micros *localhost* port)
       (update-buffer-package)
 
-      ;; XXX:
-      ;; Systems added after lem initialization are not visible from within this process and must
-      ;; be re-initialized.
-      (asdf:clear-source-registry)
-
       (setf *self-connected-port* port))))
 
 (defun self-connection ()
@@ -595,15 +590,26 @@
             (convert-remote-to-local-file fastfile))))))
 
 (defun show-compile-result (notes secs successp)
-  (display-message (format nil "~{~A~^ ~}"
-                           (remove-if #'null
-                                      (list (if successp
-                                                "Compilation finished"
-                                                "Compilation failed")
-                                            (unless notes
-                                              "(No warnings)")
-                                            (when secs
-                                              (format nil "[~,2f secs]" secs)))))))
+  (let ((buffer (make-buffer "*lisp-compiled-result*" :temporary t)))
+    (setf (variable-value 'line-wrap :buffer buffer) nil)
+    (with-point ((point (buffer-point buffer) :left-inserting))
+      (insert-string point
+                     (if successp
+                         (if notes
+                             (format nil "Compilation warning~P" (length notes))
+                             "Compilation finished")
+                         "Compilation failed")
+                     :attribute (if successp
+                                    (if notes
+                                        (make-attribute :foreground "yellow")
+                                        (make-attribute :foreground "green"))
+                                    (make-attribute :foreground "red")))
+      (when notes
+        (insert-string point (format nil " (~D warning~:P)" (length notes))))
+      (when secs
+        (insert-string point (format nil " [~,2f secs]" secs)))
+      (buffer-start (buffer-point buffer))
+      (show-message buffer))))
 
 (defun make-highlight-overlay (pos buffer message source-context)
   (with-point ((point (buffer-point buffer)))
@@ -760,7 +766,8 @@
                  (end point))
       (scan-lists end 1 0)
       (send-string-to-listener (points-to-string start end)
-                               (buffer-package (current-buffer))))))
+                               :package-name (buffer-package (current-buffer))
+                               :evaluate t))))
 
 (defun form-string-at-point ()
   (with-point ((point (current-point)))
@@ -844,26 +851,27 @@
 (defun completion-symbol-async (point then)
   (check-connection)
   (let ((string (symbol-string-at-point point)))
-    (when string
-      (remote-eval-from-string
-       (current-connection)
-       (lem-lisp-mode/completion:make-completions-form-string string (current-package))
-       :continuation (lambda (result)
-                       (alexandria:destructuring-ecase result
-                         ((:ok completions)
-                          (with-point ((start (current-point))
-                                       (end (current-point)))
-                            (skip-symbol-backward start)
-                            (skip-symbol-forward end)
-                            (funcall then
-                                     (lem-lisp-mode/completion:make-completion-items
-                                      completions
-                                      start
-                                      end))))
-                         ((:abort condition)
-                          (editor-error "abort ~A" condition))))
-       :thread (current-micros-thread)
-       :package (current-package)))))
+    (if string
+        (remote-eval-from-string
+         (current-connection)
+         (lem-lisp-mode/completion:make-completions-form-string string (current-package))
+         :continuation (lambda (result)
+                         (alexandria:destructuring-ecase result
+                           ((:ok completions)
+                            (with-point ((start (current-point))
+                                         (end (current-point)))
+                              (skip-symbol-backward start)
+                              (skip-symbol-forward end)
+                              (funcall then
+                                       (lem-lisp-mode/completion:make-completion-items
+                                        completions
+                                        start
+                                        end))))
+                           ((:abort condition)
+                            (editor-error "abort ~A" condition))))
+         :thread (current-micros-thread)
+         :package (current-package))
+        (funcall then '()))))
 
 (defun describe-symbol (symbol-name)
   (when symbol-name
@@ -1137,9 +1145,9 @@
                               (incf retry-count))))
                      (:no-error (conn)
                        (connected-slime-message conn)
-                       ;; replのプロンプトの表示とカーソル位置の変更をしたいが
-                       ;; 他のファイルの作業中にバッファ/ウィンドウが切り替わると作業の邪魔なので
-                       ;; with-current-windowで元に戻す
+                       ;; We want to to show the repl prompt and change the cursor position.
+                       ;; However, it's disruptive to change the buffer/window while working on another file,
+                       ;; so we use `with-current-window` to switch back afterwards.
                        (unless (repl-buffer)
                          (with-current-window (current-window) (start-lisp-repl)))
                        (success))))
@@ -1211,7 +1219,6 @@
     (self-connect))
   (when start-repl (start-lisp-repl)))
 
-
 (defun buffer-pathname-type (buffer)
   (alexandria:when-let (pathname (buffer-filename buffer))
     (pathname-type pathname)))

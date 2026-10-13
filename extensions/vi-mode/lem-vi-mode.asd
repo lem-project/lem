@@ -8,6 +8,7 @@
                "alexandria"
                "split-sequence"
                "lem-lisp-mode"
+               "lem-dashboard"
                "trivial-types")
   :components ((:file "core")
                (:file "leader" :depends-on ("core"))
@@ -57,7 +58,8 @@
      (:file "registers")
      (:file "kbdmacro")
      (:file "jumplist")
-     (:file "options")))
+     (:file "options")
+     (:file "insert")))
    (:file "utils"
     :pathname "tests/utils"))
   :perform (test-op (op c) (symbol-call :rove '#:run c)))

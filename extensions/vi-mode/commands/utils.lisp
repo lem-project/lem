@@ -61,7 +61,10 @@
             (1- len)))))
 
 (defun fall-within-line (point)
-  (when (eolp point)
+  "Clamps the given point to the character before the newline at the end of the line it is in."
+  ;; a buffer-line end whose newline is hidden by a fold is mid-visual-line, so we dont clamp.
+  (when (and (eolp point)
+             (not (invisible-overlay-covering point)))
     (line-end point)
     (unless (bolp point)
       (character-offset point *cursor-offset*))))
@@ -282,8 +285,11 @@
 
 (defmacro define-text-object-command (name arg-list arg-descriptors (&key expand-selection)
                                       &body body)
-  `(define-command (,name (:advice-classes vi-text-object)) ,arg-list
-       (,(parse-arg-descriptors arg-descriptors))
-     (call-define-text-object-command
-      (lambda () ,@body)
-      :expand-selection ,expand-selection)))
+  "Define a text-object command. An optional docstring may appear as the first form of BODY."
+  (let ((docstring (when (stringp (car body)) (pop body))))
+    `(define-command (,name (:advice-classes vi-text-object)) ,arg-list
+         (,(parse-arg-descriptors arg-descriptors))
+       ,@(when docstring (list docstring))
+       (call-define-text-object-command
+        (lambda () ,@body)
+        :expand-selection ,expand-selection))))

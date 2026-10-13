@@ -12,6 +12,8 @@
            :move-to-beginning-of-logical-line
            :move-to-end-of-line
            :move-to-end-of-logical-line
+           :visual-line-beginning
+           :visual-line-end
            :next-page
            :previous-page
            :next-page-char
@@ -45,6 +47,134 @@
 (define-key *global-keymap* "C-x [" 'previous-page-char)
 (define-key *global-keymap* "M-g" 'goto-line)
 
+(defvar *cursor-positions-before-command*
+  (make-hash-table :test 'eq)
+  "Maps each cursor point to its absolute buffer position before the running command, so
+`run-overlay-cursor-motion-hooks' can tell which direction it moved.")
+
+(defvar *cursor-overlays-before-command*
+  (make-hash-table :test 'eq)
+  "Maps each cursor point to the cursor-hook overlays it occupied before the running command,
+so `run-overlay-cursor-motion-hooks' can tell which overlays it entered and which it left.")
+
+(add-hook *pre-command-hook* 'snapshot-cursor-state)
+(add-hook *post-command-hook* 'run-overlay-cursor-motion-hooks)
+
+(defun snapshot-cursor-state ()
+  "Snapshot every cursor's position and the cursor-hook overlays it occupies, so that after the
+command `run-overlay-cursor-motion-hooks' can tell which overlays each cursor entered and left,
+and in which direction."
+  (clrhash *cursor-positions-before-command*)
+  (clrhash *cursor-overlays-before-command*)
+  (dolist (point (buffer-cursors (current-buffer)))
+    (setf (gethash point *cursor-positions-before-command*)
+          (position-at-point point))
+    (setf (gethash point *cursor-overlays-before-command*)
+          (overlays-with-cursor-hooks-covering point))))
+
+(defun run-overlay-cursor-enter-functions (point direction)
+  "Run the :cursor-enter-functions of every cursor-hook overlay POINT has entered since the
+command, each called as (FUNCTION point overlay direction). repeats while a handler
+repositions POINT so that overlays it is then pushed into also fire."
+  (let ((seen (copy-list (gethash point *cursor-overlays-before-command*)))
+        (visited (list (position-at-point point))))
+    (loop
+      (let ((entered (set-difference (overlays-with-cursor-hooks-covering point) seen)))
+        (when (null entered)
+          (return))
+        (let ((before-pass (position-at-point point)))
+          (dolist (overlay entered)
+            (push overlay seen)
+            (dolist (function (overlay-get overlay :cursor-enter-functions))
+              (funcall function point overlay direction)))
+          (let ((after-pass (position-at-point point)))
+            ;; stop once a pass leaves POINT put, or revisits a position. the latter guards
+            ;; against two overlays snapping a cursor back and forth forever.
+            ;; this is tricky. this is definitely not the best way to do things but it works for now.
+            ;; the nature of overlay hooks itself is tricky anyway.
+            (when (or (= before-pass after-pass)
+                      (member after-pass visited))
+              (return))
+            (push after-pass visited)))))))
+
+(defun run-overlay-cursor-leave-functions (point direction)
+  "Run the :cursor-leave-functions of every cursor-hook overlay POINT was in before the
+command, each called as (FUNCTION point overlay direction)."
+  (let ((left (set-difference (gethash point *cursor-overlays-before-command*)
+                              (overlays-with-cursor-hooks-covering point))))
+    (dolist (overlay left)
+      (dolist (function (overlay-get overlay :cursor-leave-functions))
+        (funcall function point overlay direction)))))
+
+(defun cursor-move-direction-overlay (point)
+  "The direction POINT moved during the command, :forward or :backward (:forward when its prior
+position is unknown or unchanged)."
+  (let ((before (gethash point *cursor-positions-before-command*)))
+    (if (and before (< (position-at-point point) before))
+        :backward
+        :forward)))
+
+(defun run-overlay-cursor-motion-hooks ()
+  (dolist (point (buffer-cursors (current-buffer)))
+    (let ((direction (cursor-move-direction-overlay point)))
+      (run-overlay-cursor-enter-functions point direction)
+      (run-overlay-cursor-leave-functions point direction))))
+
+(defun visual-line-end (point)
+  "Move POINT to the end of its visual line. returns POINT."
+  (line-end point)
+  (loop :until (last-line-p point)
+        :while (invisible-overlay-covering point)
+        :do (line-offset point 1)
+            (line-end point))
+  point)
+
+(defun visual-line-beginning (point)
+  "Move POINT to the start of its visual line. returns POINT."
+  (line-start point)
+  (loop :while (line-continuation-p point)
+        :do (line-offset point -1)
+            (line-start point))
+  point)
+
+(defun line-continuation-to-skip (point)
+  (let ((overlay (line-continuation-p point)))
+    (and overlay
+         (not (overlay-get overlay :cursor-leave-functions))
+         overlay)))
+
+(defun skip-invisible-lines (point direction)
+  "Move POINT past any fully invisible lines in DIRECTION (1 or -1).
+returns POINT on success, or NIL if a buffer boundary is reached."
+  (loop :while (line-continuation-to-skip point)
+        :do (unless (line-offset point direction)
+              (return-from skip-invisible-lines nil)))
+  point)
+
+(defun move-to-next-visible-virtual-line (point n)
+  "Like `move-to-next-virtual-line' but skips fully invisible lines."
+  (let ((dir (if (plusp n) 1 -1))
+        (steps (abs n)))
+    (loop :repeat steps
+          :do (unless (move-to-next-virtual-line point dir)
+                (return-from move-to-next-visible-virtual-line nil))
+              (when (line-continuation-to-skip point)
+                (unless (skip-invisible-lines point dir)
+                  (return-from move-to-next-visible-virtual-line nil))))
+    point))
+
+(defun visible-line-offset (point n)
+  "Like `line-offset' but skips fully invisible lines."
+  (let ((dir (if (plusp n) 1 -1))
+        (steps (abs n)))
+    (loop :repeat steps
+          :do (unless (line-offset point dir)
+                (return-from visible-line-offset nil))
+              (when (line-continuation-to-skip point)
+                (unless (skip-invisible-lines point dir)
+                  (return-from visible-line-offset nil))))
+    point))
+
 (defun next-line-aux (n
                       point-column-fn
                       forward-line-fn
@@ -67,14 +197,14 @@
   "Move the cursor to next line."
   (next-line-aux n
                  #'point-virtual-line-column
-                 #'move-to-next-virtual-line
+                 #'move-to-next-visible-virtual-line
                  #'move-to-virtual-line-column))
 
 (define-command (next-logical-line (:advice-classes movable-advice)) (&optional n) (:universal)
   "Move the cursor to the next logical line."
   (next-line-aux n
                  #'point-column
-                 #'line-offset
+                 #'visible-line-offset
                  #'move-to-column))
 
 (define-command (previous-line (:advice-classes movable-advice)) (&optional (n 1)) (:universal)

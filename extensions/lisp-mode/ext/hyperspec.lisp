@@ -992,6 +992,11 @@ It can also be a path to load it locally:
 (defparameter *symbols* (make-hash-table :test 'equal)
   "Maps symbol names to relative urls in the hyperspec.")
 
+(define-key lem-lisp-mode/internal:*lisp-mode-keymap*
+  "C-c C-d h" 'lisp-hyperspec-at-point)
+(define-key lem-lisp-mode/internal:*lisp-repl-mode-keymap*
+  "C-c C-d h" 'lisp-hyperspec-at-point)
+
 (defun hlookup (symbol)
   (unless (> (hash-table-count *symbols*) 0)
     (hload-symbols))
@@ -1011,14 +1016,16 @@ It can also be a path to load it locally:
                '("http" "https")
                :test #'equal)))
 
-(define-command hyperspec-at-point (point) ((current-point))
+(define-command lisp-hyperspec-at-point (point) ((current-point))
+  "Open the HyperSpec page for the Common Lisp symbol at point."
   (let* ((symbol (symbol-string-at-point point))
          (url (hlookup symbol)))
     (if (valid-url-p url)
         (open-external-file url)
         (message "This symbol isn't referenced in the HyperSpec."))))
 
-(define-command hyperspec-lookup () ()
+(define-command lisp-hyperspec-lookup () ()
+  "Open the HyperSpec page for a Common Lisp symbol, to choose with auto-completion."
   (let* ((symbol-list (mapcar #'car *symbols-list*))
          (symbol (prompt-for-string
                   "Symbol: "

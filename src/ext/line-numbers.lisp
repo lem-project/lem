@@ -83,7 +83,7 @@ With a positive universal argument, use relative line numbers. Also obey the glo
         (lem/buffer/line:make-content :string string
                                       :attributes attribute)))))
 
-(defmethod lem-core:compute-wrap-left-area-content (left-side-width left-side-characters)
+(defmethod lem-core:compute-wrap-left-area-content ((mode line-numbers-mode) left-side-width left-side-characters)
   (if (< 0 left-side-width)
       (list (lem-core::make-object-with-type
              (make-string left-side-characters :initial-element #\space)

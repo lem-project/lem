@@ -16,6 +16,7 @@
            :copy-region
            :copy-region-to-clipboard
            :kill-region
+           :delete-region
            :kill-region-to-clipboard
            :kill-line
            :kill-whole-line
@@ -61,6 +62,7 @@
 (define-key *global-keymap* "M-^" 'delete-indentation)
 (define-key *global-keymap* "C-t" 'transpose-characters)
 (define-key *global-keymap* "C-\\" 'undo)
+(define-key *global-keymap* "C-x u" 'undo)
 (define-key *global-keymap* "C-_" 'redo)
 (define-key *global-keymap* "C-/" 'redo)
 (define-key *global-keymap* "Shift-Left" 'mark-and-backward-char)
@@ -174,6 +176,10 @@
     (with-killring-context (:appending (continue-flag :kill))
       (copy-to-clipboard-with-killring killed-string))
     (mark-cancel (cursor-mark point))))
+
+(define-command delete-region (start end) (:region)
+  "Deletes the text of region WITHOUT copying it to the clipboard"
+  (delete-between-points start end))
 
 (define-command kill-region (start end) (:region)
   "Kill the text of region."

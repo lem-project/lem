@@ -96,6 +96,12 @@
     (when callback
       (funcall callback window point))))
 
+(defmethod handle-button-1 ((window side-window) x y clicks)
+  (let* ((point (get-point-from-window-with-coordinates window x y))
+         (callback (text-property-at point :click-callback)))
+    (when callback
+      (funcall callback window point))))
+
 (defmethod handle-button-1 ((window floating-window) x y clicks)
   (if (floating-window-focusable-p window)
       (call-next-method)))

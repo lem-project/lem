@@ -49,12 +49,18 @@
      :ignore-error-status t))
   (revert-buffer t))
 
+(defun tree-sitter-query-path ()
+  "Return the path to the tree-sitter highlight query for JSON."
+  (asdf:system-relative-pathname :lem-json-mode "tree-sitter/highlights.scm"))
+
 (define-major-mode json-mode language-mode
     (:name "JSON"
      :keymap *json-mode-keymap*
      :syntax-table *json-syntax-table*
      :mode-hook *json-mode-hook*
      :formatter #'js-prettier)
+  (lem-tree-sitter:enable-tree-sitter-for-mode
+   *json-syntax-table* "json" (tree-sitter-query-path))
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'indent-tabs-mode) nil
         (variable-value 'tab-width) 2

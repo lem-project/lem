@@ -93,9 +93,9 @@
   (make-instance timer-class
                  :name (or name
 			   (guess-function-name function))
-                 :function (ensure-function function)
+                 :function function
                  :handle-function (when handle-function
-                                    (ensure-function handle-function))))
+                                    handle-function)))
 
 (defun call-timer-function (timer)
   (let ((*running-timer* timer))

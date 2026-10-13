@@ -29,7 +29,7 @@
            (run-command `("unlink" ,(string-right-trim
                                      (string
                                       (uiop:directory-separator-for-host))
-                                     (namestring file)))))
+                                     (uiop:native-namestring file)))))
       (run-command `("rm" "-fr" ,file))))
 
 (defun subdirectory-p (to-pathname from-pathname)
@@ -121,7 +121,12 @@
 ;;; internal functions
 (defun run-command (command)
   (when (consp command)
-    (setf command (mapcar #'princ-to-string command)))
+    (setf command (mapcar
+                    (lambda (x)
+                      (if (pathnamep x)
+                        (uiop:native-namestring x)
+                        (princ-to-string x)))
+                    command)))
   (let ((error-string
           (with-output-to-string (error-output)
             (uiop:run-program command

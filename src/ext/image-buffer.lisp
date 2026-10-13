@@ -46,13 +46,14 @@ function resetImage() {
   (let ((buffer (lem:make-buffer
                  (file-namestring pathname)
                  :directory (lem:expand-file-name
-                             (namestring (uiop:pathname-directory-pathname
-                                          pathname))))))
+                             (uiop:pathname-directory-pathname pathname)))))
     (change-class buffer
                   'image-buffer
                   :html
                   (mustache:render* *html-template*
                                     `((image . ,(namestring pathname)))))
+    (setf (lem:buffer-filename buffer) (namestring pathname))
+    (lem:update-changed-disk-date buffer)
     (lem:change-buffer-mode buffer 'image-viewer-mode)))
 
 (defclass find-file-executor (lem:find-file-executor) ())

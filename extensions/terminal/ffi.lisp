@@ -93,13 +93,19 @@
   (cb_sb_pushline :pointer)
   (cb_sb_popline :pointer))
 
-(defun terminal-new (directory id rows cols)
+(defun terminal-new (directory id rows cols &key program argv)
+  "Create a new terminal PTY running PROGRAM with ARGV.
+When PROGRAM/ARGV are not provided, defaults to the user's shell started
+in DIRECTORY (via 'cd <directory>; <shell>')."
   (let* ((shell (or (uiop:getenv "SHELL") "/bin/bash"))
-         (argv (list shell "-c" (concatenate 'string "cd " directory "; " shell))))
+         (program (or program shell))
+         (argv (or argv
+                   (list shell "-c"
+                         (concatenate 'string "cd " directory "; " shell)))))
     (%terminal-new id
                    rows
                    cols
-                   shell
+                   program
                    argv
                    (cffi:callback cb-damage)
                    (cffi:callback cb-moverect)
@@ -126,8 +132,13 @@
 (cffi:defcfun ("terminal_process_input_wait" terminal-process-input-wait) :void
   (terminal :pointer))
 
-(cffi:defcfun ("terminal_process_input_nonblock" terminal-process-input-nonblock) :bool
+(cffi:defcfun ("terminal_process_input_nonblock" terminal-process-input-nonblock) :size
   (terminal :pointer))
+
+;; Time-budgeted PTY drain: processes data for up to max-ms milliseconds
+(cffi:defcfun ("terminal_process_input_timed" terminal-process-input-timed) :size
+  (terminal :pointer)
+  (max-ms :int))
 
 (cffi:defcfun ("terminal_process_input" terminal-process-input) :void
   (terminal :pointer))
@@ -136,6 +147,41 @@
   (terminal :pointer)
   (x :int)
   (y :int))
+
+;; Packed cell data struct for bulk row transfer (12 bytes per cell)
+(cffi:defcstruct cell-data
+  (ch :uint32)
+  (fg-r :uint8)
+  (fg-g :uint8)
+  (fg-b :uint8)
+  (bg-r :uint8)
+  (bg-g :uint8)
+  (bg-b :uint8)
+  (bold :uint8)
+  (underline :uint8)
+  (reverse-attr :uint8)
+  (width :uint8))
+
+(cffi:defcfun ("terminal_get_row" terminal-get-row) :int
+  (terminal :pointer)
+  (row :int)
+  (out :pointer)
+  (cols :int))
+
+(cffi:defcfun ("terminal_sb_line_to_string" terminal-sb-line-to-string) :int
+  (terminal :pointer)
+  (cols :int)
+  (cells :pointer)
+  (out :pointer)
+  (out-size :int))
+
+;; Zero-allocation: extracts into the terminal's per-terminal C buffer,
+;; returns pointer. Trailing ASCII spaces are stripped during extraction.
+(cffi:defcfun ("terminal_sb_line_extract" terminal-sb-line-extract) :pointer
+  (terminal :pointer)
+  (cols :int)
+  (cells :pointer)
+  (out-len (:pointer :int)))
 
 (cffi:defcfun ("terminal_last_cell_chars" terminal-last-cell-chars) :pointer
   (terminal :pointer))
@@ -208,10 +254,15 @@
   (rows :int)
   (cols :int))
 
+;; Field order must match libvterm's VTermRect exactly: start_row, end_row,
+;; start_col, end_col.  A previous definition swapped end-row and start-col,
+;; so cb-damage/cb-moverect read a column value as the end row and marked an
+;; empty/garbage row range -- erases and scrolls the cursor didn't visit
+;; (clear, completion listings) were never re-rendered, leaving ghosting.
 (cffi:defcstruct vterm-rect
   (start-row :int)
-  (start-col :int)
   (end-row :int)
+  (start-col :int)
   (end-col :int))
 
 (cffi:defcstruct vterm-pos

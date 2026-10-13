@@ -5,14 +5,23 @@
   (:local-nicknames (:display :lem-core/display)
                     (:queue :lem/common/queue)
                     (:mouse :lem-server/mouse))
-  (:export :register-method
+  (:export :jsonrpc
+           :register-method
            :run-tcp-server
            :run-stdio-server
            :run-websocket-server
+           :*exit-function*
            :main))
 (in-package :lem-server)
 
 (defvar *server-runner*)
+
+(defvar *exit-function* (lambda () (uiop:quit 0))
+  "Function called from *exit-editor-hook* after notifying clients of exit.
+The default quits the process. The webview frontend replaces it because
+uiop:quit cannot unwind the main thread while it is blocked in the native
+webview event loop; it terminates that loop instead and the main thread
+quits by itself afterwards.")
 
 (defclass server-runner ()
   ())
@@ -62,7 +71,7 @@
                                                "frontend/dist/~A"
                                                (string-left-trim "/" path)))))
             ((alexandria:starts-with-subseq "/local/" path)
-             (let* ((file (pathname (subseq path (length "/local"))))
+             (let* ((file (uiop:parse-native-namestring (subseq path (length "/local"))))
                     (mime-type (hunchentoot:mime-type file)))
                `(200 (:content-type ,mime-type)
                      ,file)))
@@ -104,9 +113,24 @@
   (:default-initargs
    :name :jsonrpc
    :redraw-after-modifying-floating-window t
-   :window-left-margin 1
+   :window-left-margin 0
+   :window-bottom-margin 0
    :html-support t
-   :underline-color-support t))
+   :underline-color-support t
+   :no-force-needed t
+   :support-pixel-positioning t))
+
+(defun view-id-hash (view)
+  "Return a minimal hash table containing only the view ID.
+Used for hot-path messages (put, clear-eol, etc.) where the JS frontend
+only needs viewInfo.id. Avoids serializing the full VIEW object (14+ fields).
+
+The hash is memoized on the view: it is called once per drawing object
+per frame, but its content is constant, so we allocate it once and reuse
+the same immutable instance for every subsequent message."
+  (or (view-cached-id-hash view)
+      (setf (view-cached-id-hash view)
+            (hash "id" (view-id view)))))
 
 (defun get-all-views ()
   (if (null (lem:current-frame))
@@ -137,7 +161,6 @@
     (notify jsonrpc "bulk" argument)))
 
 (defun handle-login (jsonrpc logged-in-callback params)
-  (log:info "ready: ~A ~A" jsonrpc/connection:*connection* (pretty-json params))
   (with-error-handler ()
     (let* ((size (gethash "size" params))
            (foreground (gethash "foreground" params))
@@ -160,7 +183,6 @@
                             "background" (lem-core::background-color)
                             "size" (hash "width" (lem:display-width)
                                          "height" (lem:display-height)))))
-        (log:info "login response: ~A" (pretty-json response))
         response))))
 
 (defun login (jsonrpc logged-in-callback)
@@ -168,7 +190,6 @@
     (handle-login jsonrpc logged-in-callback params)))
 
 (defun redraw (args)
-  (log:info "redraw: ~A" (pretty-json args))
   (with-error-handler ()
     (let ((size (and args (gethash "size" args))))
       (when size
@@ -192,16 +213,16 @@
              args)))
 
 (defmethod lem-if:invoke ((jsonrpc jsonrpc) function)
-  (let ((ready nil))
+  (let ((ready (bt2:make-semaphore :name "lem-server ready")))
     (setf (jsonrpc-editor-thread jsonrpc)
           (funcall function
                    (lambda ()
-                     (loop :until ready))))
+                     (bt2:wait-on-semaphore ready))))
     (jsonrpc:expose (jsonrpc-server jsonrpc)
                     "login"
                     (login jsonrpc
                            (lambda ()
-                             (setf ready t))))
+                             (bt2:signal-semaphore ready))))
     (jsonrpc:expose (jsonrpc-server jsonrpc)
                     "input"
                     (lambda (args)
@@ -219,7 +240,7 @@
     (lem:add-hook lem:*exit-editor-hook*
                   (lambda ()
                     (notify jsonrpc "exit" nil)
-                    (uiop:quit 0)))
+                    (funcall *exit-function*)))
 
     (server-listen *server-runner* (jsonrpc-server jsonrpc))))
 
@@ -238,8 +259,9 @@
     (notify jsonrpc "update-background" color-name)))
 
 (defmethod lem-if:update-cursor-shape ((jsonrpc jsonrpc) cursor-type)
-  ;; TODO
-  )
+  (with-error-handler ()
+    (notify jsonrpc "update-cursor-shape"
+            (hash "cursorType" (string-downcase (string cursor-type))))))
 
 (defmethod lem-if:display-width ((jsonrpc jsonrpc))
   (with-error-handler ()
@@ -279,11 +301,14 @@
                          :width width
                          :height height
                          :use-modeline use-modeline
-                         :kind (if (lem:floating-window-p window)
-                                   "floating"
-                                   "tile")
-                         :border (and (lem:floating-window-p window)
-                                      (lem:floating-window-border window))
+                         :kind (cond ((or (lem:floating-window-p window)
+                                          (lem:attached-window-p window))
+                                      "floating")
+                                     ((lem:header-window-p window)
+                                      "header")
+                                     (t
+                                      "tile"))
+                         :border (lem:window-border window)
                          :border-shape (and (lem:floating-window-p window)
                                             (lem:floating-window-border-shape window)))))
     (notify* jsonrpc "make-view" view)
@@ -297,18 +322,18 @@
 
 (defmethod lem-if:delete-view ((jsonrpc jsonrpc) view)
   (with-error-handler ()
-    (notify* jsonrpc "delete-view" (hash "viewInfo" view))))
+    (notify* jsonrpc "delete-view" (hash "viewInfo" (view-id-hash view)))))
 
 (defmethod lem-if:clear ((jsonrpc jsonrpc) view)
   (with-error-handler ()
-    (notify* jsonrpc "clear" (hash "viewInfo" view))))
+    (notify* jsonrpc "clear" (hash "viewInfo" (view-id-hash view)))))
 
 (defmethod lem-if:set-view-size ((jsonrpc jsonrpc) view width height)
   (with-error-handler ()
     (resize-view view width height)
     (notify* jsonrpc
              "resize-view"
-             (hash "viewInfo" view
+             (hash "viewInfo" (view-id-hash view)
                    "width" width
                    "height" height))))
 
@@ -317,9 +342,57 @@
     (move-view view x y)
     (notify* jsonrpc
              "move-view"
-             (hash "viewInfo" view
+             (hash "viewInfo" (view-id-hash view)
                    "x" x
                    "y" y))))
+
+(defmethod lem-if:make-view-with-pixels ((jsonrpc jsonrpc) window x y width height
+                                         pixel-x pixel-y pixel-width pixel-height
+                                         use-modeline)
+  (let ((view (make-view :window window
+                         :x x
+                         :y y
+                         :width width
+                         :height height
+                         :pixel-x pixel-x
+                         :pixel-y pixel-y
+                         :pixel-width pixel-width
+                         :pixel-height pixel-height
+                         :use-modeline use-modeline
+                         :kind (cond ((or (lem:floating-window-p window)
+                                          (lem:attached-window-p window))
+                                      "floating")
+                                     ((lem:header-window-p window)
+                                      "header")
+                                     (t
+                                      "tile"))
+                         :border (lem:window-border window)
+                         :border-shape (and (lem:floating-window-p window)
+                                            (lem:floating-window-border-shape window)))))
+    (notify* jsonrpc "make-view" view)
+    view))
+
+(defmethod lem-if:set-view-pos-pixels ((jsonrpc jsonrpc) view x y pixel-x pixel-y)
+  (with-error-handler ()
+    (move-view view x y pixel-x pixel-y)
+    (notify* jsonrpc
+             "move-view"
+             (hash "viewInfo" (view-id-hash view)
+                   "x" x
+                   "y" y
+                   "pixelX" pixel-x
+                   "pixelY" pixel-y))))
+
+(defmethod lem-if:set-view-size-pixels ((jsonrpc jsonrpc) view width height pixel-width pixel-height)
+  (with-error-handler ()
+    (resize-view view width height pixel-width pixel-height)
+    (notify* jsonrpc
+             "resize-view"
+             (hash "viewInfo" (view-id-hash view)
+                   "width" width
+                   "height" height
+                   "pixelWidth" pixel-width
+                   "pixelHeight" pixel-height))))
 
 (defmethod lem-if:redraw-view-before ((jsonrpc jsonrpc) view)
   )
@@ -327,22 +400,41 @@
 (defmethod lem-if:redraw-view-after ((jsonrpc jsonrpc) view)
   (notify* jsonrpc
            "redraw-view-after"
-           (hash "viewInfo" view)))
+           (hash "viewInfo" (view-id-hash view))))
 
 (defmethod lem:redraw-buffer ((jsonrpc jsonrpc) (buffer lem:html-buffer) window force)
   )
 
 (defmethod lem-if:will-update-display ((jsonrpc jsonrpc))
-  )
+  (clear-attribute-hash-cache))
 
 (defmethod lem-if:update-display ((jsonrpc jsonrpc))
   (with-error-handler ()
-    (let ((view (lem:window-view (lem:current-window)))
-          (x (lem:last-print-cursor-x (lem:current-window)))
-          (y (lem:last-print-cursor-y (lem:current-window))))
+    (let* ((view (lem:window-view (lem:current-window)))
+           (x (lem:last-print-cursor-x (lem:current-window)))
+           (y (lem:last-print-cursor-y (lem:current-window)))
+           (cursor-attr (lem:ensure-attribute 'lem:cursor nil))
+           (impl (lem:implementation))
+           (cursor-color (ensure-rgb
+                          (or (when cursor-attr
+                                (lem:attribute-background cursor-attr))
+                              (lem-if:get-foreground-color impl))))
+           (cursor-char (lem:character-at
+                         (lem:buffer-point
+                          (lem:window-buffer (lem:current-window)))))
+           (cursor-text (if (and cursor-char (char/= cursor-char #\Newline))
+                            (string cursor-char)
+                            " "))
+           (cursor-fg (ensure-rgb
+                       (or (when cursor-attr
+                             (lem:attribute-foreground cursor-attr))
+                           (lem-if:get-background-color impl)))))
       (notify* jsonrpc
                "move-cursor"
-               (hash "viewInfo" view "x" x "y" y)))
+               (hash "viewInfo" (view-id-hash view) "x" x "y" y
+                     "color" cursor-color
+                     "cursorText" cursor-text
+                     "cursorForeground" cursor-fg)))
     (notify* jsonrpc "update-display" nil)
     (notify-all jsonrpc)))
 
@@ -410,7 +502,7 @@
           (error value)))))
 
 (defmethod lem-if:js-eval ((jsonrpc jsonrpc) view code &key wait)
-  (let ((params (hash "viewInfo" view "code" code)))
+  (let ((params (hash "viewInfo" (view-id-hash view) "code" code)))
     (if wait
         (call "js-eval" params)
         (notify (lem:implementation) "js-eval" params))))
@@ -435,24 +527,27 @@
   (cond ((and (typep buffer 'lem:html-buffer)
               (lem:html-buffer-updated-p buffer))
          (lem:invalidate-html-buffer-updated buffer)
-         (notify* (lem:implementation)
-                  "change-view"
-                  (hash "viewInfo" (lem:window-view (lem:current-window))
-                        "type" "html"
-                        "content" (lem:html-buffer-html buffer))))
+         (change-view-to-html (lem:current-window) (lem:html-buffer-html buffer)))
         ((and (typep (lem:current-buffer) 'lem:html-buffer)
               (not (typep buffer 'lem:html-buffer)))
-         (notify* (lem:implementation)
-                  "change-view"
-                  (hash "viewInfo" (lem:window-view (lem:current-window))
-                        "type" "editor")))
+         (change-view-to-editor (lem:current-window)))
         ((and (not (typep (lem:current-buffer) 'lem:html-buffer))
               (typep buffer 'lem:html-buffer))
-         (notify* (lem:implementation)
-                  "change-view"
-                  (hash "viewInfo" (lem:window-view (lem:current-window))
-                        "type" "html"
-                        "content" (lem:html-buffer-html buffer))))))
+         (change-view-to-html (lem:current-window) (lem:html-buffer-html buffer)))))
+
+(defun change-view-to-editor (window)
+  (notify* (lem:implementation)
+           "change-view"
+           (hash "viewInfo" (view-id-hash (lem:window-view window))
+                 "type" "editor")))
+
+(defun change-view-to-html (window content)
+  (notify* (lem:implementation)
+           "change-view"
+           (hash "viewInfo" (view-id-hash (lem:window-view window))
+                 "type" "html"
+                 "content" content)))
+
 ;;;;
 (defun bool (x) (if x 'yason:true 'yason:false))
 
@@ -473,7 +568,8 @@
         (yason:encode-object-element "background" (ensure-rgb (lem:attribute-background attribute)))
         (yason:encode-object-element "reverse" (bool (lem:attribute-reverse attribute)))
         (yason:encode-object-element "bold" (bool (lem:attribute-bold attribute)))
-        (yason:encode-object-element "underline" (lem:attribute-underline attribute))))))
+        (yason:encode-object-element "underline" (lem:attribute-underline attribute))
+        (yason:encode-object-element "cursor" (bool (lem-core:cursor-attribute-p attribute)))))))
 
 
 
@@ -505,80 +601,115 @@
 
 (defvar *put-target* :edit-area)
 
+;;; Attribute JSON cache: avoids re-serializing the same attribute objects
+;;; through YASON's CLOS dispatch (ensure-rgb, encode-object-element, etc.)
+;;; every frame.  The table is held in a lexical LET around its two
+;;; accessors so the state isn't a global defvar; it is eq-keyed because
+;;; attribute objects have identity, and cleared once per display update.
+(let ((attribute-hash-cache (make-hash-table :test 'eq)))
+  (defun clear-attribute-hash-cache ()
+    "Drop all memoized attribute->hash entries.  Called once at the start
+of each display update so the cache only reflects the current frame's
+live attributes."
+    (clrhash attribute-hash-cache))
+
+  (defun attribute-to-hash (attribute)
+    "Return a cached hash-table representation of ATTRIBUTE for fast JSON
+encoding.  Uses EQ identity caching — same attribute object returns the
+same hash."
+    (when attribute
+      (or (gethash attribute attribute-hash-cache)
+          (setf (gethash attribute attribute-hash-cache)
+                (hash "foreground" (ensure-rgb (lem:attribute-foreground attribute))
+                      "background" (ensure-rgb (lem:attribute-background attribute))
+                      "reverse" (bool (lem:attribute-reverse attribute))
+                      "bold" (bool (lem:attribute-bold attribute))
+                      "underline" (lem:attribute-underline attribute)
+                      "cursor" (bool (lem-core:cursor-attribute-p attribute))))))))
+
 (defun ensure-attribute (attribute)
   (let ((attribute (lem:ensure-attribute attribute nil)))
     (when (and lem-if:*background-color-of-drawing-window*
                (null attribute))
       (setf attribute (lem:make-attribute :background lem-if:*background-color-of-drawing-window*)))
-    attribute))
+    (attribute-to-hash attribute)))
 
-(defun put (jsonrpc view x y string attribute &key font)
+(defun put (jsonrpc view x y string attribute &key font text-width)
   (with-error-handler ()
     (notify* jsonrpc
              (ecase *put-target*
                (:edit-area "put")
                (:modeline "modeline-put"))
-             (hash "viewInfo" view
+             (hash "viewInfo" (view-id-hash view)
                    "x" x
                    "y" y
                    "text" string
-                   "textWidth" (lem:string-width string)
+                   "textWidth" (or text-width (lem:string-width string))
                    "attribute" (ensure-attribute attribute)
                    "font" font))))
 
 (defmethod draw-object (jsonrpc (object display:text-object) x y view)
   (let* ((string (display:text-object-string object))
          (attribute (display:text-object-attribute object))
-         (type (display:text-object-type object)))
+         (type (display:text-object-type object))
+         (width (object-width object)))
     (when (and attribute (lem-core:cursor-attribute-p attribute))
-      (lem-core::set-last-print-cursor (view-window view) x y))
-    (put jsonrpc
-         view
-         x
-         y
-         string
-         attribute)))
-
-(defmethod draw-object (jsonrpc (object display:icon-object) x y view)
-  (let* ((string (display:text-object-string object))
-         (attribute (display:text-object-attribute object))
-         (type (display:text-object-type object)))
-    (when (and attribute (lem-core:cursor-attribute-p attribute))
-      (lem-core::set-last-print-cursor (view-window view) x y))
+      (lem-core:set-last-print-cursor (view-window view) x y))
     (put jsonrpc
          view
          x
          y
          string
          attribute
+         :text-width width)))
+
+(defmethod draw-object (jsonrpc (object display:icon-object) x y view)
+  (let* ((string (display:text-object-string object))
+         (attribute (display:text-object-attribute object))
+         (type (display:text-object-type object))
+         (width (object-width object)))
+    (when (and attribute (lem-core:cursor-attribute-p attribute))
+      (lem-core:set-last-print-cursor (view-window view) x y))
+    (put jsonrpc
+         view
+         x
+         y
+         string
+         attribute
+         :text-width width
          :font (lem:icon-value (char-code (char string 0))
                                :font))))
 
 (defmethod draw-object (jsonrpc (object display:eol-cursor-object) x y view)
-  (lem-core::set-last-print-cursor (view-window view) x y)
-  (put jsonrpc view x y " "
-       (lem:make-attribute
-        :background
-        (lem:color-to-hex-string (display:eol-cursor-object-color object)))))
+  (lem-core:set-last-print-cursor (view-window view) x y)
+  (let ((attr (lem:make-attribute
+               :background
+               (lem:color-to-hex-string (display:eol-cursor-object-color object)))))
+    (lem-core:set-cursor-attribute attr)
+    (put jsonrpc view x y " " attr :text-width 1)))
 
 (defmethod draw-object (jsonrpc (object display:extend-to-eol-object) x y view)
   (let ((width (lem-if:view-width (lem-core:implementation) view)))
     (when (< x width)
-      (put jsonrpc view x y
-           (make-string (- width x) :initial-element #\space)
-           (lem:make-attribute
-            :background
-            (lem:color-to-hex-string (display:extend-to-eol-object-color object)))))))
+      (let ((fill-width (- width x)))
+        (put jsonrpc view x y
+             (make-string fill-width :initial-element #\space)
+             (lem:make-attribute
+              :background
+              (lem:color-to-hex-string (display:extend-to-eol-object-color object)))
+             :text-width fill-width)))))
 
 (defmethod draw-object (jsonrpc (object display:line-end-object) x y view)
   (let ((string (display:text-object-string object))
-        (attribute (display:text-object-attribute object)))
+        (attribute (display:text-object-attribute object))
+        (width (object-width object)))
     (put jsonrpc
          view
          (+ x (display:line-end-object-offset object))
          y
          string
-         attribute)))
+         attribute
+         :text-width width)))
 
 (defmethod draw-object (jsonrpc (object display:image-object) x y view)
   (values))
@@ -598,7 +729,7 @@
   (with-error-handler ()
     (notify* jsonrpc
              "clear-eol"
-             (hash "viewInfo" view
+             (hash "viewInfo" (view-id-hash view)
                    "x" x
                    "y" y))
     (render-line jsonrpc view x y objects)))
@@ -609,12 +740,12 @@
     (with-error-handler ()
       (notify* jsonrpc
                "modeline-put"
-               (hash "viewInfo" view
+               (hash "viewInfo" (view-id-hash view)
                      "x" 0
                      "y" 0
                      "text" (make-string (view-width view) :initial-element #\space)
                      "textWidth" (view-width view)
-                     "attribute" default-attribute))
+                     "attribute" (attribute-to-hash default-attribute)))
       (render-line jsonrpc view 0 0 left-objects)
       (render-line-from-behind jsonrpc view 0 right-objects))))
 
@@ -627,7 +758,7 @@
 (defmethod lem-if:clear-to-end-of-window ((jsonrpc jsonrpc) view y)
   (notify* jsonrpc
            "clear-eob"
-           (hash "viewInfo" view
+           (hash "viewInfo" (view-id-hash view)
                  "x" 0
                  "y" y)))
 
@@ -676,7 +807,8 @@
                     (mode (lem:ensure-mode-object
                            (lem:current-major-mode-at-point
                             (lem:current-point)))))
-                (lem:paste-using-mode mode text)))))
+                (when text
+                  (lem:paste-using-mode mode text))))))
           ("mousedown"
            (let ((x (gethash "x" value))
                  (y (gethash "y" value))
@@ -750,33 +882,39 @@
                 (let ((stream (yason:make-json-output-stream stream)))
                   (yason:encode args stream)))))))
 
-;;;
-(defparameter +command-line-spec+
-  '(("mode" :type string :optional t :documentation "\"websocket\", \"stdio\", \"local-domain-socket\"")
-    ("port" :type integer :optional nil :documentation "port of \"websocket\"")
-    ("host" :type string :optional t)
-    ("address" :type string :optional t :documentation "address of \"local-domain-socket\"")))
+(defun init ()
+  ;; TODO: Fix this problem: frame-multiplexer cannot be used with lem-server, disable them for now.
+  (lem:remove-hook lem:*after-init-hook* 'lem/frame-multiplexer::enable-frame-multiplexer))
 
 (defun run-websocket-server (&key (port 50000) (hostname "127.0.0.1") args)
   (let ((*server-runner*
           (make-instance 'websocket-server-runner
                          :port port
                          :host hostname)))
+    (init)
     (apply #'lem:lem (append args (list "--interface" "JSONRPC")))))
 
 (defun run-stdio-server ()
   (let ((*server-runner* (make-instance 'stdio-server-runner)))
+    (init)
     (lem:lem "--interface" "JSONRPC")))
 
 (defun run-local-domain-socket-server (&key address)
   (let ((*server-runner* (make-instance 'local-domain-socket-server-runner
                                         :address address)))
+    (init)
     (lem:lem "--interface" "JSONRPC")))
 
 (defun check-port-specified (port)
   (unless port
     (command-line-arguments:show-option-help +command-line-spec+)
     (uiop:quit 1)))
+
+(defparameter +command-line-spec+
+  '(("mode" :type string :optional t :documentation "\"websocket\", \"stdio\", \"local-domain-socket\"")
+    ("port" :type integer :optional nil :documentation "port of \"websocket\"")
+    ("host" :type string :optional t)
+    ("address" :type string :optional t :documentation "address of \"local-domain-socket\"")))
 
 (defun main (&optional (args (uiop:command-line-arguments)))
   (command-line-arguments:handle-command-line

@@ -56,7 +56,10 @@
 
                (:file "read-only-sources")
 
-               (:file "package")))
+               (:file "package")
+               
+               (:module "commands"
+                :components ((:file "call-defun")))))
 
 (defsystem "lem-lisp-mode/v2"
   :depends-on ("lem-lisp-mode")

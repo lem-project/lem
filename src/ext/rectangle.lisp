@@ -9,7 +9,7 @@
 (defvar *overlays* '())
 
 (defvar *rectangle-mark-mode-keymap*
-  (make-keymap :name '*rectangle-mark-mode-keymap*
+  (make-keymap :description '*rectangle-mark-mode-keymap*
                :undef-hook 'rectangle-self-insert))
 
 (define-minor-mode rectangle-mark-mode

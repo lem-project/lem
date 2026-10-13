@@ -14,7 +14,7 @@
            :*ex-keymap*))
 (in-package :lem-vi-mode/ex)
 
-(defvar *ex-keymap* (make-keymap :name '*ex-keymap*))
+(defvar *ex-keymap* (make-keymap :description '*ex-keymap*))
 
 (define-state ex () ()
   (:default-initargs

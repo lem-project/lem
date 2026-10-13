@@ -71,7 +71,11 @@ The WS connection is closed when the markdown file is closed."))
 (defun generate-html-and-preview (buffer)
   (let* ((port (setup-server buffer))
          (html-file (generate-html buffer port)))
-    (trivial-open-browser:open-browser (namestring html-file))))
+    (uiop:launch-program
+      (list #+(or win32 mswindows windows) "explorer"
+            #+(or macos darwin) "open"
+            #-(or win32 mswindows macos darwin windows) "xdg-open"
+            (namestring html-file)))))
 
 (defun refresh (buffer)
   (alexandria:when-let ((server (get-buffer-server-or-make buffer)))
@@ -90,7 +94,7 @@ The WS connection is closed when the markdown file is closed."))
     (trivial-ws:stop handler)))
 
 (defmethod lem-markdown-mode/internal:on-change (buffer (view-type (eql :external-browser)))
-  )
+  (refresh buffer))
 
 (defmethod lem-markdown-mode/internal:preview (buffer (view-type (eql :external-browser)))
   "Render the markdown of the current buffer to a browser window. The preview is refreshed when the file is saved.

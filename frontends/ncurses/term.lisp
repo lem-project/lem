@@ -53,7 +53,7 @@
 
   (let ((counter 0))
     (flet ((add-color (r g b)
-             (term-set-color counter r g b (<= 8 counter))
+             (term-set-color counter r g b nil)
              (incf counter)))
       (setf *colors* (make-array n))
       (add-color #x00 #x00 #x00)

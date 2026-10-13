@@ -36,6 +36,17 @@ build/*
 /systems/
 
 /result
+.direnv/
 
 TODO
 artifacts/
+logs/
+.serena/
+
+# macOS deploy artifacts
+resources/lem.icns
+lem-macos.zip
+lem-macos/
+
+# lem-terminal native helper, built from terminal.c via `make terminal-lib`
+extensions/terminal/lib/**/*.so

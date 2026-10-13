@@ -1,6 +1,6 @@
 (defsystem "lem-legit"
   :serial t
-  :depends-on ("lem/core" "lem-patch-mode" "lem-yaml-mode" "lem-markdown-mode")
+  :depends-on ("lem/core" "lem-patch-mode" "lem-yaml-mode")
   :components ((:module "./"
                 :components ((:file "porcelain")
                              (:file "porcelain-git")
@@ -10,6 +10,10 @@
                              (:file "peek-legit")
                              (:file "legit")
                              (:file "legit-rebase")
-                             (:file "legit-commit")))
+                             (:file "legit-commit")
+                             (:file "legit-utils")
+                             (:file "legit-browse")
+                             (:file "legit-clone"))
+                )
                (:module "scripts"
                 :components ((:static-file "dumbrebaseeditor.sh")))))

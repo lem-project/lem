@@ -25,9 +25,17 @@
     nil))
 
 (defgeneric scroll (window n))
+(defgeneric window-border (window)
+  (:method (window) nil))
 
 (defclass window ()
-  ((x
+  ((attached-window
+    :initarg :attached-window
+    :initform nil
+    :reader window-attached-window
+    :writer set-window-attached-window
+    :type (or null attached-window))
+   (x
     :initarg :x
     :reader window-x
     :writer set-window-x
@@ -118,6 +126,12 @@
     :initarg :buffer-switchable
     :accessor window-buffer-switchable-p)))
 
+(defmethod window-use-modeline-p ((window window))
+  (and (not (header-window-p window))
+       (not (floating-window-p window))
+       (not (attached-window-p window))
+       (frame-enable-window-modeline-per-window (current-frame))))
+
 (defun need-to-redraw (window)
   (setf (window-need-to-redraw-p window) t))
 
@@ -132,13 +146,27 @@
      (if (window-use-modeline-p window) 1 0)))
 
 (defun make-view-from-window (window)
-  (lem-if:make-view (implementation)
-                    window
-                    (window-x window)
-                    (window-y window)
-                    (window-width window)
-                    (window-height-without-modeline window)
-                    (window-use-modeline-p window)))
+  "Create a view for a window. For floating windows with pixel coordinates,
+uses pixel-aware view creation if the implementation supports it."
+  (let ((x (window-x window))
+        (y (window-y window))
+        (width (window-width window))
+        (height (window-height-without-modeline window))
+        (use-modeline (window-use-modeline-p window)))
+    (if (and (floating-window-p window)
+             (support-pixel-positioning-p (implementation)))
+        (lem-if:make-view-with-pixels (implementation)
+                                      window
+                                      x y width height
+                                      (floating-window-pixel-x window)
+                                      (floating-window-pixel-y window)
+                                      (floating-window-pixel-width window)
+                                      (floating-window-pixel-height window)
+                                      use-modeline)
+        (lem-if:make-view (implementation)
+                          window
+                          x y width height
+                          use-modeline))))
 
 (defmethod initialize-instance :after ((window window) &rest initargs)
   (declare (ignore initargs))
@@ -257,7 +285,9 @@ This is the content area in which the buffer is displayed, without any side marg
   (window-tree-leaf-p (window-tree)))
 
 (defun deleted-window-p (window)
-  (cond ((window-tree-find (window-tree) window)
+  (cond ((attached-window-p window)
+         (window-deleted-p window))
+        ((window-tree-find (window-tree) window)
          nil)
         ((find window (frame-floating-windows (current-frame)))
          nil)
@@ -270,11 +300,13 @@ This is the content area in which the buffer is displayed, without any side marg
 
 (defun delete-window (window)
   (unless (window-deleted-p window)
-    (setf (window-deleted-p window) t)
+    (alexandria:when-let (attached-window (window-attached-window window))
+      (delete-window attached-window))
     (notify-frame-redisplay-required (current-frame))
     (%delete-window window)
     (run-hooks (window-delete-hook window))
-    (%free-window window))
+    (%free-window window)
+    (setf (window-deleted-p window) t))
   t)
 
 (defun setup-frame-windows (frame buffer)
@@ -343,7 +375,8 @@ window width is changed, we must recalc the window view point."
   (assert (not (eq current-window new-window)))
   (window-set-size current-window
                    (window-width current-window)
-                   (window-height current-window))
+                   (window-height current-window)
+                   t)
   (move-point (window-view-point new-window)
               (window-view-point current-window))
   (move-point (%window-point new-window)
@@ -362,6 +395,8 @@ window width is changed, we must recalc the window view point."
                  (make-window-node split-type
                                    (funcall getter)
                                    new-window))))
+  (alexandria:when-let (attached-buffer (buffer-attached-buffer (window-buffer new-window)))
+    (make-attached-window new-window :buffer attached-buffer))
   t)
 
 (defun check-before-splitting-window (window)
@@ -374,6 +409,8 @@ window width is changed, we must recalc the window view point."
 If the key argument HEIGHT is omitted or nil, both windows get the same
 height, or close to it."
   (check-before-splitting-window window)
+  (when (attached-window-p window)
+    (setf window (attached-window-parent-window window)))
   (let* ((use-modeline-p t)
          (min (+ 1 (if use-modeline-p 1 0)))
          (max (- (window-height window) min)))
@@ -388,9 +425,11 @@ height, or close to it."
   (let ((new-window
           (make-window (window-buffer window)
                        (window-x window)
-                       (+ (window-y window) height)
+                       (+ (frame-window-bottom-margin (current-frame))
+                          (window-y window)
+                          height)
                        (window-width window)
-                       (- (window-height window) height)
+                       (- (window-height window) height (frame-window-bottom-margin (current-frame)))
                        t)))
     (set-window-height height window)
     (split-window-after window new-window :vsplit)))
@@ -401,6 +440,8 @@ height, or close to it."
 If key argument WIDTH is omitted or nil, both windows get the same width, or
 close to it."
   (check-before-splitting-window window)
+  (when (attached-window-p window)
+    (setf window (attached-window-parent-window window)))
   (let* ((fringe-size 0)
          (min (+ 2 fringe-size))
          (max (- (window-width window) min)))
@@ -415,7 +456,8 @@ close to it."
   (let ((new-window
           (make-window (window-buffer window)
                        (+ (frame-window-left-margin (current-frame))
-                          (window-x window) width)
+                          (window-x window)
+                          width)
                        (window-y window)
                        (- (window-width window)
                           width
@@ -436,10 +478,14 @@ close to it."
 
 You can pass in the optional argument WINDOW-LIST to replace the default
 `window-list`."
-  (let ((result (member window window-list)))
-    (if (cdr result)
-        (cadr result)
-        (car window-list))))
+  (if (attached-window-p window)
+      (get-next-window (attached-window-parent-window window))
+      (let ((window (let ((result (member window window-list)))
+                      (if (cdr result)
+                          (cadr result)
+                          (car window-list)))))
+        (or (window-attached-window window)
+            window))))
 
 (defun get-previous-window (window &optional (window-list (window-list)))
   "Return window before WINDOW in the cyclic ordering of windows.
@@ -451,15 +497,25 @@ You can pass in the optional argument WINDOW-LIST to replace the default
         (cadr result)
         (car window-list))))
 
-(defun window-set-pos (window x y)
+(defvar *update-only-when-state-changed* nil)
+
+(defun window-set-pos (window x y &optional (update-only-when-state-changed *update-only-when-state-changed*))
   "Make point value in WINDOW be at position X and Y in WINDOW’s buffer."
+  (unless update-only-when-state-changed
+    (when (and (= x (window-x window))
+               (= y (window-y window)))
+      (return-from window-set-pos)))
   (notify-frame-redisplay-required (current-frame))
   (when (floating-window-p window)
     (notify-floating-window-modified (current-frame)))
   (need-to-redraw window)
   (lem-if:set-view-pos (implementation) (window-view window) x y)
   (set-window-x x window)
-  (set-window-y y window))
+  (set-window-y y window)
+  (when (window-attached-window window)
+    (multiple-value-bind (x y)
+        (compute-attached-window-position window)
+      (window-set-pos (window-attached-window window) x y t))))
 
 (defun valid-window-height-p (height)
   (plusp height))
@@ -467,10 +523,14 @@ You can pass in the optional argument WINDOW-LIST to replace the default
 (defun valid-window-width-p (width)
   (< 2 width))
 
-(defun window-set-size (window width height)
+(defun window-set-size (window width height &optional (update-only-when-state-changed *update-only-when-state-changed*))
   "Resize WINDOW to the same WIDTH and HEIGHT."
   (assert (valid-window-width-p width))
   (assert (valid-window-height-p height))
+  (unless update-only-when-state-changed
+    (when (and (= width (window-width window))
+               (= height (window-height window)))
+      (return-from window-set-size)))
   (notify-frame-redisplay-required (current-frame))
   (when (floating-window-p window)
     (notify-floating-window-modified (current-frame)))
@@ -482,7 +542,10 @@ You can pass in the optional argument WINDOW-LIST to replace the default
                         width
                         (- height
                            (if (window-use-modeline-p window) 1 0)))
-  (run-hooks *window-size-change-functions* window))
+  (when (window-attached-window window)
+    (adjust-attached-window-size window))
+  (unless (attached-window-p (current-window))
+    (run-hooks *window-size-change-functions* window)))
 
 (defun window-move (window dx dy)
   (window-set-pos window
@@ -819,29 +882,35 @@ You can pass in the optional argument WINDOW-LIST to replace the default
 (defun %switch-to-buffer (buffer record move-prev-point)
   (without-interrupts
     (unless (eq (current-buffer) buffer)
-      (when record
-        (setf (window-pop-to-buffer-state (current-window)) nil)
-        (let ((old-buffer (current-buffer)))
+      (let ((old-buffer (current-buffer)))
+        (when record
+          (setf (window-pop-to-buffer-state (current-window)) nil)
           (unbury-buffer old-buffer)
           (%buffer-clear-keep-binfo old-buffer)
           (setf (%buffer-keep-binfo old-buffer)
                 (list (copy-point (window-view-point (current-window)) :right-inserting)
-                      (copy-point (window-buffer-point (current-window)) :right-inserting)))))
-      (set-window-buffer buffer (current-window))
-      (setf (current-buffer) buffer)
-      (delete-point (%window-point (current-window)))
-      (delete-point (window-view-point (current-window)))
-      (cond ((and (%buffer-keep-binfo buffer) move-prev-point)
-             (destructuring-bind (view-point cursor-point)
-                 (%buffer-keep-binfo buffer)
-               (set-window-view-point (copy-point view-point) (current-window))
-               (set-window-point (copy-point cursor-point) (current-window))
-               (move-point (buffer-point (current-buffer)) cursor-point)))
-            (t
-             (set-window-point (copy-point (buffer-start-point buffer) :right-inserting)
-                               (current-window))
-             (set-window-view-point (copy-point (buffer-start-point buffer) :right-inserting)
-                                    (current-window)))))
+                      (copy-point (window-buffer-point (current-window)) :right-inserting))))
+        (set-window-buffer buffer (current-window))
+        (setf (current-buffer) buffer)
+        (delete-point (%window-point (current-window)))
+        (delete-point (window-view-point (current-window)))
+        (cond ((and (%buffer-keep-binfo buffer) move-prev-point)
+               (destructuring-bind (view-point cursor-point)
+                   (%buffer-keep-binfo buffer)
+                 (set-window-view-point (copy-point view-point) (current-window))
+                 (set-window-point (copy-point cursor-point) (current-window))
+                 (move-point (buffer-point (current-buffer)) cursor-point)))
+              (t
+               (set-window-point (copy-point (buffer-start-point buffer) :right-inserting)
+                                 (current-window))
+               (set-window-view-point (copy-point (buffer-start-point buffer) :right-inserting)
+                                      (current-window))))
+        (alexandria:when-let (attached-window (window-attached-window (current-window)))
+          (delete-window attached-window))
+        (alexandria:when-let (attached-buffer (buffer-attached-buffer buffer))
+          (setf (current-window)
+                (make-attached-window (current-window)
+                                      :buffer attached-buffer)))))
     (change-buffer (current-window)))
   buffer)
 
@@ -860,9 +929,14 @@ You can pass in the optional argument WINDOW-LIST to replace the default
             (not-switchable-buffer-p buffer)
             (not (window-buffer-switchable-p (current-window))))
     (editor-error "This buffer is not switchable"))
-  (run-hooks *switch-to-buffer-hook* buffer)
-  (run-hooks (window-switch-to-buffer-hook (current-window)) buffer)
-  (%switch-to-buffer buffer record move-prev-point))
+  (flet ((f ()
+           (run-hooks *switch-to-buffer-hook* buffer)
+           (run-hooks (window-switch-to-buffer-hook (current-window)) buffer)
+           (%switch-to-buffer buffer record move-prev-point)))
+    (if (attached-window-p (current-window))
+        (with-current-window (attached-window-parent-window (current-window))
+          (f))
+        (f))))
 
 (defun pop-to-buffer (buffer &key (split-action *default-split-action*))
   (check-type split-action split-action)
@@ -939,7 +1013,7 @@ You can pass in the optional argument WINDOW-LIST to replace the default
   (unless (floating-window-p window)
     (first (sort (min-if #'window-x
                          (remove-if-not (lambda (w)
-                                          (> (window-x w)
+                                          (>= (window-x w)
                                              (+ (window-x window)
                                                 (window-width window))))
                                         (window-list)))
@@ -969,10 +1043,14 @@ You can pass in the optional argument WINDOW-LIST to replace the default
 
 ;;;
 (defun adjust-all-window-size ()
+  "Resize all windows to fit the current display dimensions.
+Each header window is set to full display width and its preferred height."
   (dolist (window (frame-header-windows (current-frame)))
-    (window-set-size window (display-width) 1))
+    (window-set-size window (display-width) (header-window-height window)))
   (alexandria:when-let (window (frame-rightside-window (current-frame)))
     (resize-rightside-window window))
+  (alexandria:when-let (window (frame-bottomside-window (current-frame)))
+    (resize-bottomside-window window (window-height window)))
   (balance-windows))
 
 (defun update-on-display-resized ()

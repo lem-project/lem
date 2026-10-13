@@ -28,12 +28,15 @@
     (= status 0)))
 
 (defun open-external-file (pathname)
-  #+linux
-  (uiop:launch-program (list "xdg-open" (namestring pathname)))
-  #+darwin
-  (uiop:launch-program (list "open" (namestring pathname)))
-  #+windows
-  (uiop:launch-program (list "explorer" (namestring pathname)) :ignore-error-status t))
+  (let ((argument (if (pathnamep pathname)
+                      (uiop:native-namestring pathname)
+                      pathname)))
+    #+linux
+    (uiop:launch-program (list "xdg-open" argument))
+    #+darwin
+    (uiop:launch-program (list "open" argument))
+    #+windows
+    (uiop:launch-program (list "explorer" argument) :ignore-error-status t)))
 
 ;;;; PATH
 

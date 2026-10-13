@@ -37,6 +37,11 @@
            :directory-mode-rename-files
            :directory-mode-rename-file
            :directory-mode-sort-files
+           :directory-mode-sort-by-name
+           :directory-mode-sort-by-time
+           :directory-mode-sort-by-size
+           :directory-mode-sort-by-extension
+           :directory-mode-sort-reverse
            :make-directory
            :find-file-directory
            :directory-mode-kill-lines))
@@ -213,7 +218,9 @@ With prefix argument ARG, unmark all those files."
 
 (define-command directory-mode-delete-files () ()
   (let ((files (selected-files (current-point))))
-    (when (prompt-for-y-or-n-p (format nil "Really delete files~%~{- ~A~%~}" files))
+    (when (prompt-for-y-or-n-p (format nil
+                                       "Really delete files~%~{- ~A~%~}"
+                                       (mapcar #'uiop:native-namestring files)))
       (dolist (file files)
         (delete-file* file))
       (update-all-buffers))))
@@ -231,8 +238,12 @@ With prefix argument ARG, unmark all those files."
   (update-all-buffers))
 
 (define-command directory-mode-rename-files () ()
-  (let ((dst-file (prompt-for-file "Destination Filename: " :directory (get-dest-directory))))
-    (rename-files (selected-files (current-point)) dst-file))
+  (let ((dst-file (prompt-for-file "Destination: " :directory (get-dest-directory)))
+        (files (selected-files (current-point))))
+    (when (and (< 1 (length files))
+               (uiop:file-pathname-p dst-file))
+      (editor-error "Please select a directory to move multiple files."))
+    (rename-files files dst-file))
   (update-all-buffers))
 
 (defun move-to-file-position (point)
@@ -253,11 +264,12 @@ With prefix argument ARG, unmark all those files."
       (insert-string point string :file file))))
 
 (defun prompt-for-rename-file (point)
+  "Open an inlined prompt at point to rename the file."
   (let ((file (current-file point)))
     (save-excursion
       (move-point (current-point) point)
       (prompt-for-string
-       ""
+       "New name: "
        :initial-value (if file (file-namestring file) "")
        :test-function (lambda (string)
                         (not (alexandria:emptyp string)))
@@ -265,43 +277,70 @@ With prefix argument ARG, unmark all those files."
        :use-border nil))))
 
 (define-command directory-mode-rename-file () ()
+  "Edit the file name at point.
+  Also rename the file's buffer, if it is open."
   (with-point ((point (current-point) :right-inserting))
     (move-to-file-position point)
     (alexandria:when-let (source-file (text-property-at point :file))
       (replace-file-name point "")
       (unwind-protect
-           (let* ((new-file (merge-pathnames (prompt-for-rename-file point)
+           (let* ((old-file (merge-pathnames source-file
+                                             (buffer-directory)))
+                  (new-name (prompt-for-rename-file point))
+                  (new-file (merge-pathnames new-name
                                              (buffer-directory (current-buffer)))))
              (when (probe-file new-file)
                (editor-error "The filename already exists."))
-             (rename-file* source-file new-file))
+             (rename-file* source-file new-file)
+             ;; Rename the old buffer.
+             (alexandria:when-let (old-buffer (get-file-buffer old-file))
+               (buffer-rename old-buffer new-name)
+               (setf (buffer-filename old-buffer) new-file)))
         (directory-mode-update-buffer)))))
+
+(defun sort-files-by (method &key reverse)
+  "Sort files by the given method (:pathname, :name, :msize),
+  and move the cursor on the current file's line."
+  (let ((path (get-pathname (current-point))))
+    (setf (buffer-value (current-buffer) :sort-method) method)
+    (setf (buffer-value (current-buffer) :sort-reverse) reverse)
+    (update-buffer (current-buffer) :sort-method method :sort-reverse reverse)
+    ;; Follow file name.
+    (when (and path (str:non-blank-string-p (file-namestring path)))
+      (search-filename-and-recenter (display-name path)))))
+
+(define-command directory-mode-sort-by-name () ()
+  (sort-files-by :pathname))
+
+(define-command directory-mode-sort-by-time () ()
+  (sort-files-by :mtime))
+
+(define-command directory-mode-sort-by-size () ()
+  (sort-files-by :size))
+
+(define-command directory-mode-sort-by-extension () ()
+  (sort-files-by :extension))
 
 (define-command directory-mode-sort-files () ()
   "Sort files: by name, by last modification time, then by size.
 
   Each new directory buffer first uses the default sort method (`lem/directory-mode:*default-sort-method*')"
-  (let ((path (get-pathname (current-point))))
-    (cond
-      ;; mtime -> size
-      ((eql (buffer-value (current-buffer) :sort-method) :mtime)
-       (message "Sorting by size")
-       (setf (buffer-value (current-buffer) :sort-method) :size)
-       (update-buffer (current-buffer) :sort-method :size))
-      ;; size -> pathname
-      ((eql (buffer-value (current-buffer) :sort-method) :size)
-       (message "Sorting by name")
-       (setf (buffer-value (current-buffer) :sort-method) :pathname)
-       (update-buffer (current-buffer) :sort-method :pathname))
-      (t
-       ;; At first call, the buffer's sort-method is not set.
-       (message "Sorting by last modification time")
-       (setf (buffer-value (current-buffer) :sort-method) :mtime)
-       (update-buffer (current-buffer) :sort-method :mtime)))
+  (cond
+    ((eql (buffer-value (current-buffer) :sort-method) :mtime)
+     (message "Sorting by size")
+     (sort-files-by :size))
+    ((eql (buffer-value (current-buffer) :sort-method) :size)
+     (message "Sorting by name")
+     (sort-files-by :pathname))
+    (t
+     (message "Sorting by last modification time")
+     (sort-files-by :mtime))))
 
-    ;; Follow file name.
-    (when (and path (str:non-blank-string-p (file-namestring path)))
-      (search-filename-and-recenter (file-namestring path)))))
+(define-command directory-mode-sort-reverse () ()
+  "Reverse the current sort order."
+  (let ((method (buffer-value (current-buffer) :sort-method))
+        (reversed (buffer-value (current-buffer) :sort-reverse)))
+    (sort-files-by method :reverse (not reversed))))
 
 (define-command make-directory (filename) ((:new-file "Make directory: "))
   (setf filename (uiop:ensure-directory-pathname filename))
@@ -315,12 +354,11 @@ With prefix argument ARG, unmark all those files."
       ((mode-active-p (current-buffer) 'directory-mode)
        (directory-mode-up-directory))
       ((null fullpath)
-       (message "No file at point"))
+       (switch-to-buffer (find-file-buffer (uiop:getcwd))))
       (t
        (switch-to-buffer
-        (find-file-buffer (lem-core/commands/file::directory-for-file-or-lose (buffer-directory))))
-       (let ((filename (file-namestring fullpath)))
-         (search-filename-and-recenter (file-namestring filename)))))))
+        (find-file-buffer (pathname (lem-core/commands/file::directory-for-file-or-lose (buffer-directory)))))
+       (search-filename-and-recenter (display-name fullpath))))))
 
 (define-command directory-mode-kill-lines () ()
   "Delete the marked lines from the directory-mode buffer.

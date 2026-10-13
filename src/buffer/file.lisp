@@ -69,15 +69,13 @@
     encoding))
 
 (defun find-file-buffer (filename &key temporary (enable-undo-p t) (syntax-table nil syntax-table-p))
-  (when (pathnamep filename)
-    (setf filename (namestring filename)))
   (setf filename (expand-file-name filename))
-  (unless (uiop:directory-exists-p (directory-namestring filename))
+  (unless (virtual-directory-exists-p (directory-namestring filename))
     (error 'directory-does-not-exist :directory (directory-namestring filename)))
-  (alexandria:when-let (it (probe-file filename)) (setf filename (namestring it)))
+  (alexandria:when-let (it (virtual-probe-file filename)) (setf filename (namestring it)))
   (cond ((uiop:directory-pathname-p filename)
          (if *find-directory-function*
-             (funcall *find-directory-function* filename)
+             (funcall *find-directory-function* (pathname filename))
              (editor-error "~A is a directory" filename)))
         ((and (not temporary)
               (find filename (buffer-list) :key #'buffer-filename :test #'equal)))
@@ -91,7 +89,7 @@
                                      :enable-undo-p nil
                                      :temporary temporary)))
            (setf (buffer-filename buffer) filename)
-           (when (probe-file filename)
+           (when (virtual-probe-file filename)
              (let ((*inhibit-modification-hooks* t))
                (let ((encoding
                        (handler-bind ((encoding-read-error
@@ -186,8 +184,11 @@
                       (%%write-region-to-file encoding out))))))
 
 (defun file-write-date* (buffer)
-  (if (probe-file (buffer-filename buffer))
-      (file-write-date (buffer-filename buffer))))
+  (if (virtual-probe-file (buffer-filename buffer))
+      (or (loop :for f :in *virtual-file-metadata-functions*
+                :for result := (funcall f (buffer-filename buffer) :write-date)
+                :when result :do (return result))
+          (file-write-date (buffer-filename buffer)))))
 
 (defun update-changed-disk-date (buffer)
   (setf (buffer-last-write-date buffer)
@@ -195,6 +196,6 @@
 
 (defun changed-disk-p (buffer)
   (and (buffer-filename buffer)
-       (probe-file (buffer-filename buffer))
+       (virtual-probe-file (buffer-filename buffer))
        (not (eql (buffer-last-write-date buffer)
                  (file-write-date* buffer)))))

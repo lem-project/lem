@@ -279,13 +279,18 @@
                                          string
                                          (string #\newline))))))
 
-(defun send-string-to-listener (string &optional package-name)
-  (with-current-window (current-window)
-    (lisp-switch-to-repl-buffer)
-    (buffer-end (current-point))
-    (when package-name (lisp-set-package package-name))
-    (insert-string (current-point) string)
-    (lem/listener-mode:listener-return)))
+(defun send-string-to-listener (string &key package-name evaluate focus)
+  (labels ((process ()
+             (lisp-switch-to-repl-buffer)
+             (buffer-end (current-point))
+             (when package-name (lisp-set-package package-name))
+             (lem/listener-mode:listener-clear-input)
+             (insert-string (current-point) string)
+             (when evaluate (lem/listener-mode:listener-return))))
+    (if focus
+        (process)
+        (with-current-window (current-window)
+          (process)))))
 
 (defparameter *welcome-text*
   ";; Welcome to the REPL!

@@ -97,6 +97,17 @@
     (sdl2-ffi:+sdl-windowevent-resized+
      (display:update-texture display)
      (display:notify-required-redisplay display))
+    ;; SDL fires :size-changed on backing-pixel-size changes that do not
+    ;; correspond to a user resize — most notably when the window moves
+    ;; between displays with different DPI (Retina ↔ standard).  Re-derive
+    ;; the high-DPI scale, re-open the font, and resize the backing texture.
+    (sdl2-ffi:+sdl-windowevent-size-changed+
+     (display:handle-display-changed display))
+    ;; SDL ≥ 2.0.18 fires :display-changed when the window is dragged onto
+    ;; a different monitor.  On older SDL builds this constant is still
+    ;; defined by the FFI binding but the event simply never fires.
+    (sdl2-ffi:+sdl-windowevent-display-changed+
+     (display:handle-display-changed display))
     (sdl2-ffi:+sdl-windowevent-focus-gained+
      (setf (display:display-focus-p display) t))
     (sdl2-ffi:+sdl-windowevent-focus-lost+
@@ -361,6 +372,9 @@
   (with-debug ("will-update-display")
     (display:with-display (display)
       (display:with-renderer (display)
+        ;; Bound cache memory: full reset when cache exceeds threshold.
+        ;; Runs inside with-renderer so sdl2:destroy-texture is on the main thread.
+        (lem-sdl2/text-surface-cache:sweep-if-oversize)
         (sdl2:set-render-target (display:display-renderer display) (display:display-texture display))
         (display:set-render-color display (display:display-background-color display))
         (sdl2:render-clear (display:display-renderer display))))))
@@ -389,7 +403,11 @@
             (display:set-render-color display (display:display-background-color display))
             (sdl2:render-fill-rect (display:display-renderer display) rect)
             (sdl2:render-copy (display:display-renderer display) texture :dest-rect rect))
-          (sdl2:destroy-texture texture))))))
+          (sdl2:destroy-texture texture)
+          ;; Explicitly free the surface now instead of waiting for GC finalizer.
+          ;; Cancel the autocollect finalizer first to prevent double-free.
+          (trivial-garbage:cancel-finalization surface)
+          (sdl2:free-surface surface))))))
 
 (defmethod lem-if:update-display ((implementation sdl2))
   (with-debug ("lem-if:update-display")
@@ -424,10 +442,14 @@
 (defmethod lem-if:set-font-size ((implementation sdl2) size)
   (display:with-display (display)
     (display:with-renderer (display)
-      (let ((font-config (display:display-font-config display)))
+      (let* ((font-config (display:display-font-config display))
+             (ratio (round (first (display:display-scale display))))
+             (scaled-size (* ratio size)))
+        (setf (lem:config :sdl2-font-size) size)
         (display:change-font
          display
-         (change-size font-config size))))))
+         (change-size font-config scaled-size)
+         nil)))))
 
 (defmethod lem-if:resize-display-before ((implementation sdl2))
   (with-debug ("resize-display-before")
@@ -499,3 +521,45 @@
 (defun char-width () (display:display-char-width (display:current-display)))
 (defun char-height () (display:display-char-height (display:current-display)))
 (defun current-renderer () (display:display-renderer (display:current-display)))
+
+(defmethod lem-if:display-fullscreen-p ((implementation sdl2))
+  (with-debug ("lem-if:display-fullscreen-p")
+    (display:with-display (display)
+      (not (null (member :fullscreen (sdl2:get-window-flags (display:display-window display))))))))
+
+;;;; Toggle Display Borderless
+
+(defgeneric lem-if::display-borderless-p (implementation)
+  (:documentation
+   "Return `t' if FRAME is borderless, `nil' otherwise. 
+Default IMPLEMENTATION should return `t' as fallback. ")
+  (:method (implementation) t)
+  (:method ((implementation sdl2))
+    (with-debug ("display-borderless-p")
+      (display:with-display (display)
+        (not (null (member :borderless (sdl2:get-window-flags (display:display-window display)))))))))
+
+(defmethod (setf lem-if::display-borderless-p) (boolean implementation)
+  (declare (ignore boolean implementation)))
+
+(defmethod (setf lem-if::display-borderless-p) (boolean (implementation sdl2))
+  (declare (ignore implementation))
+  (with-debug ("(setf lem-if::display-borderless-p)")
+    (sdl2:in-main-thread ()
+      (display:with-display (display)
+        (sdl2-ffi.functions:sdl-set-window-bordered (display:display-window display) 
+                                                    (if boolean 0 1))))))
+
+(in-package :lem-core)
+
+(defun lem-core::display-borderless-p ()
+  "Get/Set current display if borderless. 
+Return `t' for borderless (no-titlebar), `nil' for otherwise. "
+  (lem-if::display-borderless-p (implementation)))
+
+(defun (setf lem-core::display-borderless-p) (boolean)
+  (setf (lem-if::display-borderless-p (implementation)) boolean))
+
+(define-command toggle-frame-borderless () ()
+  "Toggles frame borderless. "
+  (setf (display-borderless-p) (not (display-borderless-p))))

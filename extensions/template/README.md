@@ -20,7 +20,7 @@ Assuming this file exists in `~/.config/lem/templates/asd.clt`, you can register
 ```lisp
 (lem-template:register-template
  :pattern ".*\.asd"
- :file (merge-pathnames "templates/asd.clt" (lem-home)))
+ :file (merge-pathnames "templates/asd.clt" (lem:lem-home)))
 ```
 
 If you provide multiple templates for the same pattern, with the `:name` option (examples below), you will be prompted to choose a template.

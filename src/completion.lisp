@@ -3,6 +3,15 @@
 (defvar *file-completion-ignore-case* t)
 
 (defun fuzzy-match-p (str elt &optional ignore-case)
+  "Return T if each character of STR appears in ELT, in order.
+
+  Example:
+
+  (fuzzy-match-p \"hl\" \"hello\")
+  => T
+
+  (fuzzy-match-p \"hle\" \"hello\")
+  => NIL"
   (loop :with start := 0
         :for c :across str
         :do (let ((pos (position c elt :start start :test (if ignore-case #'char-equal #'char=))))

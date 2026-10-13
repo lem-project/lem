@@ -14,5 +14,5 @@
             (if with-none-option
                 (cons "none" (hash-table-keys table))
                 (hash-table-keys table))
-            :test #'lem-core::fuzzy-match-p))
+            :test #'lem-core:fuzzy-match-p))
    table))

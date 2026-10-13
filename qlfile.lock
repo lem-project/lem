@@ -42,6 +42,10 @@
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/cxxxr/jsonrpc.git")
   :version "git-42fa96ec34f6b6be77a6f12f7c4e84f375eff019"))
+("cl-template" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/alpha123/cl-template")
+  :version "git-46193a9a389bb950530e579eae7e6e5a18184832"))
 ("named-readtables" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/melisgl/named-readtables.git")

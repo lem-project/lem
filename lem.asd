@@ -311,7 +311,8 @@
                "lem-skk-mode"
                "lem-emacs-help-mode"
                "lem-display-time-mode"
-               "lem-tramp"))
+               "lem-tramp"
+               "lem-winner-mode"))
 
 (defsystem "lem"
   :version "2.3.0"

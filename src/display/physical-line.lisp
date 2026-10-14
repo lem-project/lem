@@ -651,6 +651,9 @@ A frontend that does not report a baseline is taken to put it at the bottom of t
     (let ((height (or cell-height (lem-if:cell-height (implementation)))))
       (values (or cell-ascent height) height))))
 
+(defun text-row-height ()
+  (nth-value 1 (text-row-metrics)))
+
 (defun row-metrics-of-objects (&rest object-lists)
   "The ascent and height a row of all the objects in OBJECT-LISTS needs, as (values ASCENT HEIGHT).
 Everything shares one baseline, so the height is max ascent plus max descent, which can exceed any
@@ -1038,50 +1041,59 @@ ROWS is one `screen-row' per screen row the line drew, as the redraw functions c
         :when (typep obj 'text-object)
         :sum (length (text-object-string obj))))
 
+(defun wrapped-left-side-objects (left-side-objects left-side-width)
+  "left-side objects for a wrapped line's continuation rows, replacing the LEFT-SIDE-OBJECTS that
+are shown on its first row, supplied by the active modes via `compute-wrap-left-area-content`
+to fill LEFT-SIDE-WIDTH and preserve alignment."
+  (copy-list (compute-wrap-left-area-content
+              *active-modes*
+              left-side-width
+              (left-side-character-count left-side-objects))))
+
+(defun map-wrapped-rows (window logical-line left-side-objects left-side-width function)
+  "Split LOGICAL-LINE into the rows line wrapping draws it as, calling FUNCTION with each row's left
+side objects, its objects and a keyword whose value indicates the reason it ended (see
+`separate-objects-by-width'), top to bottom until FUNCTION returns NIL."
+  (let ((objects (create-drawing-objects logical-line))
+        (width (- (window-view-width window) left-side-width))
+        (side left-side-objects))
+    (loop :for first := t :then nil
+          ;; an empty row is still a row when more of the line follows, which is what a break at
+          ;; the very start of the virtual text asks for. an empty line is also one row.
+          :while (or first objects)
+          :do (multiple-value-bind (row rest why)
+                  (separate-objects-by-width objects width (window-buffer window))
+                (unless (funcall function side row why)
+                  (return))
+                ;; only the first row carries the real left area, the rest get the wrap padding.
+                (when (and first rest)
+                  (setf side (wrapped-left-side-objects left-side-objects left-side-width)))
+                (setf objects rest)))))
+
 (defun redraw-logical-line-when-line-wrapping (window
                                                y
                                                logical-line
                                                left-side-objects
                                                left-side-width)
-  (let* ((left-side-characters (left-side-character-count left-side-objects)))
-    (multiple-value-bind (first-line-objects rest-line-objects why)
-        (separate-objects-by-width (create-drawing-objects logical-line)
-                                   (- (window-view-width window) left-side-width)
-                                   (window-buffer window))
-      (let ((wrapped-left-side-objects
-              (when rest-line-objects
-                (copy-list (compute-wrap-left-area-content
-                            *active-modes*
-                            left-side-width
-                            left-side-characters)))))
-        (let ((rows)
-              (wrap-index 0)
-              (objects first-line-objects)
-              (first-row-p t))
-          (loop
-            ;; an empty row is still a row when more of the line follows, which is what a break at
-            ;; the very start of the virtual text asks for. an empty line is also one row, so the
-            ;; first iteration always draws, even when there is nothing to draw.
-            (unless (or first-row-p objects rest-line-objects) (return))
-            (setf first-row-p nil)
-            (let ((row (render-row-with-caching window y (append left-side-objects objects))))
-              (incf y (row-height row))
-              (setq left-side-objects wrapped-left-side-objects)
-              (push (make-screen-row :row row
-                                     :wrap-index wrap-index
-                                     :left-width left-side-width)
-                    rows)
-              ;; only running out of width advances the position, a virtual-text break does not.
-              (when (eq why :wrapped)
-                (incf wrap-index))
-              ;; y is in the frontend's units, so the bound must be too, not the row count.
-              (unless (< y (window-view-height window))
-                (return)))
-            (setf (values objects rest-line-objects why)
-                  (separate-objects-by-width rest-line-objects
-                                             (- (window-view-width window) left-side-width)
-                                             (window-buffer window))))
-          (nreverse rows))))))
+  (let ((rows)
+        (wrap-index 0))
+    (map-wrapped-rows window
+                      logical-line
+                      left-side-objects
+                      left-side-width
+                      (lambda (side objects why)
+                        (let ((row (render-row-with-caching window y (append side objects))))
+                          (incf y (row-height row))
+                          (push (make-screen-row :row row
+                                                 :wrap-index wrap-index
+                                                 :left-width left-side-width)
+                                rows)
+                          ;; only running out of width advances the position, a virtual-text break
+                          ;; does not.
+                          (when (eq why :wrapped)
+                            (incf wrap-index))
+                          (< y (window-view-height window)))))
+    (nreverse rows)))
 
 (defun find-cursor-object (objects)
   (loop :for object :in objects
@@ -1175,7 +1187,6 @@ creating zero temporary letter-objects."
     (alexandria:when-let ((cached-rows (check-line-fingerprint window y fingerprint)))
       (return-from redraw-logical-line-when-horizontal-scroll cached-rows))
     (let* ((rows (split-objects-at-virtual-line-breaks (create-drawing-objects logical-line)))
-           (left-side-characters (left-side-character-count left-side-objects))
            (screen-rows)
            (total-height 0))
       ;; the cursor is on one of the rows, scrolling follows it there.
@@ -1194,9 +1205,7 @@ creating zero temporary letter-objects."
                               (object-width cursor-object)))))))))
       (let ((wrapped-left-side-objects
               (when (rest rows)
-                (copy-list (compute-wrap-left-area-content *active-modes*
-                                                           left-side-width
-                                                           left-side-characters)))))
+                (wrapped-left-side-objects left-side-objects left-side-width))))
         (loop :for row-objects :in rows
               ;; only the first row carries the real left area, the rest get the wrap padding.
               :for side := left-side-objects :then wrapped-left-side-objects
@@ -1226,6 +1235,56 @@ creating zero temporary letter-objects."
        screen-rows)
       screen-rows)))
 
+(defun logical-line-left-side-objects (logical-line)
+  (alexandria:when-let (content (logical-line-left-content logical-line))
+    (mapcan #'create-drawing-object
+            (items-from-string-and-attributes
+             (lem/buffer/line:content-string content)
+             (lem/buffer/line:content-attributes content)))))
+
+(defun row-start-and-height (objects &optional side-objects)
+  (let ((starts (loop :for object :in objects
+                      :for source := (drawing-object-source object)
+                      :when source :collect (car source))))
+    (cons (and starts (reduce #'min starts))
+          (nth-value 1 (row-metrics-of-objects side-objects objects)))))
+
+(defun logical-line-rows (window logical-line)
+  "The rows `redraw-lines' draws LOGICAL-LINE as in WINDOW, each as (START . HEIGHT).
+START is the source offset the row's buffer text starts at, NIL for a row of only virtual text, and
+the HEIGHT is the row's height. stops past the view's height."
+  (let* ((left-side-objects (logical-line-left-side-objects logical-line))
+         (left-side-width (reduce #'+ left-side-objects :key #'object-width)))
+    (if *line-wrap*
+        (let ((total 0)
+              (rows))
+          (map-wrapped-rows window
+                            logical-line
+                            left-side-objects
+                            left-side-width
+                            (lambda (side objects why)
+                              (let ((row (row-start-and-height objects side)))
+                                (push row rows)
+                                (incf total (cdr row))
+                                (<= total (window-view-height window)))))
+          (nreverse rows))
+        (let* ((rows (split-objects-at-virtual-line-breaks (create-drawing-objects logical-line)))
+               (wrapped (when (rest rows)
+                          (wrapped-left-side-objects left-side-objects left-side-width))))
+          (loop :for row :in rows
+                :for side := left-side-objects :then wrapped
+                :collect (row-start-and-height row side))))))
+
+(defun visual-line-rows (window point)
+  "The rows of POINT's visual line in WINDOW, see `logical-line-rows'."
+  (with-point ((start point))
+    (let* ((*active-modes* (get-active-modes-class-instance (window-buffer window)))
+           (*line-wrap* (variable-value 'line-wrap :default (window-buffer window)))
+           (logical-line (create-logical-line (visual-line-beginning start)
+                                              (get-window-overlays window)
+                                              *active-modes*)))
+      (and logical-line (logical-line-rows window logical-line)))))
+
 (defun redraw-lines (window)
   (let* ((*line-wrap* (variable-value 'line-wrap
                                       :default (window-buffer window)))
@@ -1239,12 +1298,7 @@ creating zero temporary letter-objects."
           left-side-width)
       (block outer
         (do-logical-line (logical-line window line-point)
-          (let* ((left-side-objects
-                   (alexandria:when-let (content (logical-line-left-content logical-line))
-                     (mapcan #'create-drawing-object
-                             (items-from-string-and-attributes
-                              (lem/buffer/line:content-string content)
-                              (lem/buffer/line:content-attributes content))))))
+          (let* ((left-side-objects (logical-line-left-side-objects logical-line)))
             (setf left-side-width
                   (loop :for object :in left-side-objects
                         :sum (object-width object)))

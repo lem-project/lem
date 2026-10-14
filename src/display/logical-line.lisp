@@ -638,11 +638,8 @@ several folds that each hide arbitrary character ranges across multiple buffer l
       (loop :for logical-line := (create-logical-line point overlays active-modes)
             :do (when logical-line
                   (funcall function logical-line point))
-                (loop
-                  (unless (line-offset point 1)
-                    (return-from call-do-logical-line))
-                  (unless (line-continuation-p point)
-                    (return)))))))
+                (unless (next-visual-line-beginning point)
+                  (return-from call-do-logical-line))))))
 
 (defmacro do-logical-line ((logical-line window &optional point) &body body)
   "Run BODY for each logical line of WINDOW, in draw order.

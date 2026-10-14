@@ -394,10 +394,11 @@
    :grow-window-height
    :shrink-window-height
    :grow-window-width
-   :shrink-window-width
-   :window-offset-view)
+   :shrink-window-width)
   ;; virtual-line
   (:export
+   :visual-line-beginning
+   :window-first-clipped-row
    :window-recenter
    :window-recenter-top-bottom
    :window-cursor-x

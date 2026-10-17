@@ -1,4 +1,4 @@
-(uiop:define-package :lem/directory-mode/wdired
+(uiop:define-package :lem/directory-mode/writeable-directory
   (:use :cl
         :lem)
   (:import-from :lem/directory-mode/file
@@ -10,22 +10,22 @@
                 :update-buffer)
   (:import-from :lem/directory-mode/mode
                 :directory-mode)
-  (:export :wdired-mode
-           :wdired-change-to-wdired-mode
-           :wdired-finish-edit
-           :wdired-abort-changes))
-(in-package :lem/directory-mode/wdired)
+  (:export :writeable-directory-mode
+           :writeable-directory-change-to-writeable-directory-mode
+           :writeable-directory-finish-edit
+           :writeable-directory-abort-changes))
+(in-package :lem/directory-mode/writeable-directory)
 
 #+sbcl
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (sb-ext:lock-package :lem/directory-mode/wdired))
+  (sb-ext:lock-package :lem/directory-mode/writeable-directory))
 
-(define-minor-mode wdired-mode
-    (:name "Wdired"
+(define-minor-mode writeable-directory-mode
+    (:name "Writeable Directory"
      :description "Edit the file names of a directory buffer as text."
-     :keymap *wdired-mode-keymap*
-     :enable-hook 'wdired-mode-enable
-     :disable-hook 'wdired-mode-disable))
+     :keymap *writeable-directory-mode-keymap*
+     :enable-hook 'writeable-directory-mode-enable
+     :disable-hook 'writeable-directory-mode-disable))
 
 ;;; keybindings
 
@@ -34,12 +34,12 @@
 ;; they are bound to.  An undef-hook would do this in one step, but it also
 ;; hides every key it does not bind itself, such as C-x or M-x.
 (loop :for code :from 33 :to 126
-      :do (define-key *wdired-mode-keymap* (string (code-char code)) 'self-insert))
-(define-key *wdired-mode-keymap* "Space" 'self-insert)
+      :do (define-key *writeable-directory-mode-keymap* (string (code-char code)) 'self-insert))
+(define-key *writeable-directory-mode-keymap* "Space" 'self-insert)
 
-(define-key *wdired-mode-keymap* "C-c C-c" 'wdired-finish-edit)
-(define-key *wdired-mode-keymap* "C-c C-k" 'wdired-abort-changes)
-(define-key *wdired-mode-keymap* "C-x C-q" 'wdired-abort-changes)
+(define-key *writeable-directory-mode-keymap* "C-c C-c" 'writeable-directory-finish-edit)
+(define-key *writeable-directory-mode-keymap* "C-c C-k" 'writeable-directory-abort-changes)
+(define-key *writeable-directory-mode-keymap* "C-x C-q" 'writeable-directory-abort-changes)
 
 ;;; listing lines
 
@@ -53,9 +53,10 @@ file entry here."
 (defun line-name-region (line property name-start scan name-end)
   "Bound the file name of the file entry on the line LINE.
 PROPERTY is the text property whose regions delimit the file name: `:file' in
-the listing `wdired-change-to-wdired-mode' starts from, `:read-only' while the
-names are editable.  Move NAME-START and NAME-END to the ends of the file name,
-using SCAN as scratch space, and return T when the line has a file name."
+the listing `writeable-directory-change-to-writeable-directory-mode' starts
+from, `:read-only' while the names are editable.  Move NAME-START and NAME-END
+to the ends of the file name, using SCAN as scratch space, and return T when
+the line has a file name."
   (move-point name-start line)
   (line-start name-start)
   (move-point name-end line)
@@ -124,8 +125,8 @@ names of the entries can be edited."
 (defun check-listing-unchanged (buffer entry-count)
   "Signal an editor error when the edited listing of BUFFER cannot be saved.
 File names are renamed line by line, so a listing whose lines were added,
-removed, merged or split has to be left with `wdired-abort-changes' instead of
-being renamed only partially."
+removed, merged or split has to be left with `writeable-directory-abort-changes'
+instead of being renamed only partially."
   (with-point ((line (buffer-start-point buffer)))
     (let ((count 0))
       (loop
@@ -214,19 +215,19 @@ applied completely or not at all."
 
 ;;; minor mode
 
-(defun wdired-mode-enable ()
+(defun writeable-directory-mode-enable ()
   "Make the file names of the current directory buffer editable."
   (when (mode-active-p (current-buffer) 'directory-mode)
     (setf (buffer-read-only-p (current-buffer)) nil)
     ;; directory buffers are created without undo, since the listing was never
     ;; meant to be edited, but editing file names has to be undoable
     (buffer-enable-undo (current-buffer))
-    (setf (buffer-value (current-buffer) :wdired-entry-count)
+    (setf (buffer-value (current-buffer) :writeable-directory-entry-count)
           (count-file-entries (current-buffer)))
     (make-file-names-editable (current-buffer))
     (message "Editing file names: C-c C-c saves, C-c C-k aborts")))
 
-(defun wdired-mode-disable ()
+(defun writeable-directory-mode-disable ()
   "List the current directory buffer read-only again."
   (when (mode-active-p (current-buffer) 'directory-mode)
     (setf (buffer-read-only-p (current-buffer)) t)
@@ -242,40 +243,40 @@ applied completely or not at all."
 
 ;;; commands
 
-(define-command wdired-change-to-wdired-mode () ()
+(define-command writeable-directory-change-to-writeable-directory-mode () ()
   "Make the file names listed in this directory buffer editable.
 
-  Editable names are saved with `wdired-finish-edit' (C-c C-c), which renames
-  the files whose names were changed.  The parent directory entry `..' is not
-  editable.
+  Editable names are saved with `writeable-directory-finish-edit' (C-c C-c),
+  which renames the files whose names were changed.  The parent directory entry
+  `..' is not editable.
 
-  `wdired-abort-changes' (C-c C-k or C-x C-q) discards the edited names and
-  lists the directory read-only again."
+  `writeable-directory-abort-changes' (C-c C-k or C-x C-q) discards the edited
+  names and lists the directory read-only again."
   (unless (mode-active-p (current-buffer) 'directory-mode)
     (editor-error "This is not a directory buffer"))
-  (enable-minor-mode 'wdired-mode))
+  (enable-minor-mode 'writeable-directory-mode))
 
-(define-command wdired-finish-edit () ()
+(define-command writeable-directory-finish-edit () ()
   "Rename the files whose names were edited, then list the directory as before.
 
   Only the file names that differ from the ones the listing showed are used,
   and the edit is rejected, leaving the buffer editable, when a new name cannot
   be used: an empty name, a name with a line break, a name that already exists,
   or a name in a directory that does not exist."
-  (unless (mode-active-p (current-buffer) 'wdired-mode)
+  (unless (mode-active-p (current-buffer) 'writeable-directory-mode)
     (editor-error "The file names of this buffer are not editable"))
   (let* ((buffer (current-buffer))
          (directory (buffer-directory buffer)))
-    (check-listing-unchanged buffer (buffer-value buffer :wdired-entry-count))
+    (check-listing-unchanged buffer (buffer-value buffer :writeable-directory-entry-count))
     (let ((renames (checked-renames (collect-renames buffer) directory)))
       (unwind-protect
            (when renames
              (apply-renames renames)
              (message "Renamed ~D file~:P" (length renames)))
-        (wdired-abort-changes)))))
+        (writeable-directory-abort-changes)))))
 
-(define-command wdired-abort-changes () ()
+(define-command writeable-directory-abort-changes () ()
   "Discard the edited file names and list the directory read-only again."
-  (when (mode-active-p (current-buffer) 'wdired-mode)
-    (disable-minor-mode 'wdired-mode)
+  (when (mode-active-p (current-buffer) 'writeable-directory-mode)
+    (disable-minor-mode 'writeable-directory-mode)
     (message "File name changes discarded")))

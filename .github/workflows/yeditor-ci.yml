@@ -1,0 +1,69 @@
+# Yeditor CI (fork). Based on the inherited Nix workflow from lem-project/lem.
+# Changes for the fork on top of .github/workflows/ci.yml upstream copy:
+#   - add workflow_dispatch (manual trigger)
+#   - restrict to Linux + macOS (dropped ubuntu-24.04-arm until proven)
+# SDL2 remains optional via include_optional, exactly as upstream.
+name: Yeditor CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      include_optional:
+        description: 'Include optional targets (SDL2)'
+        type: boolean
+        default: false
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      os: ${{ steps.set-matrix.outputs.os }}
+      backend: ${{ steps.set-matrix.outputs.backend }}
+    steps:
+      - name: Generate Matrix JSON
+        id: set-matrix
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let osList = ["ubuntu-24.04", "macos-15"];
+            let backendList = ["lem-ncurses", "lem-webview"];
+            if (context.payload.inputs && context.payload.inputs.include_optional === 'true') {
+              console.log("Adding optional targets (SDL2)...");
+              backendList.push("lem-sdl2");
+            }
+            core.setOutput('os', JSON.stringify(osList));
+            core.setOutput('backend', JSON.stringify(backendList));
+
+  build:
+    needs: setup
+    name: builds ${{ matrix.backend }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJson(needs.setup.outputs.os) }}
+        backend: ${{ fromJson(needs.setup.outputs.backend) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v16
+
+      - name: Setup FlakeHub Cache
+        uses: DeterminateSystems/flakehub-cache-action@main
+
+      - name: Check flake
+        run: nix flake check --all-systems --no-build
+
+      - name: Build ${{ matrix.backend }}
+        run: nix build .#${{ matrix.backend }} --print-build-logs

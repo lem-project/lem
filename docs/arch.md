@@ -23,7 +23,7 @@
 
 ## Overview
 
-Yeditor implements a spatiotemporal composable architecture built on top of Lem. It introduces a unified effect/coeffect context (L2), a transactional core with reversible effects (L1), and a component ecosystem (L3) that can be dynamically loaded. Higher layers provide AI‑enhanced loops (L4) and a generative forge (L5). Each layer builds on lower layers without direct coupling, ensuring modularity and testability.
+Yeditor implements a spatiotemporal composable architecture built on top of Lem. It introduces a unified effect/coeffect context (L2), a transactional core with reversible effects (L1), and a component ecosystem (L3) that can be dynamically loaded. Higher layers provide AI-enhanced loops (L4) and a generative forge (L5). Each layer builds on lower layers without direct coupling, ensuring modularity and testability.
 
 ## The component model
 
@@ -55,25 +55,38 @@ Components are defined via `define-component` and can provide buffers, modes, ke
 
 ## Config
 
-Configuration lives in `.yeditor.lisp`. Hot‑module‑replacement (HMR) watches this file and reloads configuration without restarting the editor.
+Configuration lives in `.yeditor.lisp`. Hot-module-replacement (HMR) watches this file and reloads configuration without restarting the editor.
 
 ## Directory map
 
+Inherited from Lem (kept stable to ease upstream merges) — top level:
+
 ```
-.
-├─ .hermes
-├─ .qwen
-├─ contrib
-├─ docs
-├─ extensions
-├─ frontends
-├─ resources
-├─ scripts
-├─ specs
-├─ src
-├─ tests
-└─ yeditor
+yeditor/
+├── src/                     # Lem core (L0) — minimal changes; src/ext/ = core extensions
+├── extensions/              # larger inherited modules (Phase 2 turns some into components)
+├── frontends/               # ncurses / webview / SDL2 (L0)
+├── contrib/                 # inherited, load on demand
+├── yeditor/                 # NEW: Yeditor packages (L1-L5)
+│   ├── core.lisp, package.lisp
+│   ├── tx/                  # (T1+) transactional core yeditor-tx
+│   ├── effects/             # (T4+) standard inverses
+│   ├── components/          # (Phase 2) le-* components
+│   ├── forge/               # (T18) generative agent
+│   └── tests/               # unit + property tests
+├── docs/                    # EN docs (arch.md, component-author.md, ...)
+├── tests/                   # inherited
+├── lem.asd, yeditor.asd
+├── Makefile, qlfile, qlfile.lock
+├── README.md + README.pt-BR.md
+├── .yeditor.lisp
+├── CONTRIBUTING.md, LICENSE, LICENCE (upstream MIT)
+└── .github/workflows/       # test.yml (rove tests) + yeditor-ci.yml (Nix builds)
 ```
+
+Note: the plan's `modes/` directory (language modes) does not exist in the
+current upstream layout — language modes live under `src/ext/` and
+`extensions/`; the map above reflects the real tree.
 
 ## Layer dependency rule
 

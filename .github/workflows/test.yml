@@ -8,11 +8,8 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: lem
+  IMAGE_NAME: yeditor
   IMAGE_TAGS: latest ${{ github.sha }}
-  IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
-  REGISTRY_USER: ${{ github.actor }}
-  REGISTRY_PASSWORD: ${{ github.token }}
 
 jobs:
   test:
@@ -45,6 +42,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
+      # GHCR requires a lowercase registry path; the repository owner may
+      # contain uppercase ("Yuri-Albuquerque"). Compute it in a shell step.
+      - name: Compute lowercase image registry
+        run: echo "IMAGE_REGISTRY=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+
       # Build image using Buildah action
       - name: Build Image
         uses: redhat-actions/buildah-build@v2
@@ -62,6 +65,6 @@ jobs:
           image: ${{ steps.build_image.outputs.image }}
           tags: ${{ steps.build_image.outputs.tags }}
           registry: ${{ env.IMAGE_REGISTRY }}
-          username: ${{ env.REGISTRY_USER }}
-          password: ${{ env.REGISTRY_PASSWORD }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
           extra-args: --disable-content-trust

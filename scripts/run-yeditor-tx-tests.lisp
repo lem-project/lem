@@ -1,0 +1,6 @@
+(load ".qlot/setup.lisp")
+(asdf:load-asd "/home/yuri/Documents/yeditor/yeditor/tx/yeditor-tx.asd")
+(asdf:load-asd "/home/yuri/Documents/yeditor/yeditor/tx/tx-tests.asd")
+(ql:quickload :yeditor-tx-tests)
+(rove:run :yeditor-tx-tests)
+(quit)

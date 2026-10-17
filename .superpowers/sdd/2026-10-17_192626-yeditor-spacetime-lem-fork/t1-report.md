@@ -46,10 +46,10 @@ Note: From T2 onward, the implementer template requires a RED commit (tests fail
 
 - PKG check: sbcl --script with load-asd yeditor.asd + load-system :yeditor → "PKG-YEDITOR: T version=0.1.0" (PASS — I-1 resolved: stub module back, find-package :yeditor non-NIL)
 - Tests: scripts/run-yeditor-tx-tests.lisp (now via asdf:test-system :yeditor-tx-tests) → "All 1 test passed" (PASS)
-- Bench: scripts/benchmark-tx.lisp rewritten to BATCH timing with representative install-effect body → 3 reps, per-commit amortized p50/p95/p99 = 0.03 µs (PASS — I-2 resolved: failable measurement, 300x under 10 µs target)
+- Bench: scripts/benchmark-tx.lisp rewritten to BATCH timing with representative install-effect body → 3 reps, per-commit amortized p50/p95/p99 = 0.03 µs (PASS — I-2 resolved: batch measurement replaces unfalsifiable per-call clock, 300x under 10 µs target)
 - Report corrections (I-3) present in "## Fix round 2" above (claims about 99515e9d and tests/tx.lisp corrected; RED-commit note recorded)
 - Minors: test inverse #identity; ts → get-internal-real-time; context.lisp unused import removed; :perform via uiop:symbol-call; scripts use merge-pathnames (PASS all)
 
 Controller micro-fixes in this round (ruling: syntax-level repairs of implementer's own edits): #identity → #'identity in tx-test.lisp + benchmark-tx.lisp (Qwen emitted invalid reader dispatch); run runner restored to asdf:test-system flow; report → report-bench-stats rename (SBCL package-lock collision with SB-PROFILE); benchmark call qualified yeditor-tx:install-effect (import lost in rewrite).
 
-Fix round 2 commits: 34ade656 (implementer) + controller fixes in final commit (see git log).
+Fix round 2 commits: 34ade656 (implementer) + 705374a4 (controller syntax repairs).

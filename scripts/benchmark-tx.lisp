@@ -7,11 +7,11 @@
   (let ((*tx-log* nil))
     (let ((start (get-internal-run-time)))
       (dotimes (i n)
-        (install-effect :noop nil nil #identity))
+        (yeditor-tx:install-effect :noop nil nil #'identity))
       (let ((elapsed (/ (- (get-internal-run-time) start) internal-time-units-per-second)))
         (* elapsed 1e6))))) ; total µs
 
-(defun report (values n)
+(defun report-bench-stats (values n)
   (let ((per-commit (mapcar (lambda (v) (/ v n)) values)))
     (let* ((sorted (sort (copy-list per-commit) #'<))
            (len (length sorted))
@@ -25,5 +25,5 @@
     (dotimes (rep 3)
       (format t "Repetition ~a~%" (1+ rep))
       (push (run-batch iterations) results))
-    (report (nreverse results) iterations))
+    (report-bench-stats (nreverse results) iterations))
   (quit))

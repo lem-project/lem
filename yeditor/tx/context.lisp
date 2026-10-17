@@ -1,8 +1,7 @@
 (defpackage :yeditor-context
   (:use :cl)
   (:import-from :yeditor-tx
-                #:install-effect
-                #:*tx-log*)
+                #:install-effect)
   (:export #:effect))
 (in-package :yeditor-context)
 

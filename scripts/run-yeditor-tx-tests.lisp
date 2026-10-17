@@ -1,6 +1,11 @@
 (load ".qlot/setup.lisp")
-(asdf:load-asd "/home/yuri/Documents/yeditor/yeditor/tx/yeditor-tx.asd")
-(asdf:load-asd "/home/yuri/Documents/yeditor/yeditor/tx/tx-tests.asd")
-(ql:quickload :yeditor-tx-tests)
-(rove:run :yeditor-tx-tests)
+
+(ql:quickload :rove)
+
+(asdf:load-asd (merge-pathnames "yeditor/tx/yeditor-tx.asd" (uiop:getcwd)))
+(asdf:load-system :yeditor-tx)
+
+(load "yeditor/tx/tx-test.lisp")
+
+(rove:run :lem-tests/tx-test)
 (quit)

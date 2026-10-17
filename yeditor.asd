@@ -6,7 +6,9 @@
   :license "MIT"
   :version "0.1.0"
   :depends-on (:lem)
-  :components ((:module "yeditor/tx"
-                :components
-                ((:file "tx")
-                 (:file "context")))))
+  :components ((:module "yeditor"
+                :components ((:file "package")
+                             (:file "core")))
+               (:module "yeditor/tx"
+                :components ((:file "tx")
+                             (:file "context")))))

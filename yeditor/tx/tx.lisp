@@ -17,7 +17,7 @@
                      (cons :owner owner)
                      (cons :payload payload)
                      (cons :inverse inverse)
-                     (cons :ts (get-universal-time)))))
+                     (cons :ts (get-internal-real-time))))) ; use internal real time for finer granularity
     (push entry *tx-log*)
     entry))
 

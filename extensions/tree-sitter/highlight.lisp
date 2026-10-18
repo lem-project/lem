@@ -28,6 +28,7 @@
       (add "string" 'lem:syntax-string-attribute)
       (add "string.special" 'lem:syntax-string-attribute)
       (add "string.escape" 'lem:syntax-constant-attribute)
+      (add "string.documentation" 'lem:syntax-string-attribute)
       (add "character" 'lem:syntax-string-attribute)
 
       ;; Numbers

@@ -152,3 +152,82 @@
       (ok (> (length (funcall yeditor-components/palette:*palette-themes-function*)) 11)
           "le-theme-extended offers every installed theme")
       (uninstall-component (quote le-theme-extended)))))
+
+;;; T13 — le-lsp: language server sessions as transactions
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  ;; define-language-spec inspects the mode at macroexpansion time
+  (define-major-mode yeditor-fake-lang-mode lem/language-mode:language-mode
+      (:name "FakeLang"))
+  (define-major-mode yeditor-missing-lang-mode lem/language-mode:language-mode
+      (:name "MissingLang")))
+
+(defparameter *fake-lsp-server*
+  (namestring (asdf:system-relative-pathname "yeditor-components" "test-data/fake-lsp-server.py")))
+
+(lem-lsp-mode:define-language-spec (yeditor-fake-spec yeditor-fake-lang-mode)
+  :language-id "yeditor-fake"
+  :command (list "python3" *fake-lsp-server*)
+  :install-command "pip install yeditor-fake-server"
+  :connection-mode :stdio)
+
+(lem-lsp-mode:define-language-spec (yeditor-missing-spec yeditor-missing-lang-mode)
+  :language-id "yeditor-missing"
+  :command (list "yeditor-no-such-language-server")
+  :install-command "npm install -g yeditor-no-such-language-server"
+  :connection-mode :stdio)
+
+(defun lang-buffer (name mode)
+  (let ((buffer (make-buffer name)))
+    (let ((lem-lsp-mode:*disable* t))
+      (change-buffer-mode buffer mode))
+    buffer))
+
+(deftest test-le-lsp-session-start-stop
+  (lem-fake-interface:with-fake-interface ()
+    (let ((disable-before lem-lsp-mode:*disable*)
+          (buffer (lang-buffer "main.fake" (quote yeditor-fake-lang-mode))))
+      (install-component (quote le-lsp))
+      (ok (eq lem-lsp-mode:*disable* t) "Lem's untracked auto-start is suppressed while installed")
+      (dotimes (i 20)
+        (let ((workspace (yeditor-components/lsp:lsp-start-buffer buffer)))
+          (ok (lem-lsp-mode:lsp-session-alive-p workspace) "server process running after start")
+          (ok (eq workspace (yeditor-components/lsp:lsp-start-buffer buffer))
+              "second start for the same language reuses the session")
+          (ok (= 1 (length yeditor-components/lsp:*lsp-sessions*)) "one session per language")
+          (yeditor-components/lsp:lsp-stop-all)
+          (sleep 0.05)
+          (ok (not (lem-lsp-mode:lsp-session-alive-p workspace)) "server process gone after stop")
+          (ok (null yeditor-components/lsp:*lsp-sessions*) "no session left")))
+      (let ((workspace (yeditor-components/lsp:lsp-start-buffer buffer)))
+        (uninstall-component (quote le-lsp))
+        (sleep 0.05)
+        (ok (not (lem-lsp-mode:lsp-session-alive-p workspace)) "uninstall stops running servers")
+        (ok (null yeditor-components/lsp:*lsp-sessions*) "uninstall clears sessions")
+        (ok (eq lem-lsp-mode:*disable* disable-before) "auto-start setting restored"))
+      (kill-buffer buffer))))
+
+(deftest test-le-lsp-missing-server-reports-install-command
+  (lem-fake-interface:with-fake-interface ()
+    (let ((buffer (lang-buffer "main.missing" (quote yeditor-missing-lang-mode))))
+      (install-component (quote le-lsp))
+      (let ((condition (handler-case (progn (yeditor-components/lsp:lsp-start-buffer buffer) nil)
+                         (lem-lsp-mode:not-found-program (c) c))))
+        (ok condition "missing server signals not-found-program")
+        (ok (search "npm install -g yeditor-no-such-language-server" (format nil "~A" condition))
+            "the message carries the install command"))
+      (ok (null yeditor-components/lsp:*lsp-sessions*) "nothing left running")
+      (uninstall-component (quote le-lsp))
+      (kill-buffer buffer))))
+
+(deftest test-le-lsp-modeline-segment
+  (lem-fake-interface:with-fake-interface ()
+    (let ((buffer (lang-buffer "seg.fake" (quote yeditor-fake-lang-mode))))
+      (install-component (quote le-lsp))
+      (switch-to-buffer buffer)
+      (ok (equal (yeditor-components/lsp:lsp-modeline-segment (current-window)) " LSP:off ") "off before start")
+      (yeditor-components/lsp:lsp-start-buffer buffer)
+      (ok (equal (yeditor-components/lsp:lsp-modeline-segment (current-window)) " LSP:yeditor-fake ")
+          "shows the running language server")
+      (uninstall-component (quote le-lsp))
+      (kill-buffer buffer))))

@@ -44,7 +44,7 @@ send keys with `tmux send-keys`, read the screen with `tmux capture-pane -p` (`-
 `M-x` must be sent as one escape sequence: `tmux send-keys -l $'\ex'`. The abort key is `C-g`
 (`Esc` is the Meta prefix in a terminal).
 
-Test status at last update: 9 test systems, **14,328 assertions, 0 failures** (the T1–T10/T12
+Test status at last update: 9 test systems, **14,437 assertions, 0 failures** (the T1–T10/T12
 suites were also verified inside the CI Docker image).
 
 ## 3. Layout
@@ -78,6 +78,7 @@ scripts/                  test runners, launchers, CI gates
 | T10 | Benchmarks (dispatch, keystroke→frame, component toggle, empty commit), budgets, 20% p95 regression gate in CI (base vs head on same runner) | `core/bench/`, `scripts/bench-gate.sh` |
 | T12 (first cut) | Zero-chrome basal state, theme palette with live preview + abort rollback, agent HUD mounted by coeffect with inline diffs and C-c C-a / C-c C-k | `components/` |
 | T11 | Curated pack of 11 `ergo-*` themes defined by semantic roles; OKLCH/WCAG policy validator (no pure black/white, text ≥ 7:1, syntax chroma ≤ 0.17, no light neon); `le-themes-ergonomic` applies Gruvbox Soft and narrows the palette to the pack; `le-theme-extended` reopens all Lem themes; `e-theme` effect | `components/themes-ergonomic.lisp`, `components/theme-policy.lisp`, `effects/e-theme.lisp` |
+| T13 | `le-lsp`: language server sessions started as transactions (one per language), stopped on uninstall; suppresses Lem's untracked auto-start (`lem-lsp-mode:*disable*`) while installed; starts on find-file; modeline `LSP:<lang>` / `LSP:off`; missing server → message with the install command. `e-lsp` rewritten on a new public L0 API (`start-lsp-session`, `stop-lsp-session`, `lsp-session-alive-p`) | `components/lsp.lisp`, `effects/e-lsp.lisp`, `extensions/lsp-mode/lsp-mode.lisp` |
 | Licensing | Open-core licenses, CLA, IP strategy, header/dependency CI gate | root `LICENSE*`, `docs/IP_STRATEGY.md` |
 
 Extra effects added for T11/T12: `e-editor-variable` (Lem editor variables), `e-window` (side split, kind 15), `e-theme` (apply a color theme without saving it).
@@ -85,7 +86,6 @@ Extra effects added for T11/T12: `e-editor-variable` (Lem editor variables), `e-
 ## 5. Left to do (in plan order)
 
 - **T12 remainder**: `le-tabs` (off by default), per-segment modeline toggles, palette preview for buffers / LSP symbols / journal entries.
-- **T13** `le-lsp` component (start/stop LSP per project as effect; fake `pyright` in tests).
 - **T14** Quicklisp onboarding (install package under transaction).
 - **T15** `le-git`, `le-project`, `le-tree` as components (no leaked keybindings/hooks).
 - **T27–T28** Tree-sitter query packs (`:treesitter-grammar` effect, kind 16) and `le-lang-python` (+ TS/Rust/Go/CL).
@@ -95,7 +95,7 @@ Extra effects added for T11/T12: `e-editor-variable` (Lem editor variables), `e-
 
 ## 6. Known gaps and gotchas
 
-- `e-lsp` uses `lem-lsp-mode::` internals and has no test; `e-server` has no test.
+- `e-server` has no test. T13 sessions are keyed by language (as Lem's workspaces are), not by project root; the missing-server case reports the install command but does not run it (no unattended installs); tests use a fake stdio server (`components/test-data/fake-lsp-server.py`) and never complete the async initialize handshake (no event loop under the fake frontend).
 - T8: `use-component` options are validated but not passed to the component's install function;
   HMR uses `file-write-date` (1 s resolution).
 - T9: components suspended at crash time are not reinstalled on recovery (choice, not specified by plan).
@@ -108,4 +108,4 @@ Extra effects added for T11/T12: `e-editor-variable` (Lem editor variables), `e-
 
 ## 7. Current work in progress
 
-None. Next in plan order: T12 remainder or T13 (`le-lsp`).
+None. Next in plan order: T14 (Quicklisp onboarding) and T15 (`le-git`, `le-project`, `le-tree`).

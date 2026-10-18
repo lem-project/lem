@@ -8,10 +8,11 @@
   :author "Yuri Flores Albuquerque <yuri-albuquerque@users.noreply.github.com>"
   :license "FSL-1.1-MIT"
   :version "0.1.0"
-  :depends-on ("lem/core" "yeditor-core")
+  :depends-on ("lem/core" "lem/extensions" "yeditor-core")
   :components ((:file "zero-chrome")
                (:file "palette")
                (:file "theme-policy")
                (:file "themes-ergonomic")
                (:file "hud")
+               (:file "lsp")
                (:file "components")))

@@ -9,9 +9,10 @@
   (:import-from :yeditor-components/zero-chrome #:le-zero-chrome)
   (:import-from :yeditor-components/palette #:le-palette)
   (:import-from :yeditor-components/hud #:le-hud)
+  (:import-from :yeditor-components/lsp #:le-lsp)
   (:import-from :yeditor-components/themes-ergonomic #:le-themes-ergonomic #:le-theme-extended)
   (:export :enable-ephemeral-ui :disable-ephemeral-ui :le-zero-chrome :le-palette :le-hud
-           :le-themes-ergonomic :le-theme-extended))
+           :le-themes-ergonomic :le-theme-extended :le-lsp))
 (in-package :yeditor-components)
 
 (defun enable-ephemeral-ui ()

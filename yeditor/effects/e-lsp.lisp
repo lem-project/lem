@@ -8,24 +8,21 @@
   (:export :install-lsp-session))
 (in-package :yeditor-effects/e-lsp)
 
-(defun install-lsp-session (comp buffer spec)
-  "Start an LSP workspace for BUFFER using SPEC as a transaction effect
-   (kind 12, Cap. 5.3).  SPEC is a lem-lsp-mode workspace spec plist.
-   Undo disposes the workspace (shutdown + kill LSP process).
-   Requires lem-lsp-mode to be loaded."
-  (let ((workspace nil))
-    (let ((handle (install-effect comp :lsp-session
-                                   (lambda ()
-                                     (setf workspace
-                                           (lem-lsp-mode::make-workspace
-                                            :spec spec
-                                            :buffer buffer))
-                                     (lem-lsp-mode::add-workspace workspace))
-                                   :undo-thunk
-                                   (lambda ()
-                                     (when workspace
-                                       (handler-case
-                                           (lem-lsp-mode::dispose-workspace workspace)
-                                         (error () nil)))))))
-      (push (cons :buffer buffer) handle)
-      handle)))
+(defun install-lsp-session (comp buffer)
+  "Start the language server session for BUFFER as a transaction effect (kind 12,
+   Cap. 5.3). Undo stops the server process and unregisters its workspace.
+   The handle carries :workspace-of, a function returning the started workspace.
+   Callers must own the session: an already-registered workspace is reused by
+   start-lsp-session and would be stopped by undo as well."
+  (let* ((cell (list nil))
+         (handle (install-effect comp :lsp-session
+                                 (lambda ()
+                                   (setf (car cell) (lem-lsp-mode:start-lsp-session buffer)))
+                                 :undo-thunk
+                                 (lambda ()
+                                   (when (car cell)
+                                     (lem-lsp-mode:stop-lsp-session (car cell))
+                                     (setf (car cell) nil))))))
+    (push (cons :buffer buffer) handle)
+    (push (cons :workspace-of (lambda () (car cell))) handle)
+    handle))

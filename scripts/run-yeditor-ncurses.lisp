@@ -8,11 +8,14 @@
 ;;;   C-c p    theme palette with live preview (C-g restores)
 ;;;   M-x yeditor-demo-agent   open a demo agent transaction (HUD mounts)
 ;;;   C-c C-a / C-c C-k        commit / roll back the agent transaction (HUD unmounts)
+;;;   M-x yeditor-lsp-start / yeditor-lsp-stop-all   language servers as transactions (le-lsp)
 (load ".qlot/setup.lisp")
 (asdf:load-system :lem-ncurses)
 (asdf:load-system :yeditor-components)
 ;; negative weight: run after Lem turns the tab bar on in its own after-init hook
 (lem:add-hook lem:*after-init-hook* (quote yeditor-components:enable-ephemeral-ui) -10)
+(lem:add-hook lem:*after-init-hook*
+             (lambda () (yeditor-context:install-component (quote yeditor-components:le-lsp))) -20)
 ;; the "lem" system also loads the webview frontend; select the terminal one explicitly
 (lem:lem "--interface" "ncurses")
 (uiop:quit)

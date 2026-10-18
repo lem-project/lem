@@ -1,0 +1,8 @@
+(load ".qlot/setup.lisp")
+(require :asdf)
+(asdf:load-asd (merge-pathnames "yeditor/tx/yeditor-tx.asd" (uiop:getcwd)))
+(asdf:load-asd (merge-pathnames "yeditor/context/yeditor-context.asd" (uiop:getcwd)))
+(asdf:load-asd (merge-pathnames "yeditor/context/registry-tests.asd" (uiop:getcwd)))
+(asdf:load-system :registry-tests)
+(asdf:test-system :registry-tests)
+(quit)

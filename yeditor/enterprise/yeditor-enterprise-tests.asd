@@ -5,5 +5,6 @@
 (defsystem "yeditor-enterprise-tests"
   :description "Yeditor Enterprise tests"
   :license "LicenseRef-Yeditor-Enterprise"
-  :depends-on ("yeditor-enterprise" "rove")
-  :components ((:file "agent/workers-tests")))
+  :depends-on ("yeditor-enterprise" "lem-fake-interface" "rove")
+  :components ((:file "agent/workers-tests")
+               (:file "forge/forge-tests")))

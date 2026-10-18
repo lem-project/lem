@@ -7,6 +7,9 @@
   (:use :cl :lem :yeditor-context :yeditor-effects)
   (:export :le-sidebar
            :yeditor-sidebar-toggle
+           :yeditor-sidebar-focus
+           :yeditor-sidebar-refresh
+           :sidebar-active-p
            :*sidebar-width*))
 (in-package :yeditor-components/sidebar)
 
@@ -27,10 +30,43 @@
   (let* ((directory (probe-file directory))
          (buffer (make-buffer *sidebar-buffer-name* :temporary t)))
     (change-buffer-mode buffer 'lem/filer:filer-mode)
+    (setf (buffer-value buffer 'sidebar-keymap) t)
     (let ((root (lem/filer::create-directory-item directory :open t)))
       (lem/filer:render buffer root)
       (setf (lem/filer:root-item buffer) root))
     buffer))
+
+(defun sidebar-focus-editor ()
+  "Move focus from the sidebar to the main editor window."
+  (let ((left (frame-leftside-window (current-frame))))
+    (loop :for w := (next-window)
+          :repeat 20
+          :until (and (not (eq w left)) (not (typep w 'lem-core:side-window)))
+          :finally (switch-to-window w))))
+
+(defun focus-sidebar-window ()
+  (alexandria:when-let ((left (frame-leftside-window (current-frame))))
+    (switch-to-window left)))
+
+(define-command yeditor-sidebar-focus-editor () ()
+  "Leave the sidebar focused window and return to the editor."
+  (sidebar-focus-editor))
+
+(define-command yeditor-sidebar-refresh () ()
+  "Reload the sidebar tree from disk."
+  (let ((buffer (get-buffer *sidebar-buffer-name*)))
+    (when buffer
+      (let ((root (lem/filer:root-item buffer)))
+        (when (typep root 'lem/filer::directory-item)
+          (setf (lem/filer::directory-item-open-p root) t)
+          (setf (lem/filer::directory-item-children root)
+                (lem/filer::create-directory-children (lem/filer::item-pathname root)))
+          (lem/filer:render buffer root))
+        (message "Sidebar refreshed")))))
+
+(define-command yeditor-sidebar-focus () ()
+  "Focus the sidebar window without toggling it (C-c C-b)."
+  (focus-sidebar-window))
 
 (defun ensure-sidebar-buffer ()
   "Create or reuse the sidebar filer buffer for the current project."
@@ -64,4 +100,11 @@
   :version "0.1.0"
   :install (lambda (comp ctx)
              (declare (ignore ctx))
-             (list (install-keybinding comp *global-keymap* "C-c b" (quote yeditor-sidebar-toggle)))))
+             (list
+              (install-keybinding comp *global-keymap* "C-c b" (quote yeditor-sidebar-toggle))
+              (install-keybinding comp *global-keymap* "C-c C-b" (quote yeditor-sidebar-focus))
+              ;; quick keys inside the sidebar buffer (filer mode keymap)
+              (install-keybinding comp lem/filer:*filer-mode-keymap* "q"
+                                  (quote yeditor-sidebar-focus-editor))
+              (install-keybinding comp lem/filer:*filer-mode-keymap* "r"
+                                  (quote yeditor-sidebar-refresh)))))

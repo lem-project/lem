@@ -109,6 +109,12 @@ test:
 		--eval '(asdf:test-system "lem-sdl2/tests")' \
 		--quit
 
+# Yeditor suites: each in its own SBCL process (test suites leak bindings when
+# run in the same image; see components-tests.lisp).
+test-yeditor:
+	$(LISP) --load .qlot/setup.lisp --eval '(ql:quickload :yeditor-components-tests)' --eval "(rove:run :yeditor-components-tests)" --quit
+	$(LISP) --load .qlot/setup.lisp --eval '(ql:quickload :yeditor-enterprise-tests)' --eval "(rove:run :yeditor-enterprise-tests)" --quit
+
 doc:
 	qlot install
 	$(LISP) --load .qlot/setup.lisp --load scripts/generate-documentation-tests.lisp --eval '(progn (lem-documentation-mode/tests::generate-markdown-file "test.md" :test) (quit))'

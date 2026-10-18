@@ -20,7 +20,9 @@
 ;; negative weight: run after Lem turns the tab bar on in its own after-init hook
 (lem:add-hook lem:*after-init-hook* (quote yeditor-components:enable-ephemeral-ui) -10)
 (lem:add-hook lem:*after-init-hook*
-             (lambda () (yeditor-context:install-component (quote yeditor-components:le-lsp))) -20)
+             (lambda ()
+               (yeditor-context:install-component (quote yeditor-components:le-lsp))
+               (yeditor-context:install-component (quote yeditor-enterprise/hermes-chat:le-hermes-chat))) -20)
 ;; the "lem" system also loads the webview frontend; select the terminal one explicitly
 (lem:lem "--interface" "ncurses")
 (uiop:quit)

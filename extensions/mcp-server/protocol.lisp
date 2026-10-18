@@ -29,19 +29,30 @@
                  :type list)
    (handler :initarg :handler
             :reader tool-handler
-            :type function)))
+            :type function)
+   (thread-safe :initarg :thread-safe
+                :initform nil
+                :reader tool-thread-safe-p
+                :documentation "True when the handler may run on the HTTP thread instead of
+Lem's main thread (it must not touch buffers, windows or other editor state).")))
 
 (defvar *registered-tools* (make-hash-table :test 'equal)
   "Hash table of registered MCP tools.")
 
-(defun register-tool (name description input-schema handler)
-  "Register an MCP tool."
+(defun register-tool (name description input-schema handler &key thread-safe)
+  "Register an MCP tool. HANDLER receives the arguments alist and returns a string.
+With THREAD-SAFE, calls run on the HTTP thread instead of Lem's main thread."
   (setf (gethash name *registered-tools*)
         (make-instance 'mcp-tool
                        :name name
                        :description description
                        :input-schema input-schema
-                       :handler handler)))
+                       :handler handler
+                       :thread-safe thread-safe)))
+
+(defun unregister-tool (name)
+  "Remove the tool NAME; returns true if it was registered."
+  (remhash name *registered-tools*))
 
 (defun get-tool (name)
   "Get a registered tool by name."

@@ -108,4 +108,7 @@
            :mcp-server-sessions
            :mcp-server-start
            :mcp-server-stop
-           :mcp-server-status))
+           :mcp-server-status
+           :register-tool
+           :unregister-tool
+           :publish-event))

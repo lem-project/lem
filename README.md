@@ -4,7 +4,9 @@
 
 [![CI](https://github.com/Yuri-Albuquerque/yeditor/actions/workflows/test.yml/badge.svg)](https://github.com/Yuri-Albuquerque/yeditor/actions/workflows/test.yml)
 
-Yeditor is a **spatiotemporally composable, agentic code editor** built in Common Lisp, forked from [Lem](https://github.com/lem-project/lem) (MIT).
+Yeditor is a **spatiotemporally composable, agentic code editor** built in Common Lisp on top of [Lem](https://github.com/lem-project/lem) (MIT).
+
+Yeditor is a **proprietary agentic-orchestration product**: the Core IP (layers L1-L5, `yeditor/`) is proprietary, built on an MIT-compatible L0 base inherited from Lem. See [License](#license).
 
 ## Why Yeditor
 
@@ -40,7 +42,8 @@ Every editor mutation is a **transaction** carrying its inverse (captured at ins
 
 - NOT a visual VSCode clone — keyboard-first with VSCode-style onboarding
 - DOES NOT run ELisp packages (different language; best-effort compatibility layer is future work)
-- NOT a general plugin framework for arbitrary apps — an editor; `yeditor-tx`/`yeditor-context` may be extracted as standalone ASDF libraries later
+- NOT a general plugin framework for arbitrary apps — an editor
+- NOT open source — see [License](#license)
 
 ## Install
 
@@ -56,7 +59,15 @@ Yeditor tracks upstream Lem; installation follows the same paths as Lem. See the
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+External contributions are accepted only after signing the [Contributor License Agreement](CLA.md), which assigns all economic rights in the contribution to the copyright holder.
+
+## License
+
+Copyright (c) 2026 Yuri Flores Albuquerque. All Rights Reserved.
+
+- `yeditor/` (layers L1-L5) and the Yeditor brand: proprietary — see [LICENSE](LICENSE). No use, copying or distribution without a written license agreement.
+- Code inherited from Lem (layer L0): MIT — see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- IP boundary and dependency policy: [docs/IP_ARCHITECTURE.md](docs/IP_ARCHITECTURE.md).
 
 ## Citation
 

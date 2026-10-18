@@ -1,0 +1,19 @@
+# Copyright (c) 2026 Yuri Flores Albuquerque. All Rights Reserved.
+# SPDX-License-Identifier: LicenseRef-Yeditor-Proprietary
+#
+# Dependencies loaded by the inherited L0 (Lem) whose license is outside the
+# allowed list, recorded as open exceptions (docs/IP_ARCHITECTURE.md §4).
+# One ASDF system name per line. GPL/AGPL can never be listed here.
+# Resolve every entry before the first commercial release.
+trivia
+trivia.balland2006
+trivia.level0
+trivia.level1
+trivia.level2
+trivia.trivial
+lisp-namespace
+trivial-cltl2
+trivial-types
+type-i
+cl-change-case
+cl-package-locks

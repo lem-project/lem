@@ -80,7 +80,7 @@ yeditor/
 ├── Makefile, qlfile, qlfile.lock
 ├── README.md + README.pt-BR.md
 ├── .yeditor.lisp
-├── CONTRIBUTING.md, LICENSE, LICENCE (upstream MIT)
+├── LICENSE (proprietary, L1-L5), THIRD_PARTY_NOTICES.md (Lem MIT, L0), CLA.md
 └── .github/workflows/       # test.yml (rove tests) + yeditor-ci.yml (Nix builds)
 ```
 

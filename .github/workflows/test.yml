@@ -26,8 +26,14 @@ jobs:
             exit 1
           fi
 
+      - name: IP compliance - headers and L0 boundary
+        run: bash scripts/check-ip-compliance.sh
+
       - name: Build test image
         run: docker build -f docker/Dockerfile.test -t lem-tests .
+
+      - name: IP compliance - dependency licenses
+        run: docker run --rm --entrypoint bash lem-tests -c "sbcl --script scripts/check-dependency-licenses.lisp"
 
       - name: Run tests
         run: docker run --rm lem-tests

@@ -48,8 +48,6 @@ ASDF systems under `yeditor/` declare `:license "LicenseRef-Yeditor-Proprietary"
 license that imposes source-disclosure or relicensing obligations on Yeditor code.
 File-level copyleft (MPL-2.0, EPL) requires explicit approval by the owner.
 
-New dependencies of `yeditor/` systems must be checked before being added.
-
 ### Known exceptions (open)
 
 The inherited L0 dependency graph — not Yeditor code — currently loads libraries outside
@@ -64,7 +62,22 @@ These must be resolved (replaced, removed, or cleared by counsel for distributio
 of a saved SBCL image) before a commercial release. Until then, the repository does
 **not** meet the zero-copyleft policy, and should not be represented as meeting it.
 
-## 5. Provenance and history
+## 5. Automated enforcement (CI)
+
+`scripts/check-ip-compliance.sh` runs on every push and pull request (`.github/workflows/test.yml`)
+and fails the build when:
+
+1. a file under `yeditor/` lacks the proprietary copyright and SPDX header;
+2. a file carrying the Yeditor SPDX identifier appears in an MIT L0 directory
+   (`src/`, `frontends/`, `extensions/`, `contrib/`, `tests/`, `resources/`, `roswell/`, `docker/`);
+3. any system loaded with Lem and Yeditor declares a GPL/AGPL license, or an LGPL/LLGPL/MPL/EPL
+   or unrecognised license that is not listed in `scripts/ip-license-exceptions.txt`
+   (`scripts/check-dependency-licenses.lisp`). GPL/AGPL cannot be excepted.
+
+Systems that declare no license (mostly Lem's own modules, SBCL contribs and subsystems) are
+listed in the report for manual review rather than failing the build.
+
+## 6. Provenance and history
 
 - Repository history is preserved; authorship of L1–L5 is visible per commit.
 - Before 2026-10-17, the repository `LICENSE` stated that Yeditor additions were MIT

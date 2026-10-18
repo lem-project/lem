@@ -6,6 +6,8 @@
 
 Yeditor é um **editor de código composável espaço-temporalmente, agente**, construído em Common Lisp, derivado de [Lem](https://github.com/lem-project/lem) (MIT).
 
+O Yeditor é um **Produto Proprietário de Orquestração Agêntica**: o Core IP (camadas L1-L5, `yeditor/`) é proprietário, construído sobre uma base L0 compatível com MIT herdada do Lem. Veja [Licença](#licença).
+
 ## Por que Yeditor
 
 ### Easy as VSCode
@@ -40,7 +42,8 @@ Cada mutação do editor é uma **transação** que carrega seu inverso (captura
 
 - NOT a visual VSCode clone — teclado-primeiro com onboarding estilo VSCode
 - DOES NOT run pacotes ELisp (linguagem diferente; camada de compatibilidade de esforço futuro)
-- NOT a general plugin framework for arbitrary apps — um editor; `yeditor-tx`/`yeditor-context` podem ser extraídos como bibliotecas ASDF independentes mais tarde
+- NÃO é um framework de plugins genérico para qualquer aplicação — é um editor
+- NÃO é open source — veja [Licença](#licença)
 
 ## Instalação
 
@@ -56,7 +59,15 @@ Yeditor acompanha upstream Lem; a instalação segue os mesmos caminhos que o Le
 
 ## Contribuição
 
-Veja [CONTRIBUTING.md](CONTRIBUTING.md).
+Contribuições externas só são aceitas após a assinatura do [Contrato de Licença de Contribuidor](CLA.md), que cede ao titular todos os direitos patrimoniais sobre a contribuição.
+
+## Licença
+
+Copyright (c) 2026 Yuri Flores Albuquerque. Todos os direitos reservados.
+
+- `yeditor/` (camadas L1-L5) e a marca Yeditor: proprietários — veja [LICENSE](LICENSE). Nenhum uso, cópia ou distribuição sem contrato de licença escrito.
+- Código herdado do Lem (camada L0): MIT — veja [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- Fronteira de IP e política de dependências: [docs/IP_ARCHITECTURE.md](docs/IP_ARCHITECTURE.md).
 
 ## Citação
 

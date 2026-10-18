@@ -21,6 +21,7 @@
            :yeditor-hermes-chat-send
            :yeditor-hermes-chat-focus
            :yeditor-hermes-chat-quit
+           :submit-external-intent
            :*hermes-chat-buffer-name*
            :*hermes-binary*))
 (in-package :yeditor-enterprise/hermes-chat)
@@ -65,8 +66,7 @@ back to the last editor buffer without closing the panel.")
 (define-major-mode hermes-chat-mode ()
     (:name "Hermes Chat"
      :keymap *hermes-chat-keymap*)
-  (setf (variable-value 'line-wrap :buffer (current-buffer)) t)
-  (setf (tab-width :buffer (current-buffer)) 8))
+  (setf (variable-value 'line-wrap :buffer (current-buffer)) t))
 
 (defun chat-insert (buffer text &key (attribute nil))
   (with-buffer-read-only buffer nil
@@ -202,6 +202,21 @@ back to the last editor buffer without closing the panel.")
     (chat-insert buffer "...")
     (run-hermes-query-async buffer text)))
 
+(defun submit-external-intent (prompt)
+  "Director Mode fallback: no MCP worker is on the bus, so run the hermes CLI
+directly with the intent phrased to use the editor's MCP tools, and show the
+result in the chat panel."
+  (let* ((buffer (ensure-hermes-chat-buffer))
+         (full (format nil
+                       "Operate the Yeditor editor (repo at the current directory) using its MCP tools (yeditor_*). Then summarize what you changed. Intent: ~A"
+                       prompt)))
+    (make-bottomside-window buffer :height 14)
+    (unless (buffer-value buffer 'greeted)
+      (setf (buffer-value buffer 'greeted) t))
+    (chat-insert buffer (format nil "[director] ~A" prompt) :attribute 'modeline-name)
+    (chat-insert buffer "...")
+    (run-hermes-query-async buffer full)))
+
 (define-command yeditor-hermes-chat-send () ()
   "Send the current input line in the Hermes chat buffer."
   (let ((buffer (current-buffer))
@@ -252,4 +267,7 @@ back to the last editor buffer without closing the panel.")
   :version "0.1.0"
   :install (lambda (comp ctx)
              (declare (ignore ctx))
+             (when (boundp 'yeditor-components/director-cockpit::*intent-dispatcher*)
+               (setf yeditor-components/director-cockpit::*intent-dispatcher*
+                     (function submit-external-intent)))
              (list (install-keybinding comp *global-keymap* "C-c h" (quote yeditor-hermes-chat-toggle)))))

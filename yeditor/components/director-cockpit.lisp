@@ -24,11 +24,20 @@
            :yeditor-director-intent
            :yeditor-director-approve
            :yeditor-director-rollback
-           :*director-worker-name*))
+           :*director-worker-name*
+           :*intent-dispatcher*))
 (in-package :yeditor-components/director-cockpit)
 
 (defparameter *director-worker-name* "hermes"
   "Worker that receives director intents (matched by name prefix, e.g. 'hermes').")
+
+(defparameter *director-binary* "hermes"
+  "The Hermes CLI used when no worker is registered on the bus.")
+
+(defparameter *intent-dispatcher* nil
+  "Function of one argument (the intent prompt) used when no MCP worker is on
+the bus. The enterprise hermes-chat component installs the hermes CLI fallback
+here at install time; without it an intent is queued and reported to message.")
 
 (defun director-worker-id ()
   "The first registered worker whose name contains *director-worker-name*."
@@ -39,13 +48,16 @@
         :return id))
 
 (define-command yeditor-director-intent (prompt) ("s🎯 Intent for the agent: ")
-  "Submit one natural-language intent to the agent bus and open an agent
-transaction: the HUD mounts and the agent operates the editor through the
-le-mcp editor tools."
-  (let ((worker (or (director-worker-id) "unregistered")))
-    (submit-task worker "intent" prompt)
-    (message "Intent sent to ~A; the HUD shows the pending edits (C-c C-a approves, C-c C-k reverts)."
-             worker)))
+  "Submit one natural-language intent to the agent bus. The agent then operates
+the editor through the le-mcp editor tools; the HUD mounts so you can review
+and approve (C-c C-a) or revert (C-c C-k) everything it did."
+  (let ((worker (director-worker-id)))
+    (cond (worker
+           (submit-task worker "intent" prompt)
+           (message "Intent sent to worker ~A; watch the HUD and the Hermes chat." worker))
+          ((functionp *intent-dispatcher*)
+           (funcall *intent-dispatcher* prompt))
+          (t (message "No agent worker on the bus; install le-worker-hermes (or the Hermes chat) first.")))))
 
 (define-command yeditor-director-approve () ()
   "Approve and consolidate the agent's work (same as C-c C-a)."

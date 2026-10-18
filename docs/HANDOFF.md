@@ -44,9 +44,9 @@ send keys with `tmux send-keys`, read the screen with `tmux capture-pane -p` (`-
 `M-x` must be sent as one escape sequence: `tmux send-keys -l $'\ex'`. The abort key is `C-g`
 (`Esc` is the Meta prefix in a terminal).
 
-Test status at last update: 9 test systems, **14,676 assertions, 0 failures** on the host (tree-sitter
+Test status at last update: 10 test systems, **14,691 assertions, 0 failures** on the host (tree-sitter
 tests are skipped there: no libtree-sitter). Inside the CI image (`docker/Dockerfile.test`, which
-has libtree-sitter and the Python grammar) the components suite runs everything, tree-sitter included (14,800 assertions at last update).
+has libtree-sitter and the Python grammar) the components suite runs everything, tree-sitter included (14,815 assertions at last update).
 To run it there with the working tree mounted:
 `docker build -f docker/Dockerfile.test -t yeditor-ts .` then
 `docker run --rm -v "$PWD/yeditor:/app/yeditor" -v "$PWD/extensions:/app/extensions" -v "$PWD/scripts:/app/scripts" --entrypoint bash yeditor-ts -c "sbcl --script scripts/run-yeditor-all-tests.lisp"`.
@@ -62,7 +62,7 @@ yeditor/
 │   └── bench/            T10 benchmark suite (yeditor-bench)
 ├── effects/              FSL — standard effects (14 kinds) + tests
 ├── components/           FSL — T11 theme pack + policy, T12 UI components (zero-chrome, palette, HUD) + tests
-└── enterprise/           Proprietary — yeditor-enterprise.asd + placeholder (no code yet)
+└── enterprise/           Proprietary — agent/workers.lisp (T17) + tests; journal/forge to come
 scripts/                  test runners, launchers, CI gates
 ```
 
@@ -90,6 +90,7 @@ scripts/                  test runners, launchers, CI gates
 | T28 | `le-lang-python`, activated by coeffect (.py file or pyproject/requirements/uv.lock): project virtualenv (.venv/venv/env, conda) put on `VIRTUAL_ENV`/`PATH` and followed across projects; best LSP server on PATH (basedpyright → pyright → pylsp); format on save with ruff/black as a reversible side-transaction (failure leaves the buffer untouched); REPL (`C-c C-z`, send region `C-c C-r` / buffer `C-c C-b`) with eval records; pytest under cursor / file (`C-c C-t`) with failing lines marked by overlays; everything undone on deactivation. New `e-environment` effect | `components/lang-python.lisp`, `effects/e-environment.lisp` |
 | T16 | `le-models` provider layer (Core): `ollama-provider` (NDJSON streaming, model list, pull), `openai-compatible-provider` (SSE), `claude-provider` (Messages API over raw HTTP — no CL SDK; `x-api-key` from `ANTHROPIC_API_KEY`, `anthropic-version: 2023-06-01`, default `claude-opus-5-5`, server-side refusal fallback on, retries 429/529/5xx honouring `retry-after`, `stop_reason: refusal` reported). Cloud providers refused unless `*allow-cloud*` (privacy default: local). Components `le-models` (status segment `AI:<provider>` with cloud banner; `C-c a e/r/d/c` explain/rewrite/document/chat) and `le-ollama` (local Ollama as default provider, `yeditor-ai-pull-model`). Rewrite and documentation edits are reversible side-transactions (`yeditor-ai-undo-last`) | `components/models.lisp`, `components/ai.lisp` |
 | T19 | `le-mcp`: worker bus on Lem's MCP server (`http://127.0.0.1:7890/mcp`), started as an effect (an already-running server is reused, not stopped). Tools: `yeditor_list_components`, `_component_status`, `_toggle_component`, `_transaction_log`, `_worker_register` (protocol `yeditor-worker/1` + capability check), `_worker_unregister`, `_task_next`, `_task_report`; tasks and observations also pushed as JSON-RPC notifications on the SSE stream. Lisp API: `submit-task`, `next-task`, `report-task`, `task-observations`. Handshake + task delivery p95 ≈ 2–3 ms (budget 50 ms). L0: SSE stream, thread-safe tools, `unregister-tool` | `components/mcp.lisp`, `extensions/mcp-server/` |
+| T17 (Enterprise) | Worker adapters as components: `le-worker-claude-code` (runs `claude -p … --output-format json --max-turns N --mcp-config <editor MCP>`; CLI keeps its own credentials) and `le-worker-hermes` (provisional HTTP contract: `GET /health`, `POST /tasks` → `{status, observation}`). Installing registers a worker on the le-mcp bus and starts a dispatcher thread (take task → run in agent → report observation); uninstalling stops it and unregisters. Discovery ping, per-task timeout, step budget, extra CLI args configurable | `enterprise/agent/workers.lisp` |
 | Licensing | Open-core licenses, CLA, IP strategy, header/dependency CI gate | root `LICENSE*`, `docs/IP_STRATEGY.md` |
 
 Extra effects added for T11/T12: `e-editor-variable` (Lem editor variables), `e-window` (side split, kind 15), `e-theme` (apply a color theme without saving it).
@@ -112,6 +113,7 @@ Extra effects added for T11/T12: `e-editor-variable` (Lem editor variables), `e-
 - Tests under the fake frontend do not run Lem's `process-file` (major mode from extension), so `le-lang-python` also recognises buffers by `.py` file type.
 - T16: AI commands run the provider on a worker thread and deliver text through Lem's event loop; tests exercise the providers against `components/test-data/fake-ai-server.py` (Ollama, OpenAI-compatible and Anthropic protocols) and the edit operations with a canned provider. `le-models`/`le-ollama` are not installed by `enable-ephemeral-ui` yet (opt-in). Lem also ships `contrib/ollama` (separate, untouched).
 - T19 events are broadcast to every session (workers filter by `worker_id`); the toggle tool runs on Lem's main thread and is not exercised over HTTP in tests (no event loop under the fake frontend). Hunchentoot logs each request to stdout during tests.
+- T17: tested with a fake `claude` binary and a fake HTTP worker (`enterprise/agent/test-data/`); the real Claude Code CLI flags (`-p`, `--output-format json`, `--max-turns`, `--mcp-config`) were not verifiable on this machine (CLI not installed). The Hermes HTTP contract is provisional — align it with Hermes' real API. Worker edits are not yet confined to `agent-tx-id` side-transactions (T21/T22).
 - `e-server` has no test. T13 sessions are keyed by language (as Lem's workspaces are), not by project root; the missing-server case reports the install command but does not run it (no unattended installs); tests use a fake stdio server (`components/test-data/fake-lsp-server.py`) and never complete the async initialize handshake (no event loop under the fake frontend).
 - T8: `use-component` options are validated but not passed to the component's install function;
   HMR uses `file-write-date` (1 s resolution).
@@ -125,4 +127,4 @@ Extra effects added for T11/T12: `e-editor-variable` (Lem editor variables), `e-
 
 ## 7. Current work in progress
 
-None. Next in plan order: T17 (worker adapters: Claude Code CLI, Hermes HTTP) and T18 (`le-forge`), both in `yeditor/enterprise/` (proprietary), then T20–T25.
+None. Next in plan order: T18 (`le-forge`, Enterprise), then T20 (`yeditor-journal`), T21 (tool surface), T22 (multiplexer + branching), T23–T25.

@@ -7,5 +7,5 @@
   :author "Yuri Flores Albuquerque <yuri-albuquerque@users.noreply.github.com>"
   :license "LicenseRef-Yeditor-Enterprise"
   :version "0.1.0"
-  :depends-on ("yeditor-core")
-  :components ())
+  :depends-on ("yeditor-core" "yeditor-components" "dexador" "yason")
+  :components ((:file "agent/workers")))

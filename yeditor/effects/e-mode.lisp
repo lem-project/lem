@@ -4,13 +4,20 @@
 (in-package :yeditor-effects/e-mode)
 
 (defun install-mode (comp buf mode)
-  "Enable MODE on BUF. Returns an effect handle with undo that disables the mode.
-   Mode toggling semantics are implementation-defined; here we simply call the mode function.
-   The undo thunk does nothing (disabling a mode is not universally supported)."
-  (let ((handle (install-effect comp :mode
-                                 (lambda () (funcall mode buf))
-                                 :undo-thunk (lambda () (declare (ignore))))))
-    ;; store metadata
-    (push (cons :mode mode) handle)
-    (push (cons :buffer buf) handle)
-    handle))
+  "Enable MODE on BUF as a transaction effect.
+   The undo thunk restores the buffer's previous major mode (kind 3, Cap. 5.3).
+   MODE is a function (buf) or a mode symbol accepted by lem:change-buffer-mode."
+  (let ((prev-mode (lem:buffer-major-mode buf)))
+    (let ((handle (install-effect comp :mode
+                                   (lambda ()
+                                     (if (symbolp mode)
+                                         (lem:change-buffer-mode buf mode)
+                                         (funcall mode buf)))
+                                   :undo-thunk (lambda ()
+                                                 (when prev-mode
+                                                   (if (symbolp prev-mode)
+                                                       (lem:change-buffer-mode buf prev-mode)
+                                                       (funcall prev-mode buf)))))))
+      (push (cons :mode mode) handle)
+      (push (cons :buffer buf) handle)
+      handle)))

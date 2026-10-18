@@ -17,5 +17,7 @@
     ;; ensure buffer exists
     (assert (find "test-buffer" (lem:buffer-list) :key (lambda (b) (lem:buffer-name b)) :test #'string=))
     (yeditor-context:uninstall-component comp)
-    (assert (null (lem:buffer-list)))
+    ;; only assert that the test buffer is gone; other Lem buffers may exist
+    (assert (null (find "test-buffer" (lem:buffer-list)
+                        :key (lambda (b) (lem:buffer-name b)) :test #'string=)))
     (assert (null (lem:variable-value 'after-save-hook :global)))))

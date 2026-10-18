@@ -58,6 +58,15 @@
     (setf *tx-committed* nil)))
 
 (defmacro with-transaction (&body body)
-  "Execute BODY, allowing effects to be installed via `install-effect`.
-   Returns result of BODY."
-  `(progn ,@body))
+  "Execute BODY within a transaction scope.
+   If BODY exits abnormally (error/throw) before tx-commit is called, any
+   effects registered in *tx-pending* are discarded so they do not leak into
+   the next transaction."
+  (let ((committed (gensym "COMMITTED")))
+    `(let ((,committed nil))
+       (unwind-protect
+            (multiple-value-prog1
+                (progn ,@body)
+              (setf ,committed t))
+         (unless ,committed
+           (setf *tx-pending* nil))))))

@@ -4,12 +4,11 @@
 (in-package :yeditor-effects/e-buffer)
 
 (defun install-buffer (comp name)
-  "Create a Lem buffer named NAME. Returns an effect handle.
-   The undo thunk kills the created buffer."
-  (let ((buf (lem:make-buffer name :enable-undo-p nil)))
+  "Register a Lem buffer creation as a transaction effect.
+   The buffer is created when the transaction commits; the undo thunk kills it."
+  (let ((buf nil))
     (let ((handle (install-effect comp :buffer
-                                   (lambda () (declare (ignore)))
-                                   :undo-thunk (lambda () (lem:kill-buffer buf)))))
-      ;; attach name for debugging
+                                   (lambda () (setf buf (lem:make-buffer name :enable-undo-p nil)))
+                                   :undo-thunk (lambda () (when buf (lem:kill-buffer buf))))))
       (push (cons :name name) handle)
       handle)))

@@ -5,7 +5,9 @@
                 :lem-stdio-transport)
   (:export :dispose
            :tcp-client
-           :stdio-client)
+           :tcp-client-process
+           :stdio-client
+           :stdio-client-process)
   #+sbcl
   (:lock t))
 (in-package :lem-lsp-mode/client)

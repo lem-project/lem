@@ -4,10 +4,11 @@
 (asdf:load-system :yeditor-tx)
 
 (defun run-batch (n)
-  (let ((*tx-log* nil))
+  (let ((*tx-pending* nil)
+        (*tx-committed* nil))
     (let ((start (get-internal-run-time)))
       (dotimes (i n)
-        (yeditor-tx:install-effect :noop nil nil #'identity))
+        (yeditor-tx:install-effect :test :noop (lambda () nil) :undo-thunk (lambda () nil)))
       (let ((elapsed (/ (- (get-internal-run-time) start) internal-time-units-per-second)))
         (* elapsed 1e6))))) ; total µs
 

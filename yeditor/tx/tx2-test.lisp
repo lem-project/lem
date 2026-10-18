@@ -56,11 +56,11 @@
 (deftest tx2-property-random
   "Property‑based test with random effects over 20 seeds, order‑sensitive."
   (dotimes (seed 20)
-    (let ((*counter* 0) (*tx-pending* nil) (*tx-committed* nil))
-      (sb-ext:seed-random-state (+ 1000 seed))
+    (let ((*counter* 0) (*tx-pending* nil) (*tx-committed* nil)
+          (rs (sb-ext:seed-random-state (+ 1000 seed))))
       (with-transaction
         (dotimes (i 100)
-          (let ((choice (random 2)))
+          (let ((choice (random 2 rs)))
             (if (= choice 0)
                 (install-effect :test :a (lambda () (setf *counter* (+ (* 2 *counter*) 1)))
                                :undo-thunk (lambda () (setf *counter* (floor (/ (- *counter* 1) 2)))))

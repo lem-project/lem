@@ -5,6 +5,10 @@
 
 ;;; Launch Yeditor in the terminal (ncurses) with the ephemeral UI enabled.
 ;;; Usage, from the repository root: sbcl --load scripts/run-yeditor-ncurses.lisp
+;;;   C-c b    toggle project sidebar (left)
+;;;   C-c j    toggle integrated terminal (bottom)
+;;;   C-c h    toggle Hermes Agent chat panel (bottom)
+;;;   C-c w    open modern workspace layout (sidebar + editor)
 ;;;   C-c p    theme palette with live preview (C-g restores)
 ;;;   M-x yeditor-demo-agent   open a demo agent transaction (HUD mounts)
 ;;;   C-c C-a / C-c C-k        commit / roll back the agent transaction (HUD unmounts)
@@ -12,6 +16,7 @@
 (load ".qlot/setup.lisp")
 (asdf:load-system :lem-ncurses)
 (asdf:load-system :yeditor-components)
+(asdf:load-system :yeditor-enterprise)
 ;; negative weight: run after Lem turns the tab bar on in its own after-init hook
 (lem:add-hook lem:*after-init-hook* (quote yeditor-components:enable-ephemeral-ui) -10)
 (lem:add-hook lem:*after-init-hook*

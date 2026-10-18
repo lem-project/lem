@@ -9,7 +9,10 @@
   (:import-from :yeditor-components/palette #:call-with-theme-preview #:*open-preview-sessions*)
   (:import-from :yeditor-components/hud
                 #:*agent-tx* #:*hud-buffer-name* #:yeditor-demo-agent
-                #:yeditor-agent-tx-commit #:yeditor-agent-tx-rollback))
+                #:yeditor-agent-tx-commit #:yeditor-agent-tx-rollback)
+  (:import-from :yeditor-components/sidebar #:yeditor-sidebar-toggle #:sidebar-active-p)
+  (:import-from :yeditor-components/terminal #:yeditor-terminal-toggle #:terminal-active-p)
+  (:import-from :yeditor-components/workspace-layout #:yeditor-workspace-open))
 (in-package :yeditor-components-tests)
 
 (defun binding (keyspec)
@@ -813,3 +816,50 @@
       (ok (null (lem-mcp-server:current-mcp-server)) "server stopped on uninstall")
       (ok (handler-case (progn (mcp-handshake port) nil) (error () t)) "port closed")
       (ok (null (yeditor-components/mcp:worker-ids)) "workers forgotten"))))
+
+;;; Sidebar, Terminal and Workspace Layout (modern IDE panels)
+
+(defun terminal-ffi-available-p ()
+  "Return t if the libvterm alien symbol 'terminal_new' is resolvable."
+  (ignore-errors
+   (cffi:foreign-symbol-pointer "terminal_new")))
+
+(deftest test-sidebar-toggle-no-residue
+  (lem-fake-interface:with-fake-interface ()
+    (install-component (quote le-sidebar))
+    (ok (eq (binding "C-c b") (quote yeditor-sidebar-toggle)) "sidebar binding installed")
+    (yeditor-sidebar-toggle)
+    (ok (frame-leftside-window (current-frame)) "sidebar toggle opens leftside window")
+    (yeditor-sidebar-toggle)
+    (ok (not (sidebar-active-p)) "sidebar toggled off is no longer active")
+    (uninstall-component (quote le-sidebar))
+    (ok (null (binding "C-c b")) "sidebar binding removed")))
+
+(deftest test-terminal-toggle-no-residue
+  (lem-fake-interface:with-fake-interface ()
+    (install-component (quote le-terminal))
+    (ok (eq (binding "C-c j") (quote yeditor-terminal-toggle)) "terminal binding installed")
+    (if (terminal-ffi-available-p)
+        (progn
+          (yeditor-terminal-toggle)
+          (ok (terminal-active-p) "terminal toggle opens bottomside window")
+          (yeditor-terminal-toggle)
+          (ok (not (terminal-active-p)) "terminal toggled off is no longer active"))
+        (ok t "libvterm FFI not available in this build; skip terminal toggle test"))
+    (uninstall-component (quote le-terminal))
+    (ok (null (binding "C-c j")) "terminal binding removed")))
+
+(deftest test-workspace-layout-opens-sidebar-on-find-file
+  (lem-fake-interface:with-fake-interface ()
+    (install-component (quote le-workspace-layout))
+    (ok (null (frame-leftside-window (current-frame))) "no sidebar before opening file")
+    (let ((file (merge-pathnames (format nil "yeditor-ws-~D.txt" (random 1000000))
+                                 (uiop:default-temporary-directory))))
+      (ensure-directories-exist file)
+      (with-open-file (out file :direction :output :if-exists :supersede)
+        (write-string "hello" out))
+      (find-file file)
+      (ok (frame-leftside-window (current-frame)) "sidebar opened after find-file"))
+    (uninstall-component (quote le-workspace-layout))
+    (when (frame-leftside-window (current-frame))
+      (delete-leftside-window))))

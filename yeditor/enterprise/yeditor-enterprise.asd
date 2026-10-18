@@ -8,6 +8,7 @@
   :license "LicenseRef-Yeditor-Enterprise"
   :version "0.1.0"
   :depends-on ("yeditor-core" "yeditor-components" "dexador" "yason")
-  :components ((:file "agent/workers")
-               (:file "forge/forge")
-               (:file "journal/journal")))
+  :components ((:file "journal/journal")
+               (:file "agent/workers")
+               (:file "agent/hermes-chat")
+               (:file "forge/forge")))

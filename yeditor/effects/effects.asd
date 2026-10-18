@@ -1,5 +1,5 @@
 (defsystem "yeditor-effects"
-  :description "Standard effects T4-T5: buffer, mode, hook, keymap, variable, command, overlay, timer"
+  :description "Standard effects T4-T6: buffer, mode, hook, keymap, variable, command, overlay, timer, process, server, lsp, fdefinition"
   :depends-on ("lem" "yeditor-tx" "yeditor-context")
   :components ((:file "e-buffer")
                (:file "e-mode")
@@ -9,4 +9,8 @@
                (:file "e-command")
                (:file "e-overlay")
                (:file "e-timer")
+               (:file "e-process")
+               (:file "e-server")
+               (:file "e-lsp")
+               (:file "e-fdefinition")
                (:file "effects")))

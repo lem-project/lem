@@ -10,17 +10,24 @@
   (:import-from :yeditor-components/palette #:le-palette)
   (:import-from :yeditor-components/hud #:le-hud)
   (:import-from :yeditor-components/lsp #:le-lsp)
+  (:import-from :yeditor-components/features
+                #:le-inherited-entry-points-off #:le-git #:le-project #:le-tree)
   (:import-from :yeditor-components/themes-ergonomic #:le-themes-ergonomic #:le-theme-extended)
   (:export :enable-ephemeral-ui :disable-ephemeral-ui :le-zero-chrome :le-palette :le-hud
-           :le-themes-ergonomic :le-theme-extended :le-lsp))
+           :le-themes-ergonomic :le-theme-extended :le-lsp
+           :le-inherited-entry-points-off :le-git :le-project :le-tree))
 (in-package :yeditor-components)
 
 (defun enable-ephemeral-ui ()
   "Enter the zero-chrome basal state with the ergonomic theme pack (default Gruvbox Soft),
-   bind the palette (C-c p) and let the agent HUD
+   Git/project/tree entry points owned by toggleable components (le-git, le-project,
+   le-tree), bind the palette (C-c p) and let the agent HUD
    mount and unmount on the :agent-tx-active coeffect."
   (define-coeffects (quote le-hud) (list :agent-tx-active t))
   (install-component (quote le-zero-chrome))
+  (install-component (quote le-inherited-entry-points-off))
+  (dolist (feature (list (quote le-git) (quote le-project) (quote le-tree)))
+    (install-component feature))
   (install-component (quote le-themes-ergonomic))
   (install-component (quote le-palette)))
 
@@ -29,4 +36,7 @@
   (uninstall-component (quote le-hud))
   (uninstall-component (quote le-palette))
   (uninstall-component (quote le-themes-ergonomic))
+  (dolist (feature (list (quote le-tree) (quote le-project) (quote le-git)))
+    (uninstall-component feature))
+  (uninstall-component (quote le-inherited-entry-points-off))
   (uninstall-component (quote le-zero-chrome)))

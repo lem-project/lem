@@ -16,4 +16,5 @@
                (:file "hud")
                (:file "lsp")
                (:file "packages")
+               (:file "features")
                (:file "components")))

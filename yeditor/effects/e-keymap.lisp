@@ -5,7 +5,7 @@
 
 (defpackage :yeditor-effects/e-keymap
   (:use :cl :lem :yeditor-tx)
-  (:export :install-keybinding))
+  (:export :install-keybinding :install-key-removal))
 (in-package :yeditor-effects/e-keymap)
 
 (defun %prev-binding (keymap keyspec)
@@ -28,4 +28,18 @@
       (push (cons :keyspec keyspec) handle)
       (push (cons :command command) handle)
       (push (cons :prev prev) handle)
+      handle)))
+
+(defun install-key-removal (comp keymap keyspec)
+  "Remove the binding of KEYSPEC in KEYMAP as a transaction effect (kind 5).
+   The binding found at commit time is restored on undo."
+  (let ((prev nil))
+    (let ((handle (install-effect comp :keybinding
+                                  (lambda ()
+                                    (setf prev (%prev-binding keymap keyspec))
+                                    (when prev (undefine-key keymap keyspec)))
+                                  :undo-thunk
+                                  (lambda ()
+                                    (when prev (define-key keymap keyspec prev))))))
+      (push (cons :keyspec keyspec) handle)
       handle)))

@@ -7,8 +7,8 @@
   (:use :cl)
   (:import-from :yeditor-effects/e-buffer    :install-buffer)
   (:import-from :yeditor-effects/e-mode      :install-mode)
-  (:import-from :yeditor-effects/e-hook      :install-hook)
-  (:import-from :yeditor-effects/e-keymap    :install-keybinding)
+  (:import-from :yeditor-effects/e-hook      :install-hook :install-hook-removal)
+  (:import-from :yeditor-effects/e-keymap    :install-keybinding :install-key-removal)
   (:import-from :yeditor-effects/e-variable  :install-variable)
   (:import-from :yeditor-effects/e-command   :install-command)
   (:import-from :yeditor-effects/e-overlay   :install-overlay)
@@ -24,5 +24,6 @@
            :install-keybinding :install-variable :install-command
            :install-overlay :install-timer
            :install-process :install-tcp-server :install-lsp-session
-           :install-fdefinition :install-editor-variable :install-side-window :install-theme))
+           :install-fdefinition :install-editor-variable :install-side-window :install-theme
+           :install-key-removal :install-hook-removal))
 (in-package :yeditor-effects)

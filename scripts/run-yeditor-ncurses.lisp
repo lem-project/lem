@@ -17,15 +17,25 @@
 ;;;   M-x yeditor-lsp-start / yeditor-lsp-stop-all   language servers as transactions (le-lsp)
 (load ".qlot/setup.lisp")
 (asdf:load-system :lem-ncurses)
+;; terminal mouse (SGR 1006): clicks open sidebar items, switch tabs, focus windows,
+;; drag separators and scroll, through Lem's core mouse handling
+(asdf:load-system :lem-mouse-sgr1006)
 (asdf:load-system :yeditor-components)
 (asdf:load-system :yeditor-enterprise)
 ;; negative weight: run after Lem turns the tab bar on in its own after-init hook
 (lem:add-hook lem:*after-init-hook* (quote yeditor-components:enable-ephemeral-ui) -10)
+;; YEDITOR_MCP_PORT lets a second editor run beside one already serving the default port
+(let ((port (uiop:getenv "YEDITOR_MCP_PORT")))
+  (when (and port (plusp (length port)))
+    (setf yeditor-components/mcp:*mcp-port* (parse-integer port))))
 (lem:add-hook lem:*after-init-hook*
              (lambda ()
-               (yeditor-context:install-component (quote yeditor-components:le-lsp))
-               (yeditor-context:install-component (quote yeditor-components:le-mcp))
-               (yeditor-context:install-component (quote yeditor-enterprise/hermes-chat:le-hermes-chat))) -20)
+               ;; one component failing (e.g. the MCP port is taken) must not stop the others
+               (dolist (name (list (quote yeditor-components:le-lsp)
+                                   (quote yeditor-components:le-mcp)
+                                   (quote yeditor-enterprise/hermes-chat:le-hermes-chat)))
+                 (handler-case (yeditor-context:install-component name)
+                   (error (e) (lem:message "~(~A~) not installed: ~A" name e))))) -20)
 ;; the "lem" system also loads the webview frontend; select the terminal one explicitly
 (lem:lem "--interface" "ncurses")
 (uiop:quit)

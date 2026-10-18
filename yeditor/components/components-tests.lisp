@@ -565,3 +565,125 @@
         (uninstall-component (quote le-context-bridge))
         (uiop:delete-directory-tree root :validate t :if-does-not-exist :ignore)
         (uiop:delete-directory-tree elsewhere :validate t :if-does-not-exist :ignore)))))
+
+;;; T16 — le-models providers and the AI commands' core operations
+
+(defparameter *fake-ai-server*
+  (namestring (asdf:system-relative-pathname "yeditor-components" "test-data/fake-ai-server.py")))
+
+(defun call-with-fake-ai-server (function)
+  (let* ((process (uiop:launch-program (list "python3" *fake-ai-server* "0") :output :stream))
+         (line (read-line (uiop:process-info-output process)))
+         (port (parse-integer line :start (1+ (position #\Space line)))))
+    (unwind-protect (funcall function (format nil "http://127.0.0.1:~D" port))
+      (uiop:terminate-process process)
+      (uiop:wait-process process))))
+
+(defmacro with-fake-ai-server ((url) &body body)
+  `(call-with-fake-ai-server (lambda (,url) ,@body)))
+
+(defun hits (url path)
+  (or (gethash path (yason:parse (dex:get (format nil "~A/stats" url) :keep-alive nil))) 0))
+
+(defmacro with-env ((name value) &body body)
+  (let ((old (gensym)))
+    `(let ((,old (uiop:getenv ,name)))
+       (if ,value (sb-posix:setenv ,name ,value 1) (sb-posix:unsetenv ,name))
+       (unwind-protect (progn ,@body)
+         (if ,old (sb-posix:setenv ,name ,old 1) (sb-posix:unsetenv ,name))))))
+
+(deftest test-ollama-provider
+  (with-fake-ai-server (url)
+    (let ((ollama (make-instance (quote yeditor-components/models:ollama-provider) :base-url url))
+          (chunks nil))
+      (ok (yeditor-components/models:provider-available-p ollama) "detected")
+      (ok (not (yeditor-components/models:provider-cloud-p ollama)) "local, not cloud")
+      (ok (equal (yeditor-components/models:provider-models ollama) (list "llama3.2" "qwen2.5-coder")) "models listed")
+      (ok (equal (yeditor-components/models:provider-generate
+                  ollama "hi" :on-chunk (lambda (c) (push c chunks)))
+                 "Hello from llama3.2")
+          "streamed response assembled")
+      (ok (= 3 (length chunks)) "each chunk delivered as it arrives")
+      (let ((statuses nil))
+        (yeditor-components/models:ollama-pull ollama "llama3.2" :on-status (lambda (s) (push s statuses)))
+        (ok (equal (reverse statuses) (list "pulling manifest" "downloading" "success")) "pull progress streamed"))))
+  (ok (not (yeditor-components/models:provider-available-p
+            (make-instance (quote yeditor-components/models:ollama-provider) :base-url "http://127.0.0.1:9")))
+      "not detected when nothing listens"))
+
+(deftest test-openai-compatible-provider
+  (with-fake-ai-server (url)
+    (let ((p (make-instance (quote yeditor-components/models:openai-compatible-provider) :base-url url)))
+      (ok (equal (yeditor-components/models:provider-models p) (list "local-model")) "models listed")
+      (ok (equal (yeditor-components/models:provider-generate p "hi") "compat answer") "SSE stream assembled"))))
+
+(deftest test-claude-provider
+  (with-fake-ai-server (url)
+    (let ((claude (make-instance (quote yeditor-components/models:claude-provider) :base-url url)))
+      (ok (yeditor-components/models:provider-cloud-p claude) "Claude is always a cloud provider")
+      (with-env ("ANTHROPIC_API_KEY" "test-key")
+        (let ((yeditor-components/models:*allow-cloud* nil))
+          (ok (handler-case (progn (yeditor-components/models:provider-generate claude "hi") nil)
+                (yeditor-components/models:cloud-provider-disabled () t))
+              "refused while cloud providers are not enabled")
+          (ok (zerop (hits url "/v1/messages")) "and nothing was sent"))
+        (let ((yeditor-components/models:*allow-cloud* t))
+          (ok (equal (yeditor-components/models:provider-generate claude "hi") "Claude says hi")
+              "text deltas assembled; thinking deltas ignored")
+          (ok (equal (yeditor-components/models:provider-generate claude "OVERLOAD-ONCE please") "Claude says hi")
+              "a 529 overload is retried")
+          (ok (handler-case (progn (yeditor-components/models:provider-generate claude "REFUSE this") nil)
+                (yeditor-components/models:generation-refused () t))
+              "stop_reason refusal is reported")))
+      (with-env ("ANTHROPIC_API_KEY" nil)
+        (let ((yeditor-components/models:*allow-cloud* t))
+          (ok (search "ANTHROPIC_API_KEY"
+                      (handler-case (progn (yeditor-components/models:provider-generate claude "hi") "")
+                        (yeditor-components/models:provider-error (e) (princ-to-string e))))
+              "a missing key is a clear error"))))))
+
+(defclass canned-provider (yeditor-components/models:provider) ((reply :initarg :reply :reader reply))
+  (:default-initargs :name "canned" :base-url "http://127.0.0.1" :default-model "canned"))
+
+(defmethod yeditor-components/models:provider-generate ((p canned-provider) prompt &key model system on-chunk)
+  (declare (ignore prompt model system))
+  (when on-chunk (funcall on-chunk (reply p)))
+  (reply p))
+
+(deftest test-ai-edits-are-reversible
+  (lem-fake-interface:with-fake-interface ()
+    (let ((buffer (make-buffer "ai-edit.py")))
+      (insert-string (buffer-start-point buffer) (format nil "def f():~%    x=1~%    return x~%"))
+      (with-point ((s (buffer-start-point buffer)) (e (buffer-start-point buffer)))
+        (move-to-line s 2) (move-to-line e 2) (line-end e)
+        (yeditor-components/ai:ai-rewrite-region
+         (make-instance (quote canned-provider) :reply (format nil "```python~%    x = 2~%```"))
+         s e "use 2"))
+      (ok (search "    x = 2" (full-text buffer)) "rewrite applied without the code fence")
+      (yeditor-tx-side:side-undo "ai-rewrite:ai-edit.py")
+      (ok (search "    x=1" (full-text buffer)) "rewrite reverted exactly")
+      (with-point ((s (buffer-start-point buffer)) (e (buffer-end-point buffer)))
+        (yeditor-components/ai:ai-document-region
+         (make-instance (quote canned-provider) :reply "# Returns one.") s e))
+      (ok (uiop:string-prefix-p (format nil "# Returns one.~%def f():") (full-text buffer)) "doc comment inserted above")
+      (yeditor-tx-side:side-undo "ai-document:ai-edit.py")
+      (ok (uiop:string-prefix-p "def f():" (full-text buffer)) "documentation reverted")
+      (kill-buffer buffer))))
+
+(deftest test-ai-components
+  (lem-fake-interface:with-fake-interface ()
+    (let ((before yeditor-components/ai:*default-provider*))
+      (install-component (quote le-models))
+      (install-component (quote le-ollama))
+      (ok (typep yeditor-components/ai:*default-provider* (quote yeditor-components/models:ollama-provider))
+          "le-ollama makes local Ollama the default provider")
+      (ok (equal (yeditor-components/ai:ai-modeline-segment (current-window)) " AI:ollama ") "status shows the provider")
+      (ok (eq (binding "C-c a r") (quote yeditor-components/ai:yeditor-ai-rewrite)) "rewrite bound")
+      (let ((yeditor-components/ai:*default-provider* (make-instance (quote yeditor-components/models:claude-provider)))
+            (yeditor-components/models:*allow-cloud* nil))
+        (ok (search "cloud, off" (yeditor-components/ai:ai-modeline-segment (current-window)))
+            "a cloud provider is flagged in the status line"))
+      (uninstall-component (quote le-ollama))
+      (uninstall-component (quote le-models))
+      (ok (eq yeditor-components/ai:*default-provider* before) "default provider restored")
+      (ok (null (binding "C-c a r")) "bindings removed"))))

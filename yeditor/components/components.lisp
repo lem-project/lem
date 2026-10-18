@@ -13,13 +13,15 @@
   (:import-from :yeditor-components/treesitter #:le-treesitter-packs)
   (:import-from :yeditor-components/context-bridge #:le-context-bridge)
   (:import-from :yeditor-components/lang-python #:le-lang-python #:enable-python-support)
+  (:import-from :yeditor-components/ai #:le-models #:le-ollama)
   (:import-from :yeditor-components/features
                 #:le-inherited-entry-points-off #:le-git #:le-project #:le-tree)
   (:import-from :yeditor-components/themes-ergonomic #:le-themes-ergonomic #:le-theme-extended)
   (:export :enable-ephemeral-ui :disable-ephemeral-ui :le-zero-chrome :le-palette :le-hud
            :le-themes-ergonomic :le-theme-extended :le-lsp
            :le-inherited-entry-points-off :le-git :le-project :le-tree
-           :le-treesitter-packs :le-context-bridge :le-lang-python))
+           :le-treesitter-packs :le-context-bridge :le-lang-python
+           :le-models :le-ollama))
 (in-package :yeditor-components)
 
 (defun enable-ephemeral-ui ()

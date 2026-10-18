@@ -8,7 +8,7 @@
   :author "Yuri Flores Albuquerque <yuri-albuquerque@users.noreply.github.com>"
   :license "FSL-1.1-MIT"
   :version "0.1.0"
-  :depends-on ("lem/core" "lem/extensions" "lem-tree-sitter" "lem-process" "cl-ppcre" "yeditor-core")
+  :depends-on ("lem/core" "lem/extensions" "lem-tree-sitter" "lem-process" "cl-ppcre" "dexador" "flexi-streams" "quri" "yason" "yeditor-core")
   :components ((:file "context-bridge")
                (:file "zero-chrome")
                (:file "palette")
@@ -20,4 +20,6 @@
                (:file "features")
                (:file "treesitter")
                (:file "lang-python")
+               (:file "models")
+               (:file "ai")
                (:file "components")))

@@ -10,6 +10,8 @@
            :yeditor-sidebar-focus
            :yeditor-sidebar-refresh
            :sidebar-active-p
+           :ensure-sidebar-buffer
+           :*sidebar-buffer-name*
            :*sidebar-width*))
 (in-package :yeditor-components/sidebar)
 
@@ -31,7 +33,7 @@
          (buffer (make-buffer *sidebar-buffer-name* :temporary t)))
     (change-buffer-mode buffer 'lem/filer:filer-mode)
     (setf (buffer-value buffer 'sidebar-keymap) t)
-    (let ((root (lem/filer::create-directory-item directory :open t)))
+    (let ((root (lem/filer:create-directory-item directory :open t)))
       (lem/filer:render buffer root)
       (setf (lem/filer:root-item buffer) root))
     buffer))
@@ -57,10 +59,10 @@
   (let ((buffer (get-buffer *sidebar-buffer-name*)))
     (when buffer
       (let ((root (lem/filer:root-item buffer)))
-        (when (typep root 'lem/filer::directory-item)
-          (setf (lem/filer::directory-item-open-p root) t)
-          (setf (lem/filer::directory-item-children root)
-                (lem/filer::create-directory-children (lem/filer::item-pathname root)))
+        (when (typep root 'lem/filer:directory-item)
+          ;; collapse, then expand again: the children are re-read from disk
+          (setf (lem/filer:directory-item-open-p root) nil)
+          (lem/filer:expand-directory-item root)
           (lem/filer:render buffer root))
         (message "Sidebar refreshed")))))
 
@@ -75,7 +77,7 @@
     (cond ((null buffer)
            (make-sidebar-buffer dir))
           ((and (lem/filer:root-item buffer)
-                (uiop:pathname-equal (lem/filer::item-pathname (lem/filer:root-item buffer)) dir))
+                (uiop:pathname-equal (lem/filer:item-pathname (lem/filer:root-item buffer)) dir))
            buffer)
           (t
            (make-sidebar-buffer dir)))))

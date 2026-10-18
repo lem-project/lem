@@ -41,13 +41,13 @@
 
 (setf (documentation '*hermes-chat-keymap* 'variable)
       "Keymap in the Hermes chat panel. Return sends the line, C-j inserts a
-newline for multiline prompts, C-c C-k closes the panel and C-c C-a jumps
+newline for multiline prompts, C-c C-k closes the panel and C-c C-e jumps
 back to the last editor buffer without closing the panel.")
 
 (define-key *hermes-chat-keymap* "Return" 'yeditor-hermes-chat-send)
 (define-key *hermes-chat-keymap* "C-j" 'newline)
 (define-key *hermes-chat-keymap* "C-c C-k" 'yeditor-hermes-chat-quit)
-(define-key *hermes-chat-keymap* "C-c C-a" 'yeditor-hermes-chat-focus-editor)
+(define-key *hermes-chat-keymap* "C-c C-e" 'yeditor-hermes-chat-focus-editor)
 
 (defun hermes-chat-active-p ()
   (alexandria:when-let (win (frame-bottomside-window (current-frame)))
@@ -198,7 +198,7 @@ back to the last editor buffer without closing the panel.")
 (defun submit-hermes-message (text)
   "Send TEXT to hermes and stream the response into the chat buffer."
   (let ((buffer (ensure-hermes-chat-buffer)))
-    (chat-insert buffer (format nil "[you] ~A" text) :attribute 'modeline-name)
+    (chat-insert buffer (format nil "[you] ~A" text) :attribute 'lem:modeline-name-attribute)
     (chat-insert buffer "...")
     (run-hermes-query-async buffer text)))
 
@@ -213,7 +213,7 @@ result in the chat panel."
     (make-bottomside-window buffer :height 14)
     (unless (buffer-value buffer 'greeted)
       (setf (buffer-value buffer 'greeted) t))
-    (chat-insert buffer (format nil "[director] ~A" prompt) :attribute 'modeline-name)
+    (chat-insert buffer (format nil "[director] ~A" prompt) :attribute 'lem:modeline-name-attribute)
     (chat-insert buffer "...")
     (run-hermes-query-async buffer full)))
 
@@ -260,14 +260,14 @@ result in the chat panel."
         (switch-to-window (frame-bottomside-window (current-frame)))
         (unless (buffer-value buffer 'greeted)
           (setf (buffer-value buffer 'greeted) t)
-          (chat-insert buffer "Hermes Agent chat. Type after '> ' and press Return to send. C-c C-k closes, C-c C-a returns to the editor.")
+          (chat-insert buffer "Hermes Agent chat. Type after '> ' and press Return to send. C-c C-k closes, C-c C-e returns to the editor.")
           (chat-redraw-prompt buffer)))))
 
 (define-component le-hermes-chat
   :version "0.1.0"
   :install (lambda (comp ctx)
              (declare (ignore ctx))
-             (when (boundp 'yeditor-components/director-cockpit::*intent-dispatcher*)
-               (setf yeditor-components/director-cockpit::*intent-dispatcher*
-                     (function submit-external-intent)))
-             (list (install-keybinding comp *global-keymap* "C-c h" (quote yeditor-hermes-chat-toggle)))))
+             (list (install-keybinding comp *global-keymap* "C-c h" (quote yeditor-hermes-chat-toggle))
+                   ;; F1 intents go to Hermes while this is installed; uninstall restores the previous dispatcher
+                   (install-variable comp (quote yeditor-components/director-cockpit:*intent-dispatcher*)
+                                     (function submit-external-intent)))))

@@ -5,6 +5,8 @@
 
 (defpackage :yeditor-components/mcp
   (:use :cl :lem :yeditor-context :yeditor-effects)
+  (:import-from :lem
+                #:ensure-attribute)
   (:import-from :yeditor-components/lang-python
                 #:python-eval #:python-test-failure-attribute)
   (:import-from :yeditor-components/hud
@@ -73,14 +75,18 @@ last buffer presented."
     last))
 
 (defun annotate-buffer (buffer line text attribute)
-  "Put TEXT as a ghost overlay after line LINE of BUFFER."
+  "Show TEXT as virtual text after line LINE of BUFFER, replacing the previous
+annotation; the buffer's contents are not changed."
+  (alexandria:when-let ((previous (buffer-value buffer 'yeditor-annotation)))
+    (delete-overlay previous))
   (with-point ((s (buffer-start-point buffer))
                (e (buffer-start-point buffer)))
     (move-to-line s line)
     (move-to-line e line)
     (line-end e)
-    (insert-string e (format nil "  <- ~A" text) :attribute attribute)
-    (make-overlay e s (quote modeline-name))))
+    (setf (buffer-value buffer 'yeditor-annotation)
+          (make-line-endings-overlay s e (ensure-attribute attribute)
+                                     :text (format nil "  <- ~A" text) :offset 1))))
 ;;;; Tools for component management (list, status, toggle, transaction log) and a
 ;;;; worker protocol: register (handshake + capability check), unregister, take the
 ;;;; next task, report an observation. Tasks and observations are also pushed to

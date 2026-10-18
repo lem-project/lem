@@ -849,20 +849,22 @@
     (uninstall-component (quote le-terminal))
     (ok (null (binding "C-c j")) "terminal binding removed")))
 
-(deftest test-workspace-layout-opens-sidebar-on-find-file
+(deftest test-workspace-layout-on-demand-only
   (lem-fake-interface:with-fake-interface ()
     (install-component (quote le-workspace-layout))
-    (ok (null (frame-leftside-window (current-frame))) "no sidebar before opening file")
-    (let ((file (merge-pathnames (format nil "yeditor-ws-~D.txt" (random 1000000))
-                                 (uiop:default-temporary-directory))))
-      (ensure-directories-exist file)
-      (with-open-file (out file :direction :output :if-exists :supersede)
-        (write-string "hello" out))
-      (find-file file)
-      (ok (frame-leftside-window (current-frame)) "sidebar opened after find-file"))
-    (uninstall-component (quote le-workspace-layout))
-    (when (frame-leftside-window (current-frame))
-      (delete-leftside-window))))
+    (unwind-protect
+         (let ((file (merge-pathnames (format nil "yeditor-ws-~D.txt" (random 1000000))
+                                      (uiop:default-temporary-directory))))
+           (with-open-file (out file :direction :output :if-exists :supersede)
+             (write-string "hello" out))
+           (find-file file)
+           (ok (null (frame-leftside-window (current-frame)))
+               "opening a file keeps the Zero-Chrome basal state")
+           (yeditor-components/workspace-layout:yeditor-workspace-open)
+           (ok (frame-leftside-window (current-frame)) "C-c w opens the sidebar"))
+      (uninstall-component (quote le-workspace-layout))
+      (when (frame-leftside-window (current-frame))
+        (delete-leftside-window)))))
 
 ;;; Director Mode (T21 editor tools on the MCP bus + T12-B cockpit)
 
@@ -928,6 +930,19 @@
              (ok (null yeditor-components/hud:*agent-tx*) "transaction closed")))
       (uninstall-component (quote le-hud))
       (uninstall-component (quote le-mcp)))))
+
+(deftest test-eval-annotation-leaves-text-alone
+  (lem-fake-interface:with-fake-interface ()
+    (let ((buffer (make-buffer "*annotate-test*" :temporary t)))
+      (insert-string (buffer-point buffer) (format nil "x = 1~%y = 2~%"))
+      (let ((before (points-to-string (buffer-start-point buffer) (buffer-end-point buffer))))
+        (yeditor-components/mcp::annotate-buffer buffer 1 "evaluating..." (quote modeline))
+        (yeditor-components/mcp::annotate-buffer buffer 2 "done" (quote modeline))
+        (ok (equal before (points-to-string (buffer-start-point buffer) (buffer-end-point buffer)))
+            "annotation is virtual text; the buffer is unchanged")
+        (ok (= 1 (length (lem:buffer-overlays buffer)))
+            "a new annotation replaces the previous one"))
+      (delete-buffer buffer))))
 
 (deftest test-director-cockpit-binding
   (lem-fake-interface:with-fake-interface ()

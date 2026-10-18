@@ -7,7 +7,8 @@
   (:use :cl :lem :yeditor-context :yeditor-effects)
   (:import-from :yeditor-components/sidebar
                 #:ensure-sidebar-buffer
-                #:*sidebar-buffer-name*)
+                #:*sidebar-buffer-name*
+                #:*sidebar-width*)
   (:export :le-workspace-layout
            :yeditor-workspace-open
            :yeditor-workspace-close))
@@ -23,7 +24,7 @@
   "Open the modern IDE workspace layout: sidebar + editor."
   (unless (workspace-active-p)
     (alexandria:when-let ((buffer (ensure-sidebar-buffer)))
-      (make-leftside-window buffer :width yeditor-components/sidebar::*sidebar-width*)
+      (make-leftside-window buffer :width *sidebar-width*)
       (message "Workspace layout opened"))))
 
 (define-command yeditor-workspace-close () ()
@@ -32,14 +33,9 @@
     (delete-leftside-window))
   (message "Workspace layout closed"))
 
-(defun yeditor-workspace-open-hook (buffer)
-  "Hook wrapper: open workspace layout when BUFFER is a real file."
-  (declare (ignore buffer))
-  (yeditor-workspace-open))
-
 (define-component le-workspace-layout
   :version "0.1.0"
   :install (lambda (comp ctx)
              (declare (ignore ctx))
-             (list (install-keybinding comp *global-keymap* "C-c w" (quote yeditor-workspace-open))
-                   (install-hook comp '*find-file-hook* (quote yeditor-workspace-open-hook)))))
+             ;; opened on demand only: the basal state stays Zero-Chrome
+             (list (install-keybinding comp *global-keymap* "C-c w" (quote yeditor-workspace-open)))))

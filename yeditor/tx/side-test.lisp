@@ -9,38 +9,45 @@
 
 ;; Global state for testing side effects
 (defvar *side-state* 0)
+;; Count of warnings signalled during a test
+(defvar *warn-count* 0)
 
 (deftest side-transaction-runs-thunk
   "Define a side transaction and verify the thunk runs and state changes."
-  (let ((*side-state* 0))
+  (let ((*side-state* 0)
+        (*side-transactions* nil))
     (side-transaction "inc" (lambda () (incf *side-state*)) (lambda () (decf *side-state*)))
-    (ok (= *side-state* 1)))
+    (ok (= *side-state* 1))))
 
 (deftest side-undo-reverts-and-clears
   "side-undo should invoke undo thunk and clear the registry."
-  (let ((*side-state* 0))
+  (let ((*side-state* 0)
+        (*side-transactions* nil))
     (side-transaction "inc" (lambda () (incf *side-state*)) (lambda () (decf *side-state*)))
     (side-undo "inc")
     (ok (= *side-state* 0))
     (ok (null *side-transactions*))))
 
 (deftest side-redefine-warns-and-replaces
-  "Redefining same name should warn and replace stored undo."
-  (let ((warn-count 0)
-        (*side-state* 0))
+  "Redefining the same name warns, undoes the OLD effect, installs the NEW effect."
+  (let ((*side-state* 0)
+        (*warn-count* 0)
+        (*side-transactions* nil))
     (handler-bind ((warning (lambda (c)
-                             (incf warn-count)
-                             (muffle-warning c))))
+                              (declare (ignore c))
+                              (incf *warn-count*))))
       (side-transaction "inc" (lambda () (incf *side-state*)) (lambda () (decf *side-state*)))
       (side-transaction "inc" (lambda () (incf *side-state*)) (lambda () (decf *side-state* 2)))
-      (ok (= warn-count 1))
+      (ok (= *warn-count* 1))
+      (ok (= *side-state* 1))
       (side-undo "inc")
       (ok (= *side-state* -1))
       (ok (null *side-transactions*)))))
 
 (deftest side-lifo-multiple-transactions
   "Multiple side transactions should be undoable in any order."
-  (let ((*side-state* 0))
+  (let ((*side-state* 0)
+        (*side-transactions* nil))
     (side-transaction "first" (lambda () (incf *side-state*)) (lambda () (decf *side-state*)))
     (side-transaction "second" (lambda () (incf *side-state*)) (lambda () (decf *side-state*)))
     (ok (= *side-state* 2))
@@ -48,4 +55,4 @@
     (ok (= *side-state* 1))
     (side-undo "first")
     (ok (= *side-state* 0))
-    (ok (null *side-transactions*)))))
+    (ok (null *side-transactions*))))

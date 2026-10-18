@@ -52,7 +52,7 @@
 (defun tx-rollback ()
   "Rollback committed effects by executing their inverses in LIFO order."
   (when *tx-committed*
-    (dolist (e *tx-committed*)
+    (dolist (e (reverse *tx-committed*))
       (let ((undo (cdr (assoc :inverse e))))
         (when undo (funcall undo))))
     (setf *tx-committed* nil)))

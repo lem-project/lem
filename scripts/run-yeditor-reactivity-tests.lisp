@@ -1,5 +1,7 @@
-;;; Run T7 reactivity tests (coeffects, context-event dispatch, work-cycle predicates).
-(require :asdf)
-(push #p"./yeditor/context/" asdf:*central-registry*)
-(push #p"./yeditor/tx/"      asdf:*central-registry*)
-(asdf:test-system "yeditor-context-reactivity-tests")
+(load ".qlot/setup.lisp")
+(asdf:load-asd (merge-pathnames "yeditor/context/yeditor-context.asd" (uiop:getcwd)))
+(asdf:load-asd (merge-pathnames "yeditor/context/yeditor-context-reactivity.asd" (uiop:getcwd)))
+(asdf:load-asd (merge-pathnames "yeditor/context/reactivity-tests.asd" (uiop:getcwd)))
+(asdf:load-system :yeditor-context-reactivity-tests)
+(rove:run :yeditor-context-reactivity-tests)
+(uiop:quit)

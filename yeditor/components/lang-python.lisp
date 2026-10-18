@@ -8,6 +8,8 @@
   (:import-from :yeditor-context/reactivity #:define-coeffects)
   (:import-from :yeditor-components/context-bridge #:buffer-context)
   (:export :le-lang-python
+           :*eval-listeners*
+           :*test-listeners*
            :enable-python-support
            :*python-coeffects*
            :find-venv
@@ -226,12 +228,22 @@
   (alexandria:when-let ((buffer (get-buffer "*yeditor-python*")))
     (kill-buffer buffer)))
 
+(defvar *eval-listeners* nil
+  "Functions called with each eval record (plist :code :language :time), e.g. the journal.")
+(defvar *test-listeners* nil
+  "Functions called with each test run record (plist :target :exit :failures :output).")
+
+(defun notify-listeners (listeners record)
+  (dolist (listener listeners)
+    (ignore-errors (funcall listener record))))
+
 (defun python-eval (code)
   "Send CODE to the REPL (via a temporary file, so multi-line code works) and record it."
   (let ((file (uiop:tmpize-pathname (merge-pathnames "yeditor-eval.py" (uiop:default-temporary-directory)))))
     (with-open-file (out file :direction :output :if-exists :supersede)
       (write-string code out))
     (push (list :code code :output "" :time (get-universal-time)) *python-evals*)
+    (notify-listeners *eval-listeners* (list :code code :language "python" :time (get-universal-time)))
     (lem-process:process-send-input (ensure-repl)
                                     (format nil "exec(open(~S).read())~%" (namestring file)))))
 
@@ -283,6 +295,7 @@
            (record (list :target target :exit code :failures failures :output all)))
       (loop :for (file . line) :in failures :do (mark-failure root file line))
       (push record *python-test-results*)
+      (notify-listeners *test-listeners* record)
       record)))
 
 (defun test-at-point (point)

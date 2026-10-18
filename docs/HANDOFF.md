@@ -44,8 +44,12 @@ send keys with `tmux send-keys`, read the screen with `tmux capture-pane -p` (`-
 `M-x` must be sent as one escape sequence: `tmux send-keys -l $'\ex'`. The abort key is `C-g`
 (`Esc` is the Meta prefix in a terminal).
 
-Test status at last update: 9 test systems, **14,577 assertions, 0 failures** (the T1–T10/T12
-suites were also verified inside the CI Docker image).
+Test status at last update: 9 test systems, **14,597 assertions, 0 failures** on the host (tree-sitter
+tests are skipped there: no libtree-sitter). Inside the CI image (`docker/Dockerfile.test`, which
+has libtree-sitter and the Python grammar) the components suite runs everything, tree-sitter included.
+To run it there with the working tree mounted:
+`docker build -f docker/Dockerfile.test -t yeditor-ts .` then
+`docker run --rm -v "$PWD/yeditor:/app/yeditor" -v "$PWD/extensions:/app/extensions" -v "$PWD/scripts:/app/scripts" --entrypoint bash yeditor-ts -c "sbcl --script scripts/run-yeditor-all-tests.lisp"`.
 
 ## 3. Layout
 
@@ -81,6 +85,7 @@ scripts/                  test runners, launchers, CI gates
 | T13 | `le-lsp`: language server sessions started as transactions (one per language), stopped on uninstall; suppresses Lem's untracked auto-start (`lem-lsp-mode:*disable*`) while installed; starts on find-file; modeline `LSP:<lang>` / `LSP:off`; missing server → message with the install command. `e-lsp` rewritten on a new public L0 API (`start-lsp-session`, `stop-lsp-session`, `lsp-session-alive-p`) | `components/lsp.lisp`, `effects/e-lsp.lisp`, `extensions/lsp-mode/lsp-mode.lisp` |
 | T14 | Package onboarding: `scan-local-systems` (~/common-lisp, Quicklisp local-projects), `install-package` makes each package a runtime component `PACKAGE/<name>` (source-registry + load effects; inverse deletes created packages and clears created ASDF systems), confirmation notice about partial reversibility, install/uninstall logged by T9 durability; commands `yeditor-install-package` / `yeditor-uninstall-package`. Registry gained `register-component` / `unregister-component` | `components/packages.lisp`, `core/context/registry.lisp` |
 | T15 | `le-inherited-entry-points-off` (basal state) removes Lem's load-time global entry points for Git (`C-x g`), projects (`C-x p …`) and the file tree (`C-x d` + filer buffer-sync hook); `le-git`, `le-project`, `le-tree` each re-add theirs as effects, so every feature toggles with no residue. New effects `install-key-removal`, `install-hook-removal` (restores original hook weight). All enabled by default via `enable-ephemeral-ui` | `components/features.lisp`, `effects/e-keymap.lisp`, `effects/e-hook.lisp` |
+| T27 | `:treesitter-grammar` effect (kind 16): attaches a tree-sitter parser to a mode's syntax table, undo restores the previous parser and rescans buffers; grammar library loaded once and reused (no reload on toggle). `le-treesitter-packs` with a Python pack (own `highlights.scm` / `indents.scm`), grammars from `~/.local/share/yeditor/parsers/` or the system; `treesitter-install-grammar` (git clone + cc) and `compile-grammar`. L0 fixes: indentation counts only enclosing nodes and line-start outdents; `string.documentation` mapped | `effects/e-treesitter.lisp`, `components/treesitter.lisp`, `components/treesitter/python/`, `extensions/tree-sitter/indent.lisp` |
 | Licensing | Open-core licenses, CLA, IP strategy, header/dependency CI gate | root `LICENSE*`, `docs/IP_STRATEGY.md` |
 
 Extra effects added for T11/T12: `e-editor-variable` (Lem editor variables), `e-window` (side split, kind 15), `e-theme` (apply a color theme without saving it).
@@ -88,7 +93,8 @@ Extra effects added for T11/T12: `e-editor-variable` (Lem editor variables), `e-
 ## 5. Left to do (in plan order)
 
 - **T12 remainder**: `le-tabs` (off by default), per-segment modeline toggles, palette preview for buffers / LSP symbols / journal entries.
-- **T27–T28** Tree-sitter query packs (`:treesitter-grammar` effect, kind 16) and `le-lang-python` (+ TS/Rust/Go/CL).
+- **T27 remainder**: query packs for TypeScript/Rust/Go/CL (only Python exists), `textobjects.scm`/folding, tree-sitter indentation wired to python-mode's `calc-indent-function` on Enter (belongs with T28).
+- **T28** `le-lang-python` (coeffect activation, venv detection, LSP + ruff, format-on-save as side-transaction, REPL, pytest) + TS/Rust/Go/CL packs.
 - **T16–T19** `le-models` + `le-ollama`, worker adapters, `le-forge`, `le-mcp` bus.
 - **T20–T25** (Enterprise) `yeditor-journal` (+ `eval-event`), agent tool surface, multiplexer with transactional branching (replaces the T12 demo worker), sessions, Change Browser, agentic eval harness.
 - **T26** `le-reading` typography/focus mode; **T29–T30** Elisp shim and porter.
@@ -96,6 +102,8 @@ Extra effects added for T11/T12: `e-editor-variable` (Lem editor variables), `e-
 ## 6. Known gaps and gotchas
 
 - T14 reversal is partial by nature: definitions a package makes inside pre-existing packages remain until restart (the user is told before installing). Uses `ql:quickload` when Quicklisp is loaded, otherwise ASDF.
+- T27: grammar libraries stay loaded after uninstall (unloading a shared library that tree-sitter objects awaiting finalization may reference is unsafe); toggling reuses them, so nothing accumulates. Indentation is verified line by line on `components/test-data/sample.py` via `calc-indent-from-query`, not yet through python-mode's Enter key.
+- LSP stdio servers are grandchildren of the editor (async-process forks twice); after stop they may linger as zombies until init reaps them — tests treat a zombie as terminated.
 - `e-server` has no test. T13 sessions are keyed by language (as Lem's workspaces are), not by project root; the missing-server case reports the install command but does not run it (no unattended installs); tests use a fake stdio server (`components/test-data/fake-lsp-server.py`) and never complete the async initialize handshake (no event loop under the fake frontend).
 - T8: `use-component` options are validated but not passed to the component's install function;
   HMR uses `file-write-date` (1 s resolution).
@@ -109,4 +117,4 @@ Extra effects added for T11/T12: `e-editor-variable` (Lem editor variables), `e-
 
 ## 7. Current work in progress
 
-None. Phase 2 (T11–T15) is done except the T12 remainder. Next in plan order: T27 (tree-sitter query packs, `:treesitter-grammar` effect) and T28 (`le-lang-python`), then Phase 3 (T16–T19).
+None. Next in plan order: T28 (`le-lang-python`), then Phase 3 (T16–T19).

@@ -10,12 +10,14 @@
   (:import-from :yeditor-components/palette #:le-palette)
   (:import-from :yeditor-components/hud #:le-hud)
   (:import-from :yeditor-components/lsp #:le-lsp)
+  (:import-from :yeditor-components/treesitter #:le-treesitter-packs)
   (:import-from :yeditor-components/features
                 #:le-inherited-entry-points-off #:le-git #:le-project #:le-tree)
   (:import-from :yeditor-components/themes-ergonomic #:le-themes-ergonomic #:le-theme-extended)
   (:export :enable-ephemeral-ui :disable-ephemeral-ui :le-zero-chrome :le-palette :le-hud
            :le-themes-ergonomic :le-theme-extended :le-lsp
-           :le-inherited-entry-points-off :le-git :le-project :le-tree))
+           :le-inherited-entry-points-off :le-git :le-project :le-tree
+           :le-treesitter-packs))
 (in-package :yeditor-components)
 
 (defun enable-ephemeral-ui ()

@@ -177,6 +177,19 @@
   :install-command "npm install -g yeditor-no-such-language-server"
   :connection-mode :stdio)
 
+(defun process-state (pid)
+  "The state letter from /proc/PID/stat, or nil when the process no longer exists."
+  (let ((stat (ignore-errors (uiop:read-file-string (format nil "/proc/~D/stat" pid)))))
+    (and stat (char stat (+ 2 (position #\) stat :from-end t))))))
+
+(defun process-gone-p (pid &key (timeout 2))
+  "True once PID has terminated: it no longer exists, or it is a zombie (dead, not yet
+   reaped; the server is a grandchild of the editor, so init may reap it later)."
+  (loop :repeat (* timeout 100)
+        :for state := (process-state pid)
+        :when (or (null state) (char= state #\Z)) :return t
+        :do (sleep 0.01)))
+
 (defun lang-buffer (name mode)
   (let ((buffer (make-buffer name)))
     (let ((lem-lsp-mode:*disable* t))
@@ -190,19 +203,19 @@
       (install-component (quote le-lsp))
       (ok (eq lem-lsp-mode:*disable* t) "Lem's untracked auto-start is suppressed while installed")
       (dotimes (i 20)
-        (let ((workspace (yeditor-components/lsp:lsp-start-buffer buffer)))
+        (let* ((workspace (yeditor-components/lsp:lsp-start-buffer buffer))
+               (pid (lem-lsp-mode:lsp-session-pid workspace)))
           (ok (lem-lsp-mode:lsp-session-alive-p workspace) "server process running after start")
           (ok (eq workspace (yeditor-components/lsp:lsp-start-buffer buffer))
               "second start for the same language reuses the session")
           (ok (= 1 (length yeditor-components/lsp:*lsp-sessions*)) "one session per language")
           (yeditor-components/lsp:lsp-stop-all)
-          (sleep 0.05)
-          (ok (not (lem-lsp-mode:lsp-session-alive-p workspace)) "server process gone after stop")
+          (ok (process-gone-p pid) "server process gone after stop")
+          (ok (not (lem-lsp-mode:lsp-session-alive-p workspace)) "session reported stopped")
           (ok (null yeditor-components/lsp:*lsp-sessions*) "no session left")))
-      (let ((workspace (yeditor-components/lsp:lsp-start-buffer buffer)))
+      (let ((pid (lem-lsp-mode:lsp-session-pid (yeditor-components/lsp:lsp-start-buffer buffer))))
         (uninstall-component (quote le-lsp))
-        (sleep 0.05)
-        (ok (not (lem-lsp-mode:lsp-session-alive-p workspace)) "uninstall stops running servers")
+        (ok (process-gone-p pid) "uninstall stops running servers")
         (ok (null yeditor-components/lsp:*lsp-sessions*) "uninstall clears sessions")
         (ok (eq lem-lsp-mode:*disable* disable-before) "auto-start setting restored"))
       (kill-buffer buffer))))
@@ -328,3 +341,115 @@
       (uninstall-component feature))
     (uninstall-component (quote le-inherited-entry-points-off))
     (ok (equal (feature-state) lem-defaults) "uninstalling the basal state restores Lem's defaults exactly")))
+
+;;; T27 — tree-sitter query packs (run where the tree-sitter library and the
+;;; Python grammar are installed, e.g. the CI image; skipped elsewhere)
+
+(defparameter *python-sample*
+  (uiop:read-file-string (asdf:system-relative-pathname "yeditor-components" "test-data/sample.py")))
+
+(defun treesitter-ready-p ()
+  (and (lem-tree-sitter:tree-sitter-available-p)
+       (ignore-errors (yeditor-effects:ensure-grammar "python"))
+       t))
+
+(defun python-buffer ()
+  (let ((buffer (make-buffer "sample.py")))
+    (insert-string (buffer-start-point buffer) *python-sample*)
+    (let ((lem-lsp-mode:*disable* t))
+      (change-buffer-mode buffer (quote lem-python-mode:python-mode)))
+    buffer))
+
+(defun attribute-at (buffer needle &optional (occurrence 0) (offset 0))
+  "The :attribute text property at NEEDLE's OCCURRENCE-th match (+ OFFSET chars)."
+  (let ((pos (loop :with start := 0 :for i :from 0 :to occurrence
+                   :for p := (search needle *python-sample* :start2 start)
+                   :do (setf start (1+ p)) :finally (return p))))
+    (with-point ((p (buffer-start-point buffer)))
+      (character-offset p (+ pos offset))
+      (text-property-at p :attribute))))
+
+(deftest test-treesitter-python-highlighting
+  (if (not (treesitter-ready-p))
+      (skip "tree-sitter or the Python grammar is not installed")
+      (lem-fake-interface:with-fake-interface ()
+        (let ((buffer (python-buffer)))
+          (install-component (quote le-treesitter-packs))
+          (unwind-protect
+               (progn
+                 (ok (typep (syntax-table-parser (mode-syntax-table (quote lem-python-mode:python-mode)))
+                            (quote lem-tree-sitter:treesitter-parser))
+                     "python-mode uses the tree-sitter parser")
+                 (dolist (kw (list "async " "await " "match " "case " "return " "def " "class " "finally:"))
+                   (ok (eq (attribute-at buffer kw) (quote syntax-keyword-attribute))
+                       (format nil "keyword ~A" (string-trim " :" kw))))
+                 (ok (eq (attribute-at buffer "fetch(") (quote syntax-function-name-attribute)) "function name")
+                 (ok (eq (attribute-at buffer "Point:") (quote syntax-type-attribute)) "class name as type")
+                 (ok (eq (attribute-at buffer "float:" 0) (quote syntax-type-attribute)) "type hint")
+                 (ok (eq (attribute-at buffer "retries:") (quote syntax-variable-attribute)) "parameter")
+                 (ok (eq (attribute-at buffer "\"\"\"Module") (quote syntax-string-attribute)) "module docstring")
+                 (ok (eq (attribute-at buffer "\"origin\"") (quote syntax-string-attribute)) "string")
+                 (ok (eq (attribute-at buffer "f\"attempt" 0 3) (quote syntax-string-attribute))
+                     "nested f-string text")
+                 (ok (eq (attribute-at buffer "3)") (quote syntax-constant-attribute)) "number"))
+            (uninstall-component (quote le-treesitter-packs))
+            (kill-buffer buffer))))))
+
+(deftest test-treesitter-python-indentation
+  (if (not (treesitter-ready-p))
+      (skip "tree-sitter or the Python grammar is not installed")
+      (lem-fake-interface:with-fake-interface ()
+        (let ((buffer (python-buffer)))
+          (install-component (quote le-treesitter-packs))
+          (unwind-protect
+               (let* ((parser (lem-tree-sitter:get-buffer-treesitter-parser buffer))
+                      (tree (lem-tree-sitter:treesitter-parser-tree parser))
+                      (query (lem-tree-sitter:treesitter-parser-indent-query parser))
+                      (mismatches nil))
+                 (ok (and tree query) "parse tree and indent query available")
+                 (with-point ((p (buffer-start-point buffer)))
+                   (loop :for line :in (uiop:split-string *python-sample* :separator (string #\Newline))
+                         :for row :from 1
+                         :unless (zerop (length (string-trim " " line)))
+                           :do (move-to-line p row)
+                               (let ((expected (or (position #\Space line :test-not (function char=)) 0))
+                                     (got (lem-tree-sitter/indent:calc-indent-from-query tree query p 4)))
+                                 (unless (eql expected got)
+                                   (push (format nil "line ~D: expected ~D got ~A: ~A" row expected got line)
+                                         mismatches)))))
+                 (ok (null mismatches) (format nil "every line indented exactly~{~%  ~A~}" (reverse mismatches))))
+            (uninstall-component (quote le-treesitter-packs))
+            (kill-buffer buffer))))))
+
+(deftest test-treesitter-pack-toggle-no-leak
+  (if (not (treesitter-ready-p))
+      (skip "tree-sitter or the Python grammar is not installed")
+      (lem-fake-interface:with-fake-interface ()
+        (let* ((table (mode-syntax-table (quote lem-python-mode:python-mode)))
+               (fallback (syntax-table-parser table))
+               (buffer (python-buffer))
+               (libraries (length (cffi:list-foreign-libraries)))
+               (languages (length (tree-sitter:list-languages))))
+          (dotimes (i 100)
+            (install-component (quote le-treesitter-packs))
+            (uninstall-component (quote le-treesitter-packs))
+            (ok (eq (syntax-table-parser table) fallback) "fallback parser restored"))
+          (ok (= (length (cffi:list-foreign-libraries)) libraries) "no grammar library loaded again")
+          (ok (= (length (tree-sitter:list-languages)) languages) "no duplicate language registrations")
+          (ok (eq (attribute-at buffer "def ") (quote syntax-keyword-attribute))
+              "buffer highlighted again by the fallback parser")
+          (kill-buffer buffer)))))
+
+(deftest test-treesitter-compile-grammar
+  (let ((source #p"/tmp/tree-sitter-python/"))
+    (if (not (and (treesitter-ready-p) (probe-file (merge-pathnames "src/parser.c" source))))
+        (skip "no grammar source checkout available")
+        (let* ((out (uiop:ensure-directory-pathname
+                     (merge-pathnames (format nil "yeditor-parsers-~D/" (random 100000))
+                                      (uiop:default-temporary-directory))))
+               (library (yeditor-components/treesitter:compile-grammar source "python" :output-directory out)))
+          (ok (probe-file library) "grammar compiled to a shared library")
+          (ok (tree-sitter:load-language "python-compiled-test" (namestring library)
+                                         :symbol-name "tree_sitter_python" :register nil)
+              "the compiled library loads as a tree-sitter language")
+          (uiop:delete-directory-tree out :validate t :if-does-not-exist :ignore)))))

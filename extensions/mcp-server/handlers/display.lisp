@@ -41,7 +41,7 @@
   "Get selection/region information for a window."
   (let* ((buffer (window-buffer window))
          (mark (buffer-mark buffer)))
-    (if (and mark (mark-active-p buffer))
+    (if (and mark (buffer-mark-p buffer))
         (let ((point (buffer-point buffer)))
           `(("active" . t)
             ("start" . (("line" . ,(line-number-at-point mark))

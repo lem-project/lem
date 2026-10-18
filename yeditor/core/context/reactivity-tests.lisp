@@ -131,3 +131,54 @@
     ;; agent commits/rollbacks → HUD unmounts
     (set-work-predicate :agent-tx-active nil)
     (ok (not *hud-active*) (format nil "HUD inactive cycle ~A close" i))))
+
+;;; T28 additions: disjunction, project markers, batched updates
+
+(deftest test-coeffect-any-and-project-marker
+  (reset-context)
+  (let* ((root (uiop:ensure-directory-pathname
+                (merge-pathnames (format nil "yeditor-react-~D/" (random 1000000))
+                                 (uiop:default-temporary-directory))))
+         (coeffects (list :any (list (list :file-type "py")
+                                     (list :project-marker (list "pyproject.toml" "uv.lock"))))))
+    (ensure-directories-exist root)
+    (unwind-protect
+         (progn
+           (ok (not (yeditor-context/reactivity::coeffect-satisfied-p coeffects)) "nothing matches")
+           (update-contexts :file-type "py")
+           (ok (yeditor-context/reactivity::coeffect-satisfied-p coeffects) "first branch (.py) matches")
+           (update-contexts :file-type "md" :project-root root)
+           (ok (not (yeditor-context/reactivity::coeffect-satisfied-p coeffects)) "no marker yet")
+           (with-open-file (o (merge-pathnames "uv.lock" root) :direction :output) (write-string "" o))
+           (ok (yeditor-context/reactivity::coeffect-satisfied-p coeffects) "second branch (marker) matches")
+           (ok (equal (context-value :project-root) root) "context-value reads the slot"))
+      (uiop:delete-directory-tree root :validate t :if-does-not-exist :ignore))))
+
+(deftest test-update-contexts-reclassifies-once
+  (reset-context)
+  (setf *mode-comp-active* nil)
+  (define-coeffects 'mode-reactive-comp (list :buffer-mode 'python-mode :file-type "py"))
+  (update-contexts :buffer-mode 'python-mode :file-type "py")
+  (ok *mode-comp-active* "activated by a batched update satisfying both predicates")
+  (update-contexts :buffer-mode 'java-mode :file-type "java")
+  (ok (not *mode-comp-active*) "deactivated by the next batched update"))
+
+(defvar *reentrant-installs* 0)
+
+(define-component reentrant-comp
+  :version "0.1"
+  :install (lambda (comp ctx)
+             (declare (ignore ctx))
+             (incf *reentrant-installs*)
+             ;; installing changes the context, as a side window switching buffers does
+             (yeditor-context/reactivity:update-contexts :file-type "touched")
+             (list (yeditor-tx:install-effect comp :noop (lambda () nil) :undo-thunk (lambda () nil)))))
+
+(deftest test-reclassify-is-not-reentrant
+  (reset-context)
+  (setf *reentrant-installs* 0)
+  (define-coeffects 'reentrant-comp (list :agent-tx-active t))
+  (set-work-predicate :agent-tx-active t)
+  (ok (= 1 *reentrant-installs*) "a context change made while installing does not install again")
+  (set-work-predicate :agent-tx-active nil)
+  (uninstall-component 'reentrant-comp))

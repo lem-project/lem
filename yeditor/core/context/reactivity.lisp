@@ -19,7 +19,10 @@
    #:*agent-tx-active*
    #:*eval-overlay-active*
    #:*diagnostics-critical*
-   #:set-work-predicate))
+   #:set-work-predicate
+   #:update-context
+   #:update-contexts
+   #:context-value))
 (in-package :yeditor-context/reactivity)
 
 ;;;; ── Coeffect registry ───────────────────────────────────────────────────
@@ -35,6 +38,9 @@
 ;;   :agent-tx-active     — boolean (Emenda 5)
 ;;   :eval-overlay-active — boolean (Emenda 5)
 ;;   :diagnostics-critical — boolean (Emenda 5)
+;;   :project-root   — pathname: (equal current-project-root value)
+;;   :project-marker — list of file names: the project root contains any of them
+;;   :any            — list of coeffect plists: satisfied if any one is
 
 (defvar *coeffect-registry* (make-hash-table :test #'eq)
   "Maps component symbol → coeffect plist.")
@@ -78,8 +84,19 @@
                                 :file-type nil
                                 :remote-p nil
                                 :server-online nil
-                                :window-width 0)
+                                :window-width 0
+                                :project-root nil)
   "Snapshot of the observable context used for coeffect classification.")
+
+(defun context-value (key)
+  (getf *current-context* key))
+
+(defun update-contexts (&rest keys-and-values)
+  "Update several context slots at once, then reclassify a single time (so a
+   component is not deactivated and reactivated in between)."
+  (loop :for (key value) :on keys-and-values :by #'cddr
+        :do (setf (getf *current-context* key) value))
+  (reclassify-all))
 
 (defun update-context (key value)
   "Update one slot of *current-context* and reclassify all components."
@@ -111,6 +128,16 @@
                    (eq *eval-overlay-active* value))
                   (:diagnostics-critical
                    (eq *diagnostics-critical* value))
+                  (:project-root
+                   (equal (getf *current-context* :project-root) value))
+                  (:project-marker
+                   ;; satisfied when the current project root contains any of the files
+                   (let ((root (getf *current-context* :project-root)))
+                     (and root (some (lambda (marker) (probe-file (merge-pathnames marker root)))
+                                     value))))
+                  (:any
+                   ;; disjunction: VALUE is a list of coeffect plists
+                   (some #'coeffect-satisfied-p value))
                   (t nil))))
 
 ;;;; ── Reclassification ────────────────────────────────────────────────────
@@ -120,27 +147,40 @@
   (let ((entry (gethash sym *component-registry*)))
     (and entry (getf entry :state))))
 
-(defun reclassify-all ()
-  "Check every component with declared coeffects against the current context.
-   Activate those whose coeffects are satisfied and are not yet active;
-   deactivate those whose coeffects are no longer satisfied.
-   Each transition is an install or uninstall sub-transaction (never partial)."
+(defvar *reclassifying* nil "True while a reclassification pass runs.")
+(defvar *reclassify-pending* nil "Set when a reclassification is requested during a pass.")
+
+(defun reclassify-once ()
   (maphash
    (lambda (sym coeffects)
      (let ((satisfied (coeffect-satisfied-p coeffects))
            (active    (component-active-p sym)))
        (cond
          ((and satisfied (not active))
-          ;; coeffect became true and component is inactive → activate
           (handler-case (install-component sym)
             (error (e)
               (warn "Reactivity: failed to activate ~A: ~A" sym e))))
          ((and (not satisfied) active)
-          ;; coeffect became false and component is active → deactivate
           (handler-case (uninstall-component sym)
             (error (e)
               (warn "Reactivity: failed to deactivate ~A: ~A" sym e)))))))
    *coeffect-registry*))
+
+(defun reclassify-all ()
+  "Check every component with declared coeffects against the current context.
+   Activate those whose coeffects are satisfied and are not yet active;
+   deactivate those whose coeffects are no longer satisfied.
+   Each transition is an install or uninstall sub-transaction (never partial).
+   Installing a component can itself change the context (e.g. a side window switches
+   buffers); such nested requests are deferred and the pass is repeated until the
+   context is stable (bounded), instead of re-entering mid-install."
+  (if *reclassifying*
+      (setf *reclassify-pending* t)
+      (let ((*reclassifying* t))
+        (loop :repeat 10
+              :do (setf *reclassify-pending* nil)
+                  (reclassify-once)
+              :while *reclassify-pending*))))
 
 ;;;; ── Context-event dispatch ─────────────────────────────────────────────
 
@@ -161,6 +201,8 @@
     (:buffer-mode-change
      (let ((new-mode (second args)))
        (update-context :buffer-mode new-mode)))
+    (:project-root-change
+     (update-context :project-root (first args)))
     (:project-change
      (update-context :project-type (first args)))
     (:file-type-change

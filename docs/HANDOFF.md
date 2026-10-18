@@ -1,0 +1,111 @@
+# Yeditor — Implementation Handoff
+
+*Living document. Updated after every completed task so another agent can continue the work.
+Last update: 2026-10-18.*
+
+Authoritative plan (Portuguese, local only — excluded from git via `.git/info/exclude`):
+`.hermes/plans/2026-10-17_192626-yeditor-spacetime-lem-fork.md` (tasks T1–T30, chapters 1–18).
+If the plan file is unavailable, this document plus `docs/IP_STRATEGY.md` and `docs/arch.md`
+describe the architecture and rules.
+
+## 1. Ground rules (read first)
+
+- **Licensing (open core).** `yeditor/core/`, `yeditor/effects/`, `yeditor/components/` →
+  FSL-1.1-MIT; `yeditor/enterprise/` → proprietary; Lem-derived L0 (`src/`, `frontends/`,
+  `extensions/`, `contrib/`) → MIT. Every file under `yeditor/` must start with its tier header
+  (see `docs/IP_STRATEGY.md` §4); `scripts/check-license-headers.sh` enforces it. Never add
+  GPL/AGPL dependencies.
+- **Commits.** Author is Yuri only — **no `Co-Authored-By` trailers**. L0 (Lem) changes go in their
+  own small commits (`chore(l0)` / `fix(l0)`) explaining why.
+- **Lem API.** Use exported `lem:` symbols; CI rejects `lem::`. If something needed is not
+  exported, export it in L0 in a separate commit.
+- **Dependencies.** Yeditor systems depend on `lem/core` (+ `lem/extensions` when needed), **never on
+  the full `lem` system** — it also loads the webview frontend, which then becomes the default UI.
+- **Layering.** Core never depends on Enterprise. Agent/journal/forge code (L4–L5) goes in
+  `yeditor/enterprise/`.
+- **Effects are lazy.** `install-effect` registers a thunk that runs at `tx-commit`; capture
+  "previous" state inside the thunk, not at registration time.
+- **Keep this file updated** at the end of each task.
+
+## 2. How to build, test and run
+
+From the repository root (dependencies via qlot, already installed in `.qlot/`):
+
+| What | Command |
+|---|---|
+| All Yeditor test suites (exit 1 on failure) | `sbcl --script scripts/run-yeditor-all-tests.lisp` |
+| License/IP gate (+ dependency audit) | `bash scripts/check-license-headers.sh --deps` |
+| Benchmarks (+ compare with a base JSON) | `sbcl --script scripts/run-yeditor-bench.lisp out.json [base.json]` |
+| Benchmark gate in Docker, base vs head | `bash scripts/bench-gate.sh <base-ref> [out-dir]` |
+| Run the editor in a terminal, ephemeral UI on | `sbcl --load scripts/run-yeditor-ncurses.lisp` |
+
+Driving the UI headlessly for verification: start it inside `tmux` (with `remain-on-exit on`),
+send keys with `tmux send-keys`, read the screen with `tmux capture-pane -p` (`-e` for colors).
+`M-x` must be sent as one escape sequence: `tmux send-keys -l $'\ex'`. The abort key is `C-g`
+(`Esc` is the Meta prefix in a terminal).
+
+Test status at last update: 9 test systems, **14,328 assertions, 0 failures** (the T1–T10/T12
+suites were also verified inside the CI Docker image).
+
+## 3. Layout
+
+```
+yeditor/
+├── core/                 FSL — yeditor-core.asd (umbrella), package.lisp, version.lisp
+│   ├── tx/               L1 yeditor-tx: install-effect, tx-commit, tx-rollback, side-transactions
+│   ├── context/          L2 yeditor-context: registry (define-component, install/uninstall/toggle),
+│   │                     reactivity (coeffects), loader (.yeditor.lisp + HMR), durability (JSONL log)
+│   └── bench/            T10 benchmark suite (yeditor-bench)
+├── effects/              FSL — standard effects (14 kinds) + tests
+├── components/           FSL — T11 theme pack + policy, T12 UI components (zero-chrome, palette, HUD) + tests
+└── enterprise/           Proprietary — yeditor-enterprise.asd + placeholder (no code yet)
+scripts/                  test runners, launchers, CI gates
+```
+
+## 4. Done
+
+| Task | What exists | Where |
+|---|---|---|
+| T1 | Transaction log, `with-transaction`, commit/rollback, benchmark | `core/tx/tx.lisp` |
+| T2 | Inverses, LIFO rollback, all-or-nothing commit, side-transactions (kind 2) | `core/tx/` |
+| T3 | `define-component`, install/uninstall/toggle; toggle suspends/resumes the **same** handles; nested installs isolated | `core/context/registry.lisp` |
+| T4 | Effects: buffer, mode, hook | `effects/e-buffer,e-mode,e-hook` |
+| T5 | Effects: keymap, variable, command, overlay, timer | `effects/` |
+| T6 | Effects: process, TCP server, LSP session, fdefinition | `effects/` |
+| T7 | Coeffects (`define-coeffects`, `emit-context-event`, `reclassify-all`), work-cycle predicates `:agent-tx-active`, `:eval-overlay-active`, `:diagnostics-critical` | `core/context/reactivity.lisp` |
+| T8 | `.yeditor.lisp` loader: `use-component` forms, config validation, reconciliation, mtime-polling HMR thread | `core/context/loader.lisp` |
+| T9 | Durable JSONL effects log, lifecycle hook, replay, crash recovery (`:persist t` reinstall) | `core/context/durability.lisp` |
+| T10 | Benchmarks (dispatch, keystroke→frame, component toggle, empty commit), budgets, 20% p95 regression gate in CI (base vs head on same runner) | `core/bench/`, `scripts/bench-gate.sh` |
+| T12 (first cut) | Zero-chrome basal state, theme palette with live preview + abort rollback, agent HUD mounted by coeffect with inline diffs and C-c C-a / C-c C-k | `components/` |
+| T11 | Curated pack of 11 `ergo-*` themes defined by semantic roles; OKLCH/WCAG policy validator (no pure black/white, text ≥ 7:1, syntax chroma ≤ 0.17, no light neon); `le-themes-ergonomic` applies Gruvbox Soft and narrows the palette to the pack; `le-theme-extended` reopens all Lem themes; `e-theme` effect | `components/themes-ergonomic.lisp`, `components/theme-policy.lisp`, `effects/e-theme.lisp` |
+| Licensing | Open-core licenses, CLA, IP strategy, header/dependency CI gate | root `LICENSE*`, `docs/IP_STRATEGY.md` |
+
+Extra effects added for T11/T12: `e-editor-variable` (Lem editor variables), `e-window` (side split, kind 15), `e-theme` (apply a color theme without saving it).
+
+## 5. Left to do (in plan order)
+
+- **T12 remainder**: `le-tabs` (off by default), per-segment modeline toggles, palette preview for buffers / LSP symbols / journal entries.
+- **T13** `le-lsp` component (start/stop LSP per project as effect; fake `pyright` in tests).
+- **T14** Quicklisp onboarding (install package under transaction).
+- **T15** `le-git`, `le-project`, `le-tree` as components (no leaked keybindings/hooks).
+- **T27–T28** Tree-sitter query packs (`:treesitter-grammar` effect, kind 16) and `le-lang-python` (+ TS/Rust/Go/CL).
+- **T16–T19** `le-models` + `le-ollama`, worker adapters, `le-forge`, `le-mcp` bus.
+- **T20–T25** (Enterprise) `yeditor-journal` (+ `eval-event`), agent tool surface, multiplexer with transactional branching (replaces the T12 demo worker), sessions, Change Browser, agentic eval harness.
+- **T26** `le-reading` typography/focus mode; **T29–T30** Elisp shim and porter.
+
+## 6. Known gaps and gotchas
+
+- `e-lsp` uses `lem-lsp-mode::` internals and has no test; `e-server` has no test.
+- T8: `use-component` options are validated but not passed to the component's install function;
+  HMR uses `file-write-date` (1 s resolution).
+- T9: components suspended at crash time are not reinstalled on recovery (choice, not specified by plan).
+- T5 timer test only checks start/stop without error.
+- The T12 HUD agent model (`*agent-tx*` in `components/hud.lisp`) is a demo stand-in until T22.
+- Lem's `get-internal-real-time` is millisecond resolution on this SBCL; benchmarks use `sb-ext:get-time-of-day`.
+- T11 palettes were written from each theme's public palette from memory; Gruvbox Soft uses Gruvbox Material accents and Tokyo Night Storm / One Dark use brighter foregrounds to meet the policy (documented in `themes-ergonomic.lisp`). The policy does not yet check comment contrast. Lem's other 180+ themes are not run through the policy (plan: mark them `ergonomic: false`, Phase 5).
+- L0 dependencies under LLGPL/MPL are recorded exceptions (`scripts/ip-license-exceptions.txt`); resolve before a commercial release.
+- `docs/` FSL text (`LICENSE-FSL`) was written from memory — verify against fsl.software before publishing.
+
+## 7. Current work in progress
+
+None. Next in plan order: T12 remainder or T13 (`le-lsp`).

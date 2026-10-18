@@ -21,4 +21,5 @@
                (:file "e-fdefinition")
                (:file "e-editor-variable")
                (:file "e-window")
+               (:file "e-theme")
                (:file "effects")))

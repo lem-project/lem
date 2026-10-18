@@ -6,10 +6,15 @@
 (defpackage :yeditor-components/palette
   (:use :cl :lem :yeditor-context :yeditor-effects)
   (:export :le-palette
+           :*palette-themes-function*
            :yeditor-palette-theme
            :call-with-theme-preview
            :*open-preview-sessions*))
 (in-package :yeditor-components/palette)
+
+(defvar *palette-themes-function* (function color-theme-names)
+  "Function of no arguments returning the theme names the palette offers.
+   le-themes-ergonomic narrows it to the curated pack; le-theme-extended widens it.")
 
 (defvar *open-preview-sessions* 0
   "Number of live-preview sessions currently open; 0 whenever no palette is shown.")
@@ -40,7 +45,7 @@
              :focus-action (lambda (context)
                              (declare (ignore context))
                              (funcall preview name))))
-          (completion string (color-theme-names))))
+          (completion string (funcall *palette-themes-function*))))
 
 (define-command yeditor-palette-theme () ()
   "Pick a color theme with live preview; C-g (abort) restores the previous theme."

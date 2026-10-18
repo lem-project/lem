@@ -11,5 +11,7 @@
   :depends-on ("lem/core" "yeditor-core")
   :components ((:file "zero-chrome")
                (:file "palette")
+               (:file "theme-policy")
+               (:file "themes-ergonomic")
                (:file "hud")
                (:file "components")))

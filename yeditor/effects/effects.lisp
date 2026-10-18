@@ -19,9 +19,10 @@
   (:import-from :yeditor-effects/e-fdefinition :install-fdefinition)
   (:import-from :yeditor-effects/e-editor-variable :install-editor-variable)
   (:import-from :yeditor-effects/e-window :install-side-window)
+  (:import-from :yeditor-effects/e-theme :install-theme)
   (:export :install-buffer :install-mode :install-hook
            :install-keybinding :install-variable :install-command
            :install-overlay :install-timer
            :install-process :install-tcp-server :install-lsp-session
-           :install-fdefinition :install-editor-variable :install-side-window))
+           :install-fdefinition :install-editor-variable :install-side-window :install-theme))
 (in-package :yeditor-effects)

@@ -9,18 +9,23 @@
   (:import-from :yeditor-components/zero-chrome #:le-zero-chrome)
   (:import-from :yeditor-components/palette #:le-palette)
   (:import-from :yeditor-components/hud #:le-hud)
-  (:export :enable-ephemeral-ui :disable-ephemeral-ui :le-zero-chrome :le-palette :le-hud))
+  (:import-from :yeditor-components/themes-ergonomic #:le-themes-ergonomic #:le-theme-extended)
+  (:export :enable-ephemeral-ui :disable-ephemeral-ui :le-zero-chrome :le-palette :le-hud
+           :le-themes-ergonomic :le-theme-extended))
 (in-package :yeditor-components)
 
 (defun enable-ephemeral-ui ()
-  "Enter the zero-chrome basal state, bind the palette (C-c p) and let the agent HUD
+  "Enter the zero-chrome basal state with the ergonomic theme pack (default Gruvbox Soft),
+   bind the palette (C-c p) and let the agent HUD
    mount and unmount on the :agent-tx-active coeffect."
   (define-coeffects (quote le-hud) (list :agent-tx-active t))
   (install-component (quote le-zero-chrome))
+  (install-component (quote le-themes-ergonomic))
   (install-component (quote le-palette)))
 
 (defun disable-ephemeral-ui ()
   "Restore the chrome and bindings that existed before enable-ephemeral-ui."
   (uninstall-component (quote le-hud))
   (uninstall-component (quote le-palette))
+  (uninstall-component (quote le-themes-ergonomic))
   (uninstall-component (quote le-zero-chrome)))

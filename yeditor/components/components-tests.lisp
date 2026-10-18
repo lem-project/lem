@@ -98,3 +98,57 @@
                  (ok (eq (binding "C-c C-k") rollback-key) "C-c C-k binding restored"))))
         (reset-demo)
         (disable-ephemeral-ui))))))
+
+;;; T11 — ergonomic theme pack and policy
+
+(defparameter *snapshot-attributes*
+  (list (quote syntax-keyword-attribute) (quote syntax-string-attribute) (quote syntax-comment-attribute)
+        (quote syntax-function-name-attribute) (quote region) (quote modeline)))
+
+(defun attribute-snapshot ()
+  (list (current-theme)
+        (mapcar (lambda (name)
+                  (let ((a (ensure-attribute name nil)))
+                    (list (attribute-foreground a) (attribute-background a))))
+                *snapshot-attributes*)))
+
+(deftest test-ergonomic-pack-passes-policy
+  (let ((pack yeditor-components/themes-ergonomic:*ergonomic-themes*))
+    (ok (= (length pack) 11) "11 curated themes (plan Cap. 12-A.2)")
+    (dolist (entry pack)
+      (ok (null (yeditor-components/theme-policy:theme-violations (cdr entry)))
+          (format nil "~A passes the ergonomic policy" (car entry)))
+      (ok (find-color-theme (car entry)) (format nil "~A is a Lem color theme" (car entry))))))
+
+(deftest test-policy-rejects-neon-and-pure-black-white
+  (let ((neon (list :bg "#282c34" :fg "#abb2bf" :keyword "#00ff00" :string "#ff00ff" :function "#00ffff"
+                    :constant "#ff0000" :type "#ffff00" :variable "#0000ff" :builtin "#39ff14"))
+        (harsh (list :bg "#000000" :fg "#ffffff" :keyword "#c678dd" :string "#98c379" :function "#61afef"
+                     :constant "#d19a66" :type "#e5c07b" :variable "#e06c75" :builtin "#56b6c2")))
+    (ok (= 7 (length (remove-if-not (lambda (m) (or (search "chroma" m) (search "neon" m)))
+                                    (yeditor-components/theme-policy:theme-violations neon))))
+        "every neon syntax color is rejected, including light cyan")
+    (ok (search "contrast" (format nil "~{~A ~}" (yeditor-components/theme-policy:theme-violations neon)))
+        "low text contrast is rejected")
+    (let ((v (yeditor-components/theme-policy:theme-violations harsh)))
+      (ok (find "background is pure black" v :test (function equal)) "pure black background rejected")
+      (ok (find "text is pure white" v :test (function equal)) "pure white text rejected"))))
+
+(deftest test-ergonomic-pack-toggle-restores-faces
+  (lem-fake-interface:with-fake-interface ()
+    (load-theme "lem-default" nil)
+    (let ((before (attribute-snapshot))
+          (source yeditor-components/palette:*palette-themes-function*))
+      (dotimes (i 200)
+        (install-component (quote le-themes-ergonomic))
+        (ok (equal (current-theme) "ergo-gruvbox-soft") "default theme is Gruvbox Soft")
+        (ok (equal (funcall yeditor-components/palette:*palette-themes-function*)
+                   (yeditor-components/themes-ergonomic:ergonomic-theme-names))
+            "palette offers only the curated pack")
+        (uninstall-component (quote le-themes-ergonomic))
+        (ok (equal (attribute-snapshot) before) "theme and faces restored exactly")
+        (ok (eq yeditor-components/palette:*palette-themes-function* source) "palette source restored"))
+      (install-component (quote le-theme-extended))
+      (ok (> (length (funcall yeditor-components/palette:*palette-themes-function*)) 11)
+          "le-theme-extended offers every installed theme")
+      (uninstall-component (quote le-theme-extended)))))

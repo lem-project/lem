@@ -36,7 +36,8 @@
                  :activate ,activate
                  :deactivate ,deactivate
                  :config-spec ,config-spec
-                 :state nil))))
+                 :state nil
+                 :suspended nil))))
 
 (defun install-component (component &optional ctx)
   "Install COMPONENT within a transaction.
@@ -56,14 +57,18 @@
       (dolist (dep deps)
         (unless (gethash dep *component-registry*)
           (error "Dependency ~A not defined (required by component ~A)" dep component))))
-    (with-transaction
+    ;; fresh bindings: a component installed while another transaction is
+    ;; pending must neither commit nor discard the outer effects
+    (let ((yeditor-tx:*tx-pending* nil)
+          (yeditor-tx:*tx-committed* nil))
+     (with-transaction
       (let* ((install-fn (getf entry :install))
              (handles (funcall install-fn component ctx)))
         ;; store handles in state for later uninstall/toggle
         (setf (getf entry :state) handles)
         ;; commit transaction (effects already run inside install-fn)
         (tx-commit)
-        entry))))
+        entry)))))
 
 (defun uninstall-component (component)
   "Uninstall COMPONENT by executing inverse effects in LIFO order.
@@ -71,28 +76,42 @@
    Component must have been installed previously."
   (let ((entry (gethash component *component-registry*)))
     (unless entry (error "Component ~A not defined" component))
-    (let ((handles (getf entry :state)))
-      (when handles
-        ;; run inverses in reverse order
-        (dolist (h (reverse handles))
-          (let ((undo (cdr (assoc :inverse h))))
-            (when undo (funcall undo))))
-        (setf (getf entry :state) nil)))
+    (run-inverses (getf entry :state))
+    (setf (getf entry :state) nil
+          (getf entry :suspended) nil)
     ;; also run deactivate if provided
     (let ((deactivate-fn (getf entry :deactivate)))
       (when deactivate-fn (funcall deactivate-fn component)))
     t))
 
+(defun run-inverses (handles)
+  (dolist (h (reverse handles))
+    (let ((undo (cdr (assoc :inverse h))))
+      (when undo (funcall undo)))))
+
+(defun resume-handles (handles)
+  "Re-run the effect of each handle in order; on error undo the ones already re-run."
+  (let ((done nil))
+    (handler-bind ((error (lambda (e)
+                            (declare (ignore e))
+                            (run-inverses (reverse done)))))
+      (dolist (h handles)
+        (funcall (cdr (assoc :fn h)))
+        (push h done)))))
+
 (defun toggle-component (component)
-  "Suspend or resume COMPONENT.
-   If currently active (state non-nil), suspend (uninstall). Otherwise, resume (install)."
+  "Suspend COMPONENT if active (undo its effects, keep handles and config), or
+   resume it if suspended (re-apply the same handles). Installs it if neither."
   (let ((entry (gethash component *component-registry*)))
     (unless entry (error "Component ~A not defined" component))
-    (if (getf entry :state)
-        (progn
-          (uninstall-component component)
-          (setf (getf entry :state) nil))
-        (progn
-          (install-component component)
-          (setf (getf entry :state) (getf entry :state))))
+    (cond
+      ((getf entry :state)
+       (run-inverses (getf entry :state))
+       (setf (getf entry :suspended) (getf entry :state)
+             (getf entry :state) nil))
+      ((getf entry :suspended)
+       (resume-handles (getf entry :suspended))
+       (setf (getf entry :state) (getf entry :suspended)
+             (getf entry :suspended) nil))
+      (t (install-component component)))
     t))

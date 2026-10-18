@@ -58,10 +58,8 @@
     (setf *tx-committed* nil)))
 
 (defmacro with-transaction (&body body)
-  "Execute BODY within a transaction scope.
-   If BODY exits abnormally (error/throw) before tx-commit is called, any
-   effects registered in *tx-pending* are discarded so they do not leak into
-   the next transaction."
+  "Execute BODY, recording effects via install-effect into *tx-pending*.
+   If BODY exits abnormally, the pending effects are discarded."
   (let ((committed (gensym "COMMITTED")))
     `(let ((,committed nil))
        (unwind-protect

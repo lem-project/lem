@@ -103,3 +103,34 @@
   (rove:ok (null (getf (gethash 'dummy-component yeditor-context::*component-registry*) :state)) "state nil after uninstall")
   (yeditor-context:uninstall-component 'dummy-component) ; second call should be safe
   (rove:ok t "second uninstall no error"))
+
+(rove:deftest test-toggle-preserves-handle-identity
+  (clear-dummy-vars)
+  (yeditor-context:uninstall-component 'dummy-component)
+  (let* ((entry (yeditor-context:install-component 'dummy-component))
+         (before (copy-list (getf (gethash 'dummy-component yeditor-context:*component-registry*) :state))))
+    (declare (ignore entry))
+    (dotimes (n 100)
+      (yeditor-context:toggle-component 'dummy-component)
+      (yeditor-context:toggle-component 'dummy-component))
+    (let ((after (getf (gethash 'dummy-component yeditor-context:*component-registry*) :state)))
+      (rove:ok (= 10 (length after)) "10 handles after 100 suspend/resume cycles")
+      (rove:ok (every #'eq before after) "same handle objects (identity preserved)")))
+  (yeditor-context:uninstall-component 'dummy-component)
+  (clear-dummy-vars))
+
+(defvar *outer-ran* nil)
+
+(rove:deftest test-nested-transaction-isolated
+  ;; an inner install-component must not commit effects pending in an outer tx
+  (setf *outer-ran* nil)
+  (yeditor-context:uninstall-component 'dummy-component)
+  (yeditor-tx:with-transaction
+    (yeditor-tx:install-effect 'outer :noop (lambda () (setf *outer-ran* t))
+                               :undo-thunk (lambda () (setf *outer-ran* nil)))
+    (yeditor-context:install-component 'dummy-component)
+    (rove:ok (not *outer-ran*) "outer pending effect not run by inner commit")
+    (yeditor-tx:tx-commit)
+    (rove:ok *outer-ran* "outer effect runs on its own commit"))
+  (yeditor-context:uninstall-component 'dummy-component)
+  (clear-dummy-vars))

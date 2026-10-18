@@ -25,6 +25,9 @@
 (defmethod lem-if:update-foreground ((implementation ncurses) color-name)
   (lem-ncurses/term:update-foreground-color color-name))
 
+(defmethod lem-if:reset-display-colors ((implementation ncurses))
+  (lem-ncurses/term:set-default-color nil nil))
+
 (defmethod lem-if:update-cursor-shape ((implementation ncurses) cursor-type)
   (lem-ncurses/term:update-cursor-shape cursor-type))
 

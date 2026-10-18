@@ -68,6 +68,7 @@ for example, to maintain an attribute like CURSOR.")
  to defined attributes, such as :background, :foreground, etc.. in the text editor"
   (setf (inactive-window-background-color) nil)
   (clear-all-attribute-cache)
+  (lem-if:reset-display-colors (implementation))
   (let ((spec-table (make-hash-table)))
     (inherit-load-theme theme spec-table)
     (maphash (lambda (name args)

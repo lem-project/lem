@@ -100,7 +100,8 @@ saved SBCL image) before a commercial Enterprise release. Until then the reposit
 1. a file in `yeditor/enterprise/` lacks the Enterprise header, or any other file in `yeditor/`
    lacks the FSL header (both also require the copyright line);
 2. a file carrying a Yeditor SPDX identifier appears in an MIT L0 directory;
-3. a dependency loaded with `lem`, `yeditor` and `yeditor-enterprise` is GPL/AGPL, or has an
+3. a system in the ASDF dependency graph of `lem`, `yeditor` and `yeditor-enterprise` (read from
+   the system definitions, without loading code, so every frontend is covered) is GPL/AGPL, or has an
    LGPL/LLGPL/MPL/EPL/unrecognised license not recorded as an exception
    (`scripts/check-dependency-licenses.lisp`). Systems that declare no license are listed for
    manual review.

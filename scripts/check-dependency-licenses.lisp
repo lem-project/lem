@@ -3,14 +3,34 @@
 ;;;; Licensed under the Functional Source License, Version 1.1 (see LICENSE-FSL).
 ;;;; Competing commercial use is strictly prohibited.
 
-;;; Loads Lem and every Yeditor system, then classifies the declared license of
-;;; each loaded ASDF system. Exit 1 on GPL/AGPL, or on LGPL/LLGPL/MPL/EPL/unknown
+;;; Walks the ASDF dependency graph of Lem and every Yeditor system (without loading
+;;; code) and classifies the declared license of each system. Exit 1 on GPL/AGPL, or on LGPL/LLGPL/MPL/EPL/unknown
 ;;; licenses not listed in scripts/ip-license-exceptions.txt.
 (load ".qlot/setup.lisp")
 (require :asdf)
 
-(dolist (s '(:lem :yeditor :yeditor-enterprise))
-  (asdf:load-system s))
+;; Walk the dependency graph from the system definitions only, without loading code,
+;; so frontends whose native libraries are absent (e.g. webview without WebKit) are
+;; still audited.
+(defun dependency-name (dep)
+  (cond ((stringp dep) dep)
+        ((symbolp dep) (string-downcase (symbol-name dep)))
+        ((and (consp dep) (eq (first dep) :feature)) (dependency-name (third dep)))
+        ((and (consp dep) (member (first dep) '(:version :require))) (dependency-name (second dep)))))
+
+(defun dependency-closure (roots)
+  (let ((seen (make-hash-table :test #'equal)) (order nil))
+    (labels ((visit (name)
+               (unless (or (null name) (gethash name seen))
+                 (setf (gethash name seen) t)
+                 (let ((system (ignore-errors (asdf:find-system name nil))))
+                   (push name order)
+                   (when system
+                     (dolist (dep (append (asdf:system-defsystem-depends-on system)
+                                          (asdf:system-depends-on system)))
+                       (visit (dependency-name dep))))))))
+      (mapc #'visit roots))
+    (nreverse order)))
 
 (defun read-exceptions ()
   (with-open-file (in "scripts/ip-license-exceptions.txt")
@@ -47,7 +67,7 @@
 
 (let ((exceptions (read-exceptions))
       (errors nil) (excepted nil) (no-license nil))
-  (dolist (name (sort (asdf:already-loaded-systems) #'string<))
+  (dolist (name (sort (dependency-closure '("lem" "yeditor" "yeditor-enterprise")) #'string<))
     (let* ((license (or (ignore-errors (asdf:system-license (asdf:find-system name)))
                         (ignore-errors (asdf:system-license (asdf:find-system (primary name))))))
            (class (classify license))

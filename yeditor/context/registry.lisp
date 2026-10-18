@@ -10,7 +10,8 @@
    #:install-component
    #:uninstall-component
    #:toggle-component
-   #:*component-registry*))
+   #:*component-registry*
+   #:*lifecycle-hook*))
 
 (in-package :yeditor-context)
 
@@ -18,10 +19,17 @@
 (defvar *component-registry* (make-hash-table :test #'eq)
   "Registry of defined components.")
 
+(defvar *lifecycle-hook* nil
+  "Function (EVENT COMPONENT) called on lifecycle transitions, or nil. EVENT is one
+   of :install-begin :install-commit :install-abort :uninstall :suspend :resume.")
+
+(defun notify (event component)
+  (when *lifecycle-hook* (funcall *lifecycle-hook* event component)))
+
 ;; Component structure (alist) stored in the registry
 ;; Keys: :name :version :author :depends-on :install :activate :deactivate :config-spec :state
 
-(defmacro define-component (name &key version author depends-on install activate deactivate config-spec)
+(defmacro define-component (name &key version author depends-on install activate deactivate config-spec persist)
   "Define a component and register it in the global registry.
    INSTALL is a function taking (component context) returning effect handles.
    ACTIVATE and DEACTIVATE are optional lifecycle functions.
@@ -36,6 +44,7 @@
                  :activate ,activate
                  :deactivate ,deactivate
                  :config-spec ,config-spec
+                 :persist ,persist
                  :state nil
                  :suspended nil))))
 
@@ -59,16 +68,19 @@
           (error "Dependency ~A not defined (required by component ~A)" dep component))))
     ;; fresh bindings: a component installed while another transaction is
     ;; pending must neither commit nor discard the outer effects
-    (let ((yeditor-tx:*tx-pending* nil)
-          (yeditor-tx:*tx-committed* nil))
-     (with-transaction
-      (let* ((install-fn (getf entry :install))
-             (handles (funcall install-fn component ctx)))
-        ;; store handles in state for later uninstall/toggle
-        (setf (getf entry :state) handles)
-        ;; commit transaction (effects already run inside install-fn)
-        (tx-commit)
-        entry)))))
+    (notify :install-begin component)
+    (handler-bind ((error (lambda (e)
+                            (declare (ignore e))
+                            (notify :install-abort component))))
+      (let ((yeditor-tx:*tx-pending* nil)
+            (yeditor-tx:*tx-committed* nil))
+        (with-transaction
+          (let ((handles (funcall (getf entry :install) component ctx)))
+            (tx-commit)
+            ;; only mark installed once the commit succeeded
+            (setf (getf entry :state) handles)))))
+    (notify :install-commit component)
+    entry))
 
 (defun uninstall-component (component)
   "Uninstall COMPONENT by executing inverse effects in LIFO order.
@@ -79,6 +91,7 @@
     (run-inverses (getf entry :state))
     (setf (getf entry :state) nil
           (getf entry :suspended) nil)
+    (notify :uninstall component)
     ;; also run deactivate if provided
     (let ((deactivate-fn (getf entry :deactivate)))
       (when deactivate-fn (funcall deactivate-fn component)))
@@ -108,10 +121,12 @@
       ((getf entry :state)
        (run-inverses (getf entry :state))
        (setf (getf entry :suspended) (getf entry :state)
-             (getf entry :state) nil))
+             (getf entry :state) nil)
+       (notify :suspend component))
       ((getf entry :suspended)
        (resume-handles (getf entry :suspended))
        (setf (getf entry :state) (getf entry :suspended)
-             (getf entry :suspended) nil))
+             (getf entry :suspended) nil)
+       (notify :resume component))
       (t (install-component component)))
     t))

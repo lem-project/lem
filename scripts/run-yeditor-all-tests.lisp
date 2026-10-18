@@ -5,11 +5,12 @@
                "context/yeditor-context.asd" "context/registry-tests.asd"
                "context/yeditor-context-reactivity.asd" "context/reactivity-tests.asd"
                "context/yeditor-context-loader.asd" "context/loader-tests.asd"
+               "context/yeditor-context-durability.asd" "context/durability-tests.asd"
                "effects/effects.asd" "effects/effects-tests.asd"
                "effects/effects-t5-tests.asd" "effects/effects-t6-tests.asd"))
   (asdf:load-asd (merge-pathnames (concatenate 'string "yeditor/" asd) (uiop:getcwd))))
 (defparameter *systems*
-  '(:yeditor-tx-tests :registry-tests :yeditor-context-reactivity-tests :loader-tests
+  '(:yeditor-tx-tests :registry-tests :yeditor-context-reactivity-tests :loader-tests :durability-tests
     :yeditor-effects-tests :yeditor-effects-t5-tests :yeditor-effects-t6-tests))
 (dolist (s *systems*) (asdf:load-system s))
 (uiop:quit (if (every #'rove:run *systems*) 0 1))

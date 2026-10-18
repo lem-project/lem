@@ -6,5 +6,5 @@
 (defsystem "yeditor-components-tests"
   :description "T12 tests: zero-chrome, palette live preview, agent HUD"
   :license "FSL-1.1-MIT"
-  :depends-on ("lem/core" "lem/extensions" "lem-fake-interface" "yeditor-components" "rove")
+  :depends-on ("lem/core" "lem/extensions" "lem-fake-interface" "yeditor-components" "yeditor-context-durability" "rove")
   :components ((:file "components-tests")))

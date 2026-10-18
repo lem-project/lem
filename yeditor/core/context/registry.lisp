@@ -12,6 +12,8 @@
    #:with-transaction)
   (:export
    #:define-component
+   #:register-component
+   #:unregister-component
    #:install-component
    #:uninstall-component
    #:toggle-component
@@ -34,24 +36,45 @@
 ;; Component structure (alist) stored in the registry
 ;; Keys: :name :version :author :depends-on :install :activate :deactivate :config-spec :state
 
+(defun register-component (name &key version author depends-on install activate deactivate
+                                      config-spec persist)
+  "Register component NAME (a symbol) in the global registry, replacing any previous
+   definition. Functional form of DEFINE-COMPONENT for components created at runtime."
+  (setf (gethash name *component-registry*)
+        (list :name name
+              :version version
+              :author author
+              :depends-on depends-on
+              :install install
+              :activate activate
+              :deactivate deactivate
+              :config-spec config-spec
+              :persist persist
+              :state nil
+              :suspended nil))
+  name)
+
+(defun unregister-component (name)
+  "Remove NAME from the registry. Signals an error if it is installed or suspended."
+  (let ((entry (gethash name *component-registry*)))
+    (when (and entry (or (getf entry :state) (getf entry :suspended)))
+      (error "Component ~A is installed; uninstall it before unregistering" name))
+    (remhash name *component-registry*)))
+
 (defmacro define-component (name &key version author depends-on install activate deactivate config-spec persist)
   "Define a component and register it in the global registry.
    INSTALL is a function taking (component context) returning effect handles.
    ACTIVATE and DEACTIVATE are optional lifecycle functions.
    CONFIG-SPEC is optional config description."
-  `(progn
-     (setf (gethash ',name *component-registry*)
-           (list :name ',name
-                 :version ,version
-                 :author ,author
-                 :depends-on ',depends-on
-                 :install ,install
-                 :activate ,activate
-                 :deactivate ,deactivate
-                 :config-spec ,config-spec
-                 :persist ,persist
-                 :state nil
-                 :suspended nil))))
+  `(register-component ',name
+                       :version ,version
+                       :author ,author
+                       :depends-on ',depends-on
+                       :install ,install
+                       :activate ,activate
+                       :deactivate ,deactivate
+                       :config-spec ,config-spec
+                       :persist ,persist))
 
 (defun install-component (component &optional ctx)
   "Install COMPONENT within a transaction.

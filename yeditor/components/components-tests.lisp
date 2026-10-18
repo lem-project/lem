@@ -231,3 +231,66 @@
           "shows the running language server")
       (uninstall-component (quote le-lsp))
       (kill-buffer buffer))))
+
+;;; T14 — package onboarding under transaction
+
+(defun make-dummy-project ()
+  "A local ASDF project in a fresh temp root; returns the root directory."
+  (let* ((root (uiop:ensure-directory-pathname
+                (merge-pathnames (format nil "yeditor-t14-~D/" (random 1000000))
+                                 (uiop:default-temporary-directory))))
+         (dir (merge-pathnames "yeditor-dummy-pkg/" root)))
+    (ensure-directories-exist dir)
+    (with-open-file (o (merge-pathnames "yeditor-dummy-pkg.asd" dir) :direction :output :if-exists :supersede)
+      (write-string "(defsystem \"yeditor-dummy-pkg\" :components ((:file \"main\")))" o))
+    (with-open-file (o (merge-pathnames "main.lisp" dir) :direction :output :if-exists :supersede)
+      (write-string "(defpackage :yeditor-dummy-pkg (:use :cl) (:export :hello))
+(in-package :yeditor-dummy-pkg)
+(defun hello () \"hello\")" o))
+    root))
+
+(defun log-events (path component)
+  (with-open-file (in path)
+    (loop :for line := (read-line in nil) :while line
+          :for rec := (yason:parse line)
+          :when (search (symbol-name component) (gethash "component" rec))
+            :collect (gethash "event" rec))))
+
+(deftest test-package-install-uninstall-cycle
+  (let* ((root (make-dummy-project))
+         (log (merge-pathnames "effects.log" root))
+         (registry-before (copy-list asdf:*central-registry*))
+         (component (yeditor-components/packages:package-component-name "yeditor-dummy-pkg")))
+    (yeditor-context/durability:enable-durability :path log)
+    (unwind-protect
+         (progn
+           (ok (assoc "yeditor-dummy-pkg" (yeditor-components/packages:scan-local-systems (list root))
+                      :test (function string=))
+               "scanner finds the local system")
+           (ok (null (yeditor-components/packages:install-package
+                      "yeditor-dummy-pkg" :roots (list root) :confirm (constantly nil)))
+               "declining the confirmation installs nothing")
+           (ok (null (find-package :yeditor-dummy-pkg)) "nothing loaded after decline")
+           (dotimes (i 20)
+             (yeditor-components/packages:install-package "yeditor-dummy-pkg" :roots (list root))
+             (ok (equal (uiop:symbol-call :yeditor-dummy-pkg :hello) "hello") "package loaded and usable")
+             (ok (member "yeditor-dummy-pkg" (yeditor-components/packages:installed-packages)
+                         :test (function string=))
+                 "listed as installed")
+             (yeditor-components/packages:uninstall-package "yeditor-dummy-pkg")
+             (ok (null (find-package :yeditor-dummy-pkg)) "package deleted on uninstall")
+             (ok (null (asdf:registered-system "yeditor-dummy-pkg")) "ASDF system cleared")
+             (ok (equal asdf:*central-registry* registry-before) "source registry restored")
+             (ok (null (gethash component *component-registry*)) "runtime component unregistered"))
+           (let ((events (log-events log component)))
+             (ok (= 20 (count "install-commit" events :test (function string=))) "every install logged")
+             (ok (= 20 (count "uninstall" events :test (function string=))) "every uninstall logged")))
+      (yeditor-context/durability:disable-durability)
+      (uiop:delete-directory-tree root :validate t :if-does-not-exist :ignore))))
+
+(deftest test-package-missing-system
+  (ok (handler-case (progn (yeditor-components/packages:install-package
+                            "yeditor-no-such-system" :roots (list (uiop:default-temporary-directory)))
+                           nil)
+        (editor-error () t))
+      "a missing system is an editor error, nothing registered"))

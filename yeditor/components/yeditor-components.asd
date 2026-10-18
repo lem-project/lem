@@ -15,4 +15,5 @@
                (:file "themes-ergonomic")
                (:file "hud")
                (:file "lsp")
+               (:file "packages")
                (:file "components")))

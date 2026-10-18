@@ -6,45 +6,13 @@
 (in-package :lem-mouse-sgr1006/main)
 ;;;don't edit above
 (defparameter *message-on-mouse-event* nil)
-(defparameter *scroll-unfocused-window* nil)
-
-(defvar *dragging-window* ())
-(defvar *min-cols*  5)
-(defvar *min-lines* 1)
-(defvar *wheel-scroll-size* 3)
+(defparameter *scroll-unfocused-window* t
+  "Kept for compatibility: the wheel always scrolls the window under the pointer.")
 
 ;; mouse button type
 (defvar *mouse-button-1*   0)
 (defvar *mouse-wheel-up*   64)
 (defvar *mouse-wheel-down* 65)
-
-(defun get-window-rect (window)
-  (values (lem:window-x     window)
-          (lem:window-y     window)
-          (lem:window-width window)
-          (- (lem:window-height window)
-             (if (lem:window-use-modeline-p window) 1 0))))
-
-(defun move-to-cursor (window x y)
-  (lem:move-point (lem:current-point) (lem:window-view-point window))
-  (lem:move-to-next-virtual-line (lem:current-point) y)
-  (lem:move-to-virtual-line-column (lem:current-point)
-                                   (- x (lem:window-left-width window))))
-
-(defun all-window-list ()
-  "returns a list of all windows including side windows"
-  (let ((side-window (lem:frame-leftside-window (lem:current-frame)))
-        (window-list (lem:window-list)))
-    (if side-window
-        (cons side-window window-list)
-        window-list)))
-
-(defun find-window-containing-pos (x1 y1)
-  (or (find-if (lambda (o)
-                 (multiple-value-bind (x y w h) (get-window-rect o)
-                   (and (<= x x1 (+ x w)) (<= y y1 (+ y h)))))
-               (all-window-list))
-      (current-window)))
 
 (defun parse-mouse-event (getch-fn)
   (let ((msg (loop :for c := (code-char (funcall getch-fn))
@@ -66,120 +34,55 @@
         ;; convert mouse position from 1-origin to 0-origin
         (decf x1)
         (decf y1)
-        ;; check mouse status
-        (when (or (and (not (lem:floating-window-p (lem:current-window)))
-                       (eql btype *mouse-button-1*)
-                       (or (eql bstate #\m)
-                           (eql bstate #\M)))
-                  (and (or (eql btype *mouse-wheel-up*)
-                           (eql btype *mouse-wheel-down*))
-                       (eql bstate #\M)))
-          ;; send a dummy key event to exit isearch-mode
+        ;; a dummy key event exits isearch-mode before the mouse acts
+        (when (or (and (eql btype *mouse-button-1*) (eql bstate #\M))
+                  (member btype (list *mouse-wheel-up* *mouse-wheel-down*)))
           (lem:send-event (lem:make-key :sym "NopKey")))
-        ;; send actual mouse event
-        (lem:send-event (parse-mouse-event-sub bstate btype x1 y1))))))
+        (dispatch-mouse-event bstate btype x1 y1)))))
 
-(defun parse-mouse-event-sub (bstate btype x1 y1)
-  (lambda ()
-    ;; process mouse event
-    (cond
-      ;; button-1 down
-      ((and (or (not (lem:floating-window-p (lem:current-window)))
-                (lem:side-window-p (lem:current-window)))
-            (eql btype *mouse-button-1*)
-            (eql bstate #\M))
-       (or
-        ;; for frame header window
-        (find-if
-         (lambda (o)
-           (multiple-value-bind (x y w h) (get-window-rect o)
-             (cond
-               ;; select frame
-               ((and (<= x x1 (+ x w -1)) (<= y y1 (+ y h -1)))
-                (lem:with-point ((point (lem:buffer-start-point (lem:window-buffer o))))
-                  (when (lem:line-offset point (- y1 y) (- x1 x))
-                    (let ((button (lem/button:button-at point)))
-                      (when button
-                        (lem/button:button-action button)
-                        (lem:update-on-display-resized)))))
-                t)
-               (t nil))))
-         (lem:frame-header-windows (lem:current-frame)))
-        ;; for normal window
-        (find-if
-         (lambda (o)
-           (multiple-value-bind (x y w h) (get-window-rect o)
-             (cond
-               ;; vertical dragging window
-               ((and (= y1 (- y 1)) (<= x x1 (+ x w -1)))
-                (setf *dragging-window* (list o 'y))
-                t)
-               ;; horizontal dragging window
-               ((and (= x1 (- x 1)) (<= y y1 (+ y h -1)))
-                (setf *dragging-window* (list o 'x))
-                t)
-               ;; move cursor
-               ((and (<= x x1 (+ x w -1)) (<= y y1 (+ y h -1)))
-                (setf (lem:current-window) o)
-                (move-to-cursor o (- x1 x) (- y1 y))
-                (lem:redraw-display)
-                t)
-               (t nil))))
-         (all-window-list))))
-      ;; button-1 up
-      ((and (eql btype *mouse-button-1*)
-            (eql bstate #\m))
-       (let ((o-orig (lem:current-window))
-             (o (first *dragging-window*)))
-         (when (windowp o)
-           (multiple-value-bind (x y w h) (get-window-rect o)
-             (cond
-               ;; vertical dragging window
-               ((eq (second *dragging-window*) 'y)
-                (let ((vy (- (- y 1) y1)))
-                  ;; this check is incomplete if 3 or more divisions exist
-                  (when (and (not (lem:floating-window-p (lem:current-window)))
-                             (>= y1       *min-lines*)
-                             (>= (+ h vy) *min-lines*))
-                    (setf (lem:current-window) o)
-                    (lem:grow-window vy)
-                    (setf (lem:current-window) o-orig)
-                    (lem:redraw-display))))
-               ;; horizontal dragging window
-               ((eq (second *dragging-window*) 'x)
-                (let ((vx (- (- x 1) x1)))
-                  ;; this check is incomplete if 3 or more divisions exist
-                  (when (and (not (lem:floating-window-p (lem:current-window)))
-                             (>= x1       *min-cols*)
-                             (>= (+ w vx) *min-cols*))
-                    (setf (lem:current-window) o)
-                    (lem:grow-window-horizontally vx)
-                    (setf (lem:current-window) o-orig)
-                    (lem:redraw-display))))
-               )))
-         (when o
-           (setf *dragging-window*
-                 (list nil (list x1 y1) *dragging-window*)))))
-      ;; wheel up
-      ((and (eql btype *mouse-wheel-up*)
-            (eql bstate #\M))
-       (let ((target-window (if *scroll-unfocused-window*
-                                (find-window-containing-pos x1 y1)
-                                (current-window))))
-         (lem:scroll-up *wheel-scroll-size* target-window)
-         (lem:redraw-display)))
-      ;; wheel down
-      ((and (eql btype *mouse-wheel-down*)
-            (eql bstate #\M))
-       (let ((target-window (if *scroll-unfocused-window*
-                                (find-window-containing-pos x1 y1)
-                                (current-window))))
-         (lem:scroll-down *wheel-scroll-size* target-window)
-         (lem:redraw-display)))
-      )
-    (when *message-on-mouse-event*
-      (lem:message "mouse:~s ~s ~s ~s" bstate btype x1 y1)
-      (lem:redraw-display))))
+;;; Events go through Lem's core mouse handling, as in the SDL2 frontend, so a terminal
+;;; click does what a GUI click does: clickable text (filer items, tab bar, buttons)
+;;; runs its callback, separators drag, double and triple clicks select, the wheel
+;;; scrolls the window under the pointer.
+
+(defvar *mouse-motion-flag* 32)
+(defvar *double-click-interval* 0.4 "Seconds within which a second click counts as a double click.")
+(defvar *last-click* nil "(time x y clicks) of the previous button-1 press.")
+
+(defun sgr-button (btype)
+  (case (logand btype 3)
+    (0 :button-1)
+    (1 :button-2)
+    (2 :button-3)))
+
+(defun click-count (x y)
+  (let ((now (/ (get-internal-real-time) internal-time-units-per-second)))
+    (destructuring-bind (&optional time last-x last-y (clicks 0)) *last-click*
+      (let ((count (if (and time (= x last-x) (= y last-y)
+                            (< (- now time) *double-click-interval*))
+                       (1+ clicks)
+                       1)))
+        (setf *last-click* (list now x y count))
+        count))))
+
+(defun dispatch-mouse-event (bstate btype x y)
+  (cond ((eql btype *mouse-wheel-up*)
+         (when (eql bstate #\M)
+           (lem:receive-mouse-wheel x y x y 0 1)))
+        ((eql btype *mouse-wheel-down*)
+         (when (eql bstate #\M)
+           (lem:receive-mouse-wheel x y x y 0 -1)))
+        ((logtest btype *mouse-motion-flag*)
+         (lem:receive-mouse-motion x y x y (sgr-button btype)))
+        ((null (sgr-button btype)) nil)
+        ((eql bstate #\M)
+         (let ((button (sgr-button btype)))
+           (lem:receive-mouse-button-down x y x y button
+                                          (if (eq button :button-1) (click-count x y) 1))))
+        ((eql bstate #\m)
+         (lem:receive-mouse-button-up x y x y (sgr-button btype))))
+  (when *message-on-mouse-event*
+    (lem:send-event (lambda () (lem:message "mouse:~s ~s ~s ~s" bstate btype x y)))))
 
 (defvar *enable-hook* '())
 (defvar *disable-hook* '())

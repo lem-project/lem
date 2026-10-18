@@ -6,7 +6,7 @@
 (defsystem "yeditor-effects"
   :license "FSL-1.1-MIT"
   :description "Standard effects T4-T6: buffer, mode, hook, keymap, variable, command, overlay, timer, process, server, lsp, fdefinition"
-  :depends-on ("lem/core" "lem/extensions" "lem-tree-sitter" "yeditor-tx" "yeditor-context")
+  :depends-on ((:feature :sbcl "sb-posix") "lem/core" "lem/extensions" "lem-tree-sitter" "yeditor-tx" "yeditor-context")
   :components ((:file "e-buffer")
                (:file "e-mode")
                (:file "e-hook")
@@ -23,4 +23,5 @@
                (:file "e-window")
                (:file "e-theme")
                (:file "e-treesitter")
+               (:file "e-environment")
                (:file "effects")))

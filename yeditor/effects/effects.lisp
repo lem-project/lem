@@ -21,11 +21,13 @@
   (:import-from :yeditor-effects/e-window :install-side-window)
   (:import-from :yeditor-effects/e-theme :install-theme)
   (:import-from :yeditor-effects/e-treesitter :install-treesitter-grammar :ensure-grammar)
+  (:import-from :yeditor-effects/e-environment :install-environment-variable)
   (:export :install-buffer :install-mode :install-hook
            :install-keybinding :install-variable :install-command
            :install-overlay :install-timer
            :install-process :install-tcp-server :install-lsp-session
            :install-fdefinition :install-editor-variable :install-side-window :install-theme
            :install-key-removal :install-hook-removal
-           :install-treesitter-grammar :ensure-grammar))
+           :install-treesitter-grammar :ensure-grammar
+           :install-environment-variable))
 (in-package :yeditor-effects)

@@ -59,7 +59,10 @@
 
 (defun attribute-to-json (attr)
   "Convert a Lem attribute to JSON-serializable form."
-  (if attr
+  ;; Line/overlay attribute specs carry the attribute NAME (symbol); resolve it
+  ;; to the attribute object, otherwise attribute-foreground has no method.
+  (let ((attr (and attr (ensure-attribute attr))))
+    (if attr
       `(("foreground" . ,(color-to-string (attribute-foreground attr)))
         ("background" . ,(color-to-string (attribute-background attr)))
         ("bold" . ,(if (attribute-bold attr) t :false))
@@ -69,7 +72,7 @@
         ("background" . :null)
         ("bold" . :false)
         ("underline" . :false)
-        ("reverse" . :false))))
+        ("reverse" . :false)))))
 
 (defun get-line-attributes (point)
   "Get attributes for a line at point. Returns list of (start end attribute) tuples."

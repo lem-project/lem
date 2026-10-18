@@ -80,6 +80,7 @@
                 :overlay-attribute
                 :overlay-buffer
                 ;; Attributes
+                :ensure-attribute
                 :attribute-foreground
                 :attribute-background
                 :attribute-bold

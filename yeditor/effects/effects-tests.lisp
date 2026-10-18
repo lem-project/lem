@@ -2,22 +2,27 @@
   (:use :cl :yeditor-context :yeditor-effects :yeditor-tx :rove))
 (in-package :yeditor-effects-tests)
 
-;; dummy hook function
 (defun dummy-hook-fn (&rest _args) (declare (ignore _args)))
+
+(defun hook-contains-p (hook-var fn)
+  (find fn (symbol-value hook-var) :key #'car))
 
 (yeditor-context:define-component test-effects
   :install (lambda (comp ctx)
+             (declare (ignore ctx))
              (list (install-buffer comp "test-buffer")
                    (install-mode comp (lem:current-buffer) (lambda (buf) (declare (ignore buf))))
-                   (install-hook comp (lem:variable-value 'after-save-hook :global) #'dummy-hook-fn))))
+                   (install-hook comp 'lem:*after-init-hook* #'dummy-hook-fn))))
 
 (deftest install-and-uninstall-buffer
   (let ((comp 'test-effects))
     (yeditor-context:install-component comp)
-    ;; ensure buffer exists
-    (assert (find "test-buffer" (lem:buffer-list) :key (lambda (b) (lem:buffer-name b)) :test #'string=))
+    (ok (find "test-buffer" (lem:buffer-list) :key #'lem:buffer-name :test #'string=)
+        "test buffer created on install")
+    (ok (hook-contains-p 'lem:*after-init-hook* #'dummy-hook-fn)
+        "hook installed on install")
     (yeditor-context:uninstall-component comp)
-    ;; only assert that the test buffer is gone; other Lem buffers may exist
-    (assert (null (find "test-buffer" (lem:buffer-list)
-                        :key (lambda (b) (lem:buffer-name b)) :test #'string=)))
-    (assert (null (lem:variable-value 'after-save-hook :global)))))
+    (ok (null (find "test-buffer" (lem:buffer-list) :key #'lem:buffer-name :test #'string=))
+        "test buffer removed on uninstall")
+    (ok (null (hook-contains-p 'lem:*after-init-hook* #'dummy-hook-fn))
+        "hook removed on uninstall")))

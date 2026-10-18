@@ -9,22 +9,15 @@
 ;;; ── e-process ──────────────────────────────────────────────────────────────
 
 (deftest test-process-spawn-and-kill
-  ;; spawns python3 sleeping 60s, commits, verifies process is alive,
-  ;; then rolls back and verifies the process is dead.
   (fresh-tx)
-  (let ((handle (install-process 'test-comp '("python3" "-c" "import time; time.sleep(60)"))))
+  (let* ((handle (install-process 'test-comp '("python3" "-c" "import time; time.sleep(60)")))
+         (proc-of (cdr (assoc :process-of handle))))
     (tx-commit)
-    ;; process should be alive immediately after commit
-    (let ((proc (cdr (assoc :fn handle))))
-      ;; We stored the handle, not the process itself.  Check via tx-committed:
-      ;; After commit, the process is alive if uiop:process-alive-p returns true.
-      ;; The process object is captured in the closure; we verify via rollback undo.
-      (ok t "process spawned without error"))
-    ;; rollback kills the process
-    (tx-rollback)
-    ;; give OS a moment to reap the child
-    (sleep 0.2)
-    (ok t "process rolled back without error")))
+    (let ((proc (funcall proc-of)))
+      (ok (uiop:process-alive-p proc) "process alive after commit")
+      (tx-rollback)
+      (sleep 0.3)
+      (ok (not (uiop:process-alive-p proc)) "process terminated by rollback"))))
 
 ;;; ── e-fdefinition ──────────────────────────────────────────────────────────
 
@@ -34,9 +27,9 @@
   (fresh-tx)
   (install-fdefinition 'test-comp '%test-fn-original (lambda () :override))
   (tx-commit)
-  (ok (eq (%test-fn-original) :override) "fdefinition overridden after commit")
+  (ok (eq (funcall '%test-fn-original) :override) "fdefinition overridden after commit")
   (tx-rollback)
-  (ok (eq (%test-fn-original) :original) "fdefinition restored after rollback"))
+  (ok (eq (funcall '%test-fn-original) :original) "fdefinition restored after rollback"))
 
 (deftest test-fdefinition-200x-cycle
   (let ((sym (intern (format nil "%FD-CYCLE-~A%" (get-internal-real-time)))))

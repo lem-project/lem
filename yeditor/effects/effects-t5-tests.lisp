@@ -51,19 +51,19 @@
 
 (deftest test-keymap-install-uninstall
   ;; minimal smoke: install-keybinding records kind :keybinding
-  (let* ((km (lem:make-keymap :name "test-km-t5")))
+  (let* ((km (lem:make-keymap)))
     (with-fresh-tx
       (let ((handle (install-keybinding 'test-comp km "C-t" 'lem:forward-char)))
         (ok (eq (cdr (assoc :kind handle)) :keybinding) "handle kind is :keybinding"))
       (tx-commit)
       ;; check via lem internals: parse key and find prefix
-      (let* ((keys (lem::parse-keyspec "C-t"))
-             (prefix (lem::prefix-for-key km (car (last keys)))))
-        (ok (and prefix (eq (lem::prefix-suffix prefix) 'lem:forward-char))
+      (let* ((keys (lem:parse-keyspec "C-t"))
+             (prefix (lem:keymap-find km keys)))
+        (ok (and prefix (eq (lem:prefix-suffix prefix) 'lem:forward-char))
             "key bound after commit"))
       (tx-rollback)
-      (let* ((keys (lem::parse-keyspec "C-t"))
-             (prefix (lem::prefix-for-key km (car (last keys)))))
+      (let* ((keys (lem:parse-keyspec "C-t"))
+             (prefix (lem:keymap-find km keys)))
         (ok (null prefix) "key unbound after rollback")))))
 
 ;;; ── e-command ──────────────────────────────────────────────────────────────
@@ -73,9 +73,9 @@
     (with-fresh-tx
       (install-command 'test-comp cmd-name (lambda () :executed))
       (tx-commit)
-      (ok (lem::find-command cmd-name) "command registered after commit")
+      (ok (lem:find-command cmd-name) "command registered after commit")
       (tx-rollback)
-      (ok (null (lem::find-command cmd-name)) "command removed after rollback"))))
+      (ok (null (lem:find-command cmd-name)) "command removed after rollback"))))
 
 ;;; ── e-overlay ──────────────────────────────────────────────────────────────
 
@@ -97,12 +97,13 @@
 (deftest test-timer-install-uninstall
   ;; installs a 10 000 ms (one-shot) timer and immediately rolls back —
   ;; the stop-timer undo must not error.
-  (with-fresh-tx
-    (install-timer 'test-comp 10000 (lambda () nil) :repeat nil)
-    (tx-commit)
-    (ok t "timer started without error")
-    (tx-rollback)
-    (ok t "timer stopped via rollback without error")))
+  (lem/common/timer:with-timer-manager (make-instance 'lem/common/timer:timer-manager)
+    (with-fresh-tx
+      (install-timer 'test-comp 10000 (lambda () nil) :repeat nil)
+      (tx-commit)
+      (ok t "timer started without error")
+      (tx-rollback)
+      (ok t "timer stopped via rollback without error"))))
 
 ;;; ── combined component using all 5 new kinds ────────────────────────────────
 
@@ -125,8 +126,8 @@
     ;; toggle on
     (yeditor-context:install-component 't5-combined)
     (ok (eql *combined-sentinel* :active) "sentinel active after install")
-    (ok (lem::find-command "t5-combined-cmd") "command present after install")
+    (ok (lem:find-command "t5-combined-cmd") "command present after install")
     ;; toggle off
     (yeditor-context:uninstall-component 't5-combined)
     (ok (not (eql *combined-sentinel* :active)) "sentinel cleared after uninstall")
-    (ok (null (lem::find-command "t5-combined-cmd")) "command gone after uninstall")))
+    (ok (null (lem:find-command "t5-combined-cmd")) "command gone after uninstall")))

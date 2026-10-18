@@ -8,22 +8,24 @@
    COMMAND is a list of strings (program + args) passed to uiop:launch-program.
    OUTPUT-BUFFER is an optional Lem buffer for capturing stdout.
    Undo terminates the process and closes associated buffers."
-  (let ((proc nil))
+  (let* ((cell (list nil))
+         (proc-of (lambda () (car cell))))
     (let ((handle (install-effect comp :process
                                    (lambda ()
-                                     (setf proc
+                                     (setf (car cell)
                                            (uiop:launch-program
                                             command
-                                            :output (if output-buffer :stream :output)
-                                            :error-output :output)))
+                                            :output (if output-buffer :stream nil)
+                                            :error-output nil)))
                                    :undo-thunk
                                    (lambda ()
-                                     (when proc
+                                     (when (car cell)
                                        (handler-case
-                                           (uiop:terminate-process proc :urgent t)
+                                           (uiop:terminate-process (car cell) :urgent t)
                                          (error () nil)))
                                      (when output-buffer
                                        (handler-case (lem:kill-buffer output-buffer)
                                          (error () nil)))))))
       (push (cons :command command) handle)
+      (push (cons :process-of proc-of) handle)
       handle)))

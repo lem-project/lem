@@ -28,7 +28,8 @@
            :not-found-program
            :start-lsp-session
            :stop-lsp-session
-           :lsp-session-alive-p))
+           :lsp-session-alive-p
+           :lsp-session-pid))
 (in-package :lem-lsp-mode/lsp-mode)
 
 ;; FIXME:
@@ -468,9 +469,15 @@ server is initialized). Signals NOT-FOUND-PROGRAM when the server is missing."
   "True while the server process of WORKSPACE is running."
   (let ((client (workspace-client workspace)))
     (typecase client
-      (client:stdio-client (async-process:process-alive-p (client:stdio-client-process client)))
+      (client:stdio-client (client:stdio-client-alive-p client))
       (client:tcp-client (and (client:tcp-client-process client) t))
       (otherwise nil))))
+
+(defun lsp-session-pid (workspace)
+  "Process id of the server of WORKSPACE (stdio servers), or nil."
+  (let ((client (workspace-client workspace)))
+    (when (typep client 'client:stdio-client)
+      (client:stdio-client-pid client))))
 
 (defun ensure-lsp-buffer (buffer &key ((:then continuation)))
   (start-lsp-session buffer :then continuation)

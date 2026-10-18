@@ -93,6 +93,10 @@ scripts/                  test runners, launchers, CI gates
 | T17 (Enterprise) | Worker adapters as components: `le-worker-claude-code` (runs `claude -p … --output-format json --max-turns N --mcp-config <editor MCP>`; CLI keeps its own credentials) and `le-worker-hermes` (provisional HTTP contract: `GET /health`, `POST /tasks` → `{status, observation}`). Installing registers a worker on the le-mcp bus and starts a dispatcher thread (take task → run in agent → report observation); uninstalling stops it and unregisters. Discovery ping, per-task timeout, step budget, extra CLI args configurable | `enterprise/agent/workers.lisp` |
 | T18 (Enterprise) | `le-forge` / `forge-component`: request → model → one `define-component` form → static checks (size ≤ 16 KB, `*read-eval*` off, a single `define-component`, only whitelisted operators — safe effects keybinding/variable/editor-variable/hook/theme/timer/buffer plus a harmless CL subset, raw `install-effect` only with `:undo-thunk`, hook/timer functions must be lambdas or `#'` allowed, variable values literals only) → reversibility test (install/uninstall ×5 comparing a fingerprint of buffers, global key bindings, hooks, theme, modeline) → promote to `~/.yeditor/components/<name>.lisp` or discard leaving nothing. Command `yeditor-forge` (`C-c a f` via `le-forge`) | `enterprise/forge/forge.lisp` |
 | Licensing | Open-core licenses, CLA, IP strategy, header/dependency CI gate | root `LICENSE*`, `docs/IP_STRATEGY.md` |
+| T20 (Enterprise) | `yeditor-journal`: observable workspace memory (file opens, saves with line diffs, evals via `eval-event`), append ~7 µs, query by path ~3 µs, truncation/rotation, watch | `enterprise/journal/journal.lisp` |
+| IDE panels (Hermes) | `le-sidebar` (project tree on Lem's filer, `C-c b` toggle, `C-c C-b` focus, `q` back to the editor, `r` refresh), `le-terminal` (`C-c j`, lem-terminal), `le-workspace-layout` (`C-c w`, on demand only), `le-hermes-chat` (Enterprise, `C-c h`, runs the `hermes` CLI; in the chat `C-c C-e` returns to the editor, `C-c C-k` closes) | `components/sidebar,terminal,workspace-layout.lisp`, `enterprise/agent/hermes-chat.lisp` |
+| T21 (partial) + T12-B | Director tools on the MCP bus: `yeditor_editor_run_command`, `_open_and_present` (single / side-by-side), `_eval_and_annotate` (Python REPL + virtual-text annotation, buffer untouched), `_propose_checkpoint` (opens the HUD agent transaction). `le-director-cockpit`: F1 intent bar → Hermes worker or `*intent-dispatcher*` (set reversibly by `le-hermes-chat`) | `components/mcp.lisp`, `components/director-cockpit.lisp` |
+| Mouse (terminal) | `lem-mouse-sgr1006` (L0 contrib) now feeds Lem's core mouse events like SDL2: clicks run clickable text (filer/sidebar items, tab bar, buttons), focus windows, place the cursor; double/triple click selects; drag separators; wheel scrolls the window under the pointer. Loaded by the ncurses launcher | `contrib/mouse-sgr1006/main.lisp`, `scripts/run-yeditor-ncurses.lisp` |
 
 Extra effects added for T11/T12: `e-editor-variable` (Lem editor variables), `e-window` (side split, kind 15), `e-theme` (apply a color theme without saving it).
 
@@ -101,8 +105,10 @@ Extra effects added for T11/T12: `e-editor-variable` (Lem editor variables), `e-
 - **T12 remainder**: `le-tabs` (off by default), per-segment modeline toggles, palette preview for buffers / LSP symbols / journal entries.
 - **T27 remainder**: query packs for TypeScript/Rust/Go/CL (only Python exists), `textobjects.scm`/folding, tree-sitter indentation wired to python-mode's `calc-indent-function` on Enter (belongs with T28).
 - **T28 remainder**: packs for TypeScript/Rust/Go/CL following `lang-python.lisp`; eval and test records move to `yeditor-journal` when T20 exists; poetry venv lookup (`poetry env info -p`) not implemented; tree-sitter indentation on Enter for python-mode.
-- **T16–T19** `le-models` + `le-ollama`, worker adapters, `le-forge`, `le-mcp` bus.
-- **T20–T25** (Enterprise) `yeditor-journal` (+ `eval-event`), agent tool surface, multiplexer with transactional branching (replaces the T12 demo worker), sessions, Change Browser, agentic eval harness.
+- **T21 remainder**: agent edits confined to `agent-tx-id` side-transactions; `_open_and_present` window splits as effects (today not reversible); verify the `hermes` CLI flags used by `le-hermes-chat` (`chat -q … --oneshot -Q --format stream-json [--resume]`) against the real CLI.
+- **T22–T25** (Enterprise) multiplexer with transactional branching (replaces the T12 demo worker), sessions, Change Browser, agentic eval harness.
+- **Syntax highlighting by default**: `le-treesitter-packs` is opt-in (needs libtree-sitter + `M-x treesitter-install-grammar`); Python otherwise uses python-mode's regex highlighting. Enable the pack in `enable-ephemeral-ui` when the grammar is present, and add packs for other languages (T27 remainder).
+- **Mouse remainder**: hover (needs SGR 1003 any-motion), a right-click context menu that works in the terminal, clickable HUD buttons (commit / rollback) and modeline segments.
 - **T26** `le-reading` typography/focus mode; **T29–T30** Elisp shim and porter.
 
 ## 6. Known gaps and gotchas
@@ -127,6 +133,9 @@ Extra effects added for T11/T12: `e-editor-variable` (Lem editor variables), `e-
 - L0 dependencies under LLGPL/MPL are recorded exceptions (`scripts/ip-license-exceptions.txt`); resolve before a commercial release.
 - `docs/` FSL text (`LICENSE-FSL`) was written from memory — verify against fsl.software before publishing.
 
+- Clicking the sidebar runs the item (open file / expand folder) but, as in Lem's core, does not move focus into it; `q` only acts when the sidebar is focused (`C-c C-b`). In python buffers `C-c C-b` is shadowed by le-lang-python's send-buffer — click or use `C-x o` there.
+- The ncurses launcher takes `YEDITOR_MCP_PORT` (default 7890) so a second editor can run beside one already serving the port; a component that fails to install is reported and the others still install.
+
 ## 7. Current work in progress
 
-None. Next in plan order: T20 (`yeditor-journal`, Enterprise), T21 (agent tool surface), T22 (multiplexer + transactional branching, replacing the T12 demo worker), T23–T25.
+None. Next in plan order: T21 remainder, T22 (multiplexer + transactional branching, replacing the T12 demo worker), T23–T25. Uncommitted edits in `extensions/mcp-server/handlers/display.lisp` and `package.lisp` (attribute names resolved with `ensure-attribute`) belong to another agent's session and were left as they are.

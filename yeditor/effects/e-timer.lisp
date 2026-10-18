@@ -1,9 +1,7 @@
-;;;; Copyright (c) 2026 Yuri Flores Albuquerque. All Rights Reserved.
-;;;; SPDX-License-Identifier: LicenseRef-Yeditor-Proprietary
-;;;;
-;;;; This file is part of Yeditor Core IP (Layers L1-L5).
-;;;; Unauthorized copying, modification, or distribution of this file,
-;;;; via any medium, is strictly prohibited without a written license agreement.
+;;;; Copyright (c) 2026 Yuri Flores Albuquerque.
+;;;; SPDX-License-Identifier: FSL-1.1-MIT
+;;;; Licensed under the Functional Source License, Version 1.1 (see LICENSE-FSL).
+;;;; Competing commercial use is strictly prohibited.
 
 (defpackage :yeditor-effects/e-timer
   (:use :cl :lem :yeditor-tx)

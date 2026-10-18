@@ -1,14 +1,12 @@
-;;;; Copyright (c) 2026 Yuri Flores Albuquerque. All Rights Reserved.
-;;;; SPDX-License-Identifier: LicenseRef-Yeditor-Proprietary
-;;;;
-;;;; This file is part of Yeditor Core IP (Layers L1-L5).
-;;;; Unauthorized copying, modification, or distribution of this file,
-;;;; via any medium, is strictly prohibited without a written license agreement.
+;;;; Copyright (c) 2026 Yuri Flores Albuquerque.
+;;;; SPDX-License-Identifier: FSL-1.1-MIT
+;;;; Licensed under the Functional Source License, Version 1.1 (see LICENSE-FSL).
+;;;; Competing commercial use is strictly prohibited.
 
 (load ".qlot/setup.lisp")
 (require :asdf)
 (defparameter *effects-dir* (merge-pathnames "yeditor/effects/" (uiop:getcwd)))
-(dolist (asd '("effects.asd" "effects-tests.asd" "effects-t5-tests.asd" "effects-t6-tests.asd"))
+(dolist (asd '("yeditor-effects.asd" "yeditor-effects-tests.asd" "yeditor-effects-t5-tests.asd" "yeditor-effects-t6-tests.asd"))
   (asdf:load-asd (merge-pathnames asd *effects-dir*)))
 (asdf:load-system :yeditor-effects-tests)
 (asdf:load-system :yeditor-effects-t5-tests)

@@ -1,0 +1,42 @@
+Yeditor Enterprise License
+SPDX-License-Identifier: LicenseRef-Yeditor-Enterprise
+
+Copyright (c) 2026 Yuri Flores Albuquerque. All Rights Reserved.
+
+1. Ownership
+
+The software, architecture, source code, object code, documentation and
+specifications contained in the `yeditor/enterprise/` directory of this
+repository — including, without limitation, yeditor-journal, le-agent-host, the
+agent multiplexer and transactional branching, Eval-to-Journal, le-forge and the
+Elisp porter, i.e. layers L4 and L5 — together with every other file that carries
+the `LicenseRef-Yeditor-Enterprise` identifier (collectively, the "Enterprise
+Software") are the exclusive and confidential property of Yuri Flores Albuquerque
+(the "Copyright Holder").
+
+2. No license granted
+
+No right or license is granted, by implication, estoppel or otherwise, to any
+person to copy, modify, merge, publish, distribute, sublicense, sell, reverse
+engineer, decompile, disassemble, create derivative works of, use as training,
+fine-tuning or evaluation data for any machine-learning or artificial-intelligence
+model, or otherwise exploit, commercially or non-commercially, the Proprietary
+Software or any portion of it, except under a separate written license agreement
+signed by the Copyright Holder.
+
+3. Other licenses in this repository
+
+Files outside `yeditor/enterprise/` are governed by the licenses listed in
+LICENSE (FSL-1.1-MIT for Yeditor Core; MIT for code derived from Lem, see
+THIRD_PARTY_NOTICES.md). This license does not restrict any right those
+licenses grant.
+
+4. Disclaimer
+
+THE ENTERPRISE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO
+EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY ARISING FROM, OUT OF OR IN CONNECTION WITH THE ENTERPRISE SOFTWARE.
+
+For licensing inquiries, contact the Copyright Holder.

@@ -1,8 +1,9 @@
 # Third-Party Notices
 
-Yeditor is proprietary software (see [LICENSE](LICENSE)). It is built on top of
-third-party open-source software, whose notices are reproduced below as required
-by their licenses. Nothing in the Yeditor proprietary license restricts any right
+Yeditor is licensed under an open-core model (see [LICENSE](LICENSE)): Yeditor Core
+under FSL-1.1-MIT and Yeditor Enterprise under a proprietary license. It is built on
+top of third-party open-source software, whose notices are reproduced below as
+required by their licenses. Nothing in the Yeditor licenses restricts any right
 granted by these third-party licenses for the third-party code itself.
 
 ## 1. Lem (layer L0)
@@ -12,8 +13,8 @@ contributors, licensed under the MIT License.
 
 Code derived from Lem lives in the inherited layer L0, including (non-exhaustive):
 `src/`, `frontends/`, `extensions/`, `contrib/`, `tests/`, `resources/`,
-`roswell/`, `docker/`, `scripts/` (except files named `run-yeditor-*` and
-`benchmark-tx.lisp`), `lem.asd`, `lem-tests.asd`, and inherited documentation
+`roswell/`, `docker/`, `scripts/` (except Yeditor tooling that carries a Yeditor
+SPDX header: `run-yeditor-*`, `benchmark-tx.lisp`, `check-*`, `ip-license-exceptions.txt`), `lem.asd`, `lem-tests.asd`, and inherited documentation
 under `docs/`. Yeditor modifications to these files remain subject to the MIT
 notice below for the Lem-derived portions.
 
@@ -55,7 +56,7 @@ other license:
 
 | License | Systems | Status |
 |---|---|---|
-| **LLGPL** (Lisp Lesser GPL — weak copyleft) | trivia, trivia.balland2006, trivia.level0, trivia.level1, trivia.level2, trivia.trivial, lisp-namespace, trivial-cltl2, trivial-types, type-i | **Open issue** — pulled in by L0; conflicts with the no-copyleft policy in [docs/IP_ARCHITECTURE.md](docs/IP_ARCHITECTURE.md) |
+| **LLGPL** (Lisp Lesser GPL — weak copyleft) | trivia, trivia.balland2006, trivia.level0, trivia.level1, trivia.level2, trivia.trivial, lisp-namespace, trivial-cltl2, trivial-types, type-i | **Open issue** — pulled in by L0; conflicts with the no-copyleft policy in [docs/IP_STRATEGY.md](docs/IP_STRATEGY.md) |
 | **MPL-2.0** (file-level copyleft) | cl-change-case | **Open issue** — same as above |
 | Not stated (copyright line only) | cl-package-locks | **To verify** |
 | zlib | deploy, dissect, documentation-utils, float-features, pathname-utils, trivial-indent, trivial-mimes, trivial-utf-8 | Permissive |

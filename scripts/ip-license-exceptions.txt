@@ -1,8 +1,9 @@
-# Copyright (c) 2026 Yuri Flores Albuquerque. All Rights Reserved.
-# SPDX-License-Identifier: LicenseRef-Yeditor-Proprietary
+# Copyright (c) 2026 Yuri Flores Albuquerque.
+# SPDX-License-Identifier: FSL-1.1-MIT
+# Licensed under the Functional Source License, Version 1.1 (see LICENSE-FSL).
 #
 # Dependencies loaded by the inherited L0 (Lem) whose license is outside the
-# allowed list, recorded as open exceptions (docs/IP_ARCHITECTURE.md §4).
+# allowed list, recorded as open exceptions (docs/IP_STRATEGY.md).
 # One ASDF system name per line. GPL/AGPL can never be listed here.
 # Resolve every entry before the first commercial release.
 trivia

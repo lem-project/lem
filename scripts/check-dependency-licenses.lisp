@@ -1,9 +1,7 @@
-;;;; Copyright (c) 2026 Yuri Flores Albuquerque. All Rights Reserved.
-;;;; SPDX-License-Identifier: LicenseRef-Yeditor-Proprietary
-;;;;
-;;;; This file is part of Yeditor Core IP (Layers L1-L5).
-;;;; Unauthorized copying, modification, or distribution of this file,
-;;;; via any medium, is strictly prohibited without a written license agreement.
+;;;; Copyright (c) 2026 Yuri Flores Albuquerque.
+;;;; SPDX-License-Identifier: FSL-1.1-MIT
+;;;; Licensed under the Functional Source License, Version 1.1 (see LICENSE-FSL).
+;;;; Competing commercial use is strictly prohibited.
 
 ;;; Loads Lem and every Yeditor system, then classifies the declared license of
 ;;; each loaded ASDF system. Exit 1 on GPL/AGPL, or on LGPL/LLGPL/MPL/EPL/unknown
@@ -11,12 +9,7 @@
 (load ".qlot/setup.lisp")
 (require :asdf)
 
-(dolist (asd '("tx/yeditor-tx.asd" "context/yeditor-context.asd"
-               "context/yeditor-context-reactivity.asd" "context/yeditor-context-loader.asd"
-               "context/yeditor-context-durability.asd" "effects/effects.asd"))
-  (asdf:load-asd (merge-pathnames (concatenate 'string "yeditor/" asd) (uiop:getcwd))))
-(dolist (s '(:lem :yeditor-tx :yeditor-context :yeditor-context-reactivity
-             :yeditor-context-loader :yeditor-context-durability :yeditor-effects))
+(dolist (s '(:lem :yeditor :yeditor-enterprise))
   (asdf:load-system s))
 
 (defun read-exceptions ()
@@ -37,7 +30,7 @@
   (let ((l (string-upcase (or license ""))))
     (flet ((any-word (&rest words) (some (lambda (w) (word-p l w)) words)))
       (cond ((zerop (length (string-trim " " l))) :none)
-            ((search "LICENSEREF-YEDITOR-PROPRIETARY" l) :own)
+            ((or (search "LICENSEREF-YEDITOR-" l) (search "FSL-1.1" l)) :own)
             ((or (any-word "GPL" "AGPL" "GPLV2" "GPLV3") (search "GNU GENERAL" l) (search "AFFERO" l))
              :strong-copyleft)
             ((or (any-word "LGPL" "LLGPL" "MPL" "EPL" "CDDL")

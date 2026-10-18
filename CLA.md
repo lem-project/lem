@@ -1,8 +1,10 @@
-# Yeditor Contributor License Agreement (Copyright Assignment)
+# Yeditor Individual Contributor License Agreement
 
 Version 1.0 — 2026-10-17
 
-Yeditor is proprietary software owned by **Yuri Flores Albuquerque** (the "Owner").
+Yeditor is owned by **Yuri Flores Albuquerque** (the "Owner") and distributed under an
+open-core model: Yeditor Core under FSL-1.1-MIT, Yeditor Enterprise under a proprietary
+license (see LICENSE).
 External contributions are accepted only from contributors who have signed this
 agreement. No pull request, patch, issue attachment or other material from an external
 contributor will be merged or used before a signed copy is on file with the Owner.
@@ -15,17 +17,19 @@ contributor will be merged or used before a signed copy is on file with the Owne
 - **"You"** means the individual, or the legal entity on whose behalf an individual signs,
   submitting a Contribution.
 
-## 2. Assignment of economic rights
+## 2. Copyright license
 
-You hereby irrevocably assign and transfer to the Owner, exclusively, for the whole world,
-for the full term of protection and free of charge, **all economic (patrimonial) rights**,
-including copyright and every right of reproduction, adaptation, translation, distribution,
-public communication, inclusion in databases and any other form of exploitation now known or
-later devised, in and to each Contribution.
+You retain ownership of the copyright in Your Contributions. You hereby grant to the Owner
+and to recipients of software distributed by the Owner a **perpetual, worldwide,
+non-exclusive, no-charge, royalty-free, irrevocable** copyright license to reproduce,
+prepare derivative works of, publicly display, publicly perform, distribute and
+**sublicense** Your Contributions and such derivative works, **under any license terms the
+Owner chooses, including proprietary and commercial terms**.
 
-Where any such right cannot be assigned under applicable law, You grant the Owner an
-exclusive, perpetual, irrevocable, worldwide, royalty-free, transferable and sublicensable
-license to exercise it.
+This license expressly allows the Owner to relicense, sell, transfer or assign Yeditor —
+including Your Contributions — as part of any financing, acquisition, merger or other
+transaction, and to change the license of any part of Yeditor, without further consent from
+or notice to You.
 
 ## 3. Moral rights
 
@@ -46,7 +50,7 @@ You represent that:
 
 1. Each Contribution is Your original work, or You identify in writing every third-party
    part of it together with its license;
-2. You are legally entitled to make this assignment; if Your employer or any other party
+2. You are legally entitled to grant this license; if Your employer or any other party
    has rights in Your work, You have obtained written permission or a waiver from it;
 3. No Contribution contains code under GPL, AGPL, LGPL, LLGPL or any other license that would
    impose source-disclosure or relicensing obligations on Yeditor;
@@ -61,7 +65,7 @@ You no right or license to Yeditor.
 ## 7. Further assurance
 
 You agree to sign any further document reasonably required to register or confirm the rights
-assigned under this agreement.
+granted under this agreement.
 
 ## 8. Governing law
 

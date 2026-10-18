@@ -27,7 +27,7 @@ jobs:
           fi
 
       - name: IP compliance - headers and L0 boundary
-        run: bash scripts/check-ip-compliance.sh
+        run: bash scripts/check-license-headers.sh
 
       - name: Build test image
         run: docker build -f docker/Dockerfile.test -t lem-tests .

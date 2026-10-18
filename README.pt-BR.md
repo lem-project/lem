@@ -6,7 +6,7 @@
 
 Yeditor é um **editor de código composável espaço-temporalmente, agente**, construído em Common Lisp, derivado de [Lem](https://github.com/lem-project/lem) (MIT).
 
-O Yeditor é um **Produto Proprietário de Orquestração Agêntica**: o Core IP (camadas L1-L5, `yeditor/`) é proprietário, construído sobre uma base L0 compatível com MIT herdada do Lem. Veja [Licença](#licença).
+O Yeditor é **open core**: o motor transacional e o SDK têm código disponível sob FSL-1.1-MIT, e a suíte agêntica (agent host, branching transacional, Eval-to-Journal, forge) é comercial. Veja [Licença e uso comercial](#licença-e-uso-comercial).
 
 ## Por que Yeditor
 
@@ -43,7 +43,7 @@ Cada mutação do editor é uma **transação** que carrega seu inverso (captura
 - NOT a visual VSCode clone — teclado-primeiro com onboarding estilo VSCode
 - DOES NOT run pacotes ELisp (linguagem diferente; camada de compatibilidade de esforço futuro)
 - NÃO é um framework de plugins genérico para qualquer aplicação — é um editor
-- NÃO é open source — veja [Licença](#licença)
+- NÃO é open source no sentido OSI — o Core tem código disponível (FSL-1.1-MIT) e o Enterprise é comercial
 
 ## Instalação
 
@@ -57,17 +57,36 @@ Yeditor acompanha upstream Lem; a instalação segue os mesmos caminhos que o Le
 - Fase 3 — IA + forge (T16-T19, Set 2027)
 - Fase 4 — Velocidade percebida + polimento (Nov 2027)
 
-## Contribuição
+## Licença e uso comercial
 
-Contribuições externas só são aceitas após a assinatura do [Contrato de Licença de Contribuidor](CLA.md), que cede ao titular todos os direitos patrimoniais sobre a contribuição.
+**Construa sobre o Yeditor.** O Yeditor Core — o motor de transações com efeitos reversíveis
+(`yeditor-tx`), o contexto de componentes e o SDK, e os efeitos padrão — tem código
+disponível sob a [Functional Source License 1.1 (MIT futura)](LICENSE-FSL). Leia, audite,
+compile, escreva e compartilhe componentes, use no trabalho e em pesquisa. A única coisa
+proibida é lançar um produto ou serviço comercial concorrente construído sobre ele. Cada
+versão vira MIT pura dois anos depois de publicada.
 
-## Licença
+O **Yeditor Enterprise** — multiplexador de agentes e host transacional, branching
+transacional paralelo, Eval-to-Journal e o forge generativo — é software comercial
+([LICENSE-ENTERPRISE](LICENSE-ENTERPRISE)), disponível sob licença comercial.
 
-Copyright (c) 2026 Yuri Flores Albuquerque. Todos os direitos reservados.
+| | Licença |
+|---|---|
+| `yeditor/core/`, `yeditor/effects/`, `yeditor/components/` | FSL-1.1-MIT |
+| `yeditor/enterprise/` | Proprietária (todos os direitos reservados) |
+| Código herdado do Lem | MIT — [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) |
 
-- `yeditor/` (camadas L1-L5) e a marca Yeditor: proprietários — veja [LICENSE](LICENSE). Nenhum uso, cópia ou distribuição sem contrato de licença escrito.
-- Código herdado do Lem (camada L0): MIT — veja [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
-- Fronteira de IP e política de dependências: [docs/IP_ARCHITECTURE.md](docs/IP_ARCHITECTURE.md).
+O mapa completo está em [LICENSE](LICENSE); o modelo de IP, em
+[docs/IP_STRATEGY.md](docs/IP_STRATEGY.md).
+
+**Licenciamento comercial, enterprise e parcerias:** fale com Yuri Flores Albuquerque
+([@Yuri-Albuquerque](https://github.com/Yuri-Albuquerque)).
+
+### Contribuição
+
+Pull requests são bem-vindos após a assinatura do [Contrato de Licença de Contribuidor](CLA.md).
+Você mantém o copyright do seu trabalho e concede uma licença que permite usá-lo em todas as
+edições do Yeditor.
 
 ## Citação
 

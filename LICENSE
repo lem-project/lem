@@ -1,44 +1,42 @@
-Yeditor Proprietary License
-SPDX-License-Identifier: LicenseRef-Yeditor-Proprietary
+Yeditor — Licensing Overview
+Copyright (c) 2026 Yuri Flores Albuquerque.
 
-Copyright (c) 2026 Yuri Flores Albuquerque. All Rights Reserved.
+Yeditor is distributed under an open-core model. Each part of this repository is
+governed by exactly one of the licenses below, determined by its location and by
+the SPDX-License-Identifier in its header. If the two ever disagree, the header of
+the individual file governs that file.
 
-1. Ownership
++-------------------------------------------+------------------------+---------------------------+
+| Part                                      | License                | Full text                 |
++-------------------------------------------+------------------------+---------------------------+
+| Yeditor Enterprise — layers L4-L5         | Proprietary,           | LICENSE-ENTERPRISE        |
+|   yeditor/enterprise/                     | All Rights Reserved    |                           |
+|   (journal, agent host, transactional     | (LicenseRef-Yeditor-   |                           |
+|   branching, Eval-to-Journal, forge)      |  Enterprise)           |                           |
++-------------------------------------------+------------------------+---------------------------+
+| Yeditor Core — layers L1-L3               | FSL-1.1-MIT            | LICENSE-FSL               |
+|   every other file under yeditor/         | (Functional Source     |                           |
+|   (core/, effects/, components/),         |  License 1.1, MIT      |                           |
+|   yeditor.asd, and Yeditor tooling in     |  Future License)       |                           |
+|   scripts/ carrying the FSL header        |                        |                           |
++-------------------------------------------+------------------------+---------------------------+
+| Lem-derived substrate — layer L0          | MIT                    | THIRD_PARTY_NOTICES.md    |
+|   src/, frontends/, extensions/,          |                        |                           |
+|   contrib/ and other inherited files      |                        |                           |
++-------------------------------------------+------------------------+---------------------------+
 
-The software, architecture, source code, object code, documentation and
-specifications contained in the `yeditor/` directory of this repository —
-including, without limitation, yeditor-tx, yeditor-context, yeditor-journal,
-yeditor-sdk, le-agent-host, le-forge, le-reading, le-themes-ergonomic and all
-other components of layers L1 through L5 — together with every other file that
-carries the `LicenseRef-Yeditor-Proprietary` identifier, the compilation of the
-software as a whole, and the name and brand "Yeditor" (collectively, the
-"Proprietary Software") are the exclusive and confidential property of Yuri
-Flores Albuquerque (the "Copyright Holder").
+In short:
 
-2. No license granted
+- Yeditor Core is source-available. You may read, study, audit, build, modify and
+  use it, including to write components, for any purpose other than a Competing
+  Use as defined in LICENSE-FSL. Each version converts to the MIT license two
+  years after it is made available.
+- Yeditor Enterprise may only be used under a written commercial license from the
+  copyright holder.
+- Code inherited from Lem remains under its original MIT license.
+- Third-party libraries keep their own licenses; see THIRD_PARTY_NOTICES.md.
 
-No right or license is granted, by implication, estoppel or otherwise, to any
-person to copy, modify, merge, publish, distribute, sublicense, sell, reverse
-engineer, decompile, disassemble, create derivative works of, use as training,
-fine-tuning or evaluation data for any machine-learning or artificial-intelligence
-model, or otherwise exploit, commercially or non-commercially, the Proprietary
-Software or any portion of it, except under a separate written license agreement
-signed by the Copyright Holder.
+"Yeditor" is a trademark of Yuri Flores Albuquerque; none of these licenses grants
+rights to use it except to identify the origin of the software.
 
-3. Third-party software
-
-This repository also contains software derived from Lem
-(https://github.com/lem-project/lem) and depends on other third-party
-open-source libraries. Those portions remain governed by their own licenses,
-reproduced or referenced in THIRD_PARTY_NOTICES.md, and this license does not
-restrict any right those licenses grant for the third-party code.
-
-4. Disclaimer
-
-THE PROPRIETARY SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO
-EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY ARISING FROM, OUT OF OR IN CONNECTION WITH THE PROPRIETARY SOFTWARE.
-
-For licensing inquiries, contact the Copyright Holder.
+Commercial, enterprise and partnership licensing: contact Yuri Flores Albuquerque.

@@ -68,19 +68,19 @@ yeditor/
 ├── frontends/               # ncurses / webview / SDL2 (L0)
 ├── contrib/                 # inherited, load on demand
 ├── yeditor/                 # NEW: Yeditor packages (L1-L5)
-│   ├── core.lisp, package.lisp
-│   ├── tx/                  # (T1+) transactional core yeditor-tx
-│   ├── effects/             # (T4+) standard inverses
-│   ├── components/          # (Phase 2) le-* components
-│   ├── forge/               # (T18) generative agent
-│   └── tests/               # unit + property tests
+│   ├── core/                # [FSL-1.1-MIT] L1-L3: yeditor-core.asd, package, version
+│   │   ├── tx/              #   yeditor-tx: transactions, inverses, side-transactions
+│   │   └── context/         #   yeditor-context: registry, reactivity, loader, durability
+│   ├── effects/             # [FSL-1.1-MIT] L1: standard effects (buffer, mode, hook, ...)
+│   ├── components/          # [FSL-1.1-MIT] L3: le-* components (Phase 2)
+│   └── enterprise/          # [Proprietary] L4-L5: journal, agent/, forge/
 ├── docs/                    # EN docs (arch.md, component-author.md, ...)
 ├── tests/                   # inherited
 ├── lem.asd, yeditor.asd
 ├── Makefile, qlfile, qlfile.lock
 ├── README.md + README.pt-BR.md
 ├── .yeditor.lisp
-├── LICENSE (proprietary, L1-L5), THIRD_PARTY_NOTICES.md (Lem MIT, L0), CLA.md
+├── LICENSE (license map), LICENSE-FSL, LICENSE-ENTERPRISE, THIRD_PARTY_NOTICES.md (Lem MIT), CLA.md
 └── .github/workflows/       # test.yml (rove tests) + yeditor-ci.yml (Nix builds)
 ```
 

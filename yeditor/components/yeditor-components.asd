@@ -26,4 +26,5 @@
                (:file "models")
                (:file "ai")
                (:file "mcp")
+               (:file "director-cockpit")
                (:file "components")))

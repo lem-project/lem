@@ -9,6 +9,8 @@
 ;;;   C-c j    toggle integrated terminal (bottom)
 ;;;   C-c h    toggle Hermes Agent chat panel (bottom)
 ;;;   C-c w    open modern workspace layout (sidebar + editor)
+;;;   F1       Director Mode: submit one intent (natural language) to the agent
+;;;   C-c C-a / C-c C-k        approve (commit) / revert (rollback) the agent transaction
 ;;;   C-c p    theme palette with live preview (C-g restores)
 ;;;   M-x yeditor-demo-agent   open a demo agent transaction (HUD mounts)
 ;;;   C-c C-a / C-c C-k        commit / roll back the agent transaction (HUD unmounts)

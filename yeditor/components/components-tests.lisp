@@ -863,3 +863,75 @@
     (uninstall-component (quote le-workspace-layout))
     (when (frame-leftside-window (current-frame))
       (delete-leftside-window))))
+
+;;; Director Mode (T21 editor tools on the MCP bus + T12-B cockpit)
+
+(deftest test-editor-run-command-tool
+  (lem-fake-interface:with-fake-interface ()
+    (install-component (quote le-mcp))
+    (unwind-protect
+         (progn
+           ;; unknown command: tool responds ok=nil, does not signal
+           (ok (eq (nth-value 0 (yeditor-components/mcp::run-lem-command "no-such-command-xyz")) nil)
+               "unknown command reports ok=nil")
+           ;; known command runs with an effect on the current buffer
+           (let ((buffer (make-buffer "*director-test*" :temporary t)))
+             (switch-to-buffer buffer)
+             (insert-string (current-point) "abc")
+             (buffer-start (current-point))
+             (let ((ok (nth-value 0 (yeditor-components/mcp::run-lem-command "forward-char"))))
+               (ok ok "forward-char runs"))
+             (ok (char= (character-at (current-point)) #\b) "forward-char moved the point")))
+      (uninstall-component (quote le-mcp)))))
+
+(deftest test-editor-open-and-present
+  (lem-fake-interface:with-fake-interface ()
+    (install-component (quote le-mcp))
+    (unwind-protect
+         (let ((file1 (merge-pathnames (format nil "yeditor-d1-~D.txt" (random 1000000))
+                                       (uiop:default-temporary-directory)))
+               (file2 (merge-pathnames (format nil "yeditor-d2-~D.txt" (random 1000000))
+                                       (uiop:default-temporary-directory))))
+           (dolist (file (list file1 file2))
+             (with-open-file (out file :direction :output :if-exists :supersede)
+               (write-string "x" out)))
+           (yeditor-components/mcp::present-side-by-side (list (namestring file1) (namestring file2)))
+           (let ((mains (remove-if (lambda (w) (typep w (quote lem-core:side-window)))
+                                   (window-list))))
+             (ok (>= (length mains) 2) "two main windows after side-by-side present"))
+           ;; reversibility: deleting the buffers leaves nothing dangling
+           (dolist (file (list file1 file2))
+             (alexandria:when-let ((b (find (probe-file file) (buffer-list)
+                                            :key (lambda (b) (and (buffer-filename b) (probe-file (buffer-filename b))))
+                                            :test (function equal))))
+               (delete-buffer b))))
+      (uninstall-component (quote le-mcp)))))
+
+(deftest test-editor-propose-checkpoint-and-rollback
+  (lem-fake-interface:with-fake-interface ()
+    (install-component (quote le-mcp))
+    (install-component (quote le-hud))
+    (unwind-protect
+         (progn
+           (yeditor-components/hud:open-agent-tx "fake-worker" "checkpoint")
+           (ok yeditor-components/hud:*agent-tx* "checkpoint opens an agent transaction")
+           (let ((buffer (make-buffer "*checkpoint-edit*" :temporary t)))
+             (switch-to-buffer buffer)
+             (yeditor-components/hud:agent-tx-insert buffer 1 "agent edit")
+             (ok (search "agent edit" (points-to-string (buffer-start-point buffer)
+                                                        (buffer-end-point buffer)))
+                 "agent edit applied")
+             (yeditor-components/hud:close-agent-tx :rollback t)
+             (ok (zerop (length (points-to-string (buffer-start-point buffer)
+                                                  (buffer-end-point buffer))))
+                 "rollback restored the buffer")
+             (ok (null yeditor-components/hud:*agent-tx*) "transaction closed")))
+      (uninstall-component (quote le-hud))
+      (uninstall-component (quote le-mcp)))))
+
+(deftest test-director-cockpit-binding
+  (lem-fake-interface:with-fake-interface ()
+    (install-component (quote le-director-cockpit))
+    (ok (eq (binding "F1") (quote yeditor-director-intent)) "F1 opens the intent bar")
+    (uninstall-component (quote le-director-cockpit))
+    (ok (null (binding "F1")) "F1 binding removed")))

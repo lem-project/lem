@@ -27,6 +27,10 @@ for example, to maintain an attribute like CURSOR.")
 (defun all-color-themes ()
   (alexandria:hash-table-keys *color-themes*))
 
+(defun color-theme-names ()
+  "Return the names of all defined color themes, sorted."
+  (sort (all-color-themes) #'string<))
+
 (defmacro define-color-theme (name (&optional (parent nil parentp)) &body specs)
  "Takes a name, optional parent theme, and color theme spec-table and generates color theme based off of spec-table
  -- see lem-base16-themes"

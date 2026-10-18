@@ -247,3 +247,9 @@ back to the last editor buffer without closing the panel.")
           (setf (buffer-value buffer 'greeted) t)
           (chat-insert buffer "Hermes Agent chat. Type after '> ' and press Return to send. C-c C-k closes, C-c C-a returns to the editor.")
           (chat-redraw-prompt buffer)))))
+
+(define-component le-hermes-chat
+  :version "0.1.0"
+  :install (lambda (comp ctx)
+             (declare (ignore ctx))
+             (list (install-keybinding comp *global-keymap* "C-c h" (quote yeditor-hermes-chat-toggle)))))

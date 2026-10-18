@@ -11,4 +11,4 @@
   :author "Yuri Flores Albuquerque <yuri-albuquerque@users.noreply.github.com>"
   :license "FSL-1.1-MIT"
   :version "0.1.0"
-  :depends-on (:lem :yeditor-core))
+  :depends-on ("lem/core" "yeditor-core"))

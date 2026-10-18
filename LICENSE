@@ -1,22 +1,44 @@
-The MIT License (MIT)
-Yeditor fork note: this project is a fork of Lem (https://github.com/lem-project/lem) by cxxxr and contributors, MIT licensed. Yeditor additions are MIT licensed, Copyright (c) 2026 Yuri Albuquerque.
+Yeditor Proprietary License
+SPDX-License-Identifier: LicenseRef-Yeditor-Proprietary
 
-Copyright (c) 2015 cxxxr
+Copyright (c) 2026 Yuri Flores Albuquerque. All Rights Reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. Ownership
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+The software, architecture, source code, object code, documentation and
+specifications contained in the `yeditor/` directory of this repository —
+including, without limitation, yeditor-tx, yeditor-context, yeditor-journal,
+yeditor-sdk, le-agent-host, le-forge, le-reading, le-themes-ergonomic and all
+other components of layers L1 through L5 — together with every other file that
+carries the `LicenseRef-Yeditor-Proprietary` identifier, the compilation of the
+software as a whole, and the name and brand "Yeditor" (collectively, the
+"Proprietary Software") are the exclusive and confidential property of Yuri
+Flores Albuquerque (the "Copyright Holder").
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+2. No license granted
+
+No right or license is granted, by implication, estoppel or otherwise, to any
+person to copy, modify, merge, publish, distribute, sublicense, sell, reverse
+engineer, decompile, disassemble, create derivative works of, use as training,
+fine-tuning or evaluation data for any machine-learning or artificial-intelligence
+model, or otherwise exploit, commercially or non-commercially, the Proprietary
+Software or any portion of it, except under a separate written license agreement
+signed by the Copyright Holder.
+
+3. Third-party software
+
+This repository also contains software derived from Lem
+(https://github.com/lem-project/lem) and depends on other third-party
+open-source libraries. Those portions remain governed by their own licenses,
+reproduced or referenced in THIRD_PARTY_NOTICES.md, and this license does not
+restrict any right those licenses grant for the third-party code.
+
+4. Disclaimer
+
+THE PROPRIETARY SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO
+EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY ARISING FROM, OUT OF OR IN CONNECTION WITH THE PROPRIETARY SOFTWARE.
+
+For licensing inquiries, contact the Copyright Holder.

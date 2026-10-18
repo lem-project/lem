@@ -687,3 +687,129 @@
       (uninstall-component (quote le-models))
       (ok (eq yeditor-components/ai:*default-provider* before) "default provider restored")
       (ok (null (binding "C-c a r")) "bindings removed"))))
+
+;;; T19 — le-mcp: MCP bus for agent workers
+
+(defun free-port ()
+  (let ((socket (usocket:socket-listen "127.0.0.1" 0 :reuse-address t)))
+    (prog1 (usocket:get-local-port socket) (usocket:socket-close socket))))
+
+(defun mcp-call (port method params &key session id)
+  "POST a JSON-RPC request; returns (values parsed-response session-id)."
+  (multiple-value-bind (body status headers)
+      (dex:post (format nil "http://127.0.0.1:~D/mcp" port)
+                :content (with-output-to-string (s)
+                           (yason:encode (let ((h (make-hash-table :test (function equal))))
+                                           (setf (gethash "jsonrpc" h) "2.0" (gethash "method" h) method
+                                                 (gethash "params" h) params)
+                                           (when id (setf (gethash "id" h) id))
+                                           h)
+                                         s))
+                :headers (append (list (cons "content-type" "application/json"))
+                                 (when session (list (cons "mcp-session-id" session))))
+                :keep-alive nil)
+    (declare (ignore status))
+    (values (and (plusp (length body)) (yason:parse body)) (gethash "mcp-session-id" headers))))
+
+(defun tool-call (port session name arguments)
+  "Call tool NAME; returns (values text error-p)."
+  (let* ((args (make-hash-table :test (function equal))))
+    (loop :for (k v) :on arguments :by (function cddr) :do (setf (gethash k args) v))
+    (let* ((response (mcp-call port "tools/call"
+                               (let ((h (make-hash-table :test (function equal))))
+                                 (setf (gethash "name" h) name (gethash "arguments" h) args) h)
+                               :session session :id 1))
+           (result (gethash "result" response)))
+      (values (gethash "text" (first (gethash "content" result)))
+              (eq (gethash "isError" result) t)))))
+
+(defun mcp-handshake (port)
+  (multiple-value-bind (response session)
+      (mcp-call port "initialize" (let ((h (make-hash-table :test (function equal))))
+                                    (setf (gethash "protocolVersion" h) "2024-11-05") h)
+                :id 0)
+    (declare (ignore response))
+    (mcp-call port "notifications/initialized" (make-hash-table) :session session)
+    session))
+
+(defun open-event-stream (port session)
+  "Read SSE data lines into a list on a thread; returns (values thread getter stream)."
+  (let* ((stream (flexi-streams:make-flexi-stream
+                  (dex:get (format nil "http://127.0.0.1:~D/mcp" port)
+                           :headers (list (cons "mcp-session-id" session))
+                           :want-stream t :force-binary t :keep-alive nil)
+                  :external-format :utf-8))
+         (lines nil)
+         (lock (bt2:make-lock)))
+    (values (bt2:make-thread (lambda ()
+                               (ignore-errors
+                                (loop :for line := (read-line stream nil)
+                                      :while line
+                                      :when (uiop:string-prefix-p "data: " line)
+                                        :do (bt2:with-lock-held (lock) (push (subseq line 6) lines))))))
+            (lambda () (bt2:with-lock-held (lock) (reverse lines)))
+            stream)))
+
+(defun wait-until (predicate &key (timeout 3))
+  (loop :repeat (* timeout 100) :thereis (funcall predicate) :do (sleep 0.01)))
+
+(deftest test-le-mcp-worker-bus
+  (lem-fake-interface:with-fake-interface ()
+    (let* ((port (free-port))
+           (yeditor-components/mcp:*mcp-port* port))
+      (install-component (quote le-mcp))
+      (unwind-protect
+           (let ((session (mcp-handshake port)))
+             (ok session "initialize returns a session id")
+             (let ((tools (mapcar (lambda (tool) (gethash "name" tool))
+                                  (gethash "tools" (gethash "result" (mcp-call port "tools/list" (make-hash-table)
+                                                                               :session session :id 2))))))
+               (dolist (name (list "yeditor_list_components" "yeditor_worker_register" "yeditor_task_next"
+                                   "yeditor_task_report" "yeditor_transaction_log" "yeditor_toggle_component"))
+                 (ok (member name tools :test (function string=)) (format nil "tool ~A listed" name))))
+             (ok (search "\"le-mcp\"" (tool-call port session "yeditor_list_components" nil))
+                 "component list includes le-mcp")
+             (ok (nth-value 1 (tool-call port session "yeditor_worker_register"
+                                         (list "name" "w" "protocol" "other/9")))
+                 "a worker speaking another protocol is refused")
+             (ok (nth-value 1 (tool-call port session "yeditor_worker_register"
+                                         (list "name" "w" "protocol" "yeditor-worker/1" "capabilities" (list "teleport"))))
+                 "a worker requiring an unoffered capability is refused")
+             (let ((worker (tool-call port session "yeditor_worker_register"
+                                      (list "name" "claude-code" "protocol" "yeditor-worker/1"
+                                            "capabilities" (list "tasks" "events")))))
+               (ok (uiop:string-prefix-p "worker-" worker) "worker registered")
+               (multiple-value-bind (thread events stream) (open-event-stream port session)
+                 (declare (ignore thread))
+                 (let ((task (yeditor-components/mcp:submit-task worker "edit" "rename foo to bar")))
+                   (ok (wait-until (lambda () (some (lambda (e) (search task e)) (funcall events))))
+                       "task pushed to the worker over SSE")
+                   (ok (search task (tool-call port session "yeditor_task_next" (list "worker_id" worker)))
+                       "task delivered by task_next")
+                   (ok (equal (tool-call port session "yeditor_task_next" (list "worker_id" worker)) "null")
+                       "no further pending task")
+                   (tool-call port session "yeditor_task_report"
+                              (list "worker_id" worker "task_id" task "status" "done" "observation" "renamed 3 uses"))
+                   (ok (equal (third (first (yeditor-components/mcp:task-observations))) "renamed 3 uses")
+                       "observation recorded")
+                   (ok (wait-until (lambda () (some (lambda (e) (search "observation" e)) (funcall events))))
+                       "observation event streamed"))
+                 (close stream))
+               ;; latency: handshake + registration + task submission and delivery
+               (let ((samples
+                       (loop :repeat 50
+                             :collect (let ((t0 (get-internal-real-time)))
+                                        (let* ((s (mcp-handshake port))
+                                               (w (tool-call port s "yeditor_worker_register"
+                                                             (list "name" "bench" "protocol" "yeditor-worker/1"))))
+                                          (yeditor-components/mcp:submit-task w "noop" "")
+                                          (tool-call port s "yeditor_task_next" (list "worker_id" w)))
+                                        (/ (* 1000.0 (- (get-internal-real-time) t0))
+                                           internal-time-units-per-second)))))
+                 (let ((p95 (nth (floor (* 0.95 50)) (sort samples (function <)))))
+                   (format t "~&handshake+task p95: ~,1F ms~%" p95)
+                   (ok (< p95 50) "handshake + task delivery p95 under 50 ms")))))
+        (uninstall-component (quote le-mcp)))
+      (ok (null (lem-mcp-server:current-mcp-server)) "server stopped on uninstall")
+      (ok (handler-case (progn (mcp-handshake port) nil) (error () t)) "port closed")
+      (ok (null (yeditor-components/mcp:worker-ids)) "workers forgotten"))))

@@ -14,6 +14,7 @@
   (:import-from :yeditor-components/context-bridge #:le-context-bridge)
   (:import-from :yeditor-components/lang-python #:le-lang-python #:enable-python-support)
   (:import-from :yeditor-components/ai #:le-models #:le-ollama)
+  (:import-from :yeditor-components/mcp #:le-mcp)
   (:import-from :yeditor-components/features
                 #:le-inherited-entry-points-off #:le-git #:le-project #:le-tree)
   (:import-from :yeditor-components/themes-ergonomic #:le-themes-ergonomic #:le-theme-extended)
@@ -21,7 +22,7 @@
            :le-themes-ergonomic :le-theme-extended :le-lsp
            :le-inherited-entry-points-off :le-git :le-project :le-tree
            :le-treesitter-packs :le-context-bridge :le-lang-python
-           :le-models :le-ollama))
+           :le-models :le-ollama :le-mcp))
 (in-package :yeditor-components)
 
 (defun enable-ephemeral-ui ()

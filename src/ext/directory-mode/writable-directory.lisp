@@ -273,7 +273,8 @@ applied completely or not at all."
            (when renames
              (apply-renames renames)
              (message "Renamed ~D file~:P" (length renames)))
-        (writable-directory-abort-changes)))))
+        (when (mode-active-p (current-buffer) 'writable-directory-mode)
+          (disable-minor-mode 'writable-directory-mode))))))
 
 (define-command writable-directory-abort-changes () ()
   "Discard the edited file names and list the directory read-only again."

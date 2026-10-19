@@ -22,6 +22,17 @@
 (asdf:load-system :lem-mouse-sgr1006)
 (asdf:load-system :yeditor-components)
 (asdf:load-system :yeditor-enterprise)
+;; Definitions are loaded and Lem's initial frame/context now exists. Recover before
+;; normal components install so their transitions are recorded from this boot onward.
+(lem:add-hook lem:*after-init-hook*
+             (lambda ()
+               (let ((report (yeditor-context/durability:start-durable-session)))
+                 (dolist (failure (getf report :errors))
+                   (lem:message "Recovery of ~A failed: ~A"
+                                (getf failure :component) (getf failure :condition)))
+                 (when (plusp (getf report :ignored-records))
+                   (lem:message "Effects journal: ~D invalid records ignored"
+                                (getf report :ignored-records))))) -5)
 ;; negative weight: run after Lem turns the tab bar on in its own after-init hook
 (lem:add-hook lem:*after-init-hook* (quote yeditor-components:enable-ephemeral-ui) -10)
 ;; YEDITOR_MCP_PORT lets a second editor run beside one already serving the default port

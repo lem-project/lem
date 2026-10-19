@@ -40,7 +40,7 @@
 (destructuring-bind (mode path ready) (uiop:command-line-arguments)
   (setf *ready-path* ready)
   (if (equal mode "recover")
-      (let ((result (yeditor-context/durability:recover :path path)))
+      (let ((result (yeditor-context/durability:start-durable-session :path path)))
         (assert (equal (getf result :cancelled) '("YEDITOR-DURABILITY-CRASH-CHILD::CRASHY")))
         (assert (equal (getf result :reinstalled) '("YEDITOR-DURABILITY-CRASH-CHILD::SAVED")))
         (assert (null *crashy-flag*))

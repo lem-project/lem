@@ -15,6 +15,7 @@
    #:log-event
    #:enable-durability
    #:disable-durability
+   #:start-durable-session
    #:replay-log
    #:recover))
 (in-package :yeditor-context/durability)
@@ -150,3 +151,9 @@ Returns :REINSTALLED, :CANCELLED, :SKIPPED, :ERRORS (id/condition), :IGNORED-REC
               (push id skipped))))
       (list :reinstalled (nreverse reinstalled) :cancelled cancelled
             :skipped (nreverse skipped) :errors (nreverse errors) :ignored-records ignored))))
+
+(defun start-durable-session (&key (path (log-path)))
+  "Enable journaling and reconcile a session after definitions/context are loaded.
+Return RECOVER's audit report; leave journaling enabled for future transitions."
+  (enable-durability :path path)
+  (recover :path path))

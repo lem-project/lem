@@ -1,21 +1,23 @@
 # T9: effects journal and crash recovery
 
-The durability module is an explicit session API. Loading an ASDF system does not
-read a user's journal or install components. After component definitions and the
-session's configuration/context are available, the session initializer calls:
+The terminal launcher (`scripts/run-yeditor-ncurses.lisp`) starts durability in
+Lem's after-init hook, after definitions and the initial frame are available and
+before its normal component installs. It surfaces recovery errors and ignored
+record counts through Lem messages. Loading an ASDF library alone does not read
+a user's journal or install components. Other session initializers can call:
 
 ```lisp
-(yeditor-context/durability:enable-durability)
-(yeditor-context/durability:recover)
+(yeditor-context/durability:start-durable-session)
 ```
 
-Both accept `:path` to select a journal; otherwise the path is
+`start-durable-session` enables the observer, calls `recover`, returns its report
+and leaves journaling enabled. Each API also accepts `:path` to select a journal; otherwise the path is
 `$XDG_DATA_HOME/yeditor/effects.log` (using UIOP's XDG fallback). Keep durability
 enabled during subsequent session changes. `disable-durability` restores the
 previous lifecycle observer and preserves an observer replaced by another owner.
-Enabling repeatedly does not duplicate records. There is no automatic Lem boot
-hook installed by loading this library; the calls belong in the session initializer
-(for example the user's Lem init file), after the relevant definitions are loaded.
+Enabling repeatedly does not duplicate records. The library itself installs no global Lem boot hook; the terminal launcher owns
+that wiring. Custom initializers should call after loading definitions and the
+session's configuration/context.
 
 Each JSONL record contains a universal-time `ts`, an `event`, and a package-qualified
 component id. Events are `install-begin`, `install-commit`, `install-abort` (failed

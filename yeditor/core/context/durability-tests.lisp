@@ -98,7 +98,7 @@
                                     :if-output-exists :append :error-output :output))))
              (ok (= code 0) "fresh boot cancels pending install and restores committed component with a fresh inverse"))
            (ok (equal (read-events path) '("install-begin" "install-commit" "install-begin"
-                                        "install-cancelled" "install-begin" "install-commit"))
+                                        "install-cancelled" "install-begin" "install-commit" "uninstall"))
                "cancellation is durably auditable on the next boot"))
       (when (and process (uiop:process-alive-p process))
         (uiop:terminate-process process :urgent t) (uiop:wait-process process))

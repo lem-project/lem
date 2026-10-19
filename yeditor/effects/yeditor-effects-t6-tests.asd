@@ -5,8 +5,10 @@
 
 (defsystem "yeditor-effects-t6-tests"
   :license "FSL-1.1-MIT"
-  :description "T6 tests: process, fdefinition effects (integration)"
-  :depends-on ("yeditor-tx" "yeditor-context" "yeditor-effects" "rove")
-  :components ((:file "effects-t6-tests"))
+  :description "T6 tests: process, TCP server, LSP session and function lifecycle"
+  :depends-on ("yeditor-tx" "yeditor-context" "yeditor-effects" "rove" "lem-fake-interface")
+  :components ((:file "effects-t6-tests")
+               (:file "effects-t6-lifecycle-tests"))
   :perform (test-op (op c)
-             (uiop:symbol-call :rove '#:run c)))
+             (unless (uiop:symbol-call :rove '#:run c)
+               (error "T6 effect tests failed."))))

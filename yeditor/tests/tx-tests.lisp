@@ -33,7 +33,7 @@
           (yeditor-tx:record-effect :noop :error nil inverse)
           (error "Expected failure"))
       (error () nil))
-    ;; T1 records immediately; rollback belongs to T2.
+    ;; Low-level audit records persist even when the recording scope signals.
     (assert (= 102 (length (yeditor-tx:log-records log)))))
   (dotimes (cycle 100)
     (let ((log (yeditor-tx:make-transaction-log)))

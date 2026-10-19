@@ -78,10 +78,6 @@ jobs:
       - name: Install SBCL
         run: sudo apt-get update && sudo apt-get install -y sbcl
       - name: Run independent L1 tests
-        run: >-
-          sbcl --noinform --non-interactive
-          --eval '(require :asdf)'
-          --eval '(asdf:load-asd (truename "yeditor-tx.asd"))'
-          --eval '(asdf:test-system "yeditor-tx")'
+        run: sbcl --noinform --script scripts/test-tx.lisp
       - name: Report empty transaction benchmark
         run: sbcl --noinform --script scripts/benchmark-tx.lisp

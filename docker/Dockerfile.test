@@ -54,4 +54,4 @@ COPY . .
 RUN qlot install
 
 # Run tests using qlot exec (fukamachi/qlot image uses qlot as entrypoint)
-CMD ["exec", "bash", "-c", ".qlot/bin/rove lem-tests.asd && .qlot/bin/rove extensions/vi-mode/lem-vi-mode.asd"]
+CMD ["exec", "bash", "-c", ".qlot/bin/rove lem-tests.asd && .qlot/bin/rove extensions/vi-mode/lem-vi-mode.asd && sbcl --noinform --non-interactive --load .qlot/setup.lisp --eval '(asdf:test-system \"yeditor-tx/lem-tests\")'"]

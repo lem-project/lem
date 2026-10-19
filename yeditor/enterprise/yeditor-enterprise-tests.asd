@@ -9,4 +9,5 @@
   :components ((:file "agent/workers-tests")
                (:file "forge/forge-tests")
                (:file "journal/journal-tests")
-               (:file "agent/hermes-chat-tests")))
+               (:file "agent/hermes-chat-tests")
+               (:file "agent/tools-tests")))

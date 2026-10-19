@@ -7,8 +7,9 @@
   :author "Yuri Flores Albuquerque <yuri-albuquerque@users.noreply.github.com>"
   :license "LicenseRef-Yeditor-Enterprise"
   :version "0.1.0"
-  :depends-on ("yeditor-core" "yeditor-components" "dexador" "yason" "split-sequence")
+  :depends-on ("yeditor-core" "yeditor-components" "lem-lsp-mode" "cl-ppcre" "dexador" "yason" "split-sequence")
   :components ((:file "journal/journal")
                (:file "agent/workers")
                (:file "agent/hermes-chat")
+               (:file "agent/tools")
                (:file "forge/forge")))

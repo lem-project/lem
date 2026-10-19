@@ -22,13 +22,14 @@
   (:import-from :yeditor-components/workspace-layout #:le-workspace-layout)
   (:import-from :yeditor-components/director-cockpit #:le-director-cockpit
                 #:yeditor-director-intent #:yeditor-director-approve #:yeditor-director-rollback)
+  (:import-from :yeditor-components/tutorial #:le-tutorial #:yeditor-tutorial)
   (:import-from :yeditor-components/themes-ergonomic #:le-themes-ergonomic #:le-theme-extended)
   (:export :enable-ephemeral-ui :disable-ephemeral-ui :le-zero-chrome :le-palette :le-hud
            :le-themes-ergonomic :le-theme-extended :le-lsp
            :le-inherited-entry-points-off :le-git :le-project :le-tree :le-sidebar :le-terminal :le-workspace-layout
            :le-director-cockpit :yeditor-director-intent :yeditor-director-approve :yeditor-director-rollback
            :le-treesitter-packs :le-context-bridge :le-lang-python
-           :le-models :le-ollama :le-mcp))
+           :le-models :le-ollama :le-mcp :le-tutorial :yeditor-tutorial))
 (in-package :yeditor-components)
 
 (defun enable-ephemeral-ui ()
@@ -44,7 +45,7 @@
   (dolist (feature (list (quote le-git) (quote le-project) (quote le-tree)
                          (quote le-sidebar) (quote le-terminal)
                          (quote le-workspace-layout)
-                         (quote le-director-cockpit)))
+                         (quote le-director-cockpit) (quote le-tutorial)))
     (install-component feature))
   (install-component (quote le-themes-ergonomic))
   (install-component (quote le-palette)))
@@ -56,7 +57,7 @@
   (uninstall-component (quote le-context-bridge))
   (uninstall-component (quote le-palette))
   (uninstall-component (quote le-themes-ergonomic))
-  (dolist (feature (list (quote le-director-cockpit)
+  (dolist (feature (list (quote le-tutorial) (quote le-director-cockpit)
                          (quote le-workspace-layout) (quote le-terminal) (quote le-sidebar)
                           (quote le-tree) (quote le-project) (quote le-git)))
     (uninstall-component feature))

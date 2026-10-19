@@ -1,0 +1,281 @@
+;;;; Copyright (c) 2026 Yuri Flores Albuquerque.
+;;;; SPDX-License-Identifier: FSL-1.1-MIT
+;;;; Licensed under the Functional Source License, Version 1.1 (see LICENSE-FSL).
+;;;; Competing commercial use is strictly prohibited.
+
+Yeditor Tutorial
+================
+
+INTRODUCTION
+
+Welcome to Yeditor. This is your own working copy of the tutorial: try
+every command right here, edit freely, and save with C-x C-s to keep your
+place for next time.
+
+Yeditor is built on the Lem editor and adds two ideas:
+
+  1. A quiet screen. Nothing is on screen until you ask for it: no tab
+     bar, no panels, a one-line status bar. Panels open with one key
+     and close with the same key.
+
+  2. Everything is reversible. Every feature is a component you can turn
+     on and off, and turning one off leaves no trace. Edits proposed by an
+     AI agent are held in a transaction: you approve them with one key or
+     revert them with another, and your files come back exactly as they
+     were.
+
+The tutorial takes about 15 minutes. Each chapter is short and ends with
+exercises marked with >>.
+
+NOTATION
+
+  C-x      Hold Control and press x
+  M-x      Hold Alt (Meta) and press x
+  C-c b    Press C-c, release, then press b
+
+  C-g      Cancel. Closes prompts and pop-ups and undoes a live preview.
+           When in doubt, press C-g.
+
+MOVING AROUND THIS TEXT
+
+  C-v      Scroll down one screen          (Page Down also works)
+  M-v      Scroll up one screen            (Page Up also works)
+  Arrows   Move the cursor
+
+You can also click anywhere with the mouse and scroll with the wheel.
+
+-----
+>> Press C-v to scroll down, then M-v to come back here.
+>> Click on this line with the mouse; the cursor jumps here.
+-----
+
+
+CHAPTER 1: THE QUIET SCREEN
+
+Look at the bottom line. It shows only the buffer name on the left and the
+cursor position on the right. That is the basal state: nothing else is
+drawn until you open it.
+
+Commands you will use all the time:
+
+  M-x         Run any command by name. Tab completes.
+  C-x ?       Explain a key: press it and Yeditor tells you what it does.
+  C-g         Cancel.
+
+-----
+>> Press M-x, type sidebar and press Tab: you see every command whose
+   name contains "sidebar". Press C-g to cancel.
+>> Press C-x ? and then C-c b. Yeditor shows which command C-c b runs.
+-----
+
+
+CHAPTER 2: FILES AND THE SIDEBAR
+
+Opening and saving work as in any Emacs-style editor:
+
+  C-x C-f     Open a file (Tab completes paths)
+  C-x C-s     Save
+  C-x b       Switch to another open buffer
+  C-x k       Close a buffer
+
+The sidebar shows your project as a tree:
+
+  C-c b       Show or hide the sidebar
+  C-c C-b     Move the cursor into the sidebar
+  C-c w       Workspace: open the sidebar beside your file
+
+With the mouse, click a folder to expand it and click a file to open it.
+Click in the text to come back to your file.
+
+With the keyboard, inside the sidebar:
+
+  Return      Open the file or expand the folder under the cursor
+  q           Go back to your file
+  r           Re-read the tree from disk
+
+-----
+>> Press C-c b. The project tree appears on the left.
+>> Click a folder to expand it, then click a file to open it.
+>> Press C-x b and Return... or type the name of this tutorial buffer to
+   come back here. (C-x b offers the previous buffer by default.)
+>> Press C-c C-b to put the cursor in the sidebar, move with the arrows,
+   then press q to return to your file.
+>> Press C-c b again to hide the sidebar.
+-----
+
+FINDING FILES IN A PROJECT
+
+A project is the folder holding .git, pyproject.toml, package.json and
+similar markers. Yeditor finds it for you.
+
+  C-x p f     Find a file anywhere in the project, by name
+  C-x p p     Switch to another project
+  C-x d       Open the full file manager (Lem's filer)
+
+-----
+>> Press C-x p f, type a few letters of a file name and press Return.
+   Then come back here with C-x b.
+-----
+
+
+CHAPTER 3: WINDOWS AND THE TERMINAL
+
+  C-x 2       Split the window horizontally
+  C-x 3       Split the window vertically
+  C-x o       Move to the other window (or click it)
+  C-x 1       Keep only the current window
+  C-x 0       Close the current window
+
+Drag the line between two windows with the mouse to resize them.
+
+The terminal opens at the bottom, in your project folder:
+
+  C-c j       Show or hide the terminal
+
+Click the terminal (or press C-x o) to type in it.
+
+-----
+>> Press C-x 3, then C-x o a few times. Press C-x 1 to go back to one window.
+>> Press C-c j to open the terminal, click it, type ls and Return.
+   Click here to come back, and press C-c j to hide the terminal.
+-----
+
+
+CHAPTER 4: THEMES
+
+Yeditor ships a pack of ergonomic themes, checked for contrast and gentle
+on the eyes for long sessions. The default is Gruvbox Soft.
+
+  C-c p       Pick a theme with live preview (Tab shows the list)
+
+While you move through the list, the whole editor previews the theme under
+the cursor. Return keeps it; C-g puts the previous theme back exactly as
+it was.
+
+-----
+>> Press C-c p, then Tab, and move through the list with the arrows; watch
+   the colors change. Press C-g: the original theme is back.
+>> Press C-c p and Tab again, choose a theme you like and press Return.
+-----
+
+
+CHAPTER 5: PYTHON
+
+Open any .py file and Yeditor sets the project up by itself:
+
+  - the project's virtualenv (.venv, venv, env or conda) is activated;
+  - the best language server on your PATH is started (basedpyright,
+    pyright or pylsp), for errors, completion and go-to-definition;
+  - files are formatted on save with ruff or black, if installed. A
+    formatter failure leaves your buffer untouched.
+
+Keys in Python files:
+
+  C-c C-z     Open the Python REPL of the project's virtualenv
+  C-c C-r     Send the selected region to the REPL
+  C-c C-b     Send the whole file to the REPL
+  C-c C-t     Run the test under the cursor with pytest
+              (C-u C-c C-t runs the whole file); failing lines are marked
+  C-c C-f     Format now
+
+When you leave the Python project, all of this is turned off again.
+
+Note: in Python files C-c C-b sends the file to the REPL, so reach the
+sidebar there with a click or with C-x o.
+
+-----
+>> If you have a Python project, open a .py file with C-x C-f, press
+   C-c C-z for the REPL and C-c C-b to run the file. Come back with C-x b.
+-----
+
+
+CHAPTER 6: AGENT TRANSACTIONS
+
+This is the heart of Yeditor. When an AI agent edits your code, it never
+writes to your disk behind your back. Its edits go into your editor
+buffers, highlighted, inside a transaction:
+
+  - a panel on the right (the HUD) lists every pending edit;
+  - C-c C-a   approve: keep the edits;
+  - C-c C-k   revert: undo every edit; files the agent opened are closed
+              and your disk stays byte for byte as it was.
+
+(The panel calls these commit and rollback.)
+
+The panel appears only while a transaction is open and disappears when
+you approve or revert.
+
+You can try it safely with a demo agent that proposes two edits to a small
+Python file:
+
+-----
+>> Press M-x, type yeditor-demo-agent and press Return.
+   A buffer *yeditor-demo* opens with two highlighted insertions, and the
+   HUD on the right lists them.
+>> Press C-c C-k. The edits disappear and the HUD closes.
+>> Run M-x yeditor-demo-agent again, and this time press C-c C-a.
+   The edits stay; the highlight and the HUD go away.
+>> Press C-x b and Return to come back to the tutorial.
+-----
+
+
+CHAPTER 7: DIRECTOR MODE AND THE HERMES CHAT
+
+In Director Mode you say what you want and an agent does it through the
+editor, under the same transaction rules.
+
+  F1          Type an intent in plain language, for example
+              "add a docstring to every function in this file".
+              It goes to the Hermes agent, which works through the
+              editor. Edits it makes through the editor arrive as a
+              transaction you approve (C-c C-a) or revert (C-c C-k).
+
+  C-c h       Show or hide the Hermes chat panel at the bottom.
+              Type after "> " and press Return to send.
+              In the chat, C-c C-e returns to your file
+              and C-c C-k closes the panel.
+
+These need the Hermes agent installed on your machine (the hermes
+command).
+
+-----
+>> If Hermes is installed, press C-c h, ask "which files are in this
+   project?" and press Return. Press C-c C-e to come back here.
+-----
+
+
+CHAPTER 8: GIT
+
+  C-x g       Git status of the project: stage, commit, push, pull,
+              view diffs (press ? inside it for the list of keys,
+              q to close it)
+
+-----
+>> Inside a Git project, press C-x g. Press q to close it.
+-----
+
+
+CHAPTER 9: COMPONENTS
+
+Every feature you used today is a component: the sidebar, the terminal,
+the themes, the Python support, the HUD. Turning a component off removes
+its keys, panels and hooks completely, and turning it back on restores
+them.
+
+The editor turns some components on by itself when they are useful: the
+Python support when you open a Python project, the HUD while an agent
+transaction is open. Everything else waits for you.
+
+
+WHERE TO GO NEXT
+
+  M-x yeditor-tutorial-editing
+              The full lessons on editing text: movement, selection,
+              copy and paste, search and replace, undo, macros.
+  C-x ?       Explain any key.
+  M-x         Browse every command: type yeditor- and press Tab.
+
+To come back to this tutorial: M-x yeditor-tutorial, or the Tutorial
+entry on the start screen.
+
+To quit Yeditor: C-x C-c.

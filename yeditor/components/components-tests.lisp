@@ -953,3 +953,39 @@
     (ok (eq (binding "F1") (quote yeditor-director-intent)) "F1 opens the intent bar")
     (uninstall-component (quote le-director-cockpit))
     (ok (null (binding "F1")) "F1 binding removed")))
+
+;;; Tutorial
+
+(deftest test-tutorial-component
+  (lem-fake-interface:with-fake-interface ()
+    (let ((home (uiop:ensure-directory-pathname
+                 (merge-pathnames (format nil "yeditor-tutorial-~D/" (random 1000000))
+                                  (uiop:default-temporary-directory))))
+          (old-home (uiop:getenv "LEM_HOME")))
+      (sb-posix:setenv "LEM_HOME" (namestring home) 1)
+      (unwind-protect
+           (progn
+             (install-component (quote yeditor-components:le-tutorial))
+             (ok (equal (yeditor-components/tutorial:yeditor-tutorial-file) lem-tutor:*tutorial-file*)
+                 "Lem's tutorial command opens the Yeditor tutorial")
+             (yeditor-components/tutorial:yeditor-tutorial)
+             (ok (uiop:string-prefix-p "Yeditor Tutorial"
+                                       (points-to-string (buffer-start-point (current-buffer))
+                                                         (buffer-end-point (current-buffer))))
+                 "the Yeditor tutorial opens")
+             (ok (probe-file (merge-pathnames "lem-tutor-saves/yeditor-tutorial-save.txt" home))
+                 "with a working copy of its own")
+             (yeditor-components/tutorial:yeditor-tutorial-editing)
+             (ok (uiop:string-prefix-p "Lem Tutor" (points-to-string (buffer-start-point (current-buffer))
+                                                                     (buffer-end-point (current-buffer))))
+                 "Lem's editing lessons stay available")
+             (ok (probe-file (merge-pathnames "lem-tutor-saves/lem-tutor-save.txt" home))
+                 "Lem's working copy keeps its historical name")
+             (uninstall-component (quote yeditor-components:le-tutorial))
+             (ok (null lem-tutor:*tutorial-file*) "uninstall gives Lem's tutorial back"))
+        (if old-home (sb-posix:setenv "LEM_HOME" old-home 1) (sb-posix:unsetenv "LEM_HOME"))
+        (dolist (buffer (buffer-list))
+          (when (and (buffer-filename buffer)
+                     (uiop:string-prefix-p (namestring home) (namestring (buffer-filename buffer))))
+            (delete-buffer buffer)))
+        (uiop:delete-directory-tree home :validate t :if-does-not-exist :ignore)))))

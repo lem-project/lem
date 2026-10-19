@@ -5,6 +5,9 @@
 
 (load ".qlot/setup.lisp")
 (require :asdf)
+(dolist (asd '("yeditor/core/tx/yeditor-tx.asd"
+               "yeditor/core/context/yeditor-context.asd"))
+  (asdf:load-asd (merge-pathnames asd (uiop:getcwd))))
 (defparameter *effects-dir* (merge-pathnames "yeditor/effects/" (uiop:getcwd)))
 (dolist (asd '("yeditor-effects.asd" "yeditor-effects-tests.asd" "yeditor-effects-t5-tests.asd" "yeditor-effects-t6-tests.asd"))
   (asdf:load-asd (merge-pathnames asd *effects-dir*)))
@@ -12,5 +15,5 @@
 (asdf:load-system :yeditor-effects-t5-tests)
 (asdf:load-system :yeditor-effects-t6-tests)
 (dolist (sys '(:yeditor-effects-tests :yeditor-effects-t5-tests :yeditor-effects-t6-tests))
-  (rove:run sys))
+  (unless (rove:run sys) (uiop:quit 1)))
 (uiop:quit)

@@ -9,16 +9,27 @@
 (in-package :yeditor-effects/e-hook)
 
 (defun install-hook (comp hook-var fn)
-  "Add FN to the hook list stored in HOOK-VAR (a symbol) as a transaction effect.
-   Undo removes FN. add-hook and remove-hook are macros over a place, so the
-   place is (symbol-value HOOK-VAR)."
-  (let ((handle (install-effect comp :hook
-                                 (lambda () (add-hook (symbol-value hook-var) fn))
-                                 :undo-thunk
-                                 (lambda () (remove-hook (symbol-value hook-var) fn)))))
-    (push (cons :hook hook-var) handle)
-    (push (cons :fn fn) handle)
-    handle))
+  "Queue FN in HOOK-VAR; undo removes only the entry created by this effect.
+A pre-existing callback, including its weight, is preserved across activations."
+  (let ((owned-entry nil))
+    (let ((handle
+            (install-effect
+             comp :hook
+             (lambda ()
+               (setf owned-entry nil)
+               (unless (find fn (symbol-value hook-var) :key #'car)
+                 (add-hook (symbol-value hook-var) fn)
+                 (setf owned-entry (find fn (symbol-value hook-var) :key #'car))))
+             :undo-thunk
+             (lambda ()
+               (when (and owned-entry (boundp hook-var)
+                          (member owned-entry (symbol-value hook-var) :test #'eq))
+                 (remove-hook (symbol-value hook-var) fn))
+               (setf owned-entry nil)))))
+      (push (cons :hook hook-var) handle)
+      ;; :FN is reserved for the transaction installer used during resume.
+      (push (cons :callback fn) handle)
+      handle)))
 
 (defun install-hook-removal (comp hook-var fn)
   "Remove FN from the hook list in HOOK-VAR as a transaction effect (kind 4).

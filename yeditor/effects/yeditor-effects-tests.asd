@@ -6,7 +6,8 @@
 (defsystem "yeditor-effects-tests"
   :license "FSL-1.1-MIT"
   :description "Tests for yeditor-effects"
-  :depends-on ("yeditor-effects" "yeditor-tx" "yeditor-context" "rove")
-  :components ((:file "effects-tests"))
+  :depends-on ("yeditor-effects" "yeditor-tx" "yeditor-context" "rove" "lem-fake-interface")
+  :components ((:file "effects-tests") (:file "effects-t4-tests"))
   :perform (asdf:test-op (op c)
-             (uiop:symbol-call :rove '#:run :yeditor-effects-tests)))
+             (unless (uiop:symbol-call :rove '#:run :yeditor-effects-tests)
+               (error "T4 effects tests failed."))))

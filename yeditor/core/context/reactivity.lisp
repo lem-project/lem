@@ -24,6 +24,7 @@
    #:update-contexts
    #:context-value
    #:component-active-p
+   #:component-wanted-p
    #:context-convergence-error
    #:*max-reclassification-passes*))
 (in-package :yeditor-context/reactivity)
@@ -161,6 +162,12 @@
   (let ((entry (gethash sym *component-registry*)))
     (and entry (or (eq (getf entry :status) :active) (not (null (getf entry :state)))))))
 
+(defun component-wanted-p (sym)
+  "True when SYM is enabled by configuration and its declared predicates match."
+  (let ((entry (gethash sym *component-registry*)))
+    (and entry (getf entry :config-enabled-p t)
+         (coeffect-satisfied-p (component-coeffects sym)))))
+
 (defvar *reclassifying* nil "True while a reclassification pass runs.")
 (defvar *reclassify-pending* nil "A nested request schedules another pass.")
 (defparameter *max-reclassification-passes* 100
@@ -179,7 +186,7 @@
       (multiple-value-bind (coeffects declared-p) (component-coeffects sym)
         (when (and declared-p (component-active-p sym))
           (push sym active)
-          (unless (coeffect-satisfied-p coeffects) (push sym removals)))))
+          (unless (component-wanted-p sym) (push sym removals)))))
     (labels ((order-of (sym) (getf (gethash sym *component-registry*) :activation-order 0))
              (transition (sym function)
                (handler-case (progn (funcall function sym) t)
@@ -200,13 +207,13 @@
                       (push sym suspended)
                       (return)))))))
       (dolist (sym suspended)
-        (if (coeffect-satisfied-p (component-coeffects sym))
+        (if (component-wanted-p sym)
             (transition sym #'yeditor-context:toggle-component)
             (transition sym #'uninstall-component)))
       (dolist (sym names)
         (multiple-value-bind (coeffects declared-p) (component-coeffects sym)
           (when (and declared-p (gethash sym *component-registry*)
-                     (not (component-active-p sym)) (coeffect-satisfied-p coeffects))
+                     (not (component-active-p sym)) (component-wanted-p sym))
             (transition sym (lambda (name) (install-component name *current-context*)))))))
     (nreverse failures)))
 
@@ -215,7 +222,7 @@
    Return transition failures. Nested requests are deferred; feedback that never
    settles signals CONTEXT-CONVERGENCE-ERROR rather than silently stopping."
   (if *reclassifying*
-      (setf *reclassify-pending* t)
+      (progn (setf *reclassify-pending* t) nil)
       (let ((*reclassifying* t) (failures nil))
         (loop :repeat *max-reclassification-passes*
               :do (setf *reclassify-pending* nil)

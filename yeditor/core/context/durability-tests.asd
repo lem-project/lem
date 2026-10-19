@@ -7,4 +7,7 @@
   :license "FSL-1.1-MIT"
   :description "T9 tests: effects log, replay, crash recovery, replay benchmark"
   :depends-on ("yeditor-tx" "yeditor-context" "yeditor-context-durability" "rove")
-  :components ((:file "durability-tests")))
+  :components ((:static-file "durability-crash-child.lisp")
+               (:file "durability-tests"))
+  :perform (test-op (op c)
+             (unless (uiop:symbol-call :rove '#:run c) (error "Durability tests failed."))))

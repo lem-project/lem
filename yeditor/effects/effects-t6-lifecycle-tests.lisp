@@ -111,12 +111,19 @@
                                                    :element-type '(unsigned-byte 8)))
            (let ((stream (usocket:socket-stream connection)))
              (write-byte 42 stream) (finish-output stream)
-             (ok (usocket:wait-for-input connection :timeout 1 :ready-only t))
-             (ok (= 42 (read-byte stream)))
+             ;; WAIT-FOR-INPUT may return NIL on EINTR before its timeout expires.
+             ;; Keep the one-second deadline; never perform a blocking read after failure.
+             (let ((ready (wait-until
+                           (lambda () (usocket:wait-for-input connection :timeout 0.01 :ready-only t))
+                           :timeout 1)))
+               (ok ready "echo becomes readable within the deadline")
+               (when ready (ok (= 42 (read-byte stream)))))
              (tx-rollback)
-             (ok (usocket:wait-for-input connection :timeout 1 :ready-only t)
-                 "rollback closes an accepted connection blocked in the handler")
-             (when (listen stream) (read-byte stream nil nil)))
+             (let ((closed (wait-until
+                            (lambda () (usocket:wait-for-input connection :timeout 0.01 :ready-only t))
+                            :timeout 1)))
+               (ok closed "rollback closes an accepted connection blocked in the handler")
+               (when closed (ok (null (read-byte stream nil nil)) "closed connection reaches EOF"))))
            (ok (wait-until
                 (lambda ()
                   (notany (lambda (thread)

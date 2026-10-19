@@ -15,21 +15,26 @@
    #:log-event
    #:enable-durability
    #:disable-durability
+   #:start-durable-session
    #:replay-log
    #:recover))
 (in-package :yeditor-context/durability)
 
-(defun default-effects-log-path ()
-  (uiop:xdg-data-home "yeditor/effects.log"))
-
 (defvar *effects-log-path* nil
-  "Path of the append-only JSONL effects log; nil means default-effects-log-path.")
-
+  "Path of the append-only JSONL effects log; nil selects the XDG data directory.")
 (defvar *log-lock* (sb-thread:make-mutex :name "yeditor-effects-log"))
+(defvar *durability-hook* nil)
+(defvar *previous-hook* nil)
+
+(defun default-effects-log-path ()
+  "Return the effects journal in the user's XDG data directory."
+  (uiop:xdg-data-home "yeditor/effects.log"))
 
 (defun log-path () (or *effects-log-path* (default-effects-log-path)))
 
 (defun component-id (component)
+  (unless (and (symbolp component) (symbol-package component))
+    (error "A durable component needs an interned symbol: ~S" component))
   (format nil "~A::~A" (package-name (symbol-package component)) (symbol-name component)))
 
 (defun find-component-symbol (id)
@@ -38,66 +43,117 @@
       (let ((pkg (find-package (subseq id 0 sep))))
         (when pkg (find-symbol (subseq id (+ sep 2)) pkg))))))
 
+(defun journal-event-p (event)
+  (member event '("install-begin" "install-commit" "install-abort"
+                  "install-cancelled" "uninstall" "suspend" "resume") :test #'equal))
+
 (defun log-event (event component &key (path (log-path)))
-  "Append one JSON line {ts, event, component} to PATH and flush it."
-  (let ((record (make-hash-table :test #'equal)))
+  "Append and flush one JSONL event. Preserve torn tails, separating the next record.
+The mutex serializes writers in this session; the journal has one owning process."
+  (let* ((event-name (string-downcase (symbol-name event)))
+         (id (if (symbolp component) (component-id component) component))
+         (record (make-hash-table :test #'equal)))
+    (unless (and (journal-event-p event-name) (stringp id) (plusp (length id)))
+      (error "Invalid lifecycle event ~S for ~S" event component))
     (setf (gethash "ts" record) (get-universal-time)
-          (gethash "event" record) (string-downcase (symbol-name event))
-          (gethash "component" record) (if (symbolp component) (component-id component) component))
-    (sb-thread:with-mutex (*log-lock*)
-      (ensure-directories-exist path)
-      (with-open-file (out path :direction :output :if-exists :append
-                                :if-does-not-exist :create :external-format :utf-8)
-        (yason:encode record out)
-        (terpri out)
-        (finish-output out)))))
+          (gethash "event" record) event-name
+          (gethash "component" record) id)
+    ;; Encode before opening the journal: encoding failure cannot leave half a record.
+    (let ((bytes (sb-ext:string-to-octets
+                  (with-output-to-string (out) (yason:encode record out))
+                  :external-format :utf-8)))
+      (sb-thread:with-mutex (*log-lock*)
+        (ensure-directories-exist path)
+        (let ((needs-newline
+                (when (probe-file path)
+                  (with-open-file (in path :element-type '(unsigned-byte 8))
+                    (let ((size (file-length in)))
+                      (when (plusp size)
+                        (file-position in (1- size))
+                        (/= 10 (read-byte in))))))))
+          (with-open-file (out path :direction :output :if-exists :append
+                                    :if-does-not-exist :create :element-type '(unsigned-byte 8))
+            (when needs-newline (write-byte 10 out))
+            (write-sequence bytes out)
+            (write-byte 10 out)
+            (finish-output out)))))))
+
+(defun make-journal-hook (prior path)
+  (lambda (event component)
+    ;; A rejected transition must not be recorded as committed.
+    (when prior (funcall prior event component))
+    (log-event event component :path path)))
 
 (defun enable-durability (&key path)
-  "Record every component lifecycle transition in the effects log."
+  "Journal lifecycle transitions, preserving the previous observer. Idempotent.
+Call after definitions/configuration are loaded, before RECOVER and session changes."
   (when path (setf *effects-log-path* path))
-  (setf *lifecycle-hook* (lambda (event component) (log-event event component))))
+  (unless (eq *lifecycle-hook* *durability-hook*)
+    (setf *previous-hook* *lifecycle-hook*))
+  (setf *durability-hook* (make-journal-hook *previous-hook* (log-path))
+        *lifecycle-hook* *durability-hook*))
 
 (defun disable-durability ()
-  (setf *lifecycle-hook* nil))
+  "Remove our observer and restore its predecessor, preserving later replacements."
+  (when (and *durability-hook* (eq *lifecycle-hook* *durability-hook*))
+    (setf *lifecycle-hook* *previous-hook*))
+  (setf *durability-hook* nil *previous-hook* nil))
 
 (defun replay-log (&key (path (log-path)))
-  "Fold the log into the state at the last write. Returns two lists of component ids:
-   LIVE (committed and neither uninstalled nor suspended) and CANCELLED (an
-   install-begin never followed by commit or abort: the process died mid-install).
-   Unparseable lines (a torn final write) are skipped."
-  (let ((last (make-hash-table :test #'equal))
-        (order nil))
+  "Return LIVE ids in last activation order and CANCELLED pending install ids.
+Only recognized, well-formed records affect reconciliation. Invalid records, including
+preserved torn writes, are ignored and counted in the third return value for audit.
+No Lisp code, component definitions or inverse closures are read from the journal."
+  (let ((last (make-hash-table :test #'equal)) (index 0) (ignored 0))
     (when (probe-file path)
-      (with-open-file (in path :external-format :utf-8)
+      (with-open-file (in path :external-format '(:utf-8 :replacement #\Replacement_Character))
         (loop :for line := (read-line in nil)
               :while line
-              :for rec := (ignore-errors (yason:parse line))
-              :when (hash-table-p rec)
-                :do (let ((id (gethash "component" rec)))
-                      (unless (nth-value 1 (gethash id last)) (push id order))
-                      (setf (gethash id last) (gethash "event" rec))))))
+              :do (incf index)
+                  (let* ((rec (ignore-errors (yason:parse line)))
+                         (id (and (hash-table-p rec) (gethash "component" rec)))
+                         (event (and (hash-table-p rec) (gethash "event" rec))))
+                    (if (and (stringp id) (plusp (length id)) (journal-event-p event)
+                             (integerp (gethash "ts" rec)))
+                        (setf (gethash id last) (cons index event))
+                        (incf ignored))))))
     (let ((live nil) (cancelled nil))
-      (dolist (id (nreverse order))
-        (let ((event (gethash id last)))
-          (cond ((member event '("install-commit" "resume") :test #'string=) (push id live))
-                ((string= event "install-begin") (push id cancelled)))))
-      (values (nreverse live) (nreverse cancelled)))))
+      (maphash (lambda (id state)
+                 (cond ((member (cdr state) '("install-commit" "resume") :test #'equal)
+                        (push (cons (car state) id) live))
+                       ((equal (cdr state) "install-begin")
+                        (push (cons (car state) id) cancelled)))) last)
+      (values (mapcar #'cdr (sort live #'< :key #'car))
+              (mapcar #'cdr (sort cancelled #'< :key #'car)) ignored))))
 
 (defun recover (&key (path (log-path)))
-  "Boot-time reconciliation. Installs that never committed are recorded as
-   install-cancelled (never re-run: nothing is installed without its inverse).
-   Live components declared with :persist t are re-installed. Returns a plist
-   :reinstalled :cancelled :skipped (ids)."
-  (multiple-value-bind (live cancelled) (replay-log :path path)
+  "Reconcile a fresh session after component definitions/configuration are loaded.
+Audit abandoned installs; reinstall only inactive :PERSIST T components in activation
+order, capturing fresh inverses. Existing active/suspended session state is borrowed.
+Every recovery transition is journaled to PATH even if durability is not enabled.
+Returns :REINSTALLED, :CANCELLED, :SKIPPED, :ERRORS (id/condition), :IGNORED-RECORDS."
+  (multiple-value-bind (live cancelled ignored) (replay-log :path path)
     (dolist (id cancelled) (log-event :install-cancelled id :path path))
-    (let ((reinstalled nil) (skipped nil))
+    (let ((reinstalled nil) (skipped nil) (errors nil)
+          (*lifecycle-hook*
+            (make-journal-hook (if (eq *lifecycle-hook* *durability-hook*)
+                                   *previous-hook* *lifecycle-hook*) path)))
       (dolist (id live)
         (let* ((sym (find-component-symbol id))
                (entry (and sym (gethash sym *component-registry*))))
-          (if (and entry (getf entry :persist) (null (getf entry :state)))
+          (if (and entry (getf entry :persist)
+                   (eq (getf entry :status) :inactive)
+                   (null (getf entry :state)) (null (getf entry :suspended)))
               (handler-case (progn (install-component sym) (push id reinstalled))
-                (error () (push id skipped)))
+                (error (condition)
+                  (push id skipped)
+                  (push (list :component id :condition condition) errors)))
               (push id skipped))))
-      (list :reinstalled (nreverse reinstalled)
-            :cancelled cancelled
-            :skipped (nreverse skipped)))))
+      (list :reinstalled (nreverse reinstalled) :cancelled cancelled
+            :skipped (nreverse skipped) :errors (nreverse errors) :ignored-records ignored))))
+
+(defun start-durable-session (&key (path (log-path)))
+  "Enable journaling and reconcile a session after definitions/context are loaded.
+Return RECOVER's audit report; leave journaling enabled for future transitions."
+  (enable-durability :path path)
+  (recover :path path))

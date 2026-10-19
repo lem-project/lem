@@ -31,7 +31,9 @@ it does not register work or compensation with the transaction lifecycle.
 
 ## Lifecycle and failures
 
-The normal lifecycle is `:open` → `:committed` → `:rolled-back`. Repeating a
+The normal lifecycle is `:open` → `:committed` → `:rolled-back`.
+T3 adds explicit `suspend`/`resume` for replay with stable handles; final rollback
+remains terminal. See [component-author.md](component-author.md). Repeating a
 successful commit or rollback does nothing. Rolled-back logs cannot be reused.
 A transaction scope selects a log; leaving the scope does not auto-commit.
 `undo-effect` cancels a pending handle or uninstalls an active handle once.

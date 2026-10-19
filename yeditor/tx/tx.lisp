@@ -6,23 +6,29 @@
            #:install-effect #:commit #:rollback #:undo-effect #:effect-state
            #:transaction-state #:transaction-kind
            #:call-with-workspace-transaction #:with-workspace-transaction
-           #:rollback-failure #:rollback-errors #:rollback-cause))
+           #:rollback-failure #:rollback-errors #:rollback-cause
+           #:transaction-handles #:effect-record #:suspend #:resume))
 (in-package :yeditor-tx)
 
 (defvar *transaction-log* nil
   "Dynamically scoped destination for effects in the current transaction.")
+
+(defvar *suspending* nil
+  "Whether nested workspace groups should retain their replayable handles.")
 
 (defstruct (transaction-log (:constructor make-transaction-log ()))
   "An in-memory effect log owned by one editor execution context."
   (records nil :type list)
   (effects nil :type list)
   (state :open)
-  (kind 1))
+  (kind 1)
+  (replay-effects nil :type list))
 
 (defstruct (effect-handle (:constructor make-effect-handle (log owner kind apply undo)))
   "A pending installer and its pre-captured compensation function."
   log owner kind apply undo
-  (state :pending))
+  (state :pending)
+  (record nil))
 
 (define-condition rollback-failure (error)
   ((errors :initarg :errors :reader rollback-errors)
@@ -141,7 +147,7 @@ preserves an original installer error when compensation also fails."
   "Roll back LOG in LIFO order, retaining failed inverses for explicit retry.
 Signal ROLLBACK-FAILURE after attempting all inverses if any fail."
   (unless (member (transaction-state log)
-                  '(:open :committed :rolled-back :rollback-failed))
+                  '(:open :committed :rolled-back :rollback-failed :suspended :suspend-failed))
     (error "Cannot start rollback during commit, uninstall or rollback."))
   (rollback-log log :cause cause))
 
@@ -165,9 +171,10 @@ An already rolled-back transaction cannot be reused."
                  (when (eq :pending (effect-state handle))
                    (setf (effect-handle-state handle) :active)
                    (let ((payload (funcall (effect-handle-apply handle))))
-                     (record-effect (effect-handle-kind handle)
-                                    (effect-handle-owner handle) payload
-                                    (effect-handle-undo handle)))))
+                     (setf (effect-handle-record handle)
+                           (record-effect (effect-handle-kind handle)
+                                          (effect-handle-owner handle) payload
+                                          (effect-handle-undo handle))))))
                (setf (transaction-log-state log) :committed
                      complete-p t))
            (error (condition) (setf cause condition)))
@@ -189,9 +196,59 @@ The caller supplies edits/inverses appropriate to the buffer's undo protocol."
     (setf (transaction-log-kind child) 2)
     (with-transaction (child) (funcall function))
     (install-effect owner :workspace
-                    (lambda () (commit child))
-                    :undo-thunk (lambda () (rollback child)))))
+                    (lambda () (if (eq :suspended (transaction-state child))
+                                   (resume child) (commit child)))
+                    :undo-thunk (lambda () (if *suspending*
+                                              (suspend child) (rollback child))))))
 
 (defmacro with-workspace-transaction ((owner) &body body)
   "Queue BODY's effects as one reversible workspace group owned by OWNER."
   `(call-with-workspace-transaction ,owner (lambda () ,@body)))
+
+
+(defun transaction-handles (log)
+  "Return LOG's handles in registration order, copying only the list spine."
+  (reverse (transaction-log-effects log)))
+
+(defun effect-record (handle)
+  "Return a copy of HANDLE's last successful installation record, or NIL."
+  (mapcar #'copy-list (effect-handle-record handle)))
+
+(defun suspend (log)
+  "Undo LOG's effects, retaining their handles for an explicit RESUME.
+Only effects active at suspension are replayed. Failed compensation leaves
+:suspend-failed; retry SUSPEND or perform a final ROLLBACK to recover."
+  (when (eq :suspended (transaction-state log))
+    (return-from suspend log))
+  (unless (member (transaction-state log) '(:committed :suspend-failed))
+    (error "Suspend requires a committed transaction or a suspension retry."))
+  (when (eq :committed (transaction-state log))
+    (setf (transaction-log-replay-effects log)
+          (remove-if-not (lambda (handle)
+                           (member (effect-state handle) '(:active :undo-failed)))
+                         (transaction-log-effects log))))
+  (let ((*suspending* t))
+    (unwind-protect (rollback-log log)
+      (case (transaction-state log)
+        (:rolled-back (setf (transaction-log-state log) :suspended))
+        (:rollback-failed (setf (transaction-log-state log) :suspend-failed)))))
+  log)
+
+(defun resume (log)
+  "Replay suspended installers, preserving handle identity and registration order.
+Replace the previous activation's audit records rather than accumulate history.
+A compensated replay failure leaves LOG suspended and retryable; failed
+compensation leaves :suspend-failed and requires suspension recovery first."
+  (unless (eq :suspended (transaction-state log))
+    (error "Resume requires a fully suspended transaction."))
+  (dolist (handle (transaction-log-replay-effects log))
+    (setf (effect-handle-state handle) :pending
+          (effect-handle-record handle) nil))
+  (setf (transaction-log-records log) nil
+        (transaction-log-state log) :open)
+  (let ((*suspending* t))
+    (unwind-protect (commit log)
+      (case (transaction-state log)
+        (:rolled-back (setf (transaction-log-state log) :suspended))
+        (:rollback-failed (setf (transaction-log-state log) :suspend-failed)))))
+  log)

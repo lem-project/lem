@@ -79,5 +79,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y sbcl
       - name: Run independent L1 tests
         run: sbcl --noinform --script scripts/test-tx.lisp
+      - name: Run component lifecycle tests
+        run: sbcl --noinform --script scripts/test-sdk.lisp
       - name: Report empty transaction benchmark
         run: sbcl --noinform --script scripts/benchmark-tx.lisp

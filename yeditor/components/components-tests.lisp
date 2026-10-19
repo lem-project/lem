@@ -868,6 +868,9 @@
 
 ;;; Director Mode (T21 editor tools on the MCP bus + T12-B cockpit)
 
+;; the tests below start le-mcp on the default port; a running editor may hold 7890
+(setf yeditor-components/mcp:*mcp-port* (free-port))
+
 (deftest test-editor-run-command-tool
   (lem-fake-interface:with-fake-interface ()
     (install-component (quote le-mcp))

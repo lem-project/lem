@@ -18,7 +18,9 @@
                                      (setf ov (lem:make-overlay start end attribute)))
                                    :undo-thunk
                                    (lambda ()
-                                     (when ov (lem:delete-overlay ov))))))
+                                     (when ov
+                                       (lem:delete-overlay ov)
+                                       (setf ov nil))))))
       (push (cons :start start) handle)
       (push (cons :end end) handle)
       handle)))

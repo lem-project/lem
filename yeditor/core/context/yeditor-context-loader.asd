@@ -8,5 +8,5 @@
   :author "Yuri Flores Albuquerque <yuri-albuquerque@users.noreply.github.com>"
   :license "FSL-1.1-MIT"
   :version "0.1.0"
-  :depends-on ("yeditor-tx" "yeditor-context")
+  :depends-on ("yeditor-tx" "yeditor-context" "yeditor-context-reactivity")
   :components ((:file "loader")))

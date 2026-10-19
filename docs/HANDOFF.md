@@ -126,8 +126,10 @@ Extra effects added for T11/T12: `e-editor-variable` (Lem editor variables), `e-
 - T17: tested with a fake `claude` binary and a fake HTTP worker (`enterprise/agent/test-data/`); the real Claude Code CLI flags (`-p`, `--output-format json`, `--max-turns`, `--mcp-config`) were not verifiable on this machine (CLI not installed). The Hermes HTTP contract is provisional — align it with Hermes' real API. Worker edits are not yet confined to `agent-tx-id` side-transactions (T21/T22).
 - T18: tests use a canned provider instead of a fake HTTP LLM; promoted components are saved but not auto-loaded at startup (loader integration pending). The operator whitelist is deliberately narrow — widening it needs a security review (process/server/fdefinition/environment effects are excluded on purpose).
 - `e-server` has no test. T13 sessions are keyed by language (as Lem's workspaces are), not by project root; the missing-server case reports the install command but does not run it (no unattended installs); tests use a fake stdio server (`components/test-data/fake-lsp-server.py`) and never complete the async initialize handshake (no event loop under the fake frontend).
-- T8: `use-component` options are validated but not passed to the component's install function;
-  HMR uses `file-write-date` (1 s resolution).
+- T8: `use-component` supports explicit `:config` and legacy flat options; installers
+  receive options under `:config` in their context. HMR compares mtime and content
+  snapshots off-thread, then reconciles on the editor thread. See
+  `docs/t8-config-hmr-validation.md` for ownership, rollback and runtime tests.
 - T9: components suspended at crash time are not reinstalled on recovery (choice, not specified by plan).
 - T5 timer test only checks start/stop without error.
 - The T12 HUD agent model (`*agent-tx*` in `components/hud.lisp`) is a demo stand-in until T22.

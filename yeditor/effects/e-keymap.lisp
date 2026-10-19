@@ -13,21 +13,56 @@
   (let ((prefix (keymap-find keymap (parse-keyspec keyspec))))
     (when prefix (prefix-suffix prefix))))
 
+(defun binding-inverse (keymap keys)
+  "Capture the prefix that define-key will change, including new prefix paths."
+  (labels ((find-prefix (map key)
+             (or (let ((prefix (find key (keymap-prefixes map)
+                                        :key #'prefix-key :test #'equal)))
+                   (when prefix (cons map prefix)))
+                 (loop :for child :in (keymap-children map)
+                       :thereis (find-prefix child key))))
+           (capture (map remaining)
+             (let* ((found (find-prefix map (first remaining)))
+                    (prefix (cdr found)))
+               (cond
+                 ((null prefix)
+                  ;; DEFINE-KEY creates this branch in MAP, even with a base map.
+                  (let ((key (first remaining)))
+                    (lambda ()
+                      (setf (keymap-prefixes map)
+                            (remove key (keymap-prefixes map)
+                                    :key #'prefix-key :test #'equal)))))
+                 ((and (rest remaining) (typep (prefix-suffix prefix) 'keymap))
+                  (capture (prefix-suffix prefix) (rest remaining)))
+                 (t
+                  (let ((previous (prefix-suffix prefix))
+                        (before (copy-list (keymap-prefixes (car found)))))
+                    (lambda ()
+                      (setf (keymap-prefixes (car found))
+                            (append before
+                                    (set-difference (keymap-prefixes (car found)) before))
+                            (prefix-suffix prefix) previous))))))))
+    (capture keymap keys)))
+
 (defun install-keybinding (comp keymap keyspec command)
-  "Bind KEYSPEC to COMMAND in KEYMAP as a transaction effect (kind 5, Cap. 5.3).
-   Captures the previous binding; undo restores it or calls undefine-key."
-  (let ((prev (%prev-binding keymap keyspec)))
+  "Bind string KEYSPEC to COMMAND as a reversible transaction effect.
+   Each activation captures the binding and prefix structure it changes."
+  (let ((inverse nil))
     (let ((handle (install-effect comp :keybinding
-                                   (lambda () (define-key keymap keyspec command))
-                                   :undo-thunk
-                                   (lambda ()
-                                     (if prev
-                                         (define-key keymap keyspec prev)
-                                         (undefine-key keymap keyspec))))))
+                                 (lambda ()
+                                   (setf inverse
+                                         (binding-inverse keymap (parse-keyspec keyspec)))
+                                   (define-key keymap keyspec command))
+                                 :undo-thunk
+                                 (lambda ()
+                                   (when inverse
+                                     ;; Public removal also invalidates Lem's binding cache.
+                                     (undefine-key keymap keyspec)
+                                     (funcall inverse)
+                                     (setf inverse nil))))))
       (push (cons :keymap keymap) handle)
       (push (cons :keyspec keyspec) handle)
       (push (cons :command command) handle)
-      (push (cons :prev prev) handle)
       handle)))
 
 (defun install-key-removal (comp keymap keyspec)

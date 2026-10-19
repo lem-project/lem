@@ -11,15 +11,25 @@
 (defun install-timer (comp ms fn &key repeat)
   "Schedule a Lem timer that fires FN every MS milliseconds as a transaction
    effect (kind 9, Cap. 5.3).  If REPEAT is true the timer fires repeatedly;
-   otherwise it fires once.  Undo stops the timer."
-  (let ((timer nil))
+   otherwise it fires once.  Undo stops the timer and invalidates queued callbacks from that activation."
+  (let ((timer nil)
+        (activation nil))
     (let ((handle (install-effect comp :timer
                                    (lambda ()
-                                     (setf timer (lem:make-timer fn))
+                                     (let ((token (list t)))
+                                       (setf activation token
+                                             timer (lem:make-timer
+                                                    (lambda ()
+                                                      (when (car token) (funcall fn))))))
                                      (lem:start-timer timer ms :repeat repeat))
                                    :undo-thunk
                                    (lambda ()
-                                     (when timer (lem:stop-timer timer))))))
+                                     (when activation
+                                       (setf (car activation) nil
+                                             activation nil))
+                                     (when timer
+                                       (lem:stop-timer timer)
+                                       (setf timer nil))))))
       (push (cons :ms ms) handle)
       (push (cons :repeat repeat) handle)
       handle)))

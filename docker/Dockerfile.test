@@ -3,6 +3,7 @@ FROM fukamachi/qlot:latest
 USER root
 RUN apt-get update && apt-get install -y \
     build-essential \
+    procps \
     libssl-dev \
     git \
     nodejs \
@@ -60,4 +61,4 @@ COPY . .
 RUN qlot install
 
 # Run tests using qlot exec (fukamachi/qlot image uses qlot as entrypoint)
-CMD ["exec", "bash", "-c", ".qlot/bin/rove lem-tests.asd && .qlot/bin/rove extensions/vi-mode/lem-vi-mode.asd"]
+CMD ["exec", "bash", "-c", ".qlot/bin/rove lem-tests.asd && .qlot/bin/rove extensions/vi-mode/lem-vi-mode.asd && sbcl --noinform --non-interactive --load .qlot/setup.lisp --eval '(asdf:test-system \"yeditor-prototype-tx/lem-tests\")' --eval '(asdf:test-system \"yeditor-prototype-sdk/rove-tests\")'"]

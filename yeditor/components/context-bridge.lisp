@@ -5,7 +5,7 @@
 
 (defpackage :yeditor-components/context-bridge
   (:use :cl :lem :yeditor-context :yeditor-effects)
-  (:import-from :yeditor-context/reactivity #:update-contexts)
+  (:import-from :yeditor-context/reactivity #:update-contexts #:emit-context-event #:context-value)
   (:export :le-context-bridge
            :buffer-context
            :publish-buffer-context
@@ -22,24 +22,63 @@
   "Project markers added to the editor's root detection while the bridge is installed.")
 
 (defun buffer-context (buffer)
-  "Plist (:file-type :buffer-mode :project-root) describing BUFFER."
+  "Observable selected buffer, file, major mode, project root and window width."
   (let* ((file (buffer-filename buffer))
          (directory (if file (uiop:pathname-directory-pathname file) (buffer-directory buffer)))
          (root (and directory
                     (or (ignore-errors (lem-core/commands/project:find-root directory))
                         directory))))
-    (list :file-type (and file (pathname-type file))
+    (list :buffer buffer :file file
+          :window-width (window-width (current-window))
+          :file-type (and file (pathname-type file))
           :buffer-mode (buffer-major-mode buffer)
           :project-root (and root (uiop:ensure-directory-pathname root)))))
 
 (defun publish-buffer-context (buffer)
   (apply (function update-contexts) (buffer-context buffer)))
 
+(defun publish-mode-change (buffer mode)
+  (declare (ignore mode))
+  (when (eq buffer (context-value :buffer)) (publish-buffer-context buffer)))
+
+(defun publish-current-context ()
+  ;; Most commands do not change context: avoid project filesystem probes per key.
+  (let ((buffer (current-buffer)) (width (window-width (current-window))))
+    (cond ((or (not (eq buffer (context-value :buffer)))
+               (not (eq (buffer-major-mode buffer) (context-value :buffer-mode)))
+               (not (equal (buffer-filename buffer) (context-value :file))))
+           (publish-buffer-context buffer))
+          ((not (eql width (context-value :window-width)))
+           (emit-context-event :window-resize width)))))
+
+(defun publish-buffer-close (buffer)
+  (emit-context-event :buffer-close buffer))
+
+(defun install-close-hook (comp)
+  (let ((owned nil))
+    (yeditor-tx:install-effect
+     comp :hook
+     (lambda ()
+       (setf owned nil)
+       (unless (find 'publish-buffer-close (variable-value 'kill-buffer-hook :global) :key #'car)
+         (add-hook (variable-value 'kill-buffer-hook :global) 'publish-buffer-close)
+         (setf owned (find 'publish-buffer-close (variable-value 'kill-buffer-hook :global)
+                           :key #'car))))
+     :undo-thunk
+     (lambda ()
+       (when (and owned (member owned (variable-value 'kill-buffer-hook :global) :test #'eq))
+         (remove-hook (variable-value 'kill-buffer-hook :global) 'publish-buffer-close)
+         (setf owned nil))))))
+
 (define-component le-context-bridge
-  :version "0.1.0"
+  :version "0.2.0"
   :install (lambda (comp ctx)
              (declare (ignore ctx))
-             (list (install-variable comp (quote lem-core/commands/project:*root-files*)
+             (list (install-variable comp 'lem-core/commands/project:*root-files*
                                      (append lem-core/commands/project:*root-files* *language-root-files*))
-                   (install-hook comp (quote *find-file-hook*) (quote publish-buffer-context))
-                   (install-hook comp (quote *switch-to-buffer-hook*) (quote publish-buffer-context)))))
+                   (install-hook comp '*find-file-hook* 'publish-buffer-context)
+                   (install-hook comp '*switch-to-buffer-hook* 'publish-buffer-context)
+                   (install-hook comp '*buffer-mode-change-hook* 'publish-mode-change)
+                   ;; Covers mode commands invoked directly, plus responsive window changes.
+                   (install-hook comp '*post-command-hook* 'publish-current-context)
+                   (install-close-hook comp))))

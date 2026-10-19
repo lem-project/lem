@@ -394,74 +394,93 @@ Use this when lsp-mode has side effects that you want to avoid."
                        'window/log-message)
   (initialize workspace
               (lambda ()
-                (initialized workspace)
-                (funcall continuation workspace))))
+                (unless (workspace-value workspace :stopped)
+                  (initialized workspace)
+                  (funcall continuation workspace)))))
 
-(defun connect (client continuation)
+(defun connect (client continuation &key (active-p (constantly t)))
   (bt2:make-thread
    (lambda ()
      (loop :with condition := nil
            :repeat 20
+           :while (funcall active-p)
            :do (handler-case (with-yason-bindings ()
                                (lem-language-client/client:jsonrpc-connect client))
                  (:no-error (&rest values)
                    (declare (ignore values))
-                   (send-event continuation)
+                   (send-event (lambda () (when (funcall active-p) (funcall continuation))))
                    (return))
                  (error (c)
                    (setq condition c)
                    (sleep 0.5)))
-           :finally (send-event
-                     (lambda ()
-                       (editor-error
-                        "Could not establish a connection with the Language Server (condition: ~A)"
-                        condition)))))))
+           :finally
+              (when (funcall active-p)
+                (send-event
+                 (lambda ()
+                   (when (funcall active-p)
+                     (editor-error
+                      "Could not establish a connection with the Language Server (condition: ~A)"
+                      condition)))))))))
 
 (defgeneric initialized-workspace (mode workspace)
   (:method (mode workspace)))
 
 (defun connect-and-initialize (workspace buffer continuation)
   (let ((spinner (spinner:start-loading-spinner
-                  :modeline
-                  :loading-message "initializing"
-                  :buffer buffer)))
+                  :modeline :loading-message "initializing" :buffer buffer)))
+    (setf (workspace-value workspace :loading-spinner) spinner)
     (connect (workspace-client workspace)
              (lambda ()
                (initialize-workspace
                 workspace
                 (lambda (workspace)
-                  (add-workspace workspace)
-                  (set-trigger-characters workspace)
-                  (add-buffer-hooks buffer)
-                  (when continuation (funcall continuation))
-                  (let ((mode (ensure-mode-object
-                               (spec-mode
-                                (workspace-spec workspace)))))
-                    (initialized-workspace mode workspace))
-                  (spinner:stop-loading-spinner spinner)
-                  (redraw-display)))))))
+                  (unless (workspace-value workspace :stopped)
+                    (set-trigger-characters workspace)
+                    (add-buffer-hooks buffer)
+                    (setf (workspace-value workspace :initialized) t)
+                    (when continuation (funcall continuation))
+                    (dolist (callback (reverse (workspace-value workspace :pending-callbacks)))
+                      (funcall callback))
+                    (setf (workspace-value workspace :pending-callbacks) nil)
+                    (let ((mode (ensure-mode-object (spec-mode (workspace-spec workspace)))))
+                      (initialized-workspace mode workspace))
+                    (spinner:stop-loading-spinner spinner)
+                    (setf (workspace-value workspace :loading-spinner) nil)
+                    (redraw-display)))))
+             :active-p (lambda () (not (workspace-value workspace :stopped))))))
 
 (defun start-lsp-session (buffer &key then)
   "Ensure a language server session for BUFFER and return its workspace.
 Reuses the registered workspace for the buffer's language, or starts the
-server and connects asynchronously (the workspace is registered once the
-server is initialized). Signals NOT-FOUND-PROGRAM when the server is missing."
+server and connects asynchronously. Pending workspaces are registered immediately
+so concurrent starts reuse them. The second value is true only for a newly created
+workspace. Signals NOT-FOUND-PROGRAM when the server is missing."
   (let ((spec (buffer-language-spec buffer)))
     (unless spec
       (editor-error "No language server is configured for this buffer"))
     (if-let ((workspace (find-workspace (spec-language-id spec) :errorp nil)))
       (progn
-        (add-buffer-hooks buffer)
-        (when then (funcall then))
-        workspace)
+        (if (workspace-value workspace :initialized)
+            (progn (add-buffer-hooks buffer) (when then (funcall then)))
+            (push (lambda () (add-buffer-hooks buffer) (when then (funcall then)))
+                  (workspace-value workspace :pending-callbacks)))
+        (values workspace nil))
       (let ((workspace (make-workspace :spec spec
                                        :client (run-server spec)
                                        :buffer buffer)))
-        (connect-and-initialize workspace buffer then)
-        workspace))))
+        (add-workspace workspace)
+        (handler-case
+            (connect-and-initialize workspace buffer then)
+          (error (condition) (stop-lsp-session workspace) (error condition)))
+        (values workspace t)))))
 
 (defun stop-lsp-session (workspace)
   "Stop the server process of WORKSPACE and unregister it."
+  (setf (workspace-value workspace :stopped) t
+        (workspace-value workspace :pending-callbacks) nil)
+  (when-let (spinner (workspace-value workspace :loading-spinner))
+    (spinner:stop-loading-spinner spinner)
+    (setf (workspace-value workspace :loading-spinner) nil))
   (ignore-errors (dispose-workspace workspace))
   (remove-workspace workspace)
   t)

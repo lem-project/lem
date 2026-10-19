@@ -9,11 +9,20 @@
 (in-package :yeditor-effects/e-buffer)
 
 (defun install-buffer (comp name)
-  "Register a Lem buffer creation as a transaction effect.
-   The buffer is created when the transaction commits; the undo thunk kills it."
-  (let ((buf nil))
-    (let ((handle (install-effect comp :buffer
-                                   (lambda () (setf buf (lem:make-buffer name :enable-undo-p nil)))
-                                   :undo-thunk (lambda () (when buf (lem:kill-buffer buf))))))
+  "Queue a buffer acquisition for COMP; undo deletes only a buffer it created.
+Recheck ownership on each activation, preserving buffers that already exist."
+  (let ((buf nil) (owned-p nil))
+    (let ((handle (install-effect
+                   comp :buffer
+                   (lambda ()
+                     (setf owned-p (null (lem:get-buffer name))
+                           buf (lem:make-buffer name :enable-undo-p nil)))
+                   :undo-thunk
+                   (lambda ()
+                     (when (and owned-p buf (not (lem:deleted-buffer-p buf)))
+                       ;; KILL-BUFFER deliberately keeps the last user buffer;
+                       ;; transaction cleanup must also release that resource.
+                       (lem:delete-buffer buf))
+                     (setf buf nil owned-p nil)))))
       (push (cons :name name) handle)
       handle)))

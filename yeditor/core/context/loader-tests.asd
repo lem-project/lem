@@ -6,5 +6,8 @@
 (defsystem "loader-tests"
   :license "FSL-1.1-MIT"
   :description "T8 tests: config loader, reconciliation, delta application"
-  :depends-on ("yeditor-tx" "yeditor-context" "yeditor-context-loader" "rove")
-  :components ((:file "loader-tests")))
+  :depends-on ("yeditor-tx" "yeditor-context" "yeditor-context-loader" "rove" "lem-fake-interface")
+  :components ((:file "loader-tests")
+               (:file "loader-lifecycle-tests"))
+  :perform (test-op (op c)
+             (unless (uiop:symbol-call :rove '#:run c) (error "Loader tests failed."))))

@@ -43,6 +43,12 @@ jobs:
       - name: Run Yeditor tests
         run: docker run --rm --entrypoint bash lem-tests -c "sbcl --script scripts/run-yeditor-all-tests.lisp"
 
+      - name: Agent IDE smoke tests
+        run: docker run --rm --entrypoint bash lem-tests -c "sbcl --script scripts/run-yeditor-agent-smoke-tests.lisp"
+
+      - name: T4 buffer installation budget
+        run: docker run --rm --entrypoint bash lem-tests -c "sbcl --script scripts/benchmark-t4.lisp"
+
       - name: Perceived-speed benchmarks (T10)
         run: |
           base="${{ github.event.pull_request.base.sha || github.event.before }}"

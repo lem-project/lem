@@ -18,15 +18,16 @@
 (defun install-command (comp name fn)
   "Register a dynamic command NAME (string) whose body is FN, as a transaction
    effect (kind 7, Cap. 5.3). Undo removes it or restores the previous definition."
-  (let* ((prev (find-command name))
+  (let* ((prev nil)
          (instance (make-instance 'yeditor-dynamic-command :name name :fn fn))
          (handle (install-effect comp :command
-                                 (lambda () (add-command name instance))
+                                 (lambda ()
+                                   (setf prev (find-command name))
+                                   (add-command name instance))
                                  :undo-thunk
                                  (lambda ()
                                    (if prev
                                        (add-command name prev)
                                        (remove-command name))))))
     (push (cons :command-name name) handle)
-    (push (cons :prev prev) handle)
     handle))

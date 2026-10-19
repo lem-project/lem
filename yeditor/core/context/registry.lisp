@@ -54,7 +54,11 @@
               :persist persist
               :state nil
               :suspended nil
-              :status :inactive))
+              :status :inactive
+              :activation-order 0
+              :configuration nil
+              :config-owner nil
+              :config-enabled-p t))
   (when requires-p
     (setf (getf (gethash name *component-registry*) :requires) requires))
   name)
@@ -106,7 +110,11 @@
       (notify :install-begin component)
       (handler-case
           (with-transaction
-            (let ((handles (funcall (getf entry :install) component ctx)))
+            (let* ((effective-context
+                     (if (getf entry :config-owner)
+                         (append (list :config (copy-tree (getf entry :configuration))) ctx)
+                         ctx))
+                   (handles (funcall (getf entry :install) component effective-context)))
               (tx-commit)
               (when (getf entry :activate) (funcall (getf entry :activate) component))
               (setf (getf entry :state) (or handles yeditor-tx:*tx-committed*)

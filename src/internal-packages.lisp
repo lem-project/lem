@@ -460,6 +460,7 @@
    :define-command)
   ;; mode.lisp
   (:export
+   :*buffer-mode-change-hook*
    :ensure-mode-object
    :major-mode
    :mode

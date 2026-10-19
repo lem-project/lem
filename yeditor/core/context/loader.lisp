@@ -85,7 +85,9 @@
 (defun apply-config-file (path &key (package *package*))
   "Read the config at PATH and reconcile the applied components with it.
    Returns the list of error messages (empty on full success)."
-  (apply-config (parse-config (read-config-forms path :package package))))
+  (let ((errors (apply-config (parse-config (read-config-forms path :package package)))))
+    (yeditor-context/reactivity:emit-context-event :config-change)
+    errors))
 
 (defvar *config-file-write-date* nil)
 
@@ -97,22 +99,32 @@
       t)))
 
 (defvar *config-watcher* nil)
+(defvar *config-watcher-token* nil)
 
 (defun start-config-watcher (path &key (interval 2) (package *package*))
-  "Poll PATH every INTERVAL seconds in a dedicated thread and reapply it when it changes (HMR)."
+  "Poll PATH off-thread; schedule reconciliation and config events on the editor.
+   Stop invalidates already queued reloads as well as the polling worker."
   (stop-config-watcher)
-  (setf *config-watcher*
-        (sb-thread:make-thread
-         (lambda ()
-           (loop
-             (when (config-file-changed-p path)
-               (dolist (msg (handler-case (apply-config-file path :package package)
-                              (error (e) (list (format nil "config: ~A" e)))))
-                 (warn "Config reload: ~A" msg)))
-             (sleep interval)))
-         :name "yeditor-config-watcher")))
+  (let ((token (list t)))
+    (setf *config-watcher-token* token
+          *config-file-write-date* nil
+          *config-watcher*
+          (sb-thread:make-thread
+           (lambda ()
+             (loop :while (car token)
+                   :do (when (config-file-changed-p path)
+                         (lem:send-event
+                          (lambda ()
+                            (when (car token)
+                              (dolist (msg (handler-case (apply-config-file path :package package)
+                                             (error (e) (list (format nil "config: ~A" e)))))
+                                (warn "Config reload: ~A" msg))))))
+                       (sleep interval)))
+           :name "yeditor-config-watcher"))))
 
 (defun stop-config-watcher ()
+  "Stop polling and cancel queued work from the previous watcher activation."
+  (when *config-watcher-token* (setf (car *config-watcher-token*) nil))
   (when (and *config-watcher* (sb-thread:thread-alive-p *config-watcher*))
     (sb-thread:terminate-thread *config-watcher*))
-  (setf *config-watcher* nil))
+  (setf *config-watcher* nil *config-watcher-token* nil))

@@ -1,5 +1,8 @@
 (in-package :lem-core)
 
+(defvar *buffer-mode-change-hook* '()
+  "Functions (BUFFER NEW-MODE) called after CHANGE-BUFFER-MODE succeeds.")
+
 (defvar *active-global-minor-modes* '())
 (defvar *current-global-mode* nil)
 
@@ -120,9 +123,12 @@
   (not (null (find mode (all-active-modes buffer) :key #'mode-identifier-name))))
 
 (defun change-buffer-mode (buffer mode &rest args)
-  (save-excursion
-    (setf (current-buffer) buffer)
-    (apply mode args))
+  (let ((previous (buffer-major-mode buffer)))
+    (save-excursion
+      (setf (current-buffer) buffer)
+      (apply mode args))
+    (unless (eq previous (buffer-major-mode buffer))
+      (run-hooks *buffer-mode-change-hook* buffer (buffer-major-mode buffer))))
   buffer)
 
 (defun make-mode-command-class-name (mode-name)

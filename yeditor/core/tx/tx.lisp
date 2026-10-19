@@ -23,7 +23,12 @@
    COMP and KIND are stored for identification.
    FN is the effect function to execute on commit.
    UNDO-THUNK is the function to undo the effect, stored as :inverse.
+   Reject non-callable effects or missing inverses before queuing any mutation.
    Returns a handle (the log entry)."
+  (flet ((callable-p (value)
+           (or (functionp value) (and value (symbolp value) (fboundp value)))))
+    (unless (and (callable-p fn) (callable-p undo-thunk))
+      (error "Effect ~S for ~S requires callable apply and inverse functions" kind comp)))
   (let ((entry (list (cons :comp comp)
                      (cons :kind kind)
                      (cons :fn fn)

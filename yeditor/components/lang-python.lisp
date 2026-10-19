@@ -214,9 +214,24 @@
     (setf (getf (first *python-evals*) :output)
           (concatenate (quote string) (getf (first *python-evals*) :output) string))))
 
+(defparameter *repl-watchdog*
+  "import os, threading, time
+def _yeditor_watchdog(editor=~D):
+    while True:
+        time.sleep(2)
+        try:
+            os.kill(editor, 0)
+        except ProcessLookupError:
+            os._exit(0)
+threading.Thread(target=_yeditor_watchdog, daemon=True).start()
+del _yeditor_watchdog"
+  "Run in the REPL before the prompt: exit when the editor process is gone, so a crashed
+   or killed editor does not leave the interpreter spinning on its closed terminal.")
+
 (defun ensure-repl ()
   (unless (and *repl* (lem-process:process-alive-p *repl*))
-    (setf *repl* (lem-process:run-process (list (python-program) "-i" "-u")
+    (setf *repl* (lem-process:run-process (list (python-program) "-i" "-u" "-c"
+                                                (format nil *repl-watchdog* (sb-posix:getpid)))
                                           :name "yeditor-python"
                                           :output-callback (quote repl-output))))
   *repl*)

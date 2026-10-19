@@ -197,3 +197,19 @@
         (ok (null value))
         (ok (zerop (hash-table-count *applied-components*)))
         (ok (not (yeditor-context/reactivity:component-active-p 'repeatable)))))))
+
+(deftest updating-inactive-conditional-config-does-not-toggle-unrelated-effects
+  (with-loader
+    (let ((applications 0))
+      (register-component 'unrelated
+        :install (lambda (comp ctx) (declare (ignore ctx))
+                   (list (yeditor-tx:install-effect comp :count (lambda () (incf applications))
+                                                    :undo-thunk (lambda ())))))
+      (install-component 'unrelated)
+      (register-value-component 'inactive (lambda (value) (declare (ignore value))))
+      (yeditor-context/reactivity:define-coeffects 'inactive '(:remote-p t))
+      (apply-config '((inactive :value 1)))
+      (apply-config '((inactive :value 2)))
+      (ok (= applications 1) "changing inactive configuration does not replay unrelated effects")
+      (apply-config nil)
+      (uninstall-component 'unrelated))))

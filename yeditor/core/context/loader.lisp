@@ -105,7 +105,8 @@
       (let ((yeditor-context/reactivity::*reclassifying* t))
         (unwind-protect
              (block reconcile
-               (let ((owned-changes (remove-if-not #'owned-p changes)))
+               (let ((owned-changes (remove-if-not (lambda (sym) (and (owned-p sym) (active-p sym)))
+                                                    changes)))
                  (when owned-changes
                    (let ((oldest (reduce #'min owned-changes :key #'order-of)) (layers nil))
                      (maphash (lambda (sym entry) (declare (ignore entry))

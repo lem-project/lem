@@ -65,6 +65,7 @@ calls to the reconciliation function:
 - Same-tick content changes are detected; stopping cancels queued snapshots.
 - 100 configured install/remove cycles restore the effect baseline and empty the
   applied-component map after every cycle.
+- Updating an inactive conditional component does not replay unrelated effects.
 
 Run from the configured repository root:
 

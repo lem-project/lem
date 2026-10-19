@@ -8,6 +8,7 @@
   (:export #:*side-transactions*
            #:side-transaction
            #:side-undo
+           #:side-forget
            #:side-clear))
 
 (in-package :yeditor-tx-side)
@@ -51,6 +52,14 @@
         (let ((undo (cdr pair)))
           (when (functionp undo) (funcall undo)))
         (setf *side-transactions* (remove pair *side-transactions* :test #'equal)))))
+  nil)
+
+(defun side-forget (name)
+  "Drop NAME from the registry without running its undo thunk (the effect is kept).
+   If NAME is not present, do nothing."
+  (declare (type (or string symbol) name))
+  (sb-thread:with-mutex (*side-lock*)
+    (setf *side-transactions* (remove name *side-transactions* :key #'car :test #'equal)))
   nil)
 
 (defun side-clear ()

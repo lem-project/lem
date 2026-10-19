@@ -22,6 +22,7 @@
            :worker-ids
            :worker-name
            :submit-task
+           :*payload-injector*
            :next-task
            :report-task
            :task-observations
@@ -102,6 +103,9 @@ annotation; the buffer's contents are not changed."
 (defvar *workers* (make-hash-table :test (function equal)) "worker-id -> plist :name :capabilities")
 (defvar *tasks* nil "Task plists, oldest first: :id :worker :kind :payload :status :observation")
 (defvar *counter* 0)
+(defvar *payload-injector* nil
+  "Nil, or a function (worker-id kind payload) -> payload applied to every submitted task;
+   the agent host installs one that bootstraps the task with journal context (plan T21).")
 
 (defun next-id (prefix)
   (format nil "~A-~D" prefix (incf *counter*)))
@@ -153,6 +157,8 @@ annotation; the buffer's contents are not changed."
 (defun submit-task (worker-id kind payload)
   "Queue a task for WORKER-ID and push a notification to the SSE streams. Returns its id."
   (ensure-worker worker-id)
+  (when *payload-injector*
+    (setf payload (funcall *payload-injector* worker-id kind payload)))
   (let ((id (bt2:with-lock-held (*bus-lock*)
               (let ((id (next-id "task")))
                 (setf *tasks* (append *tasks* (list (list :id id :worker worker-id :kind kind

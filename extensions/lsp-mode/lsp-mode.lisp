@@ -19,6 +19,7 @@
   (:local-nicknames (:spinner :lem/loading-spinner))
   (:local-nicknames (:language-mode :lem/language-mode))
   (:export :*inhibit-highlight-diagnotics*
+           :buffer-diagnostic-list
            :get-buffer-from-text-document-identifier
            :spec-initialization-options
            :register-lsp-method
@@ -768,6 +769,23 @@ server is initialized). Signals NOT-FOUND-PROGRAM when the server is missing."
 
 (defun buffer-diagnostics (buffer)
   (mapcar #'overlay-diagnostic (buffer-diagnostic-overlays buffer)))
+
+(defun buffer-diagnostic-list (buffer)
+  "The diagnostics shown in BUFFER, sorted by line, as plists
+:line :column :severity (:error, :warning, :information or :hint) :message."
+  (sort (mapcar (lambda (overlay)
+                  (let ((diagnostic (overlay-diagnostic overlay)))
+                    (list :line (language-mode::xref-position-line-number (diagnostic-position diagnostic))
+                          :column (language-mode::xref-position-charpos (diagnostic-position diagnostic))
+                          :severity (case (overlay-attribute overlay)
+                                      (diagnostic-warning-attribute :warning)
+                                      (diagnostic-information-attribute :information)
+                                      (diagnostic-hint-attribute :hint)
+                                      (t :error))
+                          :message (diagnostic-message diagnostic))))
+                (buffer-diagnostic-overlays buffer))
+        #'<
+        :key (lambda (diagnostic) (getf diagnostic :line))))
 
 (defun reset-buffer-diagnostic (buffer)
   (clear-diagnostic-overlays buffer)

@@ -17,6 +17,7 @@
            :filer-mode
            :*filer-mode-keymap*
            :filer
+           :sync-filer-to-buffer-directory
            :filer-directory
            :filer-at-directory))
 (in-package :lem/filer)

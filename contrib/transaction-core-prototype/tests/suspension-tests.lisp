@@ -1,0 +1,68 @@
+;;;; SPDX-License-Identifier: MIT
+(defpackage :yeditor-prototype-tx/suspension-tests
+  (:use :cl)
+  (:export #:run-tests))
+(in-package :yeditor-prototype-tx/suspension-tests)
+
+(defun signals-error-p (function)
+  (handler-case (progn (funcall function) nil)
+    (error () t)))
+
+(defun test-replay-membership ()
+  (let ((log (yeditor-prototype-tx:make-transaction-log)) (value 0) (handles nil))
+    (yeditor-prototype-tx:with-transaction (log)
+      (dolist (delta '(1 10 100))
+        (let ((amount delta))
+          (push (yeditor-prototype-tx:install-effect
+                 :test :dummy (lambda () (incf value amount))
+                 :undo-thunk (lambda () (decf value amount)))
+                handles))))
+    ;; Cancel a pending effect, and later uninstall a different active effect.
+    (yeditor-prototype-tx:undo-effect (first handles))
+    (yeditor-prototype-tx:commit log)
+    (yeditor-prototype-tx:undo-effect (second handles))
+    (assert (= 1 value))
+    (dotimes (i 100)
+      (yeditor-prototype-tx:suspend log)
+      (assert (zerop value))
+      (yeditor-prototype-tx:resume log)
+      (assert (= 1 value))
+      (assert (= 1 (length (yeditor-prototype-tx:log-records log))))
+      (assert (every #'eq (reverse handles) (yeditor-prototype-tx:transaction-handles log))))
+    (assert (eq :cancelled (yeditor-prototype-tx:effect-state (first handles))))
+    (assert (eq :undone (yeditor-prototype-tx:effect-state (second handles))))
+    (yeditor-prototype-tx:rollback log)
+    (assert (zerop value))
+    ;; A final rollback remains terminal, as specified in T2.
+    (assert (signals-error-p (lambda () (yeditor-prototype-tx:resume log))))
+    (assert (signals-error-p (lambda () (yeditor-prototype-tx:commit log))))))
+
+(defun test-failed-replay-cleanup ()
+  (let ((log (yeditor-prototype-tx:make-transaction-log))
+        (value 0) (fail-install-p nil) (fail-undo-p nil))
+    (yeditor-prototype-tx:with-transaction (log)
+      (yeditor-prototype-tx:install-effect
+       :test :dummy
+       (lambda () (incf value) (when fail-install-p (error "replay failed")))
+       :undo-thunk (lambda () (when fail-undo-p (error "inverse failed")) (decf value))))
+    (yeditor-prototype-tx:commit log)
+    (yeditor-prototype-tx:suspend log)
+    (setf fail-install-p t fail-undo-p t)
+    (assert (signals-error-p (lambda () (yeditor-prototype-tx:resume log))))
+    (assert (eq :suspend-failed (yeditor-prototype-tx:transaction-state log)))
+    (assert (= 1 value))
+    (setf fail-undo-p nil)
+    (yeditor-prototype-tx:suspend log)
+    (assert (zerop value))
+    (setf fail-install-p nil)
+    (yeditor-prototype-tx:resume log)
+    (assert (= 1 value))
+    (yeditor-prototype-tx:rollback log)
+    (assert (zerop value))))
+
+(defun run-tests ()
+  "Check replay membership, bounded logs, recovery and final rollback semantics."
+  (test-replay-membership)
+  (test-failed-replay-cleanup)
+  (format t "Transaction suspension: 2 test groups passed.~%")
+  t)

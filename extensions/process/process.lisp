@@ -88,9 +88,21 @@
         (write-string string (process-buffer-stream process)))))
 
 (defun delete-process (process)
-  (when (bt2:thread-alive-p (process-read-thread process))
-    (bt2:destroy-thread (process-read-thread process)))
-  (async-process:delete-process (process-pointer process)))
+  ;; The read thread may be blocked in read() on the process structure that
+  ;; async-process:delete-process frees, and destroy-thread only takes effect
+  ;; once that call returns. Kill the child first so the read returns, wait
+  ;; for the thread to leave, reap the child, then free the structure.
+  (let* ((pointer (process-pointer process))
+         (pid (async-process::process-pid pointer)) ; defined but not exported
+         (thread (process-read-thread process)))
+    (ignore-errors (sb-posix:kill pid sb-posix:sigkill))
+    (when (bt2:thread-alive-p thread)
+      (ignore-errors (bt2:destroy-thread thread))
+      (loop :repeat 200
+            :while (bt2:thread-alive-p thread)
+            :do (sleep 0.01)))
+    (ignore-errors (sb-posix:waitpid pid 0))
+    (async-process:delete-process pointer)))
 
 (defun process-alive-p (process)
   (async-process:process-alive-p (process-pointer process)))

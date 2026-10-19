@@ -786,6 +786,7 @@
    :get-foreground-color
    :update-foreground
    :update-background
+   :reset-display-colors
    :update-cursor-shape
    :display-width
    :display-height

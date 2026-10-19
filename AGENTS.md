@@ -101,4 +101,3 @@ Antes de realizar o commit, verifique:
 1. Faça commits atômicos e bem descritos referenciando a issue (`feat(tx): implement LIFO rollback for buffer effects (Closes #X)`).
 2. Preencha os critérios do template `.github/PULL_REQUEST_TEMPLATE/ai_pull_request_template.md`.
 3. Abra o Pull Request (ou consolide na branch de trabalho conforme instruído pelo usuário), reporte um resumo executivo curto do que foi feito e pergunte se deve puxar imediatamente a próxima issue da fila.
-

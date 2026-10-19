@@ -4,6 +4,7 @@
   :depends-on ("alexandria"
                "bordeaux-threads"
                "hunchentoot"
+               "flexi-streams"
                "yason"
                "lem/core")
   :serial t

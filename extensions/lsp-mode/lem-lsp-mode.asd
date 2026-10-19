@@ -1,5 +1,6 @@
 (defsystem "lem-lsp-mode"
-  :depends-on ("alexandria"
+  :depends-on ((:feature :sbcl "sb-posix")
+               "alexandria"
                "cl-package-locks"
                "jsonrpc"
                "jsonrpc/transport/stdio"

@@ -23,7 +23,13 @@
            :spec-initialization-options
            :register-lsp-method
            :define-language-spec
-           :without-lsp-mode))
+           :without-lsp-mode
+           :*disable*
+           :not-found-program
+           :start-lsp-session
+           :stop-lsp-session
+           :lsp-session-alive-p
+           :lsp-session-pid))
 (in-package :lem-lsp-mode/lsp-mode)
 
 ;; FIXME:
@@ -241,6 +247,15 @@ Use this when lsp-mode has side effects that you want to avoid."
       (when errorp
         (error "The ~A workspace is not found." language-id)))))
 
+(defun remove-workspace (workspace)
+  (when-let (workspace-list (gethash (workspace-language-id workspace)
+                                     *workspace-list-per-language-id*))
+    (let ((remaining (remove workspace (workspace-list-workspaces workspace-list))))
+      (if remaining
+          (setf (workspace-list-workspaces workspace-list) remaining
+                (workspace-list-current-workspace workspace-list) (first remaining))
+          (remhash (workspace-language-id workspace) *workspace-list-per-language-id*)))))
+
 (defun buffer-workspace (buffer &optional (errorp t))
   (find-workspace (buffer-language-id buffer) :errorp errorp))
 
@@ -425,18 +440,48 @@ Use this when lsp-mode has side effects that you want to avoid."
                   (spinner:stop-loading-spinner spinner)
                   (redraw-display)))))))
 
-(defun ensure-lsp-buffer (buffer &key ((:then continuation)))
+(defun start-lsp-session (buffer &key then)
+  "Ensure a language server session for BUFFER and return its workspace.
+Reuses the registered workspace for the buffer's language, or starts the
+server and connects asynchronously (the workspace is registered once the
+server is initialized). Signals NOT-FOUND-PROGRAM when the server is missing."
   (let ((spec (buffer-language-spec buffer)))
+    (unless spec
+      (editor-error "No language server is configured for this buffer"))
     (if-let ((workspace (find-workspace (spec-language-id spec) :errorp nil)))
       (progn
         (add-buffer-hooks buffer)
-        (when continuation (funcall continuation)))
-      (let ((client (run-server spec)))
-        (connect-and-initialize (make-workspace :spec spec
-                                                :client client
-                                                :buffer buffer)
-                                buffer
-                                continuation)))))
+        (when then (funcall then))
+        workspace)
+      (let ((workspace (make-workspace :spec spec
+                                       :client (run-server spec)
+                                       :buffer buffer)))
+        (connect-and-initialize workspace buffer then)
+        workspace))))
+
+(defun stop-lsp-session (workspace)
+  "Stop the server process of WORKSPACE and unregister it."
+  (ignore-errors (dispose-workspace workspace))
+  (remove-workspace workspace)
+  t)
+
+(defun lsp-session-alive-p (workspace)
+  "True while the server process of WORKSPACE is running."
+  (let ((client (workspace-client workspace)))
+    (typecase client
+      (client:stdio-client (client:stdio-client-alive-p client))
+      (client:tcp-client (and (client:tcp-client-process client) t))
+      (otherwise nil))))
+
+(defun lsp-session-pid (workspace)
+  "Process id of the server of WORKSPACE (stdio servers), or nil."
+  (let ((client (workspace-client workspace)))
+    (when (typep client 'client:stdio-client)
+      (client:stdio-client-pid client))))
+
+(defun ensure-lsp-buffer (buffer &key ((:then continuation)))
+  (start-lsp-session buffer :then continuation)
+  (values))
 
 (defun check-connection ()
   (assert (buffer-language-spec (current-buffer))))

@@ -17,6 +17,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Lint - Check for internal symbol usage
         run: |
@@ -26,11 +28,33 @@ jobs:
             exit 1
           fi
 
+      - name: IP compliance - headers and L0 boundary
+        run: bash scripts/check-license-headers.sh
+
       - name: Build test image
         run: docker build -f docker/Dockerfile.test -t lem-tests .
 
+      - name: IP compliance - dependency licenses
+        run: docker run --rm --entrypoint bash lem-tests -c "sbcl --script scripts/check-dependency-licenses.lisp"
+
       - name: Run tests
         run: docker run --rm lem-tests
+
+      - name: Run Yeditor tests
+        run: docker run --rm --entrypoint bash lem-tests -c "sbcl --script scripts/run-yeditor-all-tests.lisp"
+
+      - name: Perceived-speed benchmarks (T10)
+        run: |
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then base="HEAD~1"; fi
+          bash scripts/bench-gate.sh "$base" bench-out
+
+      - name: Upload benchmark report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-report
+          path: bench-out/
 
   push_image:
     name: Push Image to GHCR

@@ -26,6 +26,7 @@
            :frame-multiplexer-recent
            :frame-multiplexer-rename
            :toggle-frame-multiplexer
+           :frame-multiplexer
            :frame-multiplexer-normalize-ids)
   #+sbcl
   (:lock t))

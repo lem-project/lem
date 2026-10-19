@@ -69,7 +69,7 @@ jobs:
         run: nix build .#${{ matrix.backend }} --print-build-logs
 
   transaction-core:
-    name: Transaction core tests
+    name: Independent transaction prototype tests
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -78,8 +78,8 @@ jobs:
       - name: Install SBCL
         run: sudo apt-get update && sudo apt-get install -y sbcl
       - name: Run independent L1 tests
-        run: sbcl --noinform --script scripts/test-tx.lisp
+        run: sbcl --noinform --script contrib/transaction-core-prototype/scripts/test-tx.lisp
       - name: Run component lifecycle tests
-        run: sbcl --noinform --script scripts/test-sdk.lisp
+        run: sbcl --noinform --script contrib/transaction-core-prototype/scripts/test-sdk.lisp
       - name: Report empty transaction benchmark
-        run: sbcl --noinform --script scripts/benchmark-tx.lisp
+        run: sbcl --noinform --script contrib/transaction-core-prototype/scripts/benchmark-tx.lisp

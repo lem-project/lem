@@ -6,7 +6,9 @@
 (defsystem "yeditor-context-reactivity-tests"
   :license "FSL-1.1-MIT"
   :description "T7 tests: coeffect classification, context-event dispatch, work-cycle predicates"
-  :depends-on ("yeditor-tx" "yeditor-context" "yeditor-context-reactivity" "rove")
-  :components ((:file "reactivity-tests"))
+  :depends-on ("yeditor-tx" "yeditor-context" "yeditor-context-reactivity" "rove" "lem-fake-interface" "yeditor-context-loader")
+  :components ((:file "reactivity-tests")
+               (:file "reactivity-lifecycle-tests"))
   :perform (test-op (op c)
-             (uiop:symbol-call :rove '#:run c)))
+             (unless (uiop:symbol-call :rove '#:run c)
+               (error "Reactivity tests failed."))))

@@ -66,7 +66,7 @@
                 :end-buffer-p
                 ;; Selection/Region
                 :buffer-mark
-                :mark-active-p
+                :buffer-mark-p
                 ;; Mode
                 :mode-name
                 :buffer-major-mode
@@ -80,6 +80,7 @@
                 :overlay-attribute
                 :overlay-buffer
                 ;; Attributes
+                :ensure-attribute
                 :attribute-foreground
                 :attribute-background
                 :attribute-bold

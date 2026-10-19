@@ -9,8 +9,16 @@
   (:export :le-hud
            :*hud-buffer-name*
            :*agent-tx*
+           :*agent-tx-close-functions*
+           :agent-tx-id
+           :agent-tx-worker
+           :agent-tx-task
+           :agent-tx-edits
+           :agent-tx-buffers
            :open-agent-tx
+           :agent-tx-open-file
            :agent-tx-insert
+           :agent-tx-replace
            :close-agent-tx
            :yeditor-agent-tx-commit
            :yeditor-agent-tx-rollback
@@ -23,11 +31,21 @@
   (:light :background "#d8f0d8")
   (:dark :background "#2f4632"))
 
-(defstruct agent-tx worker task (edits nil))
+(defstruct agent-tx
+  id worker task
+  (edits nil)     ; newest first: plist :name :buffer :overlay :removed :text
+  (buffers nil)   ; buffers the transaction opened (closed again on rollback)
+  (touched nil))  ; every buffer it edited
 
 (defvar *agent-tx* nil
   "The open agent transaction (worker edits pending commit or rollback), or nil.
-   Minimal model for the T12 HUD; the real multiplexer is T22 (yeditor-enterprise).")
+   Each edit is a workspace side-transaction (kind 2) named <agent-tx-id>/<n>.")
+
+(defvar *agent-tx-close-functions* nil
+  "Functions called with the transaction and :commit or :rollback just before it closes
+   (the journal and the agent tools use this to save and record the outcome).")
+
+(defvar *agent-tx-counter* 0)
 
 ;;; HUD rendering
 
@@ -44,8 +62,8 @@
     (when (and buffer *agent-tx*)
       (erase-buffer buffer)
       (with-point ((p (buffer-start-point buffer) :left-inserting))
-        (insert-string p (format nil " Agent transaction~%~%  worker  ~A~%  task    ~A~%~%"
-                                 (agent-tx-worker *agent-tx*) (agent-tx-task *agent-tx*)))
+        (insert-string p (format nil " Agent transaction ~A~%~%  worker  ~A~%  task    ~A~%~%"
+                                 (agent-tx-id *agent-tx*) (agent-tx-worker *agent-tx*) (agent-tx-task *agent-tx*)))
         (let ((edits (reverse (agent-tx-edits *agent-tx*))))
           (insert-string p (format nil " Pending edits (~D)~%" (length edits)))
           (dolist (edit edits)
@@ -59,43 +77,78 @@
    mounts the HUD (le-hud) through the reactivity engine."
   (when *agent-tx*
     (editor-error "An agent transaction is already open"))
-  (setf *agent-tx* (make-agent-tx :worker worker :task task))
+  (setf *agent-tx* (make-agent-tx :id (format nil "atx-~D" (incf *agent-tx-counter*))
+                                  :worker worker :task task))
   (set-work-predicate :agent-tx-active t)
   (render-hud)
   *agent-tx*)
 
+(defun require-agent-tx ()
+  (or *agent-tx* (editor-error "No agent transaction is open")))
+
+(defun agent-tx-open-file (path)
+  "The buffer visiting PATH; a buffer opened here is remembered so rollback closes it."
+  (let ((tx (require-agent-tx)))
+    (or (get-file-buffer path)
+        (let ((buffer (find-file-buffer path)))
+          (push buffer (agent-tx-buffers tx))
+          buffer))))
+
+(defun agent-tx-replace (buffer start end text)
+  "Apply a worker edit: replace the characters between positions START and END (1-based,
+   END exclusive) of BUFFER with TEXT, highlighted as an inline diff. The edit is a
+   workspace side-transaction whose undo restores the replaced text."
+  (let* ((tx (require-agent-tx))
+         (name (format nil "~A/~D" (agent-tx-id tx) (1+ (length (agent-tx-edits tx)))))
+         (edit (list :name name :buffer buffer :text text :removed nil :overlay nil)))
+    (yeditor-tx-side:side-transaction
+     name
+     (lambda ()
+       (with-point ((s (buffer-start-point buffer))
+                    (e (buffer-start-point buffer)))
+         (move-to-position s start)
+         (move-to-position e end)
+         (setf (getf edit :removed) (points-to-string s e))
+         (delete-between-points s e)
+         (insert-string s text)
+         (move-to-position s start)
+         (move-to-position e (+ start (length text)))
+         (setf (getf edit :overlay) (make-overlay s e (quote agent-insert-attribute)))))
+     (lambda ()
+       ;; the overlay's points follow later edits, so undo works on the current text
+       (let ((overlay (getf edit :overlay)))
+         (with-point ((s (overlay-start overlay))
+                      (e (overlay-end overlay)))
+           (delete-overlay overlay)
+           (delete-between-points s e)
+           (insert-string s (getf edit :removed))))))
+    (push edit (agent-tx-edits tx))
+    (pushnew buffer (agent-tx-touched tx))
+    (render-hud)
+    name))
+
 (defun agent-tx-insert (buffer position text)
-  "Apply a worker edit: insert TEXT at POSITION (1-based) of BUFFER, highlighted as
-   an inline diff, and record its inverse in the open agent transaction."
-  (unless *agent-tx*
-    (editor-error "No agent transaction is open"))
-  (let (overlay)
-    (with-point ((s (buffer-start-point buffer))
-                 (e (buffer-start-point buffer)))
-      (move-to-position s position)
-      (insert-string s text)
-      (move-to-position s position)
-      (move-to-position e (+ position (length text)))
-      (setf overlay (make-overlay s e (quote agent-insert-attribute))))
-    (push (list :buffer buffer :position position :text text :overlay overlay)
-          (agent-tx-edits *agent-tx*))
-    (render-hud)))
+  "Apply a worker edit: insert TEXT at POSITION (1-based) of BUFFER."
+  (agent-tx-replace buffer position position text))
 
 (defun close-agent-tx (&key rollback)
   "Commit (keep the edits) or roll back (undo them, newest first) the open agent
-   transaction. The coeffect becomes false and the HUD unmounts."
-  (unless *agent-tx*
-    (editor-error "No agent transaction is open"))
-  (dolist (edit (agent-tx-edits *agent-tx*))
-    (delete-overlay (getf edit :overlay))
+   transaction. The coeffect becomes false and the HUD unmounts. Returns the edit count."
+  (let ((tx (require-agent-tx)))
+    (dolist (function *agent-tx-close-functions*)
+      (funcall function tx (if rollback :rollback :commit)))
+    (dolist (edit (agent-tx-edits tx))
+      (cond (rollback (yeditor-tx-side:side-undo (getf edit :name)))
+            (t (delete-overlay (getf edit :overlay))
+               (yeditor-tx-side:side-forget (getf edit :name)))))
     (when rollback
-      (with-point ((p (buffer-start-point (getf edit :buffer))))
-        (move-to-position p (getf edit :position))
-        (delete-character p (length (getf edit :text))))))
-  (let ((count (length (agent-tx-edits *agent-tx*))))
+      (dolist (buffer (agent-tx-buffers tx))
+        (unless (deleted-buffer-p buffer)
+          (buffer-unmark buffer)
+          (delete-buffer buffer))))
     (setf *agent-tx* nil)
     (set-work-predicate :agent-tx-active nil)
-    count))
+    (length (agent-tx-edits tx))))
 
 (define-command yeditor-agent-tx-commit () ()
   "Commit the open agent transaction (C-c C-a)."

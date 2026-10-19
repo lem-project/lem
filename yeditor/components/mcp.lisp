@@ -5,6 +5,12 @@
 
 (defpackage :yeditor-components/mcp
   (:use :cl :lem :yeditor-context :yeditor-effects)
+  (:import-from :lem
+                #:ensure-attribute)
+  (:import-from :yeditor-components/lang-python
+                #:python-eval #:python-test-failure-attribute)
+  (:import-from :yeditor-components/hud
+                #:open-agent-tx)
   (:export :le-mcp
            :*mcp-hostname*
            :*mcp-port*
@@ -14,15 +20,74 @@
            :register-worker
            :unregister-worker
            :worker-ids
+           :worker-name
            :submit-task
+           :*payload-injector*
            :next-task
            :report-task
            :task-observations
            :component-states))
 (in-package :yeditor-components/mcp)
 
-;;;; le-mcp (plan T19): the low-latency bus between the editor and agent workers,
-;;;; on top of Lem's MCP server (Streamable HTTP at http://HOST:PORT/mcp).
+;;;; Editor control tools (Director Mode, plan T21): the agent operates the Lem
+;;;; UI in the user's behalf — run any command, present files side by side, eval
+;;;; code and annotate the result, and open an agent transaction (checkpoint)
+;;;; the user approves with one key. All effects flow through yeditor-tx so even
+;;;; window layouts stay reversible.
+
+(defun editor-result (&rest keys-and-values)
+  (json-string (apply (function alist) keys-and-values)))
+
+(defun editor-error-string (condition)
+  (format nil "~A" condition))
+
+(defun run-lem-command (name)
+  "Run the command registered under NAME; returns (values ok error-string)."
+  (handler-case
+      (progn (call-command (find-command name) nil)
+             (values t nil))
+    (error (e) (values nil (editor-error-string e)))))
+
+(defun main-window-p (window)
+  (not (typep window (quote lem-core:side-window))))
+
+(defun buffer-by-name (name)
+  (alexandria:when-let ((buffer (get-buffer name)))
+    buffer))
+
+(defun present-single (paths)
+  (let ((last nil))
+    (dolist (path paths)
+      (setf last (find-file-buffer path)))
+    (when last
+      (switch-to-buffer last))
+    last))
+
+(defun present-side-by-side (paths)
+  "Split the focused main window and lay PATHS out left to right; returns the
+last buffer presented."
+  (let ((last nil))
+    (dolist (path paths)
+      (let ((buffer (find-file-buffer path)))
+        (cond (last (split-active-window-vertically)
+                    (switch-to-buffer buffer))
+              (t (switch-to-buffer buffer)))
+        (setf last buffer)))
+    last))
+
+(defun annotate-buffer (buffer line text attribute)
+  "Show TEXT as virtual text after line LINE of BUFFER, replacing the previous
+annotation; the buffer's contents are not changed."
+  (alexandria:when-let ((previous (buffer-value buffer 'yeditor-annotation)))
+    (delete-overlay previous))
+  (with-point ((s (buffer-start-point buffer))
+               (e (buffer-start-point buffer)))
+    (move-to-line s line)
+    (move-to-line e line)
+    (line-end e)
+    (setf (buffer-value buffer 'yeditor-annotation)
+          (make-line-endings-overlay s e (ensure-attribute attribute)
+                                     :text (format nil "  <- ~A" text) :offset 1))))
 ;;;; Tools for component management (list, status, toggle, transaction log) and a
 ;;;; worker protocol: register (handshake + capability check), unregister, take the
 ;;;; next task, report an observation. Tasks and observations are also pushed to
@@ -38,6 +103,9 @@
 (defvar *workers* (make-hash-table :test (function equal)) "worker-id -> plist :name :capabilities")
 (defvar *tasks* nil "Task plists, oldest first: :id :worker :kind :payload :status :observation")
 (defvar *counter* 0)
+(defvar *payload-injector* nil
+  "Nil, or a function (worker-id kind payload) -> payload applied to every submitted task;
+   the agent host installs one that bootstraps the task with journal context (plan T21).")
 
 (defun next-id (prefix)
   (format nil "~A-~D" prefix (incf *counter*)))
@@ -89,6 +157,8 @@
 (defun submit-task (worker-id kind payload)
   "Queue a task for WORKER-ID and push a notification to the SSE streams. Returns its id."
   (ensure-worker worker-id)
+  (when *payload-injector*
+    (setf payload (funcall *payload-injector* worker-id kind payload)))
   (let ((id (bt2:with-lock-held (*bus-lock*)
               (let ((id (next-id "task")))
                 (setf *tasks* (append *tasks* (list (list :id id :worker worker-id :kind kind
@@ -127,6 +197,10 @@
           :collect (list (getf task :id) (getf task :status) (getf task :observation)))))
 
 ;;; Component management
+
+(defun worker-name (worker-id)
+  "The registered name of WORKER-ID, or nil."
+  (getf (gethash worker-id *workers*) :name))
 
 (defun component-states ()
   "Alist (name . state) for every registered component."
@@ -251,7 +325,56 @@
                                       (arg args "status") (arg args "observation"))
                          "ok")
                        :thread-safe t)
-     ;; forget workers and tasks when the bus goes away
+     (install-mcp-tool comp "yeditor_editor_run_command"
+                       "Director Mode: run any Lem command by name on the user's behalf."
+                       (schema (list "command_name") (list "command_name"))
+                       (lambda (args)
+                         (multiple-value-bind (ok err) (run-lem-command (arg args "command_name"))
+                           (if ok (editor-result "ok" t) (editor-result "ok" nil "error" err)))))
+     (install-mcp-tool comp "yeditor_editor_open_and_present"
+                       "Director Mode: open files in buffers and lay them out (layout: single | side-by-side)."
+                       `(("type" . "object")
+                         ("properties" . (("paths" . (("type" . "array") ("items" . (("type" . "string")))))
+                                          ("layout" . (("type" . "string") ("enum" . ("single" "side-by-side"))))))
+                         ("required" . ("paths")))
+                       (lambda (args)
+                         (let* ((paths (arg args "paths"))
+                                (layout (or (arg args "layout") "single"))
+                                (last (if (string= layout "side-by-side")
+                                          (present-side-by-side paths)
+                                          (present-single paths))))
+                           (editor-result "ok" (and last t) "buffer" (and last (buffer-name last)))))
+                       :thread-safe nil)
+     (install-mcp-tool comp "yeditor_editor_eval_and_annotate"
+                       "Director Mode: eval Python code in the REPL, annotate the buffer line and journal it."
+                       (schema (list "buffer" "start_line" "end_line" "code"))
+                       (lambda (args)
+                         (let* ((buffer (buffer-by-name (arg args "buffer")))
+                                (start (parse-integer (arg args "start_line")))
+                                (end (or (ignore-errors (parse-integer (arg args "end_line"))) start))
+                                (code (or (arg args "code")
+                                          (and buffer
+                                               (with-point ((s (buffer-start-point buffer))
+                                                            (e (buffer-end-point buffer)))
+                                                 (move-to-line s start)
+                                                 (move-to-line e end)
+                                                 (line-end e)
+                                                 (points-to-string s e)))))
+                                (attribute (quote python-test-failure-attribute)))
+                           (cond ((and buffer code)
+                                  (python-eval code)
+                                  (annotate-buffer buffer end "evaluating..." attribute)
+                                  (editor-result "ok" t "code" code))
+                                 (t (editor-result "ok" nil "error" "buffer not found")))))
+                       :thread-safe nil)
+     (install-mcp-tool comp "yeditor_editor_propose_checkpoint"
+                       "Director Mode: open an agent transaction checkpoint; the user approves (C-c C-a) or reverts (C-c C-k)."
+                       (schema (list "worker" "task") (list "worker"))
+                       (lambda (args)
+                         (open-agent-tx (or (arg args "worker") "hermes")
+                                        (or (arg args "task") "checkpoint"))
+                         (editor-result "ok" t "coeffect" ":agent-tx-active"))
+                       :thread-safe nil)
      (yeditor-tx:install-effect comp :noop (lambda () nil)
                                 :undo-thunk (lambda ()
                                               (bt2:with-lock-held (*bus-lock*)

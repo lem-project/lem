@@ -9,7 +9,10 @@
   (:import-from :yeditor-components/palette #:call-with-theme-preview #:*open-preview-sessions*)
   (:import-from :yeditor-components/hud
                 #:*agent-tx* #:*hud-buffer-name* #:yeditor-demo-agent
-                #:yeditor-agent-tx-commit #:yeditor-agent-tx-rollback))
+                #:yeditor-agent-tx-commit #:yeditor-agent-tx-rollback)
+  (:import-from :yeditor-components/sidebar #:yeditor-sidebar-toggle #:sidebar-active-p)
+  (:import-from :yeditor-components/terminal #:yeditor-terminal-toggle #:terminal-active-p)
+  (:import-from :yeditor-components/workspace-layout #:yeditor-workspace-open))
 (in-package :yeditor-components-tests)
 
 (defun binding (keyspec)
@@ -813,3 +816,176 @@
       (ok (null (lem-mcp-server:current-mcp-server)) "server stopped on uninstall")
       (ok (handler-case (progn (mcp-handshake port) nil) (error () t)) "port closed")
       (ok (null (yeditor-components/mcp:worker-ids)) "workers forgotten"))))
+
+;;; Sidebar, Terminal and Workspace Layout (modern IDE panels)
+
+(defun terminal-ffi-available-p ()
+  "Return t if the libvterm alien symbol 'terminal_new' is resolvable."
+  (ignore-errors
+   (cffi:foreign-symbol-pointer "terminal_new")))
+
+(deftest test-sidebar-toggle-no-residue
+  (lem-fake-interface:with-fake-interface ()
+    (install-component (quote le-sidebar))
+    (ok (eq (binding "C-c b") (quote yeditor-sidebar-toggle)) "sidebar binding installed")
+    (yeditor-sidebar-toggle)
+    (ok (frame-leftside-window (current-frame)) "sidebar toggle opens leftside window")
+    (yeditor-sidebar-toggle)
+    (ok (not (sidebar-active-p)) "sidebar toggled off is no longer active")
+    (uninstall-component (quote le-sidebar))
+    (ok (null (binding "C-c b")) "sidebar binding removed")))
+
+(deftest test-terminal-toggle-no-residue
+  (lem-fake-interface:with-fake-interface ()
+    (install-component (quote le-terminal))
+    (ok (eq (binding "C-c j") (quote yeditor-terminal-toggle)) "terminal binding installed")
+    (if (terminal-ffi-available-p)
+        (progn
+          (yeditor-terminal-toggle)
+          (ok (terminal-active-p) "terminal toggle opens bottomside window")
+          (yeditor-terminal-toggle)
+          (ok (not (terminal-active-p)) "terminal toggled off is no longer active"))
+        (ok t "libvterm FFI not available in this build; skip terminal toggle test"))
+    (uninstall-component (quote le-terminal))
+    (ok (null (binding "C-c j")) "terminal binding removed")))
+
+(deftest test-workspace-layout-on-demand-only
+  (lem-fake-interface:with-fake-interface ()
+    (install-component (quote le-workspace-layout))
+    (unwind-protect
+         (let ((file (merge-pathnames (format nil "yeditor-ws-~D.txt" (random 1000000))
+                                      (uiop:default-temporary-directory))))
+           (with-open-file (out file :direction :output :if-exists :supersede)
+             (write-string "hello" out))
+           (find-file file)
+           (ok (null (frame-leftside-window (current-frame)))
+               "opening a file keeps the Zero-Chrome basal state")
+           (yeditor-components/workspace-layout:yeditor-workspace-open)
+           (ok (frame-leftside-window (current-frame)) "C-c w opens the sidebar"))
+      (uninstall-component (quote le-workspace-layout))
+      (when (frame-leftside-window (current-frame))
+        (delete-leftside-window)))))
+
+;;; Director Mode (T21 editor tools on the MCP bus + T12-B cockpit)
+
+;; the tests below start le-mcp on the default port; a running editor may hold 7890
+(setf yeditor-components/mcp:*mcp-port* (free-port))
+
+(deftest test-editor-run-command-tool
+  (lem-fake-interface:with-fake-interface ()
+    (install-component (quote le-mcp))
+    (unwind-protect
+         (progn
+           ;; unknown command: tool responds ok=nil, does not signal
+           (ok (eq (nth-value 0 (yeditor-components/mcp::run-lem-command "no-such-command-xyz")) nil)
+               "unknown command reports ok=nil")
+           ;; known command runs with an effect on the current buffer
+           (let ((buffer (make-buffer "*director-test*" :temporary t)))
+             (switch-to-buffer buffer)
+             (insert-string (current-point) "abc")
+             (buffer-start (current-point))
+             (let ((ok (nth-value 0 (yeditor-components/mcp::run-lem-command "forward-char"))))
+               (ok ok "forward-char runs"))
+             (ok (char= (character-at (current-point)) #\b) "forward-char moved the point")))
+      (uninstall-component (quote le-mcp)))))
+
+(deftest test-editor-open-and-present
+  (lem-fake-interface:with-fake-interface ()
+    (install-component (quote le-mcp))
+    (unwind-protect
+         (let ((file1 (merge-pathnames (format nil "yeditor-d1-~D.txt" (random 1000000))
+                                       (uiop:default-temporary-directory)))
+               (file2 (merge-pathnames (format nil "yeditor-d2-~D.txt" (random 1000000))
+                                       (uiop:default-temporary-directory))))
+           (dolist (file (list file1 file2))
+             (with-open-file (out file :direction :output :if-exists :supersede)
+               (write-string "x" out)))
+           (yeditor-components/mcp::present-side-by-side (list (namestring file1) (namestring file2)))
+           (let ((mains (remove-if (lambda (w) (typep w (quote lem-core:side-window)))
+                                   (window-list))))
+             (ok (>= (length mains) 2) "two main windows after side-by-side present"))
+           ;; reversibility: deleting the buffers leaves nothing dangling
+           (dolist (file (list file1 file2))
+             (alexandria:when-let ((b (find (probe-file file) (buffer-list)
+                                            :key (lambda (b) (and (buffer-filename b) (probe-file (buffer-filename b))))
+                                            :test (function equal))))
+               (delete-buffer b))))
+      (uninstall-component (quote le-mcp)))))
+
+(deftest test-editor-propose-checkpoint-and-rollback
+  (lem-fake-interface:with-fake-interface ()
+    (install-component (quote le-mcp))
+    (install-component (quote le-hud))
+    (unwind-protect
+         (progn
+           (yeditor-components/hud:open-agent-tx "fake-worker" "checkpoint")
+           (ok yeditor-components/hud:*agent-tx* "checkpoint opens an agent transaction")
+           (let ((buffer (make-buffer "*checkpoint-edit*" :temporary t)))
+             (switch-to-buffer buffer)
+             (yeditor-components/hud:agent-tx-insert buffer 1 "agent edit")
+             (ok (search "agent edit" (points-to-string (buffer-start-point buffer)
+                                                        (buffer-end-point buffer)))
+                 "agent edit applied")
+             (yeditor-components/hud:close-agent-tx :rollback t)
+             (ok (zerop (length (points-to-string (buffer-start-point buffer)
+                                                  (buffer-end-point buffer))))
+                 "rollback restored the buffer")
+             (ok (null yeditor-components/hud:*agent-tx*) "transaction closed")))
+      (uninstall-component (quote le-hud))
+      (uninstall-component (quote le-mcp)))))
+
+(deftest test-eval-annotation-leaves-text-alone
+  (lem-fake-interface:with-fake-interface ()
+    (let ((buffer (make-buffer "*annotate-test*" :temporary t)))
+      (insert-string (buffer-point buffer) (format nil "x = 1~%y = 2~%"))
+      (let ((before (points-to-string (buffer-start-point buffer) (buffer-end-point buffer))))
+        (yeditor-components/mcp::annotate-buffer buffer 1 "evaluating..." (quote modeline))
+        (yeditor-components/mcp::annotate-buffer buffer 2 "done" (quote modeline))
+        (ok (equal before (points-to-string (buffer-start-point buffer) (buffer-end-point buffer)))
+            "annotation is virtual text; the buffer is unchanged")
+        (ok (= 1 (length (lem:buffer-overlays buffer)))
+            "a new annotation replaces the previous one"))
+      (delete-buffer buffer))))
+
+(deftest test-director-cockpit-binding
+  (lem-fake-interface:with-fake-interface ()
+    (install-component (quote le-director-cockpit))
+    (ok (eq (binding "F1") (quote yeditor-director-intent)) "F1 opens the intent bar")
+    (uninstall-component (quote le-director-cockpit))
+    (ok (null (binding "F1")) "F1 binding removed")))
+
+;;; Tutorial
+
+(deftest test-tutorial-component
+  (lem-fake-interface:with-fake-interface ()
+    (let ((home (uiop:ensure-directory-pathname
+                 (merge-pathnames (format nil "yeditor-tutorial-~D/" (random 1000000))
+                                  (uiop:default-temporary-directory))))
+          (old-home (uiop:getenv "LEM_HOME")))
+      (sb-posix:setenv "LEM_HOME" (namestring home) 1)
+      (unwind-protect
+           (progn
+             (install-component (quote yeditor-components:le-tutorial))
+             (ok (equal (yeditor-components/tutorial:yeditor-tutorial-file) lem-tutor:*tutorial-file*)
+                 "Lem's tutorial command opens the Yeditor tutorial")
+             (yeditor-components/tutorial:yeditor-tutorial)
+             (ok (uiop:string-prefix-p "Yeditor Tutorial"
+                                       (points-to-string (buffer-start-point (current-buffer))
+                                                         (buffer-end-point (current-buffer))))
+                 "the Yeditor tutorial opens")
+             (ok (probe-file (merge-pathnames "lem-tutor-saves/yeditor-tutorial-save.txt" home))
+                 "with a working copy of its own")
+             (yeditor-components/tutorial:yeditor-tutorial-editing)
+             (ok (uiop:string-prefix-p "Lem Tutor" (points-to-string (buffer-start-point (current-buffer))
+                                                                     (buffer-end-point (current-buffer))))
+                 "Lem's editing lessons stay available")
+             (ok (probe-file (merge-pathnames "lem-tutor-saves/lem-tutor-save.txt" home))
+                 "Lem's working copy keeps its historical name")
+             (uninstall-component (quote yeditor-components:le-tutorial))
+             (ok (null lem-tutor:*tutorial-file*) "uninstall gives Lem's tutorial back"))
+        (if old-home (sb-posix:setenv "LEM_HOME" old-home 1) (sb-posix:unsetenv "LEM_HOME"))
+        (dolist (buffer (buffer-list))
+          (when (and (buffer-filename buffer)
+                     (uiop:string-prefix-p (namestring home) (namestring (buffer-filename buffer))))
+            (delete-buffer buffer)))
+        (uiop:delete-directory-tree home :validate t :if-does-not-exist :ignore)))))

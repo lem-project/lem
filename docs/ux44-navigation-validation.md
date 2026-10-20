@@ -53,6 +53,12 @@ porta no navegador. O primeiro carregamento pode exigir as dependências opciona
 do frontend via Quicklisp. O teste aqui usou o mesmo cliente canvas distribuído
 com o editor; não validou a janela nativa WebKit/macOS nem SDL2.
 
+O primeiro CI do PR encontrou uma corrida na fixture do teste T8: uma sobrescrita
+no próprio arquivo expunha uma configuração vazia ao watcher. A fixture agora
+publica configurações completas por rename atômico, mantendo as 50 trocas e todas
+as asserções. A recarga de gravações parciais no runtime foi reproduzida isoladamente
+(escritor pausado 50 ms) e está registrada na #54; esta entrega não altera o watcher.
+
 ## Operação e limites
 
 `le-navigation` possui instalação/desinstalação reversível e restaura a UI

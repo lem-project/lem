@@ -92,6 +92,15 @@
              (ok (not (config-file-changed-p path)) "unchanged content does not trigger a reload")))
       (delete-file path))))
 
+(defun publish-config (path text)
+  ;; This test asserts deltas between complete configurations. In-place
+  ;; truncation exposes a genuinely different (empty) configuration to the watcher.
+  (uiop:with-temporary-file (:stream out :pathname staged
+                            :directory (uiop:pathname-directory-pathname path))
+    (write-string text out)
+    :close-stream
+    (uiop:rename-file-overwriting-target staged path)))
+
 (deftest watcher-applies-50-real-rewrites-and-reports-errors
   (with-loader
     (lem-fake-interface:with-fake-interface ()
@@ -112,16 +121,16 @@
                  (let* ((mask (mod (* step 7) 16))
                         (expected (loop :for i :below 4
                                         :collect (when (logbitp i mask) (+ 10 i)))))
-                   (with-open-file (out path :direction :output :if-exists :supersede)
-                     (write-line "(use-component stable)" out)
-                     (dotimes (i 4)
-                       (when (nth i expected)
-                         (format out "(use-component watch-~D :config (:value ~D))~%" i (nth i expected)))))
+                   (publish-config path
+                     (with-output-to-string (out)
+                       (write-line "(use-component stable)" out)
+                       (dotimes (i 4)
+                         (when (nth i expected)
+                           (format out "(use-component watch-~D :config (:value ~D))~%" i (nth i expected))))))
                    (ok (wait-until (lambda () (and (= 1 stable-installs) (equal (coerce values 'list) expected))))
                        "watcher applies the entire delta after every rewrite")
                    (ok (= stable-installs 1) "unchanged component is never reinstalled")))
-               (with-open-file (out path :direction :output :if-exists :supersede)
-                 (write-line "(use-component watch-0 :config (:invalid 1))" out))
+               (publish-config path "(use-component watch-0 :config (:invalid 1))")
                (ok (wait-until (lambda () messages)) "invalid options reach the UI error callback")
                (ok (search "INVALID" (first messages) :test #'char-equal))
                (ok (eql (aref values 0) 10) "invalid replacement preserves the last valid value")

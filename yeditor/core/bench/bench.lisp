@@ -55,6 +55,24 @@
         (insert-string p (format nil "(defun function-~D (x) (+ x ~D)) ; line ~D~%" i i i))))
     buffer))
 
+(defun theme-cycle ()
+  "Install and uninstall the actual ergonomic theme against the current baseline."
+  (let* ((component 'yeditor-components:le-themes-ergonomic)
+         (entry (gethash component yeditor-context:*component-registry*)))
+    (unless (eq :inactive (getf entry :status))
+      (error "Theme benchmark requires an inactive component; refusing to remove session state."))
+    (handler-bind
+        ((warning (lambda (condition)
+                    ;; This expected baseline override must not time terminal log I/O.
+                    (when (and (typep condition 'simple-warning)
+                               (equal (simple-condition-format-control condition)
+                                      "e-variable: overriding ~A; undo in LIFO order.")
+                               (eq (first (simple-condition-format-arguments condition))
+                                   'yeditor-components/palette:*palette-themes-function*))
+                      (muffle-warning condition)))))
+      (unwind-protect (yeditor-context:install-component component)
+        (yeditor-context:uninstall-component component)))))
+
 (defun benchmarks ()
   "List of (name iterations thunk) run inside a fake-interface session."
   (let ((buffer (large-buffer 10000)))
@@ -70,18 +88,25 @@
              (insert-character (current-point) #\x)
              (redraw-display)
              (delete-previous-char)))
-     (list "component-toggle" 2000
-           (lambda ()
-             (yeditor-context:install-component (quote yeditor-components:le-zero-chrome))
-             (yeditor-context:uninstall-component (quote yeditor-components:le-zero-chrome)))))))
+     (list "theme-install-uninstall" 1000 #'theme-cycle))))
 
 (defun run-benchmarks ()
-  "Run every benchmark; return an alist (name . plist :p50 :p95 :p99 :iterations), microseconds."
-  (lem-fake-interface:with-fake-interface ()
-    (lem/common/timer:with-timer-manager (make-instance (quote lem/common/timer:timer-manager))
-      (loop :for (name iterations thunk) :in (benchmarks)
-            :collect (destructuring-bind (p50 p95 p99) (median-of-rounds thunk iterations)
-                       (cons name (list :p50 p50 :p95 p95 :p99 p99 :iterations iterations)))))))
+  "Measure editor-side p50/p95/p99 in microseconds in an isolated fake frame.
+Initialize the normal default theme if none is loaded, then preserve that baseline."
+  (save-excursion
+    (lem/buffer/buffer-list-manager:with-current-buffers ()
+      (lem-fake-interface:with-fake-interface ()
+        (setf (current-buffer) (window-buffer (current-window)))
+        (unless (current-theme) (load-theme "lem-default" nil))
+        (lem/common/timer:with-timer-manager (make-instance 'lem/common/timer:timer-manager)
+          (let ((buffer nil))
+            (unwind-protect
+                 (let ((cases (benchmarks)))
+                   (setf buffer (current-buffer))
+                   (loop :for (name iterations thunk) :in cases
+                         :collect (destructuring-bind (p50 p95 p99) (median-of-rounds thunk iterations)
+                                    (cons name (list :p50 p50 :p95 p95 :p99 p99 :iterations iterations)))))
+              (when buffer (delete-buffer buffer)))))))))
 
 (defun write-results (results path)
   (let ((table (make-hash-table :test (function equal))))
@@ -96,36 +121,66 @@
 (defun read-results (path)
   (with-open-file (in path) (yason:parse in)))
 
-(defparameter *regression-ratio* 1.2
+(defparameter *regression-ratio* 6/5
   "Fail when head p95 exceeds base p95 by more than 20%.")
 
 (defparameter *noise-floor-us* 2
   "Ignore regressions smaller than this many microseconds in absolute terms (timer noise).")
 
+(defparameter *benchmark-names*
+  '("command-dispatch" "keystroke-to-frame" "theme-install-uninstall" "tx-commit-empty"))
+
+(defun valid-results-p (table)
+  (and (hash-table-p table)
+       (= (hash-table-count table) (length *benchmark-names*))
+       (every (lambda (name)
+                (let ((row (gethash name table)))
+                  (and (hash-table-p row)
+                       (every (lambda (key) (let ((v (gethash key row))) (and (realp v) (<= 0 v))))
+                              '("p50" "p95" "p99"))
+                       (<= (gethash "p50" row) (gethash "p95" row) (gethash "p99" row))
+                       (let ((n (gethash "iterations" row))) (and (integerp n) (plusp n))))))
+              *benchmark-names*)))
+
 (defun compare-results (head &optional base)
-  "HEAD and BASE are hash tables from read-results. Return (values report-string ok-p).
-   Fails on a p95 over budget, or a p95 regression over 20% and over the noise floor."
+  "Return report and PASS-P for complete, valid HEAD and optional comparable BASE.
+Enforce absolute budgets and >20% p95 regressions above the 2us timing noise floor.
+A zero baseline is reported as an absolute delta, never divided by zero."
+  (unless (and (valid-results-p head)
+               (or (null base)
+                   (and (valid-results-p base)
+                        (every (lambda (name)
+                                 (= (gethash "iterations" (gethash name head))
+                                    (gethash "iterations" (gethash name base))))
+                               *benchmark-names*))))
+    (return-from compare-results
+      (values "FAIL: incomplete, invalid or incompatible benchmark results; comparison requires all four benchmarks.
+" nil)))
   (let ((ok t))
     (values
      (with-output-to-string (s)
-       (format s "~&~22A ~10A ~10A ~10A ~12A ~A~%" "benchmark" "p50 us" "p95 us" "p99 us" "base p95" "status")
-       (loop :for name :in (sort (alexandria:hash-table-keys head) (function string<))
-             :do (let* ((h (gethash name head))
-                        (p95 (gethash "p95" h))
-                        (b (and base (gethash name base)))
-                        (bp95 (and b (gethash "p95" b)))
-                        (budget (cdr (assoc name *budgets-us* :test (function string=))))
-                        (status (cond ((and budget (> p95 budget))
-                                       (setf ok nil) (format nil "FAIL over budget (~D us)" budget))
-                                      ((and bp95 (> p95 (* *regression-ratio* bp95))
-                                            (> (- p95 bp95) *noise-floor-us*))
-                                       (setf ok nil) (format nil "FAIL +~D% vs base"
-                                                             (round (* 100 (- (/ p95 bp95) 1)))))
-                                      ((and bp95 (< (max p95 bp95) *noise-floor-us*)) "ok (below noise floor)")
-                                      (bp95 (format nil "ok (~@D%)" (round (* 100 (- (/ p95 bp95) 1)))))
-                                      (t "ok (no base)"))))
-                   (format s "~22A ~10,1F ~10,1F ~10,1F ~12A ~A~%"
-                           name (gethash "p50" h) p95 (gethash "p99" h)
-                           (if bp95 (format nil "~,1F" bp95) "-") status)))
-       (format s "~&Keystroke-to-frame runs the full redisplay pipeline against the fake frontend~%(no terminal I/O); it measures editor-side cost.~%"))
+       (format s "~&~24A ~10A ~10A ~10A ~12A ~A~%" "benchmark" "p50 us" "p95 us" "p99 us" "base p95" "status")
+       (dolist (name *benchmark-names*)
+         (let* ((h (gethash name head))
+                (p95 (gethash "p95" h))
+                (b (and base (gethash name base)))
+                (bp95 (and b (gethash "p95" b)))
+                (budget (cdr (assoc name *budgets-us* :test #'equal)))
+                (regression (and bp95 (> p95 (* *regression-ratio* bp95))
+                                 (> (- p95 bp95) *noise-floor-us*)))
+                (status
+                  (cond ((and budget (> p95 budget))
+                         (setf ok nil) (format nil "FAIL over budget (~D us)" budget))
+                        (regression
+                         (setf ok nil)
+                         (if (zerop bp95)
+                             (format nil "FAIL +~,1F us vs zero base" p95)
+                             (format nil "FAIL +~D% vs base" (round (* 100 (- (/ p95 bp95) 1))))))
+                        ((null bp95) "ok (budgets only; no base)")
+                        ((zerop bp95) (format nil "ok (+~,1F us; within noise floor)" p95))
+                        (t (format nil "ok (~@D%)" (round (* 100 (- (/ p95 bp95) 1))))))))
+           (format s "~24A ~10,1F ~10,1F ~10,1F ~12A ~A~%"
+                   name (gethash "p50" h) p95 (gethash "p99" h)
+                   (if bp95 (format nil "~,1F" bp95) "-") status)))
+       (format s "~&Keystroke-to-frame measures full redisplay on a 10,000-line buffer in the fake frontend~%(editor-side cost; excludes physical terminal I/O). Theme cycle installs the real ergonomic theme.~%"))
      ok)))

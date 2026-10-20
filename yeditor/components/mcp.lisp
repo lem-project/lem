@@ -269,6 +269,21 @@ annotation; the buffer's contents are not changed."
     (declare (ignore ctx))
     (list
      (install-server comp)
+     (install-mcp-tool comp "yeditor_navigation_action"
+                       "Use the visible file navigation: home, browse, project, tree, focus, open, preview, pin, close, save-close, discard, cancel, search, refresh. project/open/preview need path; search needs query (empty string lists all). Closing modified files requires a separate save-close/discard decision."
+                       (schema (list "action" "path" "query") (list "action"))
+                       (lambda (args)
+                         (when (and (equal (arg args "action") "search") (null (arg args "query")))
+                           (lem:editor-error "A ferramenta de busca exige query (use uma string vazia para listar)."))
+                         (json-string (alexandria:alist-hash-table
+                                       (yeditor-components/navigation:navigation-action
+                                        (arg args "action") :path (arg args "path") :query (arg args "query"))
+                                       :test #'equal))))
+     (install-mcp-tool comp "yeditor_navigation_status" "Read the active project and file navigation state."
+                       (schema)
+                       (lambda (args) (declare (ignore args))
+                         (json-string (alexandria:alist-hash-table
+                                       (yeditor-components/navigation:navigation-status) :test #'equal))))
      (install-mcp-tool comp "yeditor_list_components" "List Yeditor components and their state."
                        (schema)
                        (lambda (args) (declare (ignore args))

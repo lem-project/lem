@@ -17,7 +17,11 @@ OPENSSL_PREFIX="$(brew --prefix openssl@3)"
 # SIP strips DYLD_* when Qlot passes through /bin/sh. Set the search path
 # immediately before executing the Homebrew SBCL binary, after those shells.
 export LEM_OPENSSL_LIBDIR="$OPENSSL_PREFIX/lib"
-export LEM_REAL_SBCL="$(command -v sbcl)"
+sbcl_prefix="$(brew --prefix sbcl)"
+# Homebrew's bin/sbcl is itself a SIP-protected shell wrapper. Use its
+# actual Mach-O runtime and reproduce its SBCL_HOME setting.
+export LEM_REAL_SBCL="$sbcl_prefix/libexec/bin/sbcl"
+export SBCL_HOME="$sbcl_prefix/lib/sbcl"
 wrapper_dir="$(mktemp -d)"
 trap 'rm -rf "$wrapper_dir"' EXIT
 cp "$script_dir/macos-sbcl.bash" "$wrapper_dir/sbcl"

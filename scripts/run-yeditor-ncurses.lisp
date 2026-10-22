@@ -5,6 +5,9 @@
 
 ;;; Launch Yeditor in the terminal (ncurses) with the ephemeral UI enabled.
 ;;; Usage, from the repository root: sbcl --load scripts/run-yeditor-ncurses.lisp
+;;;   Click Abrir pasta / Arquivos / Abrir arquivo; Tab/Enter on the Files page.
+;;;   F2       projects, open tabs and recent files
+;;;   F3       filename/path search (asynchronous index)
 ;;;   C-c b    toggle project sidebar (left)
 ;;;   C-c j    toggle integrated terminal (bottom)
 ;;;   C-c h    toggle Hermes Agent chat panel (bottom)

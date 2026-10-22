@@ -1,7 +1,7 @@
 # Yeditor — Implementation Handoff
 
 *Living document. Updated after every completed task so another agent can continue the work.
-Last update: 2026-10-18.*
+Last update: 2026-10-20.*
 
 Authoritative plan (Portuguese, local only — excluded from git via `.git/info/exclude`):
 `.hermes/plans/2026-10-17_192626-yeditor-spacetime-lem-fork.md` (tasks T1–T30, chapters 1–18).
@@ -26,6 +26,22 @@ describe the architecture and rules.
 - **Effects are lazy.** `install-effect` registers a thunk that runs at `tx-commit`; capture
   "previous" state inside the thunk, not at registration time.
 - **Keep this file updated** at the end of each task.
+
+## File navigation (#44)
+
+`le-navigation` is enabled by `enable-ephemeral-ui`. The startup page and persistent
+header offer **Abrir pasta**, **Arquivos (F2)**, **Abrir arquivo (F3)** and **Foco**.
+Folder selection, tabs, recent projects/files, filename/path search, previews and
+Save/Discard/Cancel on dirty close share `navigation-action`; MCP exposes
+`yeditor_navigation_action` and `yeditor_navigation_status`. The tree is Lem's filer.
+Tab/Shift-Tab/Enter and Escape operate the Files page; old shortcuts remain optional.
+
+The filename index and folder selector enumerate in worker threads, then publish
+only to the live component on the editor queue. Uninstall cancels outstanding work
+and restores borrowed UI. See [validation and limits](ux44-navigation-validation.md).
+Run `asdf:test-system :yeditor-navigation-tests` for interaction/100-cycle tests;
+`python3 scripts/test-navigation-terminal.py` runs real ncurses at 80×24/120×32
+(requires the ncurses system/native library already installed).
 
 ## 2. How to build, test and run
 

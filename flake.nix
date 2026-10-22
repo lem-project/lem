@@ -313,6 +313,7 @@
           trivial-open-browser
           frugal-uuid
           hunchentoot
+          cl-template
         ];
 
         # The base derivation that other variants inherit from

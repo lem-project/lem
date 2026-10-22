@@ -33,9 +33,15 @@ Templating can be disabled if you put this in your config:
 (setf lem-template:*auto-template* nil)
 ```
 
-# Examples
+## Many templates
 
-See [my templates](https://github.com/garlic0x1/.lem/tree/master/templates) for more examples, I used the plural `register-templates` to register them like this:
+We can use the plural `register-templates` to register multiple
+templates at once, see examples below.
+
+When more than one template is defined for the same file extension,
+you will be prompted to choose.
+
+Example, according we have those templates in `~/.config/lem/templates/`:
 
 ```lisp
 (lem-template:register-templates
@@ -46,7 +52,8 @@ See [my templates](https://github.com/garlic0x1/.lem/tree/master/templates) for 
    :name "Test ASD"
    :file (merge-pathnames "templates/test.asd.clt" (lem-home)))
   (:pattern ".*\.lisp"
-   :file (merge-pathnames "templates/lisp.clt" (lem-home))))
+   :file (merge-pathnames "templates/lisp.clt" (lem-home)))
+   (:pattern ".*\.asd"
+   :name "Lisp Makefile"
+   :file (merge-pathnames "templates/Makefile.lisp.clt" (lem-home))))
 ```
-
-When you create a new `.asd` file, you will be prompted to choose `Test ASD` or `Basic ASD`.  When you create a new `.lisp` file, it will automatically insert the single template.

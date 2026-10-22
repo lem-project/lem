@@ -43,6 +43,16 @@ Run `asdf:test-system :yeditor-navigation-tests` for interaction/100-cycle tests
 `python3 scripts/test-navigation-terminal.py` runs real ncurses at 80×24/120×32
 (requires the ncurses system/native library already installed).
 
+## Nightly packaging repairs (2026-10-22)
+
+Packaging validation is restored as a PR workflow for packaging inputs. Linux
+builds PIC-enabled libvterm 0.3.3 and pins tree-sitter 0.27; the native helper
+also supports older distro attribute layouts. macOS selects Homebrew OpenSSL 3
+at SBCL startup and clears that loader environment before spawning tools such
+as git. Both produced artifacts must pass `--help` before upload. Validation PRs
+and manual builds do not publish releases; publication is limited to scheduled
+main builds or explicit main-only requests. See [packaging details](nightly-build-validation.md).
+
 ## 2. How to build, test and run
 
 From the repository root (dependencies via qlot, already installed in `.qlot/`):

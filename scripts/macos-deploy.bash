@@ -7,6 +7,27 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 parent_dir="$(dirname "$script_dir")"
 cd "$parent_dir"
 
+# Qlot and the pinned CL+SSL need a consistent OpenSSL 3 pair. Do not let
+# macOS's system LibreSSL or a newer Homebrew alias select an incompatible ABI.
+if ! command -v brew >/dev/null 2>&1; then
+  echo "error: Homebrew not found. Install brew before packaging." >&2
+  exit 1
+fi
+OPENSSL_PREFIX="$(brew --prefix openssl@3)"
+# SIP strips DYLD_* when Qlot passes through /bin/sh. Set the search path
+# immediately before executing the Homebrew SBCL binary, after those shells.
+export LEM_OPENSSL_LIBDIR="$OPENSSL_PREFIX/lib"
+sbcl_prefix="$(brew --prefix sbcl)"
+# Homebrew's bin/sbcl is itself a SIP-protected shell wrapper. Use its
+# actual Mach-O runtime and reproduce its SBCL_HOME setting.
+export LEM_REAL_SBCL="$sbcl_prefix/libexec/bin/sbcl"
+export SBCL_HOME="$sbcl_prefix/lib/sbcl"
+wrapper_dir="$(mktemp -d)"
+trap 'rm -rf "$wrapper_dir"' EXIT
+cp "$script_dir/macos-sbcl.bash" "$wrapper_dir/sbcl"
+chmod +x "$wrapper_dir/sbcl"
+export PATH="$wrapper_dir:$PATH"
+
 # ===== 1) ビルド =====
 qlot install
 
@@ -68,7 +89,6 @@ if ! command -v brew >/dev/null 2>&1; then
   exit 1
 fi
 
-OPENSSL_PREFIX="$(brew --prefix openssl@3)"
 OPENSSL_LIB="$OPENSSL_PREFIX/lib"
 
 # Cellar の実体（バージョン付きディレクトリ）を解決

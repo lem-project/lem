@@ -18,6 +18,6 @@ while [[ $# -gt 0 ]]; do
 done
 # dyld captures its search path at startup. Remove the environment variable
 # before Lisp launches subprocesses, while retaining dyld's path for dlopen.
-exec "$LEM_REAL_SBCL" "${runtime_options[@]}" \
+exec "$LEM_REAL_SBCL" ${runtime_options[@]+"${runtime_options[@]}"} \
   --eval '(require :sb-posix)' \
   --eval '(sb-posix:unsetenv "DYLD_LIBRARY_PATH")' "$@"

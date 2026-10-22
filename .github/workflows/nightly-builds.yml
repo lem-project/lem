@@ -153,6 +153,12 @@ jobs:
           cc tests/terminal/attributes.c -I"$prefix/include" -L"$prefix/lib" -lvterm -o "$RUNNER_TEMP/attributes"
           "$RUNNER_TEMP/attributes"
 
+      - name: Check macOS SBCL wrapper
+        if: steps.diff.outputs.skip != 'true'
+        run: |
+          prefix="$(brew --prefix sbcl)"
+          SBCL_HOME="$prefix/lib/sbcl" LEM_REAL_SBCL="$prefix/libexec/bin/sbcl" bash tests/terminal/test-macos-sbcl.sh
+
       - name: Build Lem executable
         if: steps.diff.outputs.skip != 'true'
         run: |

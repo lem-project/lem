@@ -52,6 +52,11 @@
          :initform (make-instance 'mark)
          :reader fake-cursor-mark)))
 
+(defun fake-cursor-p (point)
+  "Return true if POINT is a fake cursor, i.e. a command is running for one
+of the extra cursors rather than the real one."
+  (typep point 'fake-cursor))
+
 (defmethod cursor-mark ((cursor cursor))
   (buffer-mark-object (point-buffer cursor)))
 
@@ -126,6 +131,6 @@
 
 (defmacro when-real-cursor (&body body)
   "Execute BODY only if the current cursor is a real one (i.e. not a fake-cursor)."
-  `(unless (typep (current-point) 'fake-cursor)
+  `(unless (fake-cursor-p (current-point))
      ,@body))
 

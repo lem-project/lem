@@ -470,13 +470,26 @@
           (values (display:scaled-char-width display x)
                   (display:scaled-char-height display y))))))
 
-(defmethod lem-if:get-char-width ((implementation sdl2))
+(defmethod lem-if:cell-width ((implementation sdl2))
   (display:with-display (display)
     (display:display-char-width display)))
 
-(defmethod lem-if:get-char-height ((implementation sdl2))
+(defmethod lem-if:cell-height ((implementation sdl2))
   (display:with-display (display)
     (display:display-char-height display)))
+
+(defmethod lem-if:cell-pixel-size ((implementation sdl2))
+  (display:with-display (display)
+    (values (display:display-char-width display)
+            (display:display-char-height display)
+            (display:display-font-ascent display))))
+
+(defmethod lem-if:font-em-pixels ((implementation sdl2))
+  (display:with-display (display)
+    ;; a high dpi display opens the font at a multiple of the configured size, and the cell
+    ;; metrics are measured from the font as opened, so this has to be that size and not the
+    ;; configured one.
+    (font-config-size (display:display-font-config display))))
 
 (defmethod lem-if:view-width ((implementation sdl2) view)
   (display:with-display (display)

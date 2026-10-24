@@ -190,8 +190,13 @@
              (unwind-protect
                   (let ((stream (usocket:socket-stream connection)))
                     (write-byte 17 stream) (finish-output stream)
-                    (ok (usocket:wait-for-input connection :timeout 1 :ready-only t))
-                    (ok (= 17 (read-byte stream))))
+                    ;; Socket waits may return early after a signal. Keep the
+                    ;; original one-second deadline and never block on a failed wait.
+                    (let ((ready (wait-until
+                                  (lambda () (usocket:wait-for-input connection :timeout 0.01 :ready-only t))
+                                  :timeout 1)))
+                      (ok ready)
+                      (when ready (ok (= 17 (read-byte stream))))))
                (usocket:socket-close connection))
              (inverse handle)
              (inverse handle)

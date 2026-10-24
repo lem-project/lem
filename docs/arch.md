@@ -148,3 +148,27 @@ and effect regressions. The fixture creates two temporary Python projects and
 a shell launcher named `pyright`, verifies both initialize roots, and checks
 100 start/stop/uninstall cycles against buffer/hook/palette baselines. It needs
 Python 3, but no real pyright or external service.
+
+## Local package onboarding
+
+The standard appearance palette includes **Install package...** and **Remove
+package...**, owned by `le-package-onboarding`. Discovery includes configured
+`*package-roots*`, `~/common-lisp`, and the active Quicklisp installation's local
+project directories (including Qlot installations). Scanning and package work run
+in a worker; prompts and completion messages return through the UI event queue.
+Only one onboarding operation runs at a time.
+
+Before loading code, the installer explains partial reversibility and asks for
+confirmation. Uninstall removes acquired Lisp packages and newly loaded ASDF
+systems; definitions or side effects made in existing packages can remain until
+restart. It is not a sandbox or a general Lisp unloader. Existing source registry
+entries and preloaded packages are preserved. Failed loads clean up newly acquired
+packages/system registrations before rolling back the source registry effect.
+
+The existing MCP command interface exposes `yeditor-install-package` and
+`yeditor-uninstall-package`. Programmatic `install-package`/`uninstall-package`
+remain synchronous; their UI commands dispatch work to the worker.
+
+Run `sbcl --script scripts/run-yeditor-package-tests.lisp` for local Quicklisp
+fixtures, 100 install/remove cycles with journal assertions, palette restoration,
+repeat installation, failure cleanup, cancellation and worker dispatch checks.

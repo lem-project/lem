@@ -9,4 +9,5 @@
   :depends-on ("lem/core" "lem/extensions" "lem-tree-sitter" "lem-fake-interface" "yeditor-components" "yeditor-context-durability" "usocket" "dexador" "flexi-streams" "rove")
   :components ((:file "components-tests")
                (:file "context-bridge-tests")
-               (:file "lsp-tests")))
+               (:file "lsp-tests")
+               (:file "packages-tests")))

@@ -1030,3 +1030,48 @@
         (ok (eq source yeditor-components/palette:*palette-themes-function*))
         (ok (eq aliases yeditor-components/palette:*palette-theme-aliases*)))
       (setf (config :color-theme) saved))))
+
+(defun rendered-modeline ()
+  ;; The renderer has no exported test API; exercise the real conversion path.
+  (with-output-to-string (out)
+    (lem-core::modeline-apply
+     (current-window)
+     (lambda (text attribute alignment)
+       (declare (ignore attribute alignment))
+       (princ text out))
+     'modeline)))
+
+(deftest test-mode-line-segments-and-tabs
+  (lem-fake-interface:with-fake-interface ()
+    (let ((before (variable-value 'modeline-format :global))
+          (actions yeditor-components/palette:*palette-actions*)
+          (tabs (variable-value 'lem/frame-multiplexer:frame-multiplexer :global))
+          (headers (copy-list (frame-header-windows (current-frame))))
+          (size (list (window-width (current-window)) (window-height (current-window)))))
+      (dotimes (i 100)
+        (install-component 'le-mode-line-minimal)
+        (unwind-protect
+             (let ((empty (rendered-modeline)))
+               (loop :for segment :in '(le-mode-line-buffer le-mode-line-mode le-mode-line-git
+                                       le-mode-line-diagnostics le-mode-line-position)
+                     :for label :in '("Mode-line: buffer" "Mode-line: mode" "Mode-line: Git changes"
+                                      "Mode-line: diagnostics" "Mode-line: position")
+                     :do (call-with-theme-preview (lambda (preview) (declare (ignore preview)) label))
+                         (ok (getf (gethash segment *component-registry*) :state))
+                         (when (eq segment 'le-mode-line-buffer)
+                           (ok (search (buffer-name (window-buffer (current-window))) (rendered-modeline))))
+                         ;; Cancel must never invoke an action.
+                         (call-with-theme-preview (lambda (preview) (funcall preview label) nil))
+                         (ok (getf (gethash segment *component-registry*) :state))
+                         (call-with-theme-preview (lambda (preview) (declare (ignore preview)) label))
+                         (ok (null (getf (gethash segment *component-registry*) :state)))
+                         (ok (equal empty (rendered-modeline))))
+               (call-with-theme-preview (lambda (preview) (declare (ignore preview)) "Tabs: toggle"))
+               (ok (variable-value 'lem/frame-multiplexer:frame-multiplexer :global))
+               (call-with-theme-preview (lambda (preview) (declare (ignore preview)) "Tabs: toggle"))
+               (ok (eq tabs (variable-value 'lem/frame-multiplexer:frame-multiplexer :global))))
+          (uninstall-component 'le-mode-line-minimal))
+        (ok (eq actions yeditor-components/palette:*palette-actions*))
+        (ok (equal before (variable-value 'modeline-format :global)))
+        (ok (equal headers (frame-header-windows (current-frame))))
+        (ok (equal size (list (window-width (current-window)) (window-height (current-window)))))))))

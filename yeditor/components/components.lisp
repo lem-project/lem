@@ -9,6 +9,9 @@
   (:import-from :yeditor-components/zero-chrome #:le-zero-chrome)
   (:import-from :yeditor-components/palette #:le-palette)
   (:import-from :yeditor-components/dark-theme #:le-dark-theme)
+  (:import-from :yeditor-components/mode-line
+                #:le-mode-line-minimal #:le-mode-line-buffer #:le-mode-line-mode
+                #:le-mode-line-git #:le-mode-line-diagnostics #:le-mode-line-position #:le-tabs)
   (:import-from :yeditor-components/navigation #:le-navigation)
   (:import-from :yeditor-components/hud #:le-hud)
   (:import-from :yeditor-components/lsp #:le-lsp)
@@ -28,6 +31,8 @@
   (:import-from :yeditor-components/themes-ergonomic #:le-themes-ergonomic #:le-theme-extended)
   (:export :le-navigation :enable-ephemeral-ui :disable-ephemeral-ui :le-zero-chrome :le-palette :le-hud
            :le-themes-ergonomic :le-theme-extended :le-dark-theme :le-lsp
+           :le-mode-line-minimal :le-mode-line-buffer :le-mode-line-mode
+           :le-mode-line-git :le-mode-line-diagnostics :le-mode-line-position :le-tabs
            :le-inherited-entry-points-off :le-git :le-project :le-tree :le-sidebar :le-terminal :le-workspace-layout
            :le-director-cockpit :yeditor-director-intent :yeditor-director-approve :yeditor-director-rollback
            :le-treesitter-packs :le-context-bridge :le-lang-python
@@ -43,6 +48,9 @@
   (enable-python-support)
   (install-component (quote le-context-bridge))
   (install-component (quote le-zero-chrome))
+  (install-component 'le-mode-line-minimal)
+  (install-component 'le-mode-line-buffer)
+  (install-component 'le-mode-line-position)
   (install-component (quote le-inherited-entry-points-off))
   (dolist (feature (list (quote le-git) (quote le-project) (quote le-tree)
                          (quote le-sidebar) (quote le-terminal)
@@ -68,4 +76,8 @@
                           (quote le-tree) (quote le-project) (quote le-git)))
     (uninstall-component feature))
   (uninstall-component (quote le-inherited-entry-points-off))
+  (uninstall-component 'le-tabs)
+  (dolist (segment '(le-mode-line-position le-mode-line-diagnostics le-mode-line-git
+                     le-mode-line-mode le-mode-line-buffer le-mode-line-minimal))
+    (uninstall-component segment))
   (uninstall-component (quote le-zero-chrome)))

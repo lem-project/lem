@@ -91,3 +91,20 @@ current upstream layout — language modes live under `src/ext/` and
 ## Layer dependency rule
 
 each layer uses only lower layers; no L5/L4/L3 component touches L0 directly - always via L1/L2.
+
+## Dark/light theme component
+
+`yeditor-components:le-dark-theme` mounts the warm Gruvbox Soft dark theme and
+adds **Theme: dark** / **Theme: light** to the theme palette, alongside the
+previous theme source. The light variant ports Lem's `emacs-light` with warm
+paper/ink colors instead of pure black/white. The standard ephemeral UI installs
+this component automatically after the ergonomic pack.
+
+Focus a palette item to preview it; accept to save its canonical Lem theme name,
+or cancel to restore the previous theme. Removing `le-dark-theme` restores the
+mount-time theme, palette source and aliases through transaction effects; remove
+it before the underlying ergonomic pack (LIFO). The existing palette command
+`yeditor-palette-theme` is also available through the editor's MCP command tool.
+
+The component suite checks 200 dark/light install/preview/accept/uninstall cycles
+against color and style snapshots, plus restoration of the palette variables.

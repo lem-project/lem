@@ -14,6 +14,7 @@
                (:file "palette")
                (:file "theme-policy")
                (:file "themes-ergonomic")
+               (:file "dark-theme")
                (:file "hud")
                (:file "lsp")
                (:file "packages")

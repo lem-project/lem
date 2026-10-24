@@ -112,7 +112,10 @@
   (list (current-theme)
         (mapcar (lambda (name)
                   (let ((a (ensure-attribute name nil)))
-                    (list (attribute-foreground a) (attribute-background a))))
+                    (list (attribute-foreground a) (attribute-background a)
+                          (attribute-bold a) (attribute-underline a)
+                          (attribute-reverse a) (attribute-italic a)
+                          (attribute-strikethrough a) (attribute-dim a))))
                 *snapshot-attributes*)))
 
 (deftest test-ergonomic-pack-passes-policy
@@ -989,3 +992,41 @@
                      (uiop:string-prefix-p (namestring home) (namestring (buffer-filename buffer))))
             (delete-buffer buffer)))
         (uiop:delete-directory-tree home :validate t :if-does-not-exist :ignore)))))
+
+(deftest test-dark-light-component
+  (lem-fake-interface:with-fake-interface ()
+    (load-theme "lem-default" nil)
+    (let ((before (attribute-snapshot))
+          (source yeditor-components/palette:*palette-themes-function*)
+          (aliases yeditor-components/palette:*palette-theme-aliases*)
+          (saved (config :color-theme)))
+      (dotimes (i 200)
+        (install-component 'yeditor-components::le-dark-theme)
+        (unwind-protect
+             (progn
+               (ok (equal (current-theme) "ergo-gruvbox-soft"))
+               (ok (equal (subseq (funcall yeditor-components/palette:*palette-themes-function*) 0 2)
+                          '("Theme: dark" "Theme: light")))
+               (call-with-theme-preview
+                (lambda (preview)
+                  (funcall preview "Theme: light")
+                  (ok (eq :light (get-color-theme-color
+                                  (find-color-theme (current-theme))
+                                  :display-background-mode)))
+                  nil))
+               (ok (equal (current-theme) "ergo-gruvbox-soft") "cancel restores dark")
+               (call-with-theme-preview (lambda (preview)
+                                          (funcall preview "Theme: light")
+                                          "Theme: light"))
+               (ok (equal (current-theme) "yeditor-light"))
+               (ok (equal (config :color-theme) "yeditor-light")
+                   "save canonical name, not palette label")
+               (call-with-theme-preview (lambda (preview)
+                                          (funcall preview "Theme: dark")
+                                          "Theme: dark"))
+               (ok (equal (current-theme) "ergo-gruvbox-soft")))
+          (uninstall-component 'yeditor-components::le-dark-theme))
+        (ok (equal (attribute-snapshot) before) "200 cycles restore faces")
+        (ok (eq source yeditor-components/palette:*palette-themes-function*))
+        (ok (eq aliases yeditor-components/palette:*palette-theme-aliases*)))
+      (setf (config :color-theme) saved))))

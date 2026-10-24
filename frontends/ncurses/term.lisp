@@ -4,6 +4,7 @@
            :update-foreground-color
            :update-background-color
            :background-color
+           :set-default-color
            :term-init
            :term-finalize
            :term-set-tty

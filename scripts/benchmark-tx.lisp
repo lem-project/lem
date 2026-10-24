@@ -1,0 +1,35 @@
+;;;; Copyright (c) 2026 Yuri Flores Albuquerque.
+;;;; SPDX-License-Identifier: FSL-1.1-MIT
+;;;; Licensed under the Functional Source License, Version 1.1 (see LICENSE-FSL).
+;;;; Competing commercial use is strictly prohibited.
+
+(load ".qlot/setup.lisp")
+
+(asdf:load-asd (merge-pathnames "yeditor/core/tx/yeditor-tx.asd" (uiop:getcwd)))
+(asdf:load-system :yeditor-tx)
+
+(defun run-batch (n)
+  (let ((*tx-pending* nil)
+        (*tx-committed* nil))
+    (let ((start (get-internal-run-time)))
+      (dotimes (i n)
+        (yeditor-tx:install-effect :test :noop (lambda () nil) :undo-thunk (lambda () nil)))
+      (let ((elapsed (/ (- (get-internal-run-time) start) internal-time-units-per-second)))
+        (* elapsed 1e6))))) ; total µs
+
+(defun report-bench-stats (values n)
+  (let ((per-commit (mapcar (lambda (v) (/ v n)) values)))
+    (let* ((sorted (sort (copy-list per-commit) #'<))
+           (len (length sorted))
+           (p50 (nth (floor (* 0.5 (1- len))) sorted))
+           (p95 (nth (floor (* 0.95 (1- len))) sorted))
+           (p99 (nth (floor (* 0.99 (1- len))) sorted)))
+      (format t "p50=~6,2F µs, p95=~6,2F µs, p99=~6,2F µs~%" p50 p95 p99))))
+
+(let ((iterations 10000))
+  (let (results)
+    (dotimes (rep 3)
+      (format t "Repetition ~a~%" (1+ rep))
+      (push (run-batch iterations) results))
+    (report-bench-stats (nreverse results) iterations))
+  (quit))

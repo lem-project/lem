@@ -19,11 +19,21 @@
   (:local-nicknames (:spinner :lem/loading-spinner))
   (:local-nicknames (:language-mode :lem/language-mode))
   (:export :*inhibit-highlight-diagnotics*
+           :buffer-diagnostic-list
            :get-buffer-from-text-document-identifier
            :spec-initialization-options
            :register-lsp-method
            :define-language-spec
-           :without-lsp-mode))
+           :without-lsp-mode
+           :*disable*
+           :not-found-program
+           :start-lsp-session
+           :stop-lsp-session
+           :lsp-session-alive-p
+           :lsp-session-pid
+           :lsp-session-key
+           :buffer-lsp-session
+           :detach-lsp-buffer))
 (in-package :lem-lsp-mode/lsp-mode)
 
 ;; FIXME:
@@ -230,19 +240,47 @@ Use this when lsp-mode has side effects that you want to avoid."
     (assert workspace-list)
     (setf (workspace-list-current-workspace workspace-list) workspace)))
 
-(defun find-workspace (language-id &key (errorp t))
+(defun find-workspace (language-id &key root-uri (errorp t))
   ;; A nil LANGUAGE-ID means the buffer's current major mode has no
   ;; registered language spec (e.g. a REPL mode whose parent had one).
   ;; That is not an error condition -- the buffer simply does not
   ;; participate in LSP.  Return nil silently regardless of ERRORP.
   (when language-id
     (if-let (workspace-list (gethash language-id *workspace-list-per-language-id*))
-      (workspace-list-current-workspace workspace-list)
+      (or (if root-uri
+              (find root-uri (workspace-list-workspaces workspace-list)
+                    :key #'workspace-root-uri :test #'equal)
+              (workspace-list-current-workspace workspace-list))
+          (when errorp (error "The ~A workspace for ~A is not found." language-id root-uri)))
       (when errorp
         (error "The ~A workspace is not found." language-id)))))
 
+(defun remove-workspace (workspace)
+  (when-let (workspace-list (gethash (workspace-language-id workspace)
+                                     *workspace-list-per-language-id*))
+    (let ((remaining (remove workspace (workspace-list-workspaces workspace-list))))
+      (if remaining
+          (setf (workspace-list-workspaces workspace-list) remaining
+                (workspace-list-current-workspace workspace-list) (first remaining))
+          (remhash (workspace-language-id workspace) *workspace-list-per-language-id*)))))
+
 (defun buffer-workspace (buffer &optional (errorp t))
-  (find-workspace (buffer-language-id buffer) :errorp errorp))
+  (let ((workspace (buffer-value buffer 'lsp-workspace))
+        (language (buffer-language-id buffer)))
+    (cond ((and workspace language
+                (equal language (workspace-language-id workspace))
+                (not (workspace-value workspace :stopped)))
+           workspace)
+          ((and language errorp) (error "No language server session for ~A." (buffer-name buffer))))))
+
+(defun buffer-lsp-session (buffer)
+  "Return BUFFER's attached workspace, or NIL, without searching the filesystem."
+  (buffer-workspace buffer nil))
+
+(defun lsp-session-key (buffer)
+  "Return the language and project root URI identifying BUFFER's LSP session."
+  (when-let (spec (buffer-language-spec buffer))
+    (list (spec-language-id spec) (compute-root-uri spec buffer))))
 
 (defun all-workspaces ()
   (loop :for workspace-list :being :each :hash-value :in *workspace-list-per-language-id*
@@ -355,11 +393,51 @@ Use this when lsp-mode has side effects that you want to avoid."
         (change-event (buffer-change-event-to-content-change-event point arg)))
     (text-document/did-change buffer (make-lsp-array change-event))))
 
+(defun buffer-hook-functions ()
+  '((kill-buffer-hook . text-document/did-close)
+    (after-save-hook . text-document/did-save)
+    (before-change-functions . handle-change-buffer)
+    (self-insert-after-hook . self-insert-hook)))
+
+(defun detach-lsp-buffer (workspace buffer)
+  "Detach BUFFER from WORKSPACE, removing its acquired hooks without stopping the server."
+  (let ((entry (assoc buffer (workspace-value workspace :buffers))))
+    (when entry
+      (destructuring-bind (buffer previous owned-hooks) entry
+        (when (and (not (deleted-buffer-p buffer))
+                   (eq (buffer-value buffer 'lsp-workspace) workspace))
+          (dolist (hook owned-hooks)
+            (remove-hook (variable-value (car hook) :buffer buffer) (cdr hook)))
+          (setf (buffer-value buffer 'lsp-workspace) previous)))
+      (setf (workspace-value workspace :buffers)
+            (remove entry (workspace-value workspace :buffers) :test #'eq)))))
+
+(defun attach-workspace (workspace buffer)
+  (let ((previous (buffer-value buffer 'lsp-workspace)))
+    (when (and previous (not (eq previous workspace)))
+      (detach-lsp-buffer previous buffer)))
+  (unless (assoc buffer (workspace-value workspace :buffers))
+    (push (list buffer (buffer-value buffer 'lsp-workspace)
+                (remove-if (lambda (entry)
+                             (member (cdr entry) (variable-value (car entry) :buffer buffer) :key #'car))
+                           (buffer-hook-functions)))
+          (workspace-value workspace :buffers)))
+  (setf (buffer-value buffer 'lsp-workspace) workspace))
+
 (defun add-buffer-hooks (buffer)
-  (add-hook (variable-value 'kill-buffer-hook :buffer buffer) 'text-document/did-close)
-  (add-hook (variable-value 'after-save-hook :buffer buffer) 'text-document/did-save)
-  (add-hook (variable-value 'before-change-functions :buffer buffer) 'handle-change-buffer)
-  (add-hook (variable-value 'self-insert-after-hook :buffer buffer) 'self-insert-hook))
+  (unless (deleted-buffer-p buffer)
+    (dolist (entry (buffer-hook-functions))
+      (add-hook (variable-value (car entry) :buffer buffer) (cdr entry)))))
+
+(defun initialize-buffer (workspace buffer continuation)
+  (when (and (not (deleted-buffer-p buffer))
+             (eq workspace (buffer-lsp-session buffer)))
+    (add-buffer-hooks buffer)
+    (when continuation (funcall continuation))))
+
+(defun detach-workspace (workspace)
+  (dolist (entry (workspace-value workspace :buffers))
+    (detach-lsp-buffer workspace (first entry))))
 
 (defun register-lsp-method (workspace method function)
   (jsonrpc:expose (lem-language-client/client:client-connection (workspace-client workspace))
@@ -378,65 +456,122 @@ Use this when lsp-mode has side effects that you want to avoid."
                        'window/log-message)
   (initialize workspace
               (lambda ()
-                (initialized workspace)
-                (funcall continuation workspace))))
+                (unless (workspace-value workspace :stopped)
+                  (initialized workspace)
+                  (funcall continuation workspace)))))
 
-(defun connect (client continuation)
+(defun connect (client continuation &key (active-p (constantly t)))
   (bt2:make-thread
    (lambda ()
      (loop :with condition := nil
            :repeat 20
+           :while (funcall active-p)
            :do (handler-case (with-yason-bindings ()
                                (lem-language-client/client:jsonrpc-connect client))
                  (:no-error (&rest values)
                    (declare (ignore values))
-                   (send-event continuation)
+                   (send-event (lambda () (when (funcall active-p) (funcall continuation))))
                    (return))
                  (error (c)
                    (setq condition c)
                    (sleep 0.5)))
-           :finally (send-event
-                     (lambda ()
-                       (editor-error
-                        "Could not establish a connection with the Language Server (condition: ~A)"
-                        condition)))))))
+           :finally
+              (when (funcall active-p)
+                (send-event
+                 (lambda ()
+                   (when (funcall active-p)
+                     (editor-error
+                      "Could not establish a connection with the Language Server (condition: ~A)"
+                      condition)))))))))
 
 (defgeneric initialized-workspace (mode workspace)
   (:method (mode workspace)))
 
 (defun connect-and-initialize (workspace buffer continuation)
   (let ((spinner (spinner:start-loading-spinner
-                  :modeline
-                  :loading-message "initializing"
-                  :buffer buffer)))
+                  :modeline :loading-message "initializing" :buffer buffer)))
+    (setf (workspace-value workspace :loading-spinner) spinner)
     (connect (workspace-client workspace)
              (lambda ()
                (initialize-workspace
                 workspace
                 (lambda (workspace)
-                  (add-workspace workspace)
-                  (set-trigger-characters workspace)
-                  (add-buffer-hooks buffer)
-                  (when continuation (funcall continuation))
-                  (let ((mode (ensure-mode-object
-                               (spec-mode
-                                (workspace-spec workspace)))))
-                    (initialized-workspace mode workspace))
-                  (spinner:stop-loading-spinner spinner)
-                  (redraw-display)))))))
+                  (unless (workspace-value workspace :stopped)
+                    (set-trigger-characters workspace)
+                    (setf (workspace-value workspace :initialized) t)
+                    (initialize-buffer workspace buffer continuation)
+                    (dolist (callback (reverse (workspace-value workspace :pending-callbacks)))
+                      (funcall callback))
+                    (setf (workspace-value workspace :pending-callbacks) nil)
+                    (let ((mode (ensure-mode-object (spec-mode (workspace-spec workspace)))))
+                      (initialized-workspace mode workspace))
+                    (spinner:stop-loading-spinner spinner)
+                    (setf (workspace-value workspace :loading-spinner) nil)
+                    (redraw-display)))))
+             :active-p (lambda () (not (workspace-value workspace :stopped))))))
+
+(defun start-lsp-session (buffer &key then)
+  "Ensure a language server session for BUFFER and return its workspace.
+Reuses the registered workspace for the buffer's language and project, or starts the
+server and connects asynchronously. Pending workspaces are registered immediately
+so concurrent starts reuse them. The second value is true only for a newly created
+workspace. Signals NOT-FOUND-PROGRAM when the server is missing."
+  (let ((spec (buffer-language-spec buffer))
+        (key (lsp-session-key buffer)))
+    (unless spec
+      (editor-error "No language server is configured for this buffer"))
+    (let ((old (find-workspace (spec-language-id spec) :root-uri (second key) :errorp nil)))
+      (when (and old (not (lsp-session-alive-p old))) (stop-lsp-session old)))
+    (if-let ((workspace (find-workspace (spec-language-id spec) :root-uri (second key) :errorp nil)))
+      (progn
+        (attach-workspace workspace buffer)
+        (if (workspace-value workspace :initialized)
+            (initialize-buffer workspace buffer then)
+            (push (lambda () (initialize-buffer workspace buffer then))
+                  (workspace-value workspace :pending-callbacks)))
+        (values workspace nil))
+      (let ((workspace (make-workspace :spec spec
+                                       :client (run-server spec)
+                                       :buffer buffer)))
+        (add-workspace workspace)
+        (attach-workspace workspace buffer)
+        (handler-case
+            (connect-and-initialize workspace buffer then)
+          (error (condition) (stop-lsp-session workspace) (error condition)))
+        (values workspace t)))))
+
+(defun stop-lsp-session (workspace)
+  "Stop the server process of WORKSPACE and unregister it."
+  (setf (workspace-value workspace :stopped) t
+        (workspace-value workspace :pending-callbacks) nil)
+  (when-let (spinner (workspace-value workspace :loading-spinner))
+    (spinner:stop-loading-spinner spinner)
+    (setf (workspace-value workspace :loading-spinner) nil))
+  (ignore-errors (dispose-workspace workspace))
+  (detach-workspace workspace)
+  (remove-workspace workspace)
+  t)
+
+(defun lsp-session-alive-p (workspace)
+  "True while the server process of WORKSPACE is running."
+  (let ((client (workspace-client workspace)))
+    (typecase client
+      (client:stdio-client (client:stdio-client-alive-p client))
+      (client:tcp-client
+       (and (not (workspace-value workspace :stopped))
+            (or (null (client:tcp-client-process client))
+                (lem-process:process-alive-p (client:tcp-client-process client)))))
+      (otherwise nil))))
+
+(defun lsp-session-pid (workspace)
+  "Process id of the server of WORKSPACE (stdio servers), or nil."
+  (let ((client (workspace-client workspace)))
+    (when (typep client 'client:stdio-client)
+      (client:stdio-client-pid client))))
 
 (defun ensure-lsp-buffer (buffer &key ((:then continuation)))
-  (let ((spec (buffer-language-spec buffer)))
-    (if-let ((workspace (find-workspace (spec-language-id spec) :errorp nil)))
-      (progn
-        (add-buffer-hooks buffer)
-        (when continuation (funcall continuation)))
-      (let ((client (run-server spec)))
-        (connect-and-initialize (make-workspace :spec spec
-                                                :client client
-                                                :buffer buffer)
-                                buffer
-                                continuation)))))
+  (start-lsp-session buffer :then continuation)
+  (values))
 
 (defun check-connection ()
   (assert (buffer-language-spec (current-buffer))))
@@ -723,6 +858,23 @@ Use this when lsp-mode has side effects that you want to avoid."
 
 (defun buffer-diagnostics (buffer)
   (mapcar #'overlay-diagnostic (buffer-diagnostic-overlays buffer)))
+
+(defun buffer-diagnostic-list (buffer)
+  "The diagnostics shown in BUFFER, sorted by line, as plists
+:line :column :severity (:error, :warning, :information or :hint) :message."
+  (sort (mapcar (lambda (overlay)
+                  (let ((diagnostic (overlay-diagnostic overlay)))
+                    (list :line (language-mode::xref-position-line-number (diagnostic-position diagnostic))
+                          :column (language-mode::xref-position-charpos (diagnostic-position diagnostic))
+                          :severity (case (overlay-attribute overlay)
+                                      (diagnostic-warning-attribute :warning)
+                                      (diagnostic-information-attribute :information)
+                                      (diagnostic-hint-attribute :hint)
+                                      (t :error))
+                          :message (diagnostic-message diagnostic))))
+                (buffer-diagnostic-overlays buffer))
+        #'<
+        :key (lambda (diagnostic) (getf diagnostic :line))))
 
 (defun reset-buffer-diagnostic (buffer)
   (clear-diagnostic-overlays buffer)

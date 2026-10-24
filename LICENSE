@@ -1,0 +1,42 @@
+Yeditor — Licensing Overview
+Copyright (c) 2026 Yuri Flores Albuquerque.
+
+Yeditor is distributed under an open-core model. Each part of this repository is
+governed by exactly one of the licenses below, determined by its location and by
+the SPDX-License-Identifier in its header. If the two ever disagree, the header of
+the individual file governs that file.
+
++-------------------------------------------+------------------------+---------------------------+
+| Part                                      | License                | Full text                 |
++-------------------------------------------+------------------------+---------------------------+
+| Yeditor Enterprise — layers L4-L5         | Proprietary,           | LICENSE-ENTERPRISE        |
+|   yeditor/enterprise/                     | All Rights Reserved    |                           |
+|   (journal, agent host, transactional     | (LicenseRef-Yeditor-   |                           |
+|   branching, Eval-to-Journal, forge)      |  Enterprise)           |                           |
++-------------------------------------------+------------------------+---------------------------+
+| Yeditor Core — layers L1-L3               | FSL-1.1-MIT            | LICENSE-FSL               |
+|   every other file under yeditor/         | (Functional Source     |                           |
+|   (core/, effects/, components/),         |  License 1.1, MIT      |                           |
+|   yeditor.asd, and Yeditor tooling in     |  Future License)       |                           |
+|   scripts/ carrying the FSL header        |                        |                           |
++-------------------------------------------+------------------------+---------------------------+
+| Lem-derived substrate — layer L0          | MIT                    | THIRD_PARTY_NOTICES.md    |
+|   src/, frontends/, extensions/,          |                        |                           |
+|   contrib/ and other inherited files      |                        |                           |
++-------------------------------------------+------------------------+---------------------------+
+
+In short:
+
+- Yeditor Core is source-available. You may read, study, audit, build, modify and
+  use it, including to write components, for any purpose other than a Competing
+  Use as defined in LICENSE-FSL. Each version converts to the MIT license two
+  years after it is made available.
+- Yeditor Enterprise may only be used under a written commercial license from the
+  copyright holder.
+- Code inherited from Lem remains under its original MIT license.
+- Third-party libraries keep their own licenses; see THIRD_PARTY_NOTICES.md.
+
+"Yeditor" is a trademark of Yuri Flores Albuquerque; none of these licenses grants
+rights to use it except to identify the origin of the software.
+
+Commercial, enterprise and partnership licensing: contact Yuri Flores Albuquerque.

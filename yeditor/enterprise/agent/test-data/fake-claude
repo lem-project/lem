@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+# Copyright (c) 2026 Yuri Flores Albuquerque. All Rights Reserved.
+# SPDX-License-Identifier: LicenseRef-Yeditor-Enterprise
+# Proprietary and Confidential — Yeditor Agentic & Forge Suite (see LICENSE-ENTERPRISE).
+#
+# Stand-in for the Claude Code CLI in tests: --version, and -p PROMPT with JSON output.
+import json, sys
+args = sys.argv[1:]
+if args == ["--version"]:
+    print("9.9.9 (Claude Code, fake)")
+    sys.exit(0)
+prompt = args[args.index("-p") + 1]
+config = json.load(open(args[args.index("--mcp-config") + 1]))
+mcp = "ok" if "/mcp" in config["mcpServers"]["yeditor"]["url"] else "missing"
+if "FAIL" in prompt:
+    print(json.dumps({"type": "result", "is_error": True, "result": "boom"}))
+    sys.exit(1)
+print(json.dumps({"type": "result", "is_error": False, "result": "FAKE: %s mcp=%s turns=%s"
+                  % (prompt, mcp, args[args.index("--max-turns") + 1])}))

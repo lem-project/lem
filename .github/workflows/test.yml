@@ -8,11 +8,8 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: lem
+  IMAGE_NAME: yeditor
   IMAGE_TAGS: latest ${{ github.sha }}
-  IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
-  REGISTRY_USER: ${{ github.actor }}
-  REGISTRY_PASSWORD: ${{ github.token }}
 
 jobs:
   test:
@@ -20,6 +17,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Lint - Check for internal symbol usage
         run: |
@@ -29,11 +28,42 @@ jobs:
             exit 1
           fi
 
+      - name: IP compliance - headers and L0 boundary
+        run: bash scripts/check-license-headers.sh
+
+      - name: Benchmark gate failure-contract tests
+        run: python3 scripts/test-bench-gate.py
+
       - name: Build test image
         run: docker build -f docker/Dockerfile.test -t lem-tests .
 
+      - name: IP compliance - dependency licenses
+        run: docker run --rm --entrypoint bash lem-tests -c "sbcl --script scripts/check-dependency-licenses.lisp"
+
       - name: Run tests
         run: docker run --rm lem-tests
+
+      - name: Run Yeditor tests
+        run: docker run --rm --entrypoint bash lem-tests -c "sbcl --script scripts/run-yeditor-all-tests.lisp"
+
+      - name: Agent IDE smoke tests
+        run: docker run --rm --entrypoint bash lem-tests -c "sbcl --script scripts/run-yeditor-agent-smoke-tests.lisp"
+
+      - name: T4 buffer installation budget
+        run: docker run --rm --entrypoint bash lem-tests -c "sbcl --script scripts/benchmark-t4.lisp"
+
+      - name: Perceived-speed benchmarks (T10)
+        run: |
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then base="HEAD~1"; fi
+          bash scripts/bench-gate.sh "$base" bench-out
+
+      - name: Upload benchmark report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-report
+          path: bench-out/
 
   push_image:
     name: Push Image to GHCR
@@ -45,6 +75,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
+      # GHCR requires a lowercase registry path; the repository owner may
+      # contain uppercase ("Yuri-Albuquerque"). Compute it in a shell step.
+      - name: Compute lowercase image registry
+        run: echo "IMAGE_REGISTRY=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+
       # Build image using Buildah action
       - name: Build Image
         uses: redhat-actions/buildah-build@v2
@@ -62,6 +98,6 @@ jobs:
           image: ${{ steps.build_image.outputs.image }}
           tags: ${{ steps.build_image.outputs.tags }}
           registry: ${{ env.IMAGE_REGISTRY }}
-          username: ${{ env.REGISTRY_USER }}
-          password: ${{ env.REGISTRY_PASSWORD }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
           extra-args: --disable-content-trust

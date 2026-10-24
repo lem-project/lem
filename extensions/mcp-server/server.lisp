@@ -24,7 +24,16 @@
    (created-at :initform (get-universal-time)
                :reader session-created-at)
    (last-activity :initform (get-universal-time)
-                  :accessor session-last-activity)))
+                  :accessor session-last-activity)
+   ;; server -> client messages waiting to be written to the SSE stream
+   (events :initform nil
+           :accessor session-events)
+   (event-lock :initform (bt:make-lock "mcp-session-events")
+               :reader session-event-lock)
+   (event-cv :initform (bt:make-condition-variable)
+             :reader session-event-cv)
+   (closed-p :initform nil
+             :accessor session-closed-p)))
 
 (defun generate-session-id ()
   "Generate a unique session ID."
@@ -158,12 +167,63 @@
         (setf (hunchentoot:return-code*) hunchentoot:+http-bad-request+)
         (encode-error-response nil +parse-error+ (format nil "Parse error: ~A" e))))))
 
+(defun encode-notification (method params)
+  "Encode a JSON-RPC notification (no id)."
+  (with-output-to-string (s)
+    (yason:encode (alist-to-hash-table `(("jsonrpc" . "2.0")
+                                         ("method" . ,method)
+                                         ("params" . ,params)))
+                  s)))
+
+(defun publish-event (server method params)
+  "Send the JSON-RPC notification METHOD/PARAMS (an alist) to every session's SSE
+stream. Sessions without an open stream receive it when they connect."
+  (let ((message (encode-notification method params))
+        (sessions (bt:with-lock-held ((mcp-server-lock server))
+                    (loop :for session :being :the :hash-values :of (mcp-server-sessions server)
+                          :collect session))))
+    (dolist (session sessions)
+      (bt:with-lock-held ((session-event-lock session))
+        (setf (session-events session) (append (session-events session) (list message)))
+        (bt:condition-notify (session-event-cv session))))
+    (length sessions)))
+
+(defun close-session-stream (session)
+  (bt:with-lock-held ((session-event-lock session))
+    (setf (session-closed-p session) t)
+    (bt:condition-notify (session-event-cv session))))
+
+(defun next-events (session timeout)
+  "Wait up to TIMEOUT seconds for messages; return them (possibly none)."
+  (bt:with-lock-held ((session-event-lock session))
+    (when (and (null (session-events session)) (not (session-closed-p session)))
+      (bt:condition-wait (session-event-cv session) (session-event-lock session) :timeout timeout))
+    (shiftf (session-events session) nil)))
+
 (defun handle-get-request (server)
-  "Handle GET request (SSE stream for server -> client)."
-  ;; For now, we don't support server-initiated messages
-  ;; Return 405 to indicate SSE is not available at this endpoint
-  (setf (hunchentoot:return-code*) hunchentoot:+http-method-not-allowed+)
-  "")
+  "Handle GET request: an SSE stream of server -> client JSON-RPC messages for the
+session named by the Mcp-Session-Id header (MCP Streamable HTTP transport)."
+  (let* ((session-id (hunchentoot:header-in* :mcp-session-id))
+         (session (and session-id (get-session server session-id))))
+    (unless session
+      (setf (hunchentoot:return-code*) hunchentoot:+http-bad-request+)
+      (return-from handle-get-request ""))
+    (setf (hunchentoot:content-type*) "text/event-stream"
+          (hunchentoot:header-out :cache-control) "no-cache"
+          (hunchentoot:header-out :access-control-allow-origin) "*")
+    (let ((out (flexi-streams:make-flexi-stream (hunchentoot:send-headers) :external-format :utf-8)))
+      (handler-case
+          (progn
+            (format out ": connected~%~%")
+            (finish-output out)
+            (loop :until (session-closed-p session)
+                  :do (let ((events (next-events session 15)))
+                        (if events
+                            (dolist (event events) (format out "data: ~A~%~%" event))
+                            (format out ": keepalive~%~%"))
+                        (finish-output out))))
+        (error () nil)))
+    nil))
 
 (defvar *lifecycle-methods* '("initialize" "notifications/initialized" "shutdown" "exit" "ping"
                                "notifications/cancelled" "notifications/progress")
@@ -173,12 +233,20 @@
   "Return T if METHOD is a lifecycle method that doesn't need main thread."
   (member method *lifecycle-methods* :test #'string=))
 
+(defun thread-safe-call-p (method params)
+  "True for methods that need not run on Lem's main thread: listing tools (it only
+reads the tool registry) and tools/call of a tool registered as thread-safe."
+  (or (string= method "tools/list")
+      (and (string= method "tools/call")
+           (let ((tool (get-tool (cdr (assoc "name" params :test #'string=)))))
+             (and tool (tool-thread-safe-p tool))))))
+
 (defun handle-method (server method params id session)
   "Handle a JSON-RPC method call with SERVER and SESSION passed explicitly."
   (let ((handler (gethash method (mcp-server-method-handlers server))))
     (if handler
         (handler-case
-            (let ((result (if (lifecycle-method-p method)
+            (let ((result (if (or (lifecycle-method-p method) (thread-safe-call-p method params))
                               ;; Lifecycle methods run directly
                               (call-mcp-method handler params :server server :session session)
                               ;; Other methods run in Lem's main thread
@@ -263,6 +331,8 @@
 (defun stop-mcp-server (server)
   "Stop the MCP HTTP server."
   (when server
+    (maphash (lambda (id session) (declare (ignore id)) (close-session-stream session))
+             (mcp-server-sessions server))
     (when (mcp-server-acceptor server)
       (ignore-errors
         (hunchentoot:stop (mcp-server-acceptor server)))

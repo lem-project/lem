@@ -3,6 +3,16 @@ name: Nightly Builds
 on:
   schedule:
     - cron: '0 0 * * *'
+  pull_request:
+    paths:
+      - '.github/workflows/nightly-builds.yml'
+      - 'docker/Dockerfile-AppImage'
+      - 'docker/make_appdir.sh'
+      - 'scripts/macos-deploy.bash'
+      - 'scripts/macos-sbcl.bash'
+      - 'scripts/build-terminal.lisp'
+      - 'extensions/terminal/terminal.c'
+      - 'tests/terminal/**'
   workflow_dispatch:
     inputs:
       linux:
@@ -18,10 +28,15 @@ on:
         type: boolean
         default: false
 
-permissions:
-  contents: write
+      publish:
+        description: 'Publish artifacts (main only; scheduled builds publish automatically)'
+        type: boolean
+        default: false
 
-concurrency: nightly-${{ github.workflow }}
+permissions:
+  contents: read
+
+concurrency: nightly-${{ github.event_name }}-${{ github.ref }}
 
 env:
   NIGHTLY_TAG: nightly-latest
@@ -29,8 +44,8 @@ env:
 jobs:
   linux:
     name: Nightly Build (Linux)
-    if: github.event_name == 'schedule' || inputs.linux == true
-    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'pull_request' || inputs.linux == true
+    runs-on: ubuntu-24.04
     outputs:
       built: ${{ steps.flag.outputs.built }}
     steps:
@@ -60,12 +75,25 @@ jobs:
         if: steps.diff.outputs.skip != 'true'
         uses: docker/setup-buildx-action@v3
 
+      - name: Check libvterm attribute compatibility (Ubuntu 22.04)
+        if: steps.diff.outputs.skip != 'true'
+        run: |
+          docker run --rm -v "$PWD:/src:ro" ubuntu:22.04 sh -ec '
+            apt-get update -qq
+            apt-get install -y -qq gcc libvterm-dev
+            cc /src/tests/terminal/attributes.c -lvterm -lutil -o /tmp/attributes
+            /tmp/attributes'
+
       - name: Build AppImage
         if: steps.diff.outputs.skip != 'true'
         run: |
           make AppImage
           mkdir -p dist
           cp artifacts/Lem-x86_64.AppImage dist/Lem-x86_64.AppImage
+
+      - name: Smoke-test AppImage
+        if: steps.diff.outputs.skip != 'true'
+        run: APPIMAGE_EXTRACT_AND_RUN=1 dist/Lem-x86_64.AppImage --help
 
       - name: Upload artifact (Linux)
         if: steps.diff.outputs.skip != 'true'
@@ -77,12 +105,13 @@ jobs:
 
       - name: Flag built
         id: flag
+        if: steps.diff.outputs.skip != 'true'
         run: echo "built=true" >> "$GITHUB_OUTPUT"
 
   macos:
     name: Nightly Build (macOS)
-    if: github.event_name == 'schedule' || inputs.mac == true
-    runs-on: macos-latest
+    if: github.event_name == 'schedule' || github.event_name == 'pull_request' || inputs.mac == true
+    runs-on: macos-15
     outputs:
       built: ${{ steps.flag.outputs.built }}
     steps:
@@ -111,17 +140,31 @@ jobs:
       - name: Set up Common Lisp environment
         if: steps.diff.outputs.skip != 'true'
         run: |
-          brew install sbcl tree-sitter libvterm
+          brew install sbcl tree-sitter libvterm openssl@3
           curl -O https://beta.quicklisp.org/quicklisp.lisp
           sbcl --non-interactive --load quicklisp.lisp --eval "(quicklisp-quickstart:install)"
           curl -L https://qlot.tech/installer | sh
           echo "$HOME/.qlot/bin" >> $GITHUB_PATH
+
+      - name: Check libvterm attribute compatibility (macOS)
+        if: steps.diff.outputs.skip != 'true'
+        run: |
+          prefix="$(brew --prefix libvterm)"
+          cc tests/terminal/attributes.c -I"$prefix/include" -L"$prefix/lib" -lvterm -o "$RUNNER_TEMP/attributes"
+          "$RUNNER_TEMP/attributes"
+
+      - name: Check macOS SBCL wrapper
+        if: steps.diff.outputs.skip != 'true'
+        run: |
+          prefix="$(brew --prefix sbcl)"
+          SBCL_HOME="$prefix/lib/sbcl" LEM_REAL_SBCL="$prefix/libexec/bin/sbcl" bash tests/terminal/test-macos-sbcl.sh
 
       - name: Build Lem executable
         if: steps.diff.outputs.skip != 'true'
         run: |
           scripts/macos-deploy.bash
           test -f lem-macos.zip
+          bin/Lem.app/Contents/MacOS/Lem --help
 
       - name: Upload artifact (macOS)
         if: steps.diff.outputs.skip != 'true'
@@ -133,14 +176,21 @@ jobs:
 
       - name: Flag built
         id: flag
+        if: steps.diff.outputs.skip != 'true'
         run: echo "built=true" >> "$GITHUB_OUTPUT"
 
   publish:
     name: Publish unified Nightly pre-release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [linux, macos]
-    if: |
-      needs.linux.result != 'cancelled' || needs.macos.result != 'cancelled'
+    permissions:
+      contents: write
+    if: >-
+      always() && !cancelled() && github.ref == 'refs/heads/main' &&
+      (github.event_name == 'schedule' || inputs.publish == true) &&
+      (needs.linux.result == 'success' || needs.linux.result == 'skipped') &&
+      (needs.macos.result == 'success' || needs.macos.result == 'skipped') &&
+      (needs.linux.outputs.built == 'true' || needs.macos.outputs.built == 'true')
     steps:
       - name: Checkout
         uses: actions/checkout@v4

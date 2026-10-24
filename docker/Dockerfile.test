@@ -3,6 +3,7 @@ FROM fukamachi/qlot:latest
 USER root
 RUN apt-get update && apt-get install -y \
     build-essential \
+    procps \
     libssl-dev \
     git \
     nodejs \
@@ -45,6 +46,12 @@ RUN git clone --depth 1 https://github.com/ikatyang/tree-sitter-yaml.git && \
     c++ -c -fPIC -I src src/scanner.cc -o scanner.o && \
     c++ -shared -o /usr/local/lib/libtree-sitter-yaml.so parser.o scanner.o
 
+# Python grammar for Yeditor's tree-sitter pack tests (le-treesitter-packs).
+# The source tree is kept in /tmp/tree-sitter-python for the grammar-compile test.
+RUN git clone --depth 1 https://github.com/tree-sitter/tree-sitter-python.git && \
+    cd tree-sitter-python && \
+    cc -shared -fPIC -o /usr/local/lib/libtree-sitter-python.so -I src src/parser.c src/scanner.c
+
 RUN ldconfig
 
 WORKDIR /app
@@ -54,4 +61,4 @@ COPY . .
 RUN qlot install
 
 # Run tests using qlot exec (fukamachi/qlot image uses qlot as entrypoint)
-CMD ["exec", "bash", "-c", ".qlot/bin/rove lem-tests.asd && .qlot/bin/rove extensions/vi-mode/lem-vi-mode.asd"]
+CMD ["exec", "bash", "-c", ".qlot/bin/rove lem-tests.asd && .qlot/bin/rove extensions/vi-mode/lem-vi-mode.asd && sbcl --noinform --non-interactive --load .qlot/setup.lisp --eval '(asdf:test-system \"yeditor-prototype-tx/lem-tests\")' --eval '(asdf:test-system \"yeditor-prototype-sdk/rove-tests\")'"]

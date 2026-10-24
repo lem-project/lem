@@ -1,128 +1,104 @@
-![](https://raw.githubusercontent.com/Shinmera/lem-icon/gh-pages/icon-blue.svg)
-# Lem: Editor Modules
+[English](README.md) · Português
 
-![Build Status](https://github.com/lem-project/lem/workflows/CI/badge.svg)
-[![Backers on Open Collective](https://opencollective.com/lem/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/lem/sponsors/badge.svg)](#sponsors)
-[![GitHub Sponsors](https://img.shields.io/badge/-Sponsor-fafbfc?logo=GitHub-Sponsors)](https://github.com/sponsors/cxxxr)
-[![gitcgr](https://gitcgr.com/badge/lem-project/lem.svg)](https://gitcgr.com/lem-project/lem)
+# Yeditor
 
+[![CI](https://github.com/Yuri-Albuquerque/yeditor/actions/workflows/test.yml/badge.svg)](https://github.com/Yuri-Albuquerque/yeditor/actions/workflows/test.yml)
 
+Yeditor is a **spatiotemporally composable, agentic code editor** built in Common Lisp on top of [Lem](https://github.com/lem-project/lem) (MIT).
 
-After installing lem, you can start developing and extend the editor while it runs.
+Yeditor is **open core**: the transactional engine and SDK are source-available under FSL-1.1-MIT, and the agentic suite (agent host, transactional branching, Eval-to-Journal, forge) is commercial. See [License & Commercial Use](#license--commercial-use).
+
+## Why Yeditor
+
+### Easy as VSCode
+
+- Dashboard; Command Palette fuzzy (Ctrl-Shift-P, unified with M-x); settings in `.yeditor.lisp` with auto-reload (HMR); LSP auto-config per language; clean UI (zero chrome)
+
+### Productive as Emacs
+
+- Emacs-style keybindings; macros; transient menus; integrated REPL; the whole editor is a REPL; everything scriptable in Common Lisp
+
+### Easy Ollama/Claude integration
+
+- `le-ollama` (auto-detect server at 127.0.0.1:11434; model pull inside the editor; inline chat; explain/rewrite/document);
+- `le-claude-bridge`;
+- **MCP server reused from Lem** (`claude mcp add --transport http lem http://localhost:7890/mcp`)
+
+## The core idea: reversible effects and reactive coeffects
+
+Every editor mutation is a **transaction** carrying its inverse (captured at install time). Component context changes are classified against declared **coeffects** (buffer-mode, project-type…) governing activation. The paradigm follows "A Programming Paradigm for Spatiotemporal Composability" (Shi/Zhang/Cui, 2026, arXiv:2608.25512).
+
+## Status
+
+### What works today (inherited from Lem)
+
+- ncurses/webview/SDL2 frontends, LSP, tree-sitter, client-server, MCP server, Copilot mode, +180 themes (SDL2), 12k commits upstream heritage.
+
+### What we're building (Phase 1)
+
+- The transactional core — `yeditor-tx` (reversible-effect log, undo groups, rollback, durability), `yeditor-context` (unified effect/coeffect context), `yeditor-sdk` (define-component DSL), standard inverses for 15 effect kinds.
+
+## What Yeditor is NOT
+
+- NOT a visual VSCode clone — keyboard-first with VSCode-style onboarding
+- DOES NOT run ELisp packages (different language; best-effort compatibility layer is future work)
+- NOT a general plugin framework for arbitrary apps — an editor
+- NOT OSI open source — Core is source-available (FSL-1.1-MIT), Enterprise is commercial
 
 ## Install
 
-### nightly build
+Yeditor tracks upstream Lem; installation follows the same paths as Lem. See the Lem upstream documentation (https://lem-project.github.io/) and the nightly builds at https://github.com/lem-project/lem/releases/tag/nightly-latest.
 
-Tested on Ubuntu 24.04 and macOS(apple silicon).
+## Roadmap
 
-https://github.com/lem-project/lem/releases/tag/nightly-latest
+- Phase 0 — Fork + CI green on first build (Oct 2026)
+- Phase 1 — Transactional core M1-M5, T1-T10 (Nov 2026 – Mar 2027)
+- Phase 2 — Component ecosystem, T11-T15 (Jun 2027)
+- Phase 3 — AI + forge (T16-T19, Sep 2027)
+- Phase 4 — Perceived speed + polish (Nov 2027)
 
-### Nix
+## License & Commercial Use
 
-    $ nix profile add github:lem-project/lem#
-    $ nix profile add github:lem-project/lem#lem-ncurses
-    $ nix profile add github:lem-project/lem#lem-webview
-    $ nix profile add github:lem-project/lem#lem-sdl2
+**Build on Yeditor.** The Yeditor Core — the reversible-effect transaction engine
+(`yeditor-tx`), the component context and SDK, and the standard effects — is
+source-available under the [Functional Source License 1.1 (MIT future)](LICENSE-FSL).
+Read it, audit it, build it, write and share components for it, use it at work and in
+research. The only thing you can't do is ship a competing commercial product or service
+built on it. Every release becomes plain MIT two years after it ships.
 
-Or run Lem temporarily (no install):
+**Yeditor Enterprise** — the agent multiplexer and transactional host, parallel
+transactional branching, Eval-to-Journal and the generative forge — is commercial software
+([LICENSE-ENTERPRISE](LICENSE-ENTERPRISE)), available under a commercial license.
 
-    $ nix run github:lem-project/lem#
-    $ nix run github:lem-project/lem#lem-ncurses
-    $ nix run github:lem-project/lem#lem-webview
-    $ nix run github:lem-project/lem#lem-sdl2
+| | License |
+|---|---|
+| `yeditor/core/`, `yeditor/effects/`, `yeditor/components/` | FSL-1.1-MIT |
+| `yeditor/enterprise/` | Proprietary (All Rights Reserved) |
+| Code inherited from Lem | MIT — [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) |
 
-Use the overlay when you already have a flake-based NixOS/home-manager config and
-want `pkgs.lem-ncurses` (and `apps.lem-ncurses`) available from your `nixpkgs` set.
-You can also consume `lem` as an overlay in `flake.nix`:
+The full map is in [LICENSE](LICENSE); the IP model is described in
+[docs/IP_STRATEGY.md](docs/IP_STRATEGY.md).
 
-    {
-      inputs = {
-        nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
-        lem.url = "github:lem-project/lem";
-      };
+**Commercial, enterprise and partnership licensing:** contact Yuri Flores Albuquerque
+([@Yuri-Albuquerque](https://github.com/Yuri-Albuquerque)).
 
-      outputs = { self, nixpkgs, lem, ... }: {
-        nixosConfigurations.example = nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
-          modules = [
-            { nixpkgs.overlays = [ lem.overlays.default ]; }
-            { environment.systemPackages = [ pkgs.lem-ncurses ]; }
-          ];
-        };
-      };
-    }
+### Contributing
 
-### docker
+Pull requests are welcome after signing the [Contributor License Agreement](CLA.md). You keep
+the copyright in your work and grant a license that lets it ship in every edition of Yeditor.
 
-With Docker (terminal version):
+## Citation
 
-    $ docker run --rm -it ghcr.io/lem-project/lem:latest
+```bibtex
+@misc{shi2026cordis,
+  title         = {A Programming Paradigm for Spatiotemporal Composability},
+  author        = {Shi, Yifan and Zhang, Wei and Cui, Tianyi},
+  year          = {2026},
+  eprint        = {2608.25512},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.PL},
+  url           = {https://arxiv.org/abs/2608.25512},
+}
+```
 
-## Build
-
-Instructions to build Lem on GNU/Linux, Macos and Windows.
-
-### Terminal version
-https://lem-project.github.io/installation/ncurses/
-
-### Webview version
-https://lem-project.github.io/installation/webview/
-
-### SDL2 version
-https://lem-project.github.io/installation/sdl2/
-
-## Vision
-
-Lem brings the distance between code and its execution state as close to zero as possible.  
-Users can see the results of their program while editing, without breaking their flow, 
-and visually follow the behavior of the running code in real time.
-
-The interface is consistently simple and easy to use without confusion.  
-Moreover, Lem is fully customizable, and any extensions take effect immediately as they are written.
-
-### Goals
-- Instantly reflect executed code inline
-- Visualize running code in real time
-- Provide a consistent UI that feels effortless to use
-- Maintain documentation for beginners, extension developers, and core developers.
-- Offer an intuitive and consistent API for extensions
-- Deliver a comfortable environment right out of the box
-
-### Non-goals
-- Rather than imitating Emacs or Vim, Lem pursues its own unique approach
-
-## Contributors
-
-This project exists thanks to all the people who contribute. [[Contribute]](CONTRIBUTING.md).
-
-<a href="https://github.com/lem-project/lem/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=lem-project/lem&max=24" />
-</a>
-
-## Backers
-
-Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/lem#backer)]
-
-<a href="https://opencollective.com/lem#backers" target="_blank"><img src="https://opencollective.com/lem/backers.svg?width=890"></a>
-
-
-## Sponsors
-
-Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [[Become a sponsor](https://opencollective.com/lem#sponsor)]
-
-<a href="https://opencollective.com/lem/sponsor/0/website" target="_blank"><img src="https://opencollective.com/lem/sponsor/0/avatar.svg"></a>
-<a href="https://opencollective.com/lem/sponsor/1/website" target="_blank"><img src="https://opencollective.com/lem/sponsor/1/avatar.svg"></a>
-<a href="https://opencollective.com/lem/sponsor/2/website" target="_blank"><img src="https://opencollective.com/lem/sponsor/2/avatar.svg"></a>
-<a href="https://opencollective.com/lem/sponsor/3/website" target="_blank"><img src="https://opencollective.com/lem/sponsor/3/avatar.svg"></a>
-<a href="https://opencollective.com/lem/sponsor/4/website" target="_blank"><img src="https://opencollective.com/lem/sponsor/4/avatar.svg"></a>
-<a href="https://opencollective.com/lem/sponsor/5/website" target="_blank"><img src="https://opencollective.com/lem/sponsor/5/avatar.svg"></a>
-<a href="https://opencollective.com/lem/sponsor/6/website" target="_blank"><img src="https://opencollective.com/lem/sponsor/6/avatar.svg"></a>
-<a href="https://opencollective.com/lem/sponsor/7/website" target="_blank"><img src="https://opencollective.com/lem/sponsor/7/avatar.svg"></a>
-<a href="https://opencollective.com/lem/sponsor/8/website" target="_blank"><img src="https://opencollective.com/lem/sponsor/8/avatar.svg"></a>
-<a href="https://opencollective.com/lem/sponsor/9/website" target="_blank"><img src="https://opencollective.com/lem/sponsor/9/avatar.svg"></a>
-
-
-
-# License
-[MIT](https://github.com/lem-project/lem/blob/master/LICENCE)
+Based on Lem (lem-project/lem), MIT — 12,099 commits of upstream heritage.

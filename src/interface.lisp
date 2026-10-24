@@ -84,6 +84,10 @@ Available interfaces: ~A"
 (defgeneric lem-if:get-foreground-color (implementation))
 (defgeneric lem-if:update-foreground (implementation color-name))
 (defgeneric lem-if:update-background (implementation color-name))
+(defgeneric lem-if:reset-display-colors (implementation)
+  (:documentation "Return the display foreground and background to the frontend's defaults,
+so a color theme that leaves them unset (nil) does not inherit the previous theme's.")
+  (:method (implementation)))
 (defgeneric lem-if:update-cursor-shape (implementation cursor-type)
   (:method (implementation cursor-type)))
 (defgeneric lem-if:display-width (implementation))

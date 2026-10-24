@@ -14,6 +14,9 @@
   (unless *padwin*
     (setf *padwin* (charms/ll:newpad 1 1))
     (charms/ll:keypad *padwin* 1)
+    ;; Keep SGR mouse reports intact for our parser. With xterm-256color,
+    ;; terminfo recognizes ESC[< as KEY_MOUSE and otherwise eats the prefix.
+    #-os-windows (charms/ll:keyok charms/ll:key_mouse 0)
     (charms/ll:wtimeout *padwin* -1))
   (charms/ll:wgetch *padwin*))
 

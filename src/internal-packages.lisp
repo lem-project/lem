@@ -460,6 +460,7 @@
    :define-command)
   ;; mode.lisp
   (:export
+   :*buffer-mode-change-hook*
    :ensure-mode-object
    :major-mode
    :mode
@@ -787,6 +788,7 @@
    :get-foreground-color
    :update-foreground
    :update-background
+   :reset-display-colors
    :update-cursor-shape
    :display-width
    :display-height

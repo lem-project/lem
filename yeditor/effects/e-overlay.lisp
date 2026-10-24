@@ -1,0 +1,26 @@
+;;;; Copyright (c) 2026 Yuri Flores Albuquerque.
+;;;; SPDX-License-Identifier: FSL-1.1-MIT
+;;;; Licensed under the Functional Source License, Version 1.1 (see LICENSE-FSL).
+;;;; Competing commercial use is strictly prohibited.
+
+(defpackage :yeditor-effects/e-overlay
+  (:use :cl :lem :yeditor-tx)
+  (:export :install-overlay))
+(in-package :yeditor-effects/e-overlay)
+
+(defun install-overlay (comp start end attribute)
+  "Create a Lem overlay from START to END with ATTRIBUTE as a transaction effect
+   (kind 8, Cap. 5.3).  START and END are lem:point objects; ATTRIBUTE is a
+   lem:attribute.  Undo deletes the overlay."
+  (let ((ov nil))
+    (let ((handle (install-effect comp :overlay/face
+                                   (lambda ()
+                                     (setf ov (lem:make-overlay start end attribute)))
+                                   :undo-thunk
+                                   (lambda ()
+                                     (when ov
+                                       (lem:delete-overlay ov)
+                                       (setf ov nil))))))
+      (push (cons :start start) handle)
+      (push (cons :end end) handle)
+      handle)))

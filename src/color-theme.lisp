@@ -27,6 +27,10 @@ for example, to maintain an attribute like CURSOR.")
 (defun all-color-themes ()
   (alexandria:hash-table-keys *color-themes*))
 
+(defun color-theme-names ()
+  "Return the names of all defined color themes, sorted."
+  (sort (all-color-themes) #'string<))
+
 (defmacro define-color-theme (name (&optional (parent nil parentp)) &body specs)
  "Takes a name, optional parent theme, and color theme spec-table and generates color theme based off of spec-table
  -- see lem-base16-themes"
@@ -64,6 +68,7 @@ for example, to maintain an attribute like CURSOR.")
  to defined attributes, such as :background, :foreground, etc.. in the text editor"
   (setf (inactive-window-background-color) nil)
   (clear-all-attribute-cache)
+  (lem-if:reset-display-colors (implementation))
   (let ((spec-table (make-hash-table)))
     (inherit-load-theme theme spec-table)
     (maphash (lambda (name args)

@@ -1,7 +1,7 @@
 # Yeditor — Implementation Handoff
 
 *Living document. Updated after every completed task so another agent can continue the work.
-Last update: 2026-10-20.*
+Last update: 2026-10-24.*
 
 Authoritative plan (Portuguese, local only — excluded from git via `.git/info/exclude`):
 `.hermes/plans/2026-10-17_192626-yeditor-spacetime-lem-fork.md` (tasks T1–T30, chapters 1–18).
@@ -52,6 +52,22 @@ at SBCL startup and clears that loader environment before spawning tools such
 as git. Both produced artifacts must pass `--help` before upload. Validation PRs
 and manual builds do not publish releases; publication is limited to scheduled
 main builds or explicit main-only requests. See [packaging details](nightly-build-validation.md).
+
+## T15 feature lifecycle verification (2026-10-24)
+
+Git, project and tree continue to use Lem's existing entry points through
+`le-git`, `le-project`, `le-tree` and the basal inherited-entry-point removal.
+T15 now verifies complete keymap prefix identity/order and hook ordering, rather
+than only checking whether commands are present. Removal effects restore their
+captured objects, preserve later user replacements, and prune only empty created
+prefixes so uninstalling one feature does not remove another feature's bindings.
+No additional chrome is mounted by these three components.
+
+`yeditor-features-lifecycle-tests` runs 100 install/suspend/resume/uninstall cycles
+and checks independent features, later user siblings, custom fallback maps and
+hook priorities. It is included in `scripts/run-yeditor-all-tests.lisp`. The
+changes do not reimplement Git/project/filer and do not modify the concurrent
+LSP or Quicklisp onboarding work (#13/#14).
 
 ## 2. How to build, test and run
 

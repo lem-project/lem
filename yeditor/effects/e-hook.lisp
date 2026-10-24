@@ -31,16 +31,33 @@ A pre-existing callback, including its weight, is preserved across activations."
       (push (cons :callback fn) handle)
       handle)))
 
+(defun restore-removed-hook (hook-var entry following)
+  (when (and entry (boundp hook-var)
+             (not (find (car entry) (symbol-value hook-var) :key #'car)))
+    (let* ((current (symbol-value hook-var))
+           ;; Preserve the original position among callbacks with equal weight.
+           (anchor (find-if (lambda (candidate)
+                              (and (= (cdr candidate) (cdr entry))
+                                   (member candidate current :test #'eq)))
+                            following))
+           (tail (if anchor (member anchor current :test #'eq)
+                     (member-if (lambda (candidate) (< (cdr candidate) (cdr entry))) current))))
+      (setf (symbol-value hook-var) (append (ldiff current tail) (list entry) tail)))))
+
 (defun install-hook-removal (comp hook-var fn)
-  "Remove FN from the hook list in HOOK-VAR as a transaction effect (kind 4).
-   If FN was present at commit time, undo adds it back with its original weight."
-  (let ((entry nil))
-    (let ((handle (install-effect comp :hook
-                                  (lambda ()
-                                    (setf entry (find fn (symbol-value hook-var) :key (function car)))
-                                    (when entry (remove-hook (symbol-value hook-var) fn)))
-                                  :undo-thunk
-                                  (lambda ()
-                                    (when entry (add-hook (symbol-value hook-var) (car entry) (cdr entry)))))))
+  "Remove FN while preserving its entry, weight and relative hook order on undo.
+A later user registration of FN owns its weight and is left untouched."
+  (let ((entry nil) (following nil))
+    (let ((handle
+            (install-effect
+             comp :hook
+             (lambda ()
+               (setf entry (find fn (symbol-value hook-var) :key #'car)
+                     following (copy-list (cdr (member entry (symbol-value hook-var) :test #'eq))))
+               (when entry (remove-hook (symbol-value hook-var) fn)))
+             :undo-thunk
+             (lambda ()
+               (restore-removed-hook hook-var entry following)
+               (setf entry nil following nil)))))
       (push (cons :hook hook-var) handle)
       handle)))

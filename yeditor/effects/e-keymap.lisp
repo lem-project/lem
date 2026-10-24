@@ -13,6 +13,19 @@
   (let ((prefix (keymap-find keymap (parse-keyspec keyspec))))
     (when prefix (prefix-suffix prefix))))
 
+(defun prune-created-prefixes (map keys)
+  (let* ((prefix (find (first keys) (keymap-prefixes map) :key #'prefix-key :test #'equal))
+         (child (and prefix (prefix-suffix prefix))))
+    (when (typep child 'keymap)
+      (when (rest keys) (prune-created-prefixes child (rest keys)))
+      ;; DEFINE-KEY creates plain keymaps for intermediate prefixes. A custom
+      ;; keymap* can carry command remappings/fallbacks even without prefixes.
+      (when (and (not (typep child 'keymap*))
+                 (null (keymap-prefixes child)) (null (keymap-children child))
+                 (null (keymap-base child)) (null (keymap-properties child))
+                 (null (keymap-description child)))
+        (setf (keymap-prefixes map) (remove prefix (keymap-prefixes map) :test #'eq))))))
+
 (defun binding-inverse (keymap keys)
   "Capture the prefix that define-key will change, including new prefix paths."
   (labels ((find-prefix (map key)
@@ -27,11 +40,7 @@
                (cond
                  ((null prefix)
                   ;; DEFINE-KEY creates this branch in MAP, even with a base map.
-                  (let ((key (first remaining)))
-                    (lambda ()
-                      (setf (keymap-prefixes map)
-                            (remove key (keymap-prefixes map)
-                                    :key #'prefix-key :test #'equal)))))
+                  (lambda () (prune-created-prefixes map remaining)))
                  ((and (rest remaining) (typep (prefix-suffix prefix) 'keymap))
                   (capture (prefix-suffix prefix) (rest remaining)))
                  (t
@@ -66,15 +75,23 @@
       handle)))
 
 (defun install-key-removal (comp keymap keyspec)
-  "Remove the binding of KEYSPEC in KEYMAP as a transaction effect (kind 5).
-   The binding found at commit time is restored on undo."
-  (let ((prev nil))
-    (let ((handle (install-effect comp :keybinding
-                                  (lambda ()
-                                    (setf prev (%prev-binding keymap keyspec))
-                                    (when prev (undefine-key keymap keyspec)))
-                                  :undo-thunk
-                                  (lambda ()
-                                    (when prev (define-key keymap keyspec prev))))))
+  "Remove KEYSPEC reversibly, retaining original prefix objects and ordering.
+Undo preserves a binding supplied by the user after this removal."
+  (let ((inverse nil))
+    (let ((handle
+            (install-effect
+             comp :keybinding
+             (lambda ()
+               (setf inverse (and (%prev-binding keymap keyspec)
+                                  (binding-inverse keymap (parse-keyspec keyspec))))
+               (when inverse (undefine-key keymap keyspec)))
+             :undo-thunk
+             (lambda ()
+               (when (and inverse (null (keymap-find keymap (parse-keyspec keyspec))))
+                 ;; Invalidate lookup caches before restoring the captured objects.
+                 (undefine-key keymap keyspec)
+                 (funcall inverse))
+               (setf inverse nil)))))
+      (push (cons :keymap keymap) handle)
       (push (cons :keyspec keyspec) handle)
       handle)))

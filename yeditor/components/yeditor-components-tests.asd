@@ -10,4 +10,5 @@
   :components ((:file "components-tests")
                (:file "context-bridge-tests")
                (:file "lsp-tests")
-               (:file "packages-tests")))
+               (:file "packages-tests")
+               (:file "models-policy-tests")))

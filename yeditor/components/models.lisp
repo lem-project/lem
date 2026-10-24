@@ -85,6 +85,7 @@
     table))
 
 (defun get-json (provider path &key headers (timeout 3))
+  (check-cloud provider)
   (yason:parse (dex:get (url provider path) :headers headers :connect-timeout timeout
                                             :read-timeout timeout :keep-alive nil)))
 
@@ -112,6 +113,7 @@
 
 (defun post-lines (provider path body &key headers)
   "POST BODY as JSON and return a UTF-8 character stream over the streamed response."
+  (check-cloud provider)
   (let ((raw (call-with-retries
               (lambda ()
                 (dex:post (url provider path)

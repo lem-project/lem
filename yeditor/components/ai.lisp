@@ -5,6 +5,7 @@
 
 (defpackage :yeditor-components/ai
   (:use :cl :lem :yeditor-context :yeditor-effects :yeditor-components/models)
+  (:import-from :yeditor-components/palette #:*palette-actions*)
   (:export :le-models
            :le-ollama
            :*default-provider*
@@ -188,7 +189,19 @@
   :version "0.1.0"
   :install (lambda (comp ctx)
              (declare (ignore ctx))
-             (list (yeditor-tx:install-effect comp :ui-state
+             (list (install-variable comp '*palette-actions*
+                                     (append
+                                      (mapcar (lambda (entry)
+                                                (cons (car entry)
+                                                      (lambda () (call-command (cdr entry) nil))))
+                                              '(("AI: chat" . yeditor-ai-chat)
+                                                ("AI: explain selection" . yeditor-ai-explain)
+                                                ("AI: rewrite selection" . yeditor-ai-rewrite)
+                                                ("AI: document selection" . yeditor-ai-document)
+                                                ("AI: download model" . yeditor-ai-pull-model)
+                                                ("AI: toggle cloud access" . yeditor-ai-toggle-cloud)))
+                                      *palette-actions*))
+                   (yeditor-tx:install-effect comp :ui-state
                                               (lambda () (modeline-add-status-list (quote ai-modeline-segment)))
                                               :undo-thunk
                                               (lambda () (modeline-remove-status-list (quote ai-modeline-segment))))

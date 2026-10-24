@@ -311,10 +311,18 @@
     (call-next-method)))
 
 (defun frame-multiplexer-init ()
-  (clrhash *virtual-frame-map*)
   (loop
     :for impl :in (list (implementation))  ; for multi-frame support in the future...
-    :do (let ((vf (make-virtual-frame impl (get-frame impl))))
+    :do (let* ((previous (gethash impl *virtual-frame-map*))
+               (vf (make-virtual-frame impl (get-frame impl))))
+          (when (and previous (find-frame-table-entry previous (get-frame impl)))
+            (setf (virtual-frame-id/frame-table vf) (virtual-frame-id/frame-table previous))
+            (dolist (frame (virtual-frame-frames vf))
+              (unless (eq frame (current-frame))
+                ;; Header ownership is internal to Lem; all virtual frames share
+                ;; this one presentation window, which must be remounted together.
+                (lem-core::add-header-window frame vf)
+                (lem-core::notify-header-window-modified frame))))
           (setf (gethash impl *virtual-frame-map*) vf)
           (switch-current-frame vf (virtual-frame-current vf)))))
 
@@ -335,9 +343,13 @@
   (when (enabled-frame-multiplexer-p)
     (maphash (lambda (k v)
                (declare (ignore k))
+               (dolist (frame (virtual-frame-frames v))
+                 ;; Remove the shared header from inactive frames too, preserving
+                 ;; the frame table and its names/window trees for the next show.
+                 (lem-core::remove-header-window frame v)
+                 (lem-core::notify-header-window-modified frame))
                (delete-window v))
-             *virtual-frame-map*)
-    (clrhash *virtual-frame-map*)))
+             *virtual-frame-map*)))
 
 (defclass frame-multiplexer-advice () ())
 
@@ -511,6 +523,7 @@ With prefix argument ID, rename the frame with the given ID."
 
 (defun disable-frame-multiplexer ()
   (setf (variable-value 'frame-multiplexer :global) nil)
+  (clrhash *virtual-frame-map*)
   (setq *recent-list* nil))
 
 (add-hook *after-init-hook* 'enable-frame-multiplexer)

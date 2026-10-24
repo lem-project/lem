@@ -71,7 +71,27 @@ https://lem-project.github.io/installation/webview/
 
 ### SDL2 version
 https://lem-project.github.io/installation/sdl2/
+### Quick summary for Nix and NixOS users
+If you have flakes enabled, you can run:
 
+```
+nix develop --command make webview-ncurses # webview AND ncurses version
+```
+
+or:
+
+```
+nix develop --command make ncurses # ncurses version (no webview)
+```
+
+Then you can run the executable with:
+
+```
+nix develop --command ./lem
+```
+
+You need to run the executable inside the Nix development environment so it can
+find the required native libraries.
 ## Vision
 
 Lem brings the distance between code and its execution state as close to zero as possible.  

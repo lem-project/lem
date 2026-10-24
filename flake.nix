@@ -543,7 +543,7 @@
               pkgs.tree-sitter-grammars.tree-sitter-clojure
 
               # Perl Language Server
-              pkgs.perl538Packages.PLS # provides 'pls' command (used by lem-perl-mode)
+              pkgs.perl5Packages.PLS # provides 'pls' command (used by lem-perl-mode)
 
               # Clojure development
               clojure
@@ -587,6 +587,8 @@
             ++ pkgs.lib.optionals pkgs.stdenv.hostPlatform.isLinux [
               pkgs.webkitgtk_4_1
               pkgs.gtk3
+              pkgs.glib
+              pkgs.stdenv.cc.cc.lib
             ]
           );
 

@@ -16,6 +16,7 @@
                   yeditor-components/packages-tests::failed-package-task-releases-the-worker-slot
                   yeditor-components/packages-tests::load-and-remove-a-package-through-the-worker
                   yeditor-components-tests::test-package-install-uninstall-cycle
+                  yeditor-components/packages-tests::removal-cleans-packages-with-use-relationships
                   yeditor-components-tests::test-package-missing-system))
     (unless (rove:run-test test) (uiop:quit 1))))
 (uiop:quit 0)

@@ -105,3 +105,19 @@
         (when (member "yeditor-dummy-pkg" (installed-packages) :test #'equal)
           (uninstall-package "yeditor-dummy-pkg"))
         (uiop:delete-directory-tree root :validate t)))))
+
+(deftest removal-cleans-packages-with-use-relationships
+  (let* ((root (yeditor-components-tests::make-dummy-project))
+         (file (merge-pathnames "yeditor-dummy-pkg/main.lisp" root)))
+    (with-open-file (out file :direction :output :if-exists :append)
+      (write-line "(defpackage :yeditor-dummy-client (:use :cl :yeditor-dummy-pkg))" out))
+    (unwind-protect
+         (progn
+           (install-package "yeditor-dummy-pkg" :roots (list root))
+           (ok (find-package :yeditor-dummy-client))
+           (uninstall-package "yeditor-dummy-pkg")
+           (ok (null (find-package :yeditor-dummy-client)))
+           (ok (null (find-package :yeditor-dummy-pkg))))
+      (when (member "yeditor-dummy-pkg" (installed-packages) :test #'equal)
+        (uninstall-package "yeditor-dummy-pkg"))
+      (uiop:delete-directory-tree root :validate t))))

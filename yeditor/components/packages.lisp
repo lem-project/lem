@@ -74,6 +74,11 @@ global state or external files can remain. A restart may be needed. Proceed?")
   (let ((created-packages nil) (created-systems nil))
     (labels ((cleanup ()
                (dolist (name created-systems) (asdf:clear-system name))
+               ;; Package enumeration is unordered. Break use relationships
+               ;; before deletion so SBCL never asks for an interactive restart.
+               (dolist (package created-packages)
+                 (dolist (user (package-used-by-list package))
+                   (unuse-package package user)))
                (dolist (package created-packages)
                  (when (package-name package) (delete-package package)))
                (setf created-packages nil created-systems nil)))

@@ -419,7 +419,7 @@ Use this when lsp-mode has side effects that you want to avoid."
   (unless (assoc buffer (workspace-value workspace :buffers))
     (push (list buffer (buffer-value buffer 'lsp-workspace)
                 (remove-if (lambda (entry)
-                             (member (cdr entry) (variable-value (car entry) :buffer buffer)))
+                             (member (cdr entry) (variable-value (car entry) :buffer buffer) :key #'car))
                            (buffer-hook-functions)))
           (workspace-value workspace :buffers)))
   (setf (buffer-value buffer 'lsp-workspace) workspace))
@@ -557,7 +557,10 @@ workspace. Signals NOT-FOUND-PROGRAM when the server is missing."
   (let ((client (workspace-client workspace)))
     (typecase client
       (client:stdio-client (client:stdio-client-alive-p client))
-      (client:tcp-client (and (client:tcp-client-process client) t))
+      (client:tcp-client
+       (and (not (workspace-value workspace :stopped))
+            (or (null (client:tcp-client-process client))
+                (lem-process:process-alive-p (client:tcp-client-process client)))))
       (otherwise nil))))
 
 (defun lsp-session-pid (workspace)

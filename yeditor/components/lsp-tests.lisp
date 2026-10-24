@@ -168,3 +168,28 @@
         (uninstall-component 'le-lsp)
         (when workspace (lem-lsp-mode:stop-lsp-session workspace))
         (delete-buffer first) (delete-buffer second))))))
+
+(deftest preserve-preexisting-weighted-hooks
+  (lem-fake-interface:with-fake-interface ()
+    (let* ((buffer (yeditor-components-tests::lang-buffer "weighted.fake" 'yeditor-components-tests::yeditor-fake-lang-mode))
+           (callback 'lem-lsp-mode::text-document/did-close))
+      (add-hook (variable-value 'kill-buffer-hook :buffer buffer) callback 37)
+      (let ((before (buffer-hooks buffer)))
+        (unwind-protect
+             (progn
+               (install-component 'le-lsp)
+               (lsp-start-buffer buffer)
+               (uninstall-component 'le-lsp)
+               (ok (equal before (buffer-hooks buffer)) "weighted callback was borrowed"))
+          (uninstall-component 'le-lsp)
+          (delete-buffer buffer))))))
+
+(deftest processless-tcp-workspace-is-not-evicted
+  ;; Model the client used by Lisp's in-process server without starting Micros.
+  (let* ((client (make-instance 'lem-lsp-mode/client:tcp-client :port 1))
+         (workspace (make-instance 'lem-lsp-mode::workspace :client client
+                                   :spec (lem-lsp-mode/spec:get-language-spec
+                                          'yeditor-components-tests::yeditor-fake-lang-mode))))
+    (ok (lem-lsp-mode:lsp-session-alive-p workspace))
+    (lem-lsp-mode:stop-lsp-session workspace)
+    (ok (not (lem-lsp-mode:lsp-session-alive-p workspace)))))

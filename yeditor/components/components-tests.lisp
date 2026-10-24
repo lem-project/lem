@@ -1075,3 +1075,21 @@
         (ok (equal before (variable-value 'modeline-format :global)))
         (ok (equal headers (frame-header-windows (current-frame))))
         (ok (equal size (list (window-width (current-window)) (window-height (current-window)))))))))
+
+(deftest tabs-preserve-multiple-workspaces
+  (lem-fake-interface:with-fake-interface ()
+    (install-component 'le-tabs)
+    (lem/frame-multiplexer:frame-multiplexer-create-with-new-buffer-list)
+    ;; Inspect the inherited workspace table: there is no public snapshot API.
+    (let* ((vf (gethash (implementation) lem/frame-multiplexer::*virtual-frame-map*))
+           (table (lem/frame-multiplexer::virtual-frame-id/frame-table vf))
+           (frames (lem/frame-multiplexer::virtual-frame-frames vf)))
+      (unwind-protect
+           (dotimes (i 100)
+             (toggle-component 'le-tabs)
+             (ok (every (lambda (frame) (null (frame-header-windows frame))) frames))
+             (toggle-component 'le-tabs)
+             (ok (eq table (lem/frame-multiplexer::virtual-frame-id/frame-table
+                            (gethash (implementation) lem/frame-multiplexer::*virtual-frame-map*))))
+             (ok (every (lambda (frame) (= 1 (length (frame-header-windows frame)))) frames)))
+        (uninstall-component 'le-tabs)))))

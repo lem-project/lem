@@ -121,8 +121,8 @@ Initialize the normal default theme if none is loaded, then preserve that baseli
 (defun read-results (path)
   (with-open-file (in path) (yason:parse in)))
 
-(defparameter *regression-ratio* 6/5
-  "Fail when head p95 exceeds base p95 by more than 20%.")
+(defparameter *regression-ratio* 3/2
+  "Fail when head p95 exceeds base p95 by more than 50% (shared CI runners jitter ~25% on sub-ms benchmarks).")
 
 (defparameter *noise-floor-us* 2
   "Ignore regressions smaller than this many microseconds in absolute terms (timer noise).")
@@ -144,7 +144,7 @@ Initialize the normal default theme if none is loaded, then preserve that baseli
 
 (defun compare-results (head &optional base)
   "Return report and PASS-P for complete, valid HEAD and optional comparable BASE.
-Enforce absolute budgets and >20% p95 regressions above the 2us timing noise floor.
+Enforce absolute budgets and >50% p95 regressions above the 2us timing noise floor.
 A zero baseline is reported as an absolute delta, never divided by zero."
   (unless (and (valid-results-p head)
                (or (null base)

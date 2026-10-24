@@ -4,7 +4,7 @@
 # Proprietary and Confidential — Yeditor Agentic & Forge Suite (see LICENSE-ENTERPRISE).
 #
 # Stand-in for the Claude Code CLI in tests: --version, and -p PROMPT with JSON output.
-import json, sys
+import json, sys, time
 args = sys.argv[1:]
 if args == ["--version"]:
     print("9.9.9 (Claude Code, fake)")
@@ -12,6 +12,8 @@ if args == ["--version"]:
 prompt = args[args.index("-p") + 1]
 config = json.load(open(args[args.index("--mcp-config") + 1]))
 mcp = "ok" if "/mcp" in config["mcpServers"]["yeditor"]["url"] else "missing"
+if "SLOW" in prompt:
+    time.sleep(10)
 if "FAIL" in prompt:
     print(json.dumps({"type": "result", "is_error": True, "result": "boom"}))
     sys.exit(1)

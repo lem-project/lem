@@ -30,7 +30,10 @@
            :start-lsp-session
            :stop-lsp-session
            :lsp-session-alive-p
-           :lsp-session-pid))
+           :lsp-session-pid
+           :lsp-session-key
+           :buffer-lsp-session
+           :detach-lsp-buffer))
 (in-package :lem-lsp-mode/lsp-mode)
 
 ;; FIXME:
@@ -237,14 +240,18 @@ Use this when lsp-mode has side effects that you want to avoid."
     (assert workspace-list)
     (setf (workspace-list-current-workspace workspace-list) workspace)))
 
-(defun find-workspace (language-id &key (errorp t))
+(defun find-workspace (language-id &key root-uri (errorp t))
   ;; A nil LANGUAGE-ID means the buffer's current major mode has no
   ;; registered language spec (e.g. a REPL mode whose parent had one).
   ;; That is not an error condition -- the buffer simply does not
   ;; participate in LSP.  Return nil silently regardless of ERRORP.
   (when language-id
     (if-let (workspace-list (gethash language-id *workspace-list-per-language-id*))
-      (workspace-list-current-workspace workspace-list)
+      (or (if root-uri
+              (find root-uri (workspace-list-workspaces workspace-list)
+                    :key #'workspace-root-uri :test #'equal)
+              (workspace-list-current-workspace workspace-list))
+          (when errorp (error "The ~A workspace for ~A is not found." language-id root-uri)))
       (when errorp
         (error "The ~A workspace is not found." language-id)))))
 
@@ -258,7 +265,22 @@ Use this when lsp-mode has side effects that you want to avoid."
           (remhash (workspace-language-id workspace) *workspace-list-per-language-id*)))))
 
 (defun buffer-workspace (buffer &optional (errorp t))
-  (find-workspace (buffer-language-id buffer) :errorp errorp))
+  (let ((workspace (buffer-value buffer 'lsp-workspace))
+        (language (buffer-language-id buffer)))
+    (cond ((and workspace language
+                (equal language (workspace-language-id workspace))
+                (not (workspace-value workspace :stopped)))
+           workspace)
+          ((and language errorp) (error "No language server session for ~A." (buffer-name buffer))))))
+
+(defun buffer-lsp-session (buffer)
+  "Return BUFFER's attached workspace, or NIL, without searching the filesystem."
+  (buffer-workspace buffer nil))
+
+(defun lsp-session-key (buffer)
+  "Return the language and project root URI identifying BUFFER's LSP session."
+  (when-let (spec (buffer-language-spec buffer))
+    (list (spec-language-id spec) (compute-root-uri spec buffer))))
 
 (defun all-workspaces ()
   (loop :for workspace-list :being :each :hash-value :in *workspace-list-per-language-id*
@@ -371,11 +393,51 @@ Use this when lsp-mode has side effects that you want to avoid."
         (change-event (buffer-change-event-to-content-change-event point arg)))
     (text-document/did-change buffer (make-lsp-array change-event))))
 
+(defun buffer-hook-functions ()
+  '((kill-buffer-hook . text-document/did-close)
+    (after-save-hook . text-document/did-save)
+    (before-change-functions . handle-change-buffer)
+    (self-insert-after-hook . self-insert-hook)))
+
+(defun detach-lsp-buffer (workspace buffer)
+  "Detach BUFFER from WORKSPACE, removing its acquired hooks without stopping the server."
+  (let ((entry (assoc buffer (workspace-value workspace :buffers))))
+    (when entry
+      (destructuring-bind (buffer previous owned-hooks) entry
+        (when (and (not (deleted-buffer-p buffer))
+                   (eq (buffer-value buffer 'lsp-workspace) workspace))
+          (dolist (hook owned-hooks)
+            (remove-hook (variable-value (car hook) :buffer buffer) (cdr hook)))
+          (setf (buffer-value buffer 'lsp-workspace) previous)))
+      (setf (workspace-value workspace :buffers)
+            (remove entry (workspace-value workspace :buffers) :test #'eq)))))
+
+(defun attach-workspace (workspace buffer)
+  (let ((previous (buffer-value buffer 'lsp-workspace)))
+    (when (and previous (not (eq previous workspace)))
+      (detach-lsp-buffer previous buffer)))
+  (unless (assoc buffer (workspace-value workspace :buffers))
+    (push (list buffer (buffer-value buffer 'lsp-workspace)
+                (remove-if (lambda (entry)
+                             (member (cdr entry) (variable-value (car entry) :buffer buffer)))
+                           (buffer-hook-functions)))
+          (workspace-value workspace :buffers)))
+  (setf (buffer-value buffer 'lsp-workspace) workspace))
+
 (defun add-buffer-hooks (buffer)
-  (add-hook (variable-value 'kill-buffer-hook :buffer buffer) 'text-document/did-close)
-  (add-hook (variable-value 'after-save-hook :buffer buffer) 'text-document/did-save)
-  (add-hook (variable-value 'before-change-functions :buffer buffer) 'handle-change-buffer)
-  (add-hook (variable-value 'self-insert-after-hook :buffer buffer) 'self-insert-hook))
+  (unless (deleted-buffer-p buffer)
+    (dolist (entry (buffer-hook-functions))
+      (add-hook (variable-value (car entry) :buffer buffer) (cdr entry)))))
+
+(defun initialize-buffer (workspace buffer continuation)
+  (when (and (not (deleted-buffer-p buffer))
+             (eq workspace (buffer-lsp-session buffer)))
+    (add-buffer-hooks buffer)
+    (when continuation (funcall continuation))))
+
+(defun detach-workspace (workspace)
+  (dolist (entry (workspace-value workspace :buffers))
+    (detach-lsp-buffer workspace (first entry))))
 
 (defun register-lsp-method (workspace method function)
   (jsonrpc:expose (lem-language-client/client:client-connection (workspace-client workspace))
@@ -436,9 +498,8 @@ Use this when lsp-mode has side effects that you want to avoid."
                 (lambda (workspace)
                   (unless (workspace-value workspace :stopped)
                     (set-trigger-characters workspace)
-                    (add-buffer-hooks buffer)
                     (setf (workspace-value workspace :initialized) t)
-                    (when continuation (funcall continuation))
+                    (initialize-buffer workspace buffer continuation)
                     (dolist (callback (reverse (workspace-value workspace :pending-callbacks)))
                       (funcall callback))
                     (setf (workspace-value workspace :pending-callbacks) nil)
@@ -451,24 +512,29 @@ Use this when lsp-mode has side effects that you want to avoid."
 
 (defun start-lsp-session (buffer &key then)
   "Ensure a language server session for BUFFER and return its workspace.
-Reuses the registered workspace for the buffer's language, or starts the
+Reuses the registered workspace for the buffer's language and project, or starts the
 server and connects asynchronously. Pending workspaces are registered immediately
 so concurrent starts reuse them. The second value is true only for a newly created
 workspace. Signals NOT-FOUND-PROGRAM when the server is missing."
-  (let ((spec (buffer-language-spec buffer)))
+  (let ((spec (buffer-language-spec buffer))
+        (key (lsp-session-key buffer)))
     (unless spec
       (editor-error "No language server is configured for this buffer"))
-    (if-let ((workspace (find-workspace (spec-language-id spec) :errorp nil)))
+    (let ((old (find-workspace (spec-language-id spec) :root-uri (second key) :errorp nil)))
+      (when (and old (not (lsp-session-alive-p old))) (stop-lsp-session old)))
+    (if-let ((workspace (find-workspace (spec-language-id spec) :root-uri (second key) :errorp nil)))
       (progn
+        (attach-workspace workspace buffer)
         (if (workspace-value workspace :initialized)
-            (progn (add-buffer-hooks buffer) (when then (funcall then)))
-            (push (lambda () (add-buffer-hooks buffer) (when then (funcall then)))
+            (initialize-buffer workspace buffer then)
+            (push (lambda () (initialize-buffer workspace buffer then))
                   (workspace-value workspace :pending-callbacks)))
         (values workspace nil))
       (let ((workspace (make-workspace :spec spec
                                        :client (run-server spec)
                                        :buffer buffer)))
         (add-workspace workspace)
+        (attach-workspace workspace buffer)
         (handler-case
             (connect-and-initialize workspace buffer then)
           (error (condition) (stop-lsp-session workspace) (error condition)))
@@ -482,6 +548,7 @@ workspace. Signals NOT-FOUND-PROGRAM when the server is missing."
     (spinner:stop-loading-spinner spinner)
     (setf (workspace-value workspace :loading-spinner) nil))
   (ignore-errors (dispose-workspace workspace))
+  (detach-workspace workspace)
   (remove-workspace workspace)
   t)
 

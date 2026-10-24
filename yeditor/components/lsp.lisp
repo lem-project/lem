@@ -5,18 +5,22 @@
 
 (defpackage :yeditor-components/lsp
   (:use :cl :lem :yeditor-context :yeditor-effects)
+  (:import-from :yeditor-components/palette #:*palette-actions*)
   (:export :le-lsp
            :*lsp-sessions*
            :lsp-start-buffer
+           :lsp-stop-buffer
            :lsp-stop-all
            :lsp-session-for
            :lsp-modeline-segment
            :yeditor-lsp-start
+           :yeditor-lsp-stop
            :yeditor-lsp-stop-all))
 (in-package :yeditor-components/lsp)
 
 (defvar *lsp-sessions* nil
-  "Alist (language-id . effect-handle) of language server sessions started by le-lsp.")
+  "Alist (session-key . effect-handles), with the newest buffer acquisition first.
+   A session key is (language-id project-root-uri).")
 
 (defun buffer-spec (buffer)
   (lem-lsp-mode/spec:get-language-spec (lem/language-mode:buffer-language-mode buffer)))
@@ -25,44 +29,71 @@
   (funcall (cdr (assoc :workspace-of handle))))
 
 (defun lsp-session-for (buffer)
-  "The live workspace le-lsp started for the language of BUFFER, or nil."
-  (let* ((spec (buffer-spec buffer))
-         (handle (and spec (cdr (assoc (lem-lsp-mode/spec:spec-language-id spec) *lsp-sessions*
-                                       :test (function equal)))))
-         (workspace (and handle (handle-workspace handle))))
-    (and workspace (lem-lsp-mode:lsp-session-alive-p workspace) workspace)))
+  "The live workspace le-lsp tracks for BUFFER's project and language, or NIL."
+  (let ((workspace (lem-lsp-mode:buffer-lsp-session buffer)))
+    (and workspace
+         (some (lambda (entry)
+                 (some (lambda (handle) (eq workspace (handle-workspace handle))) (cdr entry)))
+               *lsp-sessions*)
+         (lem-lsp-mode:lsp-session-alive-p workspace)
+         workspace)))
 
 (defun lsp-start-buffer (buffer)
-  "Start (or reuse) the session for the language of BUFFER in its own transaction.
-   Returns the workspace. Signals lem-lsp-mode:not-found-program when the server
-   is not installed; nothing is left running in that case."
-  (let ((spec (buffer-spec buffer)))
-    (unless spec
+  "Start (or reuse) BUFFER's project/language session in its own transaction.
+   Requires active le-lsp; signals lem-lsp-mode:not-found-program if the server is missing."
+  (unless (eq :active (getf (gethash 'le-lsp *component-registry*) :status))
+    (editor-error "Language server support is disabled"))
+  (let ((key (lem-lsp-mode:lsp-session-key buffer)))
+    (unless key
       (editor-error "No language server is configured for ~A" (buffer-name buffer)))
-    (or (lsp-session-for buffer)
-        (let ((language (lem-lsp-mode/spec:spec-language-id spec))
-              (yeditor-tx:*tx-pending* nil)
-              (yeditor-tx:*tx-committed* nil))
-          (let ((handle (install-lsp-session (quote le-lsp) buffer)))
-            (yeditor-tx:tx-commit)
-            (setf *lsp-sessions*
-                  (acons language handle
-                         (remove language *lsp-sessions* :key (function car) :test (function equal))))
-            (handle-workspace handle))))))
+    (let* ((entry (assoc key *lsp-sessions* :test #'equal))
+           (workspace (and entry (handle-workspace (second entry)))))
+      (when (and workspace (lem-lsp-mode:lsp-session-alive-p workspace)
+                 (eq workspace (lem-lsp-mode:buffer-lsp-session buffer)))
+        (return-from lsp-start-buffer workspace))
+      (when (and entry (not (and workspace (lem-lsp-mode:lsp-session-alive-p workspace))))
+        (undo-session entry)
+        (setf *lsp-sessions* (remove entry *lsp-sessions* :test #'eq) entry nil))
+      (let ((yeditor-tx:*tx-pending* nil)
+            (yeditor-tx:*tx-committed* nil))
+        (let ((new (install-lsp-session 'le-lsp buffer)))
+          (yeditor-tx:tx-commit)
+          (if entry
+              (push new (cdr entry))
+              (push (list key new) *lsp-sessions*))
+          (handle-workspace new))))))
+
+(defun undo-session (entry)
+  (dolist (handle (cdr entry))
+    (funcall (cdr (assoc :inverse handle)))))
+
+(defun lsp-stop-buffer (buffer)
+  "Stop le-lsp's session for BUFFER's project/language, preserving other projects."
+  (let* ((key (lem-lsp-mode:lsp-session-key buffer))
+         (entry (assoc key *lsp-sessions* :test #'equal)))
+    (when entry
+      (undo-session entry)
+      (setf *lsp-sessions* (remove entry *lsp-sessions* :test #'eq)))))
 
 (defun lsp-stop-all ()
   "Stop every session le-lsp started (newest first)."
   (dolist (entry *lsp-sessions*)
-    (funcall (cdr (assoc :inverse (cdr entry)))))
+    (undo-session entry))
   (setf *lsp-sessions* nil))
 
 (defun install-hint (condition)
   (format nil "~A" condition))
 
+(defun offer-lsp-installation (condition &key (confirm #'prompt-for-y-or-n-p)
+                                              (present #'show-message))
+  (let ((hint (install-hint condition)))
+    (when (funcall confirm (format nil "Install LSP? Show setup instructions.~%~A" hint))
+      (funcall present hint))))
+
 (defun auto-start (buffer)
   (when (buffer-spec buffer)
     (handler-case (lsp-start-buffer buffer)
-      (lem-lsp-mode:not-found-program (c) (message "~A" (install-hint c)))
+      (lem-lsp-mode:not-found-program (c) (offer-lsp-installation c))
       (editor-error (c) (message "LSP: ~A" c)))))
 
 (defun lsp-modeline-segment (window)
@@ -75,9 +106,15 @@
 
 (define-command yeditor-lsp-start () ()
   "Start the language server for the current buffer, or explain how to install it."
+  (install-component 'le-lsp)
   (handler-case (progn (lsp-start-buffer (current-buffer))
-                       (message "Language server started"))
-    (lem-lsp-mode:not-found-program (c) (message "~A" (install-hint c)))))
+                       (message-without-log "Language server started"))
+    (lem-lsp-mode:not-found-program (c) (offer-lsp-installation c))))
+
+(define-command yeditor-lsp-stop () ()
+  "Stop the language server for the current project and language."
+  (lsp-stop-buffer (current-buffer))
+  (message-without-log "Language server stopped for this project"))
 
 (define-command yeditor-lsp-stop-all () ()
   "Stop every language server started by le-lsp."
@@ -91,6 +128,10 @@
              (list
               ;; Lem would otherwise start servers from major-mode hooks, outside any transaction.
               (install-variable comp (quote lem-lsp-mode:*disable*) t)
+              (install-variable comp '*palette-actions*
+                                (append (list (cons "LSP: start for this project" #'yeditor-lsp-start)
+                                              (cons "LSP: stop for this project" #'yeditor-lsp-stop))
+                                        *palette-actions*))
               (install-hook comp (quote *find-file-hook*) (quote auto-start))
               (yeditor-tx:install-effect comp :ui-state
                                          (lambda () (modeline-add-status-list (quote lsp-modeline-segment)))

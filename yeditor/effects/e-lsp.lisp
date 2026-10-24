@@ -15,14 +15,18 @@
    Reused sessions are borrowed and are preserved on undo."
   (let* ((cell (list nil))
          (owned nil)
+         (previous nil)
          (handle (install-effect comp :lsp-session
                                  (lambda ()
+                                   (setf previous (lem-lsp-mode:buffer-lsp-session buffer))
                                    (setf (values (car cell) owned)
                                      (lem-lsp-mode:start-lsp-session buffer)))
                                  :undo-thunk
                                  (lambda ()
                                    (when (car cell)
-                                     (when owned (lem-lsp-mode:stop-lsp-session (car cell)))
+                                     (cond (owned (lem-lsp-mode:stop-lsp-session (car cell)))
+                                           ((not (eq previous (car cell)))
+                                            (lem-lsp-mode:detach-lsp-buffer (car cell) buffer)))
                                      (setf (car cell) nil owned nil))))))
     (push (cons :buffer buffer) handle)
     (push (cons :workspace-of (lambda () (car cell))) handle)

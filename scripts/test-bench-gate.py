@@ -28,6 +28,8 @@ if pathlib.Path(sys.argv[0]).name == "git":
         base=pathlib.Path(args[3]); (base/"scripts").mkdir(parents=True)
         (base/"scripts/run-yeditor-bench.lisp").write_text("base harness")
     sys.exit(0)
+with pathlib.Path(os.environ["TRACE_PATH"]).open("a") as f:
+    f.write(("build" if args[0] == "build" else ("base" if "yeditor-bench-base" in args else "head"))+"\n")
 if args[0] == "build": sys.exit(0)
 out=pathlib.Path(args[args.index("-v")+1].rsplit(":",1)[0])
 command=" ".join(args)
@@ -54,7 +56,7 @@ class GateTest(unittest.TestCase):
         out.mkdir()
         (out / "base.json").write_text("stale baseline")
         (out / "report.txt").write_text("stale success")
-        env = dict(os.environ, PATH=str(root)+os.pathsep+os.environ["PATH"], SCENARIO=scenario)
+        env = dict(os.environ, PATH=str(root)+os.pathsep+os.environ["PATH"], SCENARIO=scenario, TRACE_PATH=str(out / "trace.txt"))
         result = subprocess.run(["bash", "scripts/bench-gate.sh", "BASE", str(out)], cwd=ROOT,
                                 env=env, capture_output=True, text=True)
         return result, out
@@ -72,6 +74,12 @@ class GateTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("--measure-only", (out / "calls.txt").read_text())
         self.assertIn("ok benchmark", (out / "report.txt").read_text())
+
+    def test_both_images_are_built_before_measurement(self):
+        result, out = self.run_gate("success")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((out / "trace.txt").read_text().splitlines(),
+                         ["build", "build", "base", "head"])
 
     def test_regression_propagates_nonzero_status(self):
         result, out = self.run_gate("regression")

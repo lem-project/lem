@@ -47,8 +47,6 @@ if [ -f "$base_tree/scripts/run-yeditor-bench.lisp" ]; then
   done
   stage="build baseline"
   docker build -q -f docker/Dockerfile.test -t yeditor-bench-base "$base_tree" 2>&1 | tee -a "$out_dir/base.log"
-  stage="measure baseline"
-  run_bench yeditor-bench-base --measure-only /out/base.json 2>&1 | tee -a "$out_dir/base.log"
   base_args=(/out/base.json)
 else
   printf 'Base %s predates the suite; enforcing absolute budgets only.\n' "$base_ref"
@@ -56,6 +54,12 @@ fi
 
 stage="build head"
 docker build -q -f docker/Dockerfile.test -t yeditor-bench-head . 2>&1 | tee "$out_dir/head.log"
+# Do not insert a CPU/I/O-heavy image build between the two measurements.
+# Both revisions should see the host after the same build phase.
+if [ "${#base_args[@]}" -gt 0 ]; then
+  stage="measure baseline"
+  run_bench yeditor-bench-base --measure-only /out/base.json 2>&1 | tee -a "$out_dir/base.log"
+fi
 stage="measure and compare head"
 run_bench yeditor-bench-head /out/head.json "${base_args[@]}" 2>&1 \
   | tee -a "$out_dir/head.log" | tee "$out_dir/report.txt"

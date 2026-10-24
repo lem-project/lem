@@ -88,22 +88,36 @@
 
 ;;; Running a program with a timeout
 
-(defun run-program-with-timeout (command &key directory (timeout *task-timeout*))
-  "Run COMMAND; returns (values stdout stderr exit-code), killing it after TIMEOUT seconds."
-  (let* ((process (uiop:launch-program command :directory directory
-                                               :output :stream :error-output :stream))
-         (out nil) (err nil)
-         (reader (bt2:make-thread (lambda () (setf out (uiop:slurp-stream-string (uiop:process-info-output process))))))
-         (err-reader (bt2:make-thread (lambda () (setf err (uiop:slurp-stream-string (uiop:process-info-error-output process))))))
-         (deadline (+ (get-universal-time) timeout)))
-    (loop :while (and (uiop:process-alive-p process) (< (get-universal-time) deadline))
-          :do (sleep 0.02))
-    (when (uiop:process-alive-p process)
-      (uiop:terminate-process process :urgent t))
-    (let ((code (uiop:wait-process process)))
-      (bt2:join-thread reader)
-      (bt2:join-thread err-reader)
-      (values out err code))))
+(defun run-program-with-timeout (command &key directory (timeout *task-timeout*)
+                                             (cancelled-p (constantly nil)))
+  "Run COMMAND off the UI thread; reap it on timeout, cancellation or unwinding."
+  (let ((process nil) (reader nil) (err-reader nil)
+        (out nil) (err nil) (code nil)
+        (deadline (+ (get-internal-real-time) (* timeout internal-time-units-per-second))))
+    (unwind-protect
+         (progn
+           (setf process (uiop:launch-program command :directory directory
+                                                       :output :stream :error-output :stream))
+           (setf reader
+                 (bt2:make-thread
+                  (lambda ()
+                    (with-open-stream (stream (uiop:process-info-output process))
+                      (setf out (uiop:slurp-stream-string stream))))))
+           (setf err-reader
+                 (bt2:make-thread
+                  (lambda ()
+                    (with-open-stream (stream (uiop:process-info-error-output process))
+                      (setf err (uiop:slurp-stream-string stream))))))
+           (loop :while (and (uiop:process-alive-p process)
+                             (< (get-internal-real-time) deadline)
+                             (not (funcall cancelled-p)))
+                 :do (sleep 0.02)))
+      (when process
+        (when (uiop:process-alive-p process) (uiop:terminate-process process :urgent t))
+        (setf code (uiop:wait-process process)))
+      (when reader (bt2:join-thread reader))
+      (when err-reader (bt2:join-thread err-reader)))
+    (values out err code)))
 
 ;;; Claude Code
 
@@ -140,7 +154,8 @@
                             "--max-turns" (princ-to-string *claude-code-max-turns*)
                             "--mcp-config" (namestring config))
                       *claude-code-extra-args*)
-              :directory (adapter-directory a))
+              :directory (adapter-directory a)
+              :cancelled-p (lambda () (adapter-stop-p a)))
            (let ((result (ignore-errors (yason:parse out))))
              (cond ((and (hash-table-p result) (not (eq (gethash "is_error" result) t)) (zerop code))
                     (values "done" (gethash "result" result)))

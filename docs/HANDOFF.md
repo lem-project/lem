@@ -191,3 +191,16 @@ Extra effects added for T11/T12: `e-editor-variable` (Lem editor variables), `e-
 ## 7. Current work in progress
 
 None. Next in plan order: T22 (`le-agent-multiplexer`: routing rules, context collection before acting, `dry-run`/`ask`/`auto` modes, parallel branching on shadow buffers with `tx:promote-branch`, "Revert agent session"), then T23–T25. Planned after the engine works (user request, 2026-10-18): a tmux/terminal buffer running Hermes with the project files visible to it, and a discreet top-left menu (open file, theme, terminal, project folder).
+
+### T17 worker cancellation follow-up
+
+Claude Code tasks now observe adapter removal while waiting for the CLI. Removing
+`le-worker-claude-code` terminates and reaps the active child instead of waiting
+for the full task timeout. Stdout/stderr streams are closed by their reader
+threads, and process cleanup also runs when execution unwinds after an error.
+The MCP configuration and existing worker architecture remain shared with the editor.
+
+Run `sbcl --script scripts/run-yeditor-claude-worker-tests.lisp` for the fake CLI,
+cancellation, active-task removal and 100 registration/removal cycles. These tests
+need Python 3; they use no credentials or real Claude CLI. The worker architecture
+is the amended T17 design described above, rather than a second standalone chat panel.

@@ -62,3 +62,44 @@
            (ok (null (yeditor-components/mcp:worker-ids)) "worker unregistered"))
       (uiop:terminate-process process)
       (uiop:wait-process process))))
+
+(deftest subprocess-cancellation-preempts-the-task-timeout
+  (let ((checks 0)
+        (before (get-internal-real-time)))
+    (multiple-value-bind (out err code)
+        (yeditor-enterprise/workers::run-program-with-timeout
+         '("python3" "-c" "import time; time.sleep(60)")
+         :timeout 30 :cancelled-p (lambda () (> (incf checks) 2)))
+      (declare (ignore out err))
+      (ok (not (zerop code)))
+      (ok (< (/ (- (get-internal-real-time) before) internal-time-units-per-second) 5)
+          "cancellation does not wait for the 30-second deadline"))))
+
+(deftest claude-adapter-100-registration-cycles
+  (let ((adapters (copy-list *adapters*))
+        (workers (copy-list (yeditor-components/mcp:worker-ids))))
+    (dotimes (i 100)
+      (install-component 'le-worker-claude-code)
+      (uninstall-component 'le-worker-claude-code)
+      (ok (equal adapters *adapters*))
+      (ok (equal workers (yeditor-components/mcp:worker-ids))))))
+
+(deftest removing-claude-worker-cancels-an-active-cli
+  (with-global (*claude-code-binary* (test-data "fake-claude"))
+    (install-component 'le-worker-claude-code)
+    (unwind-protect
+         (let* ((adapter (first *adapters*))
+                (task (yeditor-components/mcp:submit-task (adapter-worker-id adapter) "edit" "SLOW")))
+           ;; No public task-state accessor exists; inspect under the bus lock.
+           (ok (wait-for
+                (lambda ()
+                  (bt2:with-lock-held (yeditor-components/mcp::*bus-lock*)
+                    (eq :delivered (getf (find task yeditor-components/mcp::*tasks*
+                                              :key (lambda (entry) (getf entry :id)) :test #'equal)
+                                         :status))))))
+           (let ((before (get-internal-real-time)))
+             (uninstall-component 'le-worker-claude-code)
+             (ok (< (/ (- (get-internal-real-time) before) internal-time-units-per-second) 5)
+                 "removal interrupts a ten-second fake CLI task"))
+           (ok (null *adapters*)))
+      (uninstall-component 'le-worker-claude-code))))

@@ -31,6 +31,9 @@ jobs:
       - name: IP compliance - headers and L0 boundary
         run: bash scripts/check-license-headers.sh
 
+      - name: Benchmark gate failure-contract tests
+        run: python3 scripts/test-bench-gate.py
+
       - name: Build test image
         run: docker build -f docker/Dockerfile.test -t lem-tests .
 

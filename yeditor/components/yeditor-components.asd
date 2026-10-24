@@ -22,6 +22,7 @@
                (:file "sidebar")
                (:file "terminal")
                (:file "workspace-layout")
+               (:file "navigation")
                (:file "treesitter")
                (:file "lang-python")
                (:file "models")

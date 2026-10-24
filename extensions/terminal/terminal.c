@@ -437,7 +437,13 @@ unsigned int terminal_last_cell_attrs_reverse(struct terminal *terminal)
 
 unsigned int terminal_last_cell_attrs_conceal(struct terminal *terminal)
 {
+#if VTERM_VERSION_MAJOR > 0 || VTERM_VERSION_MINOR >= 2
   return terminal->lastCell.attrs.conceal;
+#else
+  /* libvterm before 0.2 does not expose this attribute. */
+  (void)terminal;
+  return 0;
+#endif
 }
 
 unsigned int terminal_last_cell_attrs_strike(struct terminal *terminal)
@@ -462,12 +468,24 @@ unsigned int terminal_last_cell_attrs_dhl(struct terminal *terminal)
 
 unsigned int terminal_last_cell_attrs_small(struct terminal *terminal)
 {
+#if VTERM_VERSION_MAJOR > 0 || VTERM_VERSION_MINOR >= 3
   return terminal->lastCell.attrs.small;
+#else
+  /* libvterm before 0.3 does not expose this attribute. */
+  (void)terminal;
+  return 0;
+#endif
 }
 
 unsigned int terminal_last_cell_attrs_baseline(struct terminal *terminal)
 {
+#if VTERM_VERSION_MAJOR > 0 || VTERM_VERSION_MINOR >= 3
   return terminal->lastCell.attrs.baseline;
+#else
+  /* libvterm before 0.3 does not expose this attribute. */
+  (void)terminal;
+  return 0;
+#endif
 }
 
 uint8_t terminal_last_cell_fg_red(struct terminal *terminal)

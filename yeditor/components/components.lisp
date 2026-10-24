@@ -9,6 +9,7 @@
   (:import-from :yeditor-components/zero-chrome #:le-zero-chrome)
   (:import-from :yeditor-components/palette #:le-palette)
   (:import-from :yeditor-components/dark-theme #:le-dark-theme)
+  (:import-from :yeditor-components/navigation #:le-navigation)
   (:import-from :yeditor-components/hud #:le-hud)
   (:import-from :yeditor-components/lsp #:le-lsp)
   (:import-from :yeditor-components/treesitter #:le-treesitter-packs)
@@ -25,7 +26,7 @@
                 #:yeditor-director-intent #:yeditor-director-approve #:yeditor-director-rollback)
   (:import-from :yeditor-components/tutorial #:le-tutorial #:yeditor-tutorial)
   (:import-from :yeditor-components/themes-ergonomic #:le-themes-ergonomic #:le-theme-extended)
-  (:export :enable-ephemeral-ui :disable-ephemeral-ui :le-zero-chrome :le-palette :le-hud
+  (:export :le-navigation :enable-ephemeral-ui :disable-ephemeral-ui :le-zero-chrome :le-palette :le-hud
            :le-themes-ergonomic :le-theme-extended :le-dark-theme :le-lsp
            :le-inherited-entry-points-off :le-git :le-project :le-tree :le-sidebar :le-terminal :le-workspace-layout
            :le-director-cockpit :yeditor-director-intent :yeditor-director-approve :yeditor-director-rollback
@@ -34,7 +35,7 @@
 (in-package :yeditor-components)
 
 (defun enable-ephemeral-ui ()
-  "Enter the zero-chrome basal state with the ergonomic theme pack (default Gruvbox Soft),
+  "Enable visible project/file navigation over the minimal workspace with the ergonomic theme pack (default Gruvbox Soft),
    Git/project/tree entry points owned by toggleable components (le-git, le-project,
    le-tree), bind the palette (C-c p), let the agent HUD mount and unmount on the
    :agent-tx-active coeffect, and enable the modern workspace layout (sidebar, terminal)."
@@ -50,10 +51,12 @@
     (install-component feature))
   (install-component (quote le-themes-ergonomic))
   (install-component (quote le-dark-theme))
-  (install-component (quote le-palette)))
+  (install-component (quote le-palette))
+  (install-component (quote le-navigation)))
 
 (defun disable-ephemeral-ui ()
   "Restore the chrome and bindings that existed before enable-ephemeral-ui."
+  (uninstall-component (quote le-navigation))
   (uninstall-component (quote le-hud))
   (uninstall-component (quote le-lang-python))
   (uninstall-component (quote le-context-bridge))

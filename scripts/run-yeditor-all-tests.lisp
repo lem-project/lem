@@ -16,6 +16,6 @@
   (asdf:load-asd (merge-pathnames (concatenate 'string "yeditor/" asd) (uiop:getcwd))))
 (defparameter *systems*
   '(:yeditor-tx-tests :registry-tests :yeditor-context-reactivity-tests :loader-tests :durability-tests
-    :yeditor-effects-tests :yeditor-effects-t5-tests :yeditor-effects-t6-tests :yeditor-components-tests :yeditor-enterprise-tests))
+    :yeditor-effects-tests :yeditor-effects-t5-tests :yeditor-effects-t6-tests :yeditor-components-tests :yeditor-navigation-tests :yeditor-enterprise-tests :yeditor-bench-tests))
 (dolist (s *systems*) (asdf:load-system s))
 (uiop:quit (if (every #'rove:run *systems*) 0 1))

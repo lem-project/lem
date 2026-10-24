@@ -1,7 +1,7 @@
 # Yeditor — Implementation Handoff
 
 *Living document. Updated after every completed task so another agent can continue the work.
-Last update: 2026-10-18.*
+Last update: 2026-10-20.*
 
 Authoritative plan (Portuguese, local only — excluded from git via `.git/info/exclude`):
 `.hermes/plans/2026-10-17_192626-yeditor-spacetime-lem-fork.md` (tasks T1–T30, chapters 1–18).
@@ -26,6 +26,32 @@ describe the architecture and rules.
 - **Effects are lazy.** `install-effect` registers a thunk that runs at `tx-commit`; capture
   "previous" state inside the thunk, not at registration time.
 - **Keep this file updated** at the end of each task.
+
+## File navigation (#44)
+
+`le-navigation` is enabled by `enable-ephemeral-ui`. The startup page and persistent
+header offer **Abrir pasta**, **Arquivos (F2)**, **Abrir arquivo (F3)** and **Foco**.
+Folder selection, tabs, recent projects/files, filename/path search, previews and
+Save/Discard/Cancel on dirty close share `navigation-action`; MCP exposes
+`yeditor_navigation_action` and `yeditor_navigation_status`. The tree is Lem's filer.
+Tab/Shift-Tab/Enter and Escape operate the Files page; old shortcuts remain optional.
+
+The filename index and folder selector enumerate in worker threads, then publish
+only to the live component on the editor queue. Uninstall cancels outstanding work
+and restores borrowed UI. See [validation and limits](ux44-navigation-validation.md).
+Run `asdf:test-system :yeditor-navigation-tests` for interaction/100-cycle tests;
+`python3 scripts/test-navigation-terminal.py` runs real ncurses at 80×24/120×32
+(requires the ncurses system/native library already installed).
+
+## Nightly packaging repairs (2026-10-22)
+
+Packaging validation is restored as a PR workflow for packaging inputs. Linux
+builds PIC-enabled libvterm 0.3.3 and pins tree-sitter 0.27; the native helper
+also supports older distro attribute layouts. macOS selects Homebrew OpenSSL 3
+at SBCL startup and clears that loader environment before spawning tools such
+as git. Both produced artifacts must pass `--help` before upload. Validation PRs
+and manual builds do not publish releases; publication is limited to scheduled
+main builds or explicit main-only requests. See [packaging details](nightly-build-validation.md).
 
 ## 2. How to build, test and run
 
@@ -79,7 +105,7 @@ scripts/                  test runners, launchers, CI gates
 | T7 | Coeffects (`define-coeffects`, `emit-context-event`, `reclassify-all`), work-cycle predicates `:agent-tx-active`, `:eval-overlay-active`, `:diagnostics-critical` | `core/context/reactivity.lisp` |
 | T8 | `.yeditor.lisp` loader: `use-component` forms, config validation, reconciliation, mtime-polling HMR thread | `core/context/loader.lisp` |
 | T9 | Opt-in session journal/recovery, torn-write tolerance, activation-ordered `:persist t` reinstall with fresh inverses, external-kill reboot test; [contract and validation](t9-crash-recovery-validation.md) | `core/context/durability.lisp` |
-| T10 | Benchmarks (dispatch, keystroke→frame, component toggle, empty commit), budgets, 20% p95 regression gate in CI (base vs head on same runner) | `core/bench/`, `scripts/bench-gate.sh` |
+| T10 | Real theme install/uninstall, dispatch, keystroke→frame and empty commit; validated results, shared harness on base/head, fail-closed CI and diagnostic artifacts. [Contract/tests](t10-performance-validation.md) | `core/bench/`, `scripts/bench-gate.sh` |
 | T12 (first cut) | Zero-chrome basal state, theme palette with live preview + abort rollback, agent HUD mounted by coeffect with inline diffs and C-c C-a / C-c C-k | `components/` |
 | T11 | Curated pack of 11 `ergo-*` themes defined by semantic roles; OKLCH/WCAG policy validator (no pure black/white, text ≥ 7:1, syntax chroma ≤ 0.17, no light neon); `le-themes-ergonomic` applies Gruvbox Soft and narrows the palette to the pack; `le-theme-extended` reopens all Lem themes; `e-theme` effect | `components/themes-ergonomic.lisp`, `components/theme-policy.lisp`, `effects/e-theme.lisp` |
 | T13 | `le-lsp`: language server sessions started as transactions (one per language), stopped on uninstall; suppresses Lem's untracked auto-start (`lem-lsp-mode:*disable*`) while installed; starts on find-file; modeline `LSP:<lang>` / `LSP:off`; missing server → message with the install command. `e-lsp` rewritten on a new public L0 API (`start-lsp-session`, `stop-lsp-session`, `lsp-session-alive-p`) | `components/lsp.lisp`, `effects/e-lsp.lisp`, `extensions/lsp-mode/lsp-mode.lisp` |

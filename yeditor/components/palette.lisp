@@ -7,6 +7,7 @@
   (:use :cl :lem :yeditor-context :yeditor-effects)
   (:export :le-palette
            :*palette-themes-function*
+           :*palette-theme-aliases*
            :yeditor-palette-theme
            :call-with-theme-preview
            :*open-preview-sessions*))
@@ -16,8 +17,17 @@
   "Function of no arguments returning the theme names the palette offers.
    le-themes-ergonomic narrows it to the curated pack; le-theme-extended widens it.")
 
+(defvar *palette-theme-aliases* nil
+  "Alist mapping human palette labels to registered Lem theme names.")
+
 (defvar *open-preview-sessions* 0
   "Number of live-preview sessions currently open; 0 whenever no palette is shown.")
+
+(defun resolve-theme-name (name)
+  (or (cdr (assoc name *palette-theme-aliases* :test #'equal)) name))
+
+(defun palette-theme-p (name)
+  (find-color-theme (resolve-theme-name name)))
 
 (defun call-with-theme-preview (function)
   "Run FUNCTION with a preview closure (NAME) that applies a theme without saving it.
@@ -30,10 +40,11 @@
     (unwind-protect
          (setf chosen (funcall function
                                (lambda (name)
-                                 (when (find-color-theme name)
-                                   (load-theme name nil)))))
+                                 (let ((theme (resolve-theme-name name)))
+                                   (when (find-color-theme theme)
+                                     (load-theme theme nil))))))
       (decf *open-preview-sessions*)
-      (cond (chosen (load-theme chosen t))
+      (cond (chosen (load-theme (resolve-theme-name chosen) t))
             ((and original (not (equal original (current-theme))))
              (load-theme original nil))))
     chosen))
@@ -53,7 +64,7 @@
    (lambda (preview)
      (prompt-for-string "Theme (live preview, C-g to cancel): "
                         :completion-function (lambda (string) (theme-items string preview))
-                        :test-function (quote find-color-theme)))))
+                        :test-function (quote palette-theme-p)))))
 
 (define-component le-palette
   :version "0.1.0"

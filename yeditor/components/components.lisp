@@ -8,6 +8,7 @@
   (:import-from :yeditor-context/reactivity #:define-coeffects)
   (:import-from :yeditor-components/zero-chrome #:le-zero-chrome)
   (:import-from :yeditor-components/palette #:le-palette)
+  (:import-from :yeditor-components/dark-theme #:le-dark-theme)
   (:import-from :yeditor-components/navigation #:le-navigation)
   (:import-from :yeditor-components/hud #:le-hud)
   (:import-from :yeditor-components/lsp #:le-lsp)
@@ -26,7 +27,7 @@
   (:import-from :yeditor-components/tutorial #:le-tutorial #:yeditor-tutorial)
   (:import-from :yeditor-components/themes-ergonomic #:le-themes-ergonomic #:le-theme-extended)
   (:export :le-navigation :enable-ephemeral-ui :disable-ephemeral-ui :le-zero-chrome :le-palette :le-hud
-           :le-themes-ergonomic :le-theme-extended :le-lsp
+           :le-themes-ergonomic :le-theme-extended :le-dark-theme :le-lsp
            :le-inherited-entry-points-off :le-git :le-project :le-tree :le-sidebar :le-terminal :le-workspace-layout
            :le-director-cockpit :yeditor-director-intent :yeditor-director-approve :yeditor-director-rollback
            :le-treesitter-packs :le-context-bridge :le-lang-python
@@ -49,6 +50,7 @@
                          (quote le-director-cockpit) (quote le-tutorial)))
     (install-component feature))
   (install-component (quote le-themes-ergonomic))
+  (install-component (quote le-dark-theme))
   (install-component (quote le-palette))
   (install-component (quote le-navigation)))
 
@@ -59,6 +61,7 @@
   (uninstall-component (quote le-lang-python))
   (uninstall-component (quote le-context-bridge))
   (uninstall-component (quote le-palette))
+  (uninstall-component (quote le-dark-theme))
   (uninstall-component (quote le-themes-ergonomic))
   (dolist (feature (list (quote le-tutorial) (quote le-director-cockpit)
                          (quote le-workspace-layout) (quote le-terminal) (quote le-sidebar)

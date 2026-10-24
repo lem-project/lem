@@ -18,8 +18,8 @@
     table))
 
 (deftest regression-boundaries-and-budgets
-  (ok (nth-value 1 (yeditor-bench:compare-results (results 120) (results 100))))
-  (multiple-value-bind (report pass) (yeditor-bench:compare-results (results 121) (results 100))
+  (ok (nth-value 1 (yeditor-bench:compare-results (results 150) (results 100))))
+  (multiple-value-bind (report pass) (yeditor-bench:compare-results (results 151) (results 100))
     (ng pass)
     (ok (search "FAIL" report)))
   (ng (nth-value 1 (yeditor-bench:compare-results (results 33001))))

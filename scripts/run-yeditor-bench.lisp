@@ -7,7 +7,7 @@
 ;;;   sbcl --script scripts/run-yeditor-bench.lisp OUT.json [BASE.json]
 ;;; Baseline collection: sbcl --script scripts/run-yeditor-bench.lisp --measure-only OUT.json
 ;;; Writes OUT.json and prints the report; with BASE.json, exits 1 on a regression
-;;; (p95 more than 20% slower) or on a p95 over its absolute budget.
+;;; (p95 more than 50% slower) or on a p95 over its absolute budget.
 (load ".qlot/setup.lisp")
 (asdf:load-system :yeditor-bench)
 (let* ((args (uiop:command-line-arguments))

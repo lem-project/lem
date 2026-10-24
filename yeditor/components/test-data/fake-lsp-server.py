@@ -31,6 +31,9 @@ while True:
     if msg is None or msg.get("method") == "exit":
         sys.exit(0)
     if msg.get("method") == "initialize":
+        if len(sys.argv) > 1:
+            with open(sys.argv[1], "a") as trace:
+                trace.write(json.dumps(msg["params"]) + "\n")
         send({"jsonrpc": "2.0", "id": msg["id"], "result": {"capabilities": {}}})
     elif msg.get("method") == "shutdown":
         send({"jsonrpc": "2.0", "id": msg["id"], "result": None})

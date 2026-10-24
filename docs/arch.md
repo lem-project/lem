@@ -123,3 +123,28 @@ Git gutter to populate it); diagnostics uses the existing LSP diagnostic list.
 Neither segment launches external work during redisplay. Segment removal
 restores its own flag independently of other segments; removing the mode-line
 component restores the previous format and palette actions.
+
+## Project-scoped language servers
+
+`le-lsp` tracks sessions by language and project root (the root markers from
+Lem's language specification). Files in the same project share a server;
+projects using the same language have separate workspaces and document routing.
+Stopping a project removes its acquired buffer hooks and cancels pending
+initialization callbacks. Removing the component stops all owned servers while
+preserving externally owned servers and hooks.
+
+With `le-lsp` enabled, the appearance palette offers **LSP: start for this
+project** and **LSP: stop for this project**. The mode-line reflects the current
+buffer's attached session. The commands `yeditor-lsp-start`, `yeditor-lsp-stop`
+and `yeditor-lsp-stop-all` also work through the existing MCP editor command
+interface. The start command enables the component when needed.
+
+A missing executable prompts **Install LSP? Show setup instructions**, offering
+the install command and documentation configured by the language specification.
+Accepting displays guidance; installing packages remains an explicit user action.
+
+Run `sbcl --script scripts/run-yeditor-lsp-tests.lisp` for the stdio integration
+and effect regressions. The fixture creates two temporary Python projects and
+a shell launcher named `pyright`, verifies both initialize roots, and checks
+100 start/stop/uninstall cycles against buffer/hook/palette baselines. It needs
+Python 3, but no real pyright or external service.

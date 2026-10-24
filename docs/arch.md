@@ -108,3 +108,18 @@ it before the underlying ergonomic pack (LIFO). The existing palette command
 
 The component suite checks 200 dark/light install/preview/accept/uninstall cycles
 against color and style snapshots, plus restoration of the palette variables.
+
+## Composable mode-line and tabs
+
+`le-mode-line-minimal` owns the mode-line format and adds palette actions for
+buffer, mode, Git change count, diagnostics, position, and tabs. Each segment is
+an independent `le-mode-line-*` component; accepting its palette item toggles
+it, while preview/cancel leaves it unchanged. The standard workspace enables
+buffer name and position. `le-tabs` is off by default and uses Lem's existing
+frame multiplexer when enabled.
+
+Git shows the cached gutter change count when available (enable the inherited
+Git gutter to populate it); diagnostics uses the existing LSP diagnostic list.
+Neither segment launches external work during redisplay. Segment removal
+restores its own flag independently of other segments; removing the mode-line
+component restores the previous format and palette actions.

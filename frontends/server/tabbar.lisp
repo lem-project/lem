@@ -308,8 +308,11 @@ buttons.forEach(button => {
     (setf *tabbar* nil)))
 
 (defun tabbar-on ()
-  (unless (variable-value 'tabbar :global)
-    (tabbar-init)))
+  (cond
+   ((not (html-support-p (implementation)))
+    (editor-error "The tabbar requires an HTML capable frontend"))
+   ((not (variable-value 'tabbar :global))
+    (tabbar-init))))
 
 (define-editor-variable tabbar nil ""
   (lambda (value)
@@ -345,5 +348,6 @@ automatically after init when `*enable-tabbar-on-startup*' is non-NIL."
 
 (add-hook *after-init-hook*
           (lambda ()
-            (when *enable-tabbar-on-startup*
+            (when (and *enable-tabbar-on-startup*
+                       (html-support-p (implementation)))
               (enable-tabbar))))

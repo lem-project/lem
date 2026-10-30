@@ -34,17 +34,25 @@ Such names are excluded from completion, like Emacs's `ucs-names'."
                   :when (and name (not (algorithmically-named-p name)))
                   :collect (cons (string-upcase name) char)))))
 
+(defun non-ascii-graphic-char-p (char)
+  "Return T if CHAR is a graphic character outside ASCII."
+  (and (graphic-char-p char)
+       (> (char-code char) #x7F)))
+
 (defun completion-char-names (input)
   "Return completion items for the character names matching INPUT.
 A leading `*' makes INPUT match anywhere in the name.
-When INPUT is empty, return the first names so that the completion list
-is populated as soon as the prompt is opened, like M-x."
+When INPUT is empty, return the names of graphic characters outside
+ASCII so that the completion list is populated as soon as the prompt
+is opened, like M-x."
   (let* ((substring-p (and (plusp (length input))
                            (char= (char input 0) #\*)))
          (input (string-upcase (if substring-p (subseq input 1) input)))
          (candidates (char-name-candidates))
          (matches (cond ((zerop (length input))
-                         candidates)
+                         (remove-if-not (lambda (pair)
+                                          (non-ascii-graphic-char-p (cdr pair)))
+                                        candidates))
                         (substring-p
                          (remove-if-not (lambda (pair)
                                           (search input (car pair)))

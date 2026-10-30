@@ -36,26 +36,30 @@ Such names are excluded from completion, like Emacs's `ucs-names'."
 
 (defun completion-char-names (input)
   "Return completion items for the character names matching INPUT.
-A leading `*' makes INPUT match anywhere in the name."
+A leading `*' makes INPUT match anywhere in the name.
+When INPUT is empty, return the first names so that the completion list
+is populated as soon as the prompt is opened, like M-x."
   (let* ((substring-p (and (plusp (length input))
                            (char= (char input 0) #\*)))
-         (input (string-upcase (if substring-p (subseq input 1) input))))
-    (when (plusp (length input))
-      (let* ((candidates (char-name-candidates))
-             (matches (if substring-p
-                          (remove-if-not (lambda (pair)
-                                           (search input (car pair)))
-                                         candidates)
-                          (completion-strings input candidates :key #'car))))
-        (loop :for (name . char) :in (subseq matches 0
-                                             (min +completion-limit+
-                                                  (length matches)))
-              :collect (lem/completion-mode:make-completion-item
-                        :label name
-                        :detail (format nil "U+~4,'0X~@[ ~A~]"
-                                        (char-code char)
-                                        (and (graphic-char-p char)
-                                             (string char)))))))))
+         (input (string-upcase (if substring-p (subseq input 1) input)))
+         (candidates (char-name-candidates))
+         (matches (cond ((zerop (length input))
+                         candidates)
+                        (substring-p
+                         (remove-if-not (lambda (pair)
+                                          (search input (car pair)))
+                                        candidates))
+                        (t
+                         (completion-strings input candidates :key #'car)))))
+    (loop :for (name . char) :in (subseq matches 0
+                                         (min +completion-limit+
+                                              (length matches)))
+          :collect (lem/completion-mode:make-completion-item
+                    :label name
+                    :detail (format nil "U+~4,'0X~@[ ~A~]"
+                                    (char-code char)
+                                    (and (graphic-char-p char)
+                                         (string char)))))))
 
 (defun %scalar-value-p (code)
   "Return T if CODE is a Unicode scalar value."

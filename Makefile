@@ -160,6 +160,7 @@ lint:
 	.qlot/bin/sblint extensions/scala-mode/lem-scala-mode.asd
 	.qlot/bin/sblint extensions/scheme-mode/lem-scheme-mode.asd
 	.qlot/bin/sblint extensions/shell-mode/lem-shell-mode.asd
+	.qlot/bin/sblint extensions/spell-check/lem-spell-check.asd
 	.qlot/bin/sblint extensions/sql-mode/lem-sql-mode.asd
 	.qlot/bin/sblint extensions/swift-mode/lem-swift-mode.asd
 	.qlot/bin/sblint extensions/terminal/lem-terminal.asd

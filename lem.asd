@@ -314,6 +314,7 @@
                "lem-emacs-help-mode"
                "lem-display-time-mode"
                "lem-tramp"
+               "lem-trans"
                "lem-winner-mode"))
 
 (defsystem "lem"

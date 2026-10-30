@@ -35,6 +35,7 @@
            :directory-mode-delete-files
            :directory-mode-copy-files
            :directory-mode-rename-files
+           :directory-mode-do-async-shell-command
            :directory-mode-rename-file
            :directory-mode-sort-files
            :directory-mode-sort-by-name
@@ -50,6 +51,9 @@
 #+sbcl
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (sb-ext:lock-package :lem/directory-mode/commands))
+
+(defvar *async-shell-command-buffer-name* "*Async Shell Command*"
+  "Name of the buffer that receives asynchronous shell command output.")
 
 (defun search-filename-and-recenter (filename)
   "Search `filename` in this files listing, recenter the window on it"
@@ -245,6 +249,165 @@ With prefix argument ARG, unmark all those files."
       (editor-error "Please select a directory to move multiple files."))
     (rename-files files dst-file))
   (update-all-buffers))
+
+(defun isolated-shell-wildcard-p (command wildcard)
+  "Return T if COMMAND contains WILDCARD surrounded by whitespace."
+  (ppcre:scan (format nil "(?:^|\\s)\\~C(?=\\s|$)" wildcard) command))
+
+(defun isolated-shell-qmark-p (command)
+  "Return T if COMMAND contains an isolated `?' or `` `?' ''."
+  (or (isolated-shell-wildcard-p command #\?)
+      (ppcre:scan "`\\?'" command)))
+
+(defun replace-isolated-shell-wildcard (command wildcard replacement)
+  "Replace the isolated WILDCARD marks in COMMAND with REPLACEMENT.
+The whitespace surrounding each mark is preserved.  For `?', the
+`` `?' '' form is replaced as well."
+  (let ((regex (if (char= wildcard #\?)
+                   "(^|\\s)\\?(?=\\s|$)|`\\?'"
+                   "(^|\\s)\\*(?=\\s|$)")))
+    (ppcre:regex-replace-all
+     regex
+     command
+     (lambda (target-string start end match-start match-end reg-starts reg-ends)
+       (declare (ignore start end match-start match-end))
+       (if (aref reg-starts 0)
+           (concatenate 'string
+                        (subseq target-string (aref reg-starts 0) (aref reg-ends 0))
+                        replacement)
+           replacement)))))
+
+(defun shell-command-file-argument (pathname directory)
+  "Return PATHNAME as a shell-quoted argument relative to DIRECTORY."
+  (let* ((relative-name (uiop:native-namestring
+                         (uiop:enough-pathname pathname directory)))
+         (name (if (uiop:string-prefix-p "-" relative-name)
+                   (concatenate 'string "./" relative-name)
+                   relative-name)))
+    (uiop:escape-shell-token name)))
+
+(defun make-async-shell-command-lines (command files directory)
+  "Return the shell commands to run for FILES, following dired's rules.
+If COMMAND contains an isolated `*', substitute the whole file list.
+If it contains an isolated `?' or `` `?' '', substitute one file name
+per command.  Otherwise append the file name to COMMAND."
+  (let ((file-arguments
+          (mapcar (lambda (file)
+                    (shell-command-file-argument file directory))
+                  files)))
+    (cond
+      ((isolated-shell-wildcard-p command #\*)
+       (when (isolated-shell-qmark-p command)
+         (editor-error "You can not combine `*' and `?' substitution marks"))
+       (list (replace-isolated-shell-wildcard
+              command
+              #\*
+              (format nil "~{~A~^ ~}" file-arguments))))
+      ((isolated-shell-qmark-p command)
+       (mapcar (lambda (file-argument)
+                 (replace-isolated-shell-wildcard command #\? file-argument))
+               file-arguments))
+      (t
+       (mapcar (lambda (file-argument)
+                 (format nil "~A ~A" command file-argument))
+               file-arguments)))))
+
+(defun strip-async-shell-command-suffix (command)
+  "Remove a trailing `&' or `;' from COMMAND.
+Dired treats these as requests to run the command in the background,
+which this command does regardless."
+  (loop :for stripped := (ppcre:regex-replace "\\s*[;&]\\s*\\z" command "")
+        :until (string= stripped command)
+        :do (setf command stripped)
+        :finally (return (string-trim '(#\space #\tab #\newline) command))))
+
+(defun combine-async-shell-command-lines (commands)
+  "Combine per-file COMMANDS so they run in parallel in one shell."
+  (cond
+    ((null commands) "")
+    ((null (cdr commands)) (first commands))
+    (t
+     (let ((joined (format nil "~{~A~^ & ~}" commands)))
+       #-windows (concatenate 'string joined " & wait")
+       #+windows joined))))
+
+(defun async-shell-command-output-buffer ()
+  "Return the output buffer, clearing any previous contents."
+  (let ((buffer (make-buffer *async-shell-command-buffer-name*
+                             :read-only-p t
+                             :enable-undo-p nil)))
+    (with-buffer-read-only buffer nil
+      (erase-buffer buffer))
+    buffer))
+
+(defun append-async-shell-command-output (buffer string)
+  "Append STRING to the output buffer BUFFER."
+  (unless (deleted-buffer-p buffer)
+    (let ((*inhibit-read-only* t))
+      (insert-string (buffer-end-point buffer) string))))
+
+(defun collect-async-shell-command-output (process buffer)
+  "Copy the output of PROCESS into BUFFER until PROCESS exits."
+  (let ((stream (uiop:process-info-output process)))
+    (unwind-protect
+         (loop :for line := (read-line stream nil nil)
+               :while line
+               :do (let ((line line))
+                     (send-event
+                      (lambda ()
+                        (append-async-shell-command-output
+                         buffer
+                         (format nil "~A~%" line))))))
+      (ignore-errors (close stream))
+      (let ((exit-code (uiop:wait-process process)))
+        (when (and exit-code (not (eql 0 exit-code)))
+          (send-event
+           (lambda ()
+             (message "Shell command exited with status ~A" exit-code))))))))
+
+(defun launch-async-shell-command (command directory buffer)
+  "Run COMMAND in DIRECTORY, appending its output to BUFFER."
+  (let ((process (uiop:launch-program command
+                                      :directory directory
+                                      :output :stream
+                                      :error-output :output)))
+    (bt2:make-thread
+     (lambda ()
+       (collect-async-shell-command-output process buffer))
+     :name "Lem async shell command")))
+
+(define-command directory-mode-do-async-shell-command () ()
+  "Run a shell command asynchronously on the marked files.
+
+The command is expanded like Emacs's `dired-do-async-shell-command':
+
+- If COMMAND contains `*' surrounded by whitespace, it is run once
+  with the whole list of marked file names substituted for `*'.
+- If COMMAND contains `?' surrounded by whitespace, or `` `?' '', it is
+  run once per file with that file name substituted.
+- Otherwise it is run once per file with the file name appended.
+
+The command runs in the directory buffer's directory and its output is
+shown in the `*Async Shell Command*' buffer.  The directory buffer is
+not refreshed automatically; use \\[directory-mode-update-buffer] to
+refresh it."
+  (let ((files (selected-files (current-point)))
+        (directory (buffer-directory)))
+    (unless files
+      (editor-error "No file on this line"))
+    (let* ((command (prompt-for-string
+                     (format nil "& on ~D file~:P: " (length files))
+                     :history-symbol 'directory-mode-shell-command))
+           (command (strip-async-shell-command-suffix command)))
+      (unless (str:non-blank-string-p command)
+        (editor-error "No shell command"))
+      (let* ((buffer (async-shell-command-output-buffer))
+             (commands (make-async-shell-command-lines command files directory)))
+        (launch-async-shell-command
+         (combine-async-shell-command-lines commands)
+         directory
+         buffer)
+        (pop-to-buffer buffer)))))
 
 (defun move-to-file-position (point)
   (with-point ((limit point))

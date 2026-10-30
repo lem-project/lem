@@ -11,13 +11,14 @@ suggestions for the word at point.
 ## Requirements
 
 The extension binds to the Enchant C library at load time, so
-`libenchant-2` must be installed:
+`libenchant-2` and the development package that provides the
+`libenchant-2.so` symlink must be installed:
 
 | Platform | Package |
 |----------|---------|
 | Arch Linux | `enchant` |
-| Debian/Ubuntu | `libenchant-2-2` plus a dictionary such as `hunspell-en-us` or `aspell-en` |
-| Fedora | `enchant2` plus `hunspell-en-US` |
+| Debian/Ubuntu | `libenchant-2-dev` plus a dictionary such as `hunspell-en-us` or `aspell-en` |
+| Fedora | `enchant2-devel` plus `hunspell-en-US` |
 | macOS (Homebrew) | `brew install enchant` |
 
 At least one Enchant dictionary must be available. Check the available
@@ -27,17 +28,10 @@ languages with:
 (lem-spell-check:spell-check-available-dictionaries)
 ```
 
-## Loading and enabling
+## Enabling
 
-The extension is not part of the default `lem/extensions` build because
-that would make libenchant a hard dependency of every Lem build and of
-the documentation CI. Load it explicitly from your init file:
-
-```lisp
-(lem:maybe-load-systems "lem-spell-check")
-```
-
-Then enable it per buffer:
+The extension is part of the standard `lem/extensions` build, so it is
+loaded together with Lem. Enable it per buffer:
 
 ```lisp
 (spell-check-mode t)

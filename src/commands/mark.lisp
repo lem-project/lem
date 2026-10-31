@@ -18,7 +18,7 @@
       (move-point (current-point) (pop-buffer-point))
       (progn
         (set-cursor-mark (current-point) (current-point))
-        (when-real-cursor (message "Mark set")))))
+        (message "Mark set"))))
 
 (define-command exchange-point-mark () ()
   "Exchange the current cursor position with the marked position."

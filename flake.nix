@@ -400,6 +400,8 @@
 
             mkdir -p $out/share/applications
             cp ${makeLemDesktopItem {terminal = true;}}/share/applications/* $out/share/applications
+            mkdir -p $out/share/icons/hicolor/256x256/apps
+            cp ${./resources/lem.png} $out/share/icons/hicolor/256x256/apps/lem.png
 
             runHook postInstall
           '';
@@ -442,6 +444,8 @@
 
             mkdir -p $out/share/applications
             cp ${makeLemDesktopItem {terminal = false;}}/share/applications/* $out/share/applications
+            mkdir -p $out/share/icons/hicolor/256x256/apps
+            cp ${./resources/lem.png} $out/share/icons/hicolor/256x256/apps/lem.png
 
             runHook postInstall
           '';
@@ -506,6 +510,8 @@
 
               mkdir -p $out/share/applications
               cp ${makeLemDesktopItem {terminal = false;}}/share/applications/* $out/share/applications
+              mkdir -p $out/share/icons/hicolor/256x256/apps
+              cp ${./resources/lem.png} $out/share/icons/hicolor/256x256/apps/lem.png
 
             ''
             else ''

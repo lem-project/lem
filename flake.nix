@@ -316,6 +316,30 @@
           cl-template
         ];
 
+        makeLemDesktopItem = { terminal }: pkgs.makeDesktopItem {
+          name = "lem";
+          desktopName = "Lem";
+          comment = "Common Lisp editor/IDE with high expansibility";
+          exec = "lem %F";
+          mimeTypes = [
+            "text/english"
+            "text/plain"
+            "text/x-makefile"
+            "text/x-c++hdr"
+            "text/x-c++src"
+            "application/x-shellscript"
+            "text/x-c"
+            "text/x-c++"
+          ];
+          icon = "lem";
+          terminal = terminal;
+          type = "Application";
+          categories = [
+            "Development"
+            "TextEditor"
+          ];
+        };
+
         # The base derivation that other variants inherit from
         lem-base = lisp.buildASDFSystem {
           pname = "lem-base";
@@ -373,6 +397,10 @@
             wrapProgram $out/bin/lem \
               --prefix LD_LIBRARY_PATH : "$LD_LIBRARY_PATH:${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}:${tree-sitter-grammars.yaml}:${tree-sitter-grammars.nix}:${tree-sitter-grammars.python}:${tree-sitter-grammars.javascript}:${tree-sitter-grammars.typescript}:${tree-sitter-grammars.go}:${tree-sitter-grammars.perl}:${tree-sitter-grammars.clojure}" \
               --prefix DYLD_LIBRARY_PATH : "$DYLD_LIBRARY_PATH"
+
+            mkdir -p $out/share/applications
+            cp ${makeLemDesktopItem {terminal = true;}}/share/applications/* $out/share/applications
+
             runHook postInstall
           '';
         });
@@ -411,6 +439,10 @@
             wrapProgram $out/bin/lem \
               --prefix LD_LIBRARY_PATH : "$LD_LIBRARY_PATH:${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}:${tree-sitter-grammars.yaml}:${tree-sitter-grammars.nix}:${tree-sitter-grammars.python}:${tree-sitter-grammars.javascript}:${tree-sitter-grammars.typescript}:${tree-sitter-grammars.go}:${tree-sitter-grammars.perl}:${tree-sitter-grammars.clojure}" \
               --prefix DYLD_LIBRARY_PATH : "$DYLD_LIBRARY_PATH"
+
+            mkdir -p $out/share/applications
+            cp ${makeLemDesktopItem {terminal = false;}}/share/applications/* $out/share/applications
+
             runHook postInstall
           '';
         });
@@ -471,6 +503,10 @@
                 --prefix XDG_DATA_DIRS : "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}" \
                 --prefix XDG_DATA_DIRS : "${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}" \
                 --prefix LD_LIBRARY_PATH : "${tree-sitter-grammars.json}:${tree-sitter-grammars.markdown}:${tree-sitter-grammars.yaml}:${tree-sitter-grammars.nix}:${tree-sitter-grammars.python}:${tree-sitter-grammars.javascript}:${tree-sitter-grammars.typescript}:${tree-sitter-grammars.go}:${tree-sitter-grammars.perl}:${tree-sitter-grammars.clojure}"
+
+              mkdir -p $out/share/applications
+              cp ${makeLemDesktopItem {terminal = false;}}/share/applications/* $out/share/applications
+
             ''
             else ''
               wrapProgram $out/bin/lem \

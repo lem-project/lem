@@ -4,9 +4,13 @@
 
 (in-package :lem-tutor)
 
-(defun tutorial-text ()
-  (merge-pathnames "tutorial-basics.txt" 
-                   (asdf:system-source-directory :lem-tutor)))
+;; Read at load time so that the text is part of the image: a deployed
+;; executable has neither ASDF systems nor the source tree to read from.
+(defparameter *tutorial-text*
+  (uiop:read-file-string
+   (asdf:system-relative-pathname :lem-tutor "tutorial-basics.txt")
+   :external-format :utf-8)
+  "Initial contents of the tutorial's working copy.")
 
 (defun tutorial-save-file ()
   (merge-pathnames "lem-tutor-saves/lem-tutor-save.txt" (lem-home)))
@@ -50,7 +54,8 @@
   open the save file, store the buffer and hook into after-save for progress tracking."
   (ensure-directories-exist (tutorial-save-file))
   (unless (probe-file  (tutorial-save-file))
-    (uiop:copy-file (tutorial-text) (tutorial-save-file)))
+    (alexandria:write-string-into-file *tutorial-text* (tutorial-save-file)
+                                       :external-format :utf-8))
   (let ((buffer (find-file-buffer (tutorial-save-file))))
     (switch-to-buffer buffer)
     (tutorial-load-progress)

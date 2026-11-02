@@ -292,6 +292,7 @@
           trivial-gray-streams
           trivial-types
           cl-ppcre
+          cl-unicode
           inquisitor
           babel
           bordeaux-threads

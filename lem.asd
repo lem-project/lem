@@ -22,6 +22,7 @@
                "trivial-gray-streams"
                "trivial-types"
                "cl-ppcre"
+               "cl-unicode"
                "micros"
                "inquisitor"
                "babel"
@@ -189,6 +190,7 @@
                              (:file "loading-spinner")
                              (:file "completion-mode")
                              (:file "prompt-window")
+                             (:file "insert-char")
                              (:file "tmlanguage")
                              (:file "button")
                              (:file "listener-mode")

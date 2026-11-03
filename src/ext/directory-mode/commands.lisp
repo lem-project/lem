@@ -252,22 +252,34 @@ With prefix argument ARG, unmark all those files."
 
 (defun isolated-shell-wildcard-p (command wildcard)
   "Return T if COMMAND contains WILDCARD surrounded by whitespace."
-  (ppcre:scan (format nil "(?:^|\\s)\\~C(?=\\s|$)" wildcard) command))
+  (ppcre:scan `(:sequence
+                (:alternation :start-anchor :whitespace-char-class)
+                ,wildcard
+                (:positive-lookahead
+                 (:alternation :whitespace-char-class :end-anchor)))
+              command))
 
 (defun isolated-shell-qmark-p (command)
   "Return T if COMMAND contains an isolated `?' or `` `?' ''."
   (or (isolated-shell-wildcard-p command #\?)
-      (ppcre:scan "`\\?'" command)))
+      (ppcre:scan '(:sequence #\` #\? #\') command)))
 
 (defun replace-isolated-shell-wildcard (command wildcard replacement)
   "Replace the isolated WILDCARD marks in COMMAND with REPLACEMENT.
 The whitespace surrounding each mark is preserved.  For `?', the
 `` `?' '' form is replaced as well."
-  (let ((regex (if (char= wildcard #\?)
-                   "(^|\\s)\\?(?=\\s|$)|`\\?'"
-                   "(^|\\s)\\*(?=\\s|$)")))
+  (let* ((isolated
+           `(:sequence
+             (:register (:alternation :start-anchor :whitespace-char-class))
+             ,wildcard
+             (:positive-lookahead
+              (:alternation :whitespace-char-class :end-anchor))))
+         (parse-tree
+           (if (char= wildcard #\?)
+               (list :alternation isolated '(:sequence #\` #\? #\'))
+               isolated)))
     (ppcre:regex-replace-all
-     regex
+     parse-tree
      command
      (lambda (target-string start end match-start match-end reg-starts reg-ends)
        (declare (ignore start end match-start match-end))
@@ -316,7 +328,14 @@ per command.  Otherwise append the file name to COMMAND."
   "Remove a trailing `&' or `;' from COMMAND.
 Dired treats these as requests to run the command in the background,
 which this command does regardless."
-  (loop :for stripped := (ppcre:regex-replace "\\s*[;&]\\s*\\z" command "")
+  (loop :for stripped := (ppcre:regex-replace
+                          '(:sequence
+                            (:greedy-repetition 0 nil :whitespace-char-class)
+                            (:char-class #\; #\&)
+                            (:greedy-repetition 0 nil :whitespace-char-class)
+                            :modeless-end-anchor-no-newline)
+                          command
+                          "")
         :until (string= stripped command)
         :do (setf command stripped)
         :finally (return (string-trim '(#\space #\tab #\newline) command))))

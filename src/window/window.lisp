@@ -328,48 +328,41 @@ This is the content area in which the buffer is displayed, without any side marg
   (mapc #'%free-window (uiop:ensure-list (frame-rightside-window frame)))
   (values))
 
-(defun adjust-view-point (window)
-  "When the window view point is at the middle of wrapped line and
-window width is changed, we must recalc the window view point."
-  (unless (variable-value 'line-wrap :default (window-buffer window))
-    (return-from adjust-view-point nil))
-  (when (start-line-p (window-view-point window))
-    (return-from adjust-view-point nil))
-  (let ((point (window-view-point window))
-        (i1    0))
-    (map-wrapping-line
-     window
-     (line-string point)
-     (lambda (i)
-       (when (= (point-charpos point) i)
-         (return-from adjust-view-point nil))
-       (when (< (point-charpos point) i)
-         (line-offset point 0 i1)
-         (return-from adjust-view-point point))
-       (setf i1 i)))
-    (line-offset point 0 i1)
-    point))
-
-(defun window-offset-view (window)
-  (if (point< (window-buffer-point window)
-              (window-view-point window))
-      ;; return minus number
-      (window-cursor-y window)
-      ;; return zero or plus number
-      (let ((height (window-height-without-modeline window)))
-        (max 0 (- (window-cursor-y window)
-                  (1- height))))))
-
-(defun window-see (window &optional (recenter *scroll-recenter-p*))
-  (adjust-view-point window)
-  (let ((offset (window-offset-view window)))
-    (unless (zerop offset)
-      (cond (recenter
-             (window-recenter window)
-             nil)
-            (t
-             (window-scroll window offset)
-             offset)))))
+(defun window-see (window &optional (recenter *scroll-recenter-p*) (margin 0))
+  "Scroll WINDOW so the cursor's row is fully visible.
+keep MARGIN lines between the cursor and the top and bottom of the window. near the start or end of
+the buffer there may not be enough lines, so the margin is smaller there. if the window is too
+short for both margins, the top one is kept.
+if RECENTER is true, put the cursor's row in the middle of the window instead."
+  (let* ((view (visual-line-beginning (window-view-point window)))
+         (point (window-buffer-point window))
+         (height (window-view-height window))
+         (margin (* margin (text-row-height))))
+    (with-point ((line point))
+      (visual-line-beginning line)
+      (let ((rows (visual-line-rows window line)))
+        (multiple-value-bind (row-top row-bottom)
+            (point-row-extent rows (count-characters line point))
+          (let ((below (height-below window
+                                     line
+                                     (- (reduce #'+ rows :key #'cdr) row-bottom)
+                                     margin)))
+            (multiple-value-bind (top bottom) (window-point-row-extent window point)
+              (flet ((scroll (continue-p)
+                       (if recenter
+                           (window-recenter window)
+                           (set-window-view-start
+                            window
+                            (move-back-visual-lines window line continue-p)))))
+                (cond ((not (and top (or (<= margin top) (first-line-p view))))
+                       (scroll (lambda (distance line-height)
+                                 (< (+ distance row-top) margin))))
+                      ((< height (+ bottom below))
+                       ;; as low as the row fits, but not so low that the top margin breaks
+                       (scroll (lambda (distance line-height)
+                                 (or (< (+ distance row-top) margin)
+                                     (<= (+ distance line-height row-bottom below)
+                                         height))))))))))))))
 
 (defun split-window-after (current-window new-window split-type)
   (assert (not (eq current-window new-window)))

@@ -112,7 +112,7 @@ Retina to a 1x display).")
                  :documentation
                  "Pre-allocated SDL_Rect reused across all render calls to
 avoid heap-allocating a new rect + Lisp wrapper on every draw-rect,
-fill-to-end-of-line, render-texture, etc.  Mutated in-place by
+fill-row, render-texture, etc.  Mutated in-place by
 `call-with-scratch-rect' / `with-scratch-rect'; do not rely on its
 contents outside the dynamic extent of that call.")))
 

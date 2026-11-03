@@ -44,7 +44,12 @@ When rendering the DOM and a window in a one-to-one manner, no redraw is require
     :initform nil
     :initarg :support-pixel-positioning
     :reader support-pixel-positioning-p
-    :documentation "When true, the frontend supports pixel-based floating window positioning.")))
+    :documentation "When true, the frontend supports pixel-based floating window positioning.")
+   (image-support
+    :initform nil
+    :initarg :image-support
+    :reader image-support-p
+    :documentation "When true, the frontend can draw an image object.")))
 
 (defun get-default-implementation (&key implementation)
   (let ((classes (c2mop:class-direct-subclasses (find-class 'implementation)))
@@ -175,14 +180,68 @@ PIXEL-X, PIXEL-Y, PIXEL-WIDTH, PIXEL-HEIGHT are in pixels (may be nil for auto-c
   (:method (implementation)
     (values -1 -1)))
 
-(defgeneric lem-if:get-char-width (implementation))
-(defgeneric lem-if:get-char-height (implementation))
+(defgeneric lem-if:cell-width (implementation)
+  (:documentation "Width of one character cell in the frontend's native layout units.
+1 on a cell-based frontend (a terminal counts in cells), pixels on a pixel-based one. These are
+the units `object-width' / `object-height' are counted in."))
 
-(defgeneric lem-if:render-line (implementation view x y objects height))
-(defgeneric lem-if:render-line-on-modeline (implementation view left-objects right-objects
-                                            default-attribute height))
-(defgeneric lem-if:object-width (implementation drawing-object))
-(defgeneric lem-if:object-height (implementation drawing-object))
+(defgeneric lem-if:cell-height (implementation)
+  (:documentation "Height of one character cell in the frontend's native layout units.
+Unit-relative like `cell-width'."))
+
+(defgeneric lem-if:cell-pixel-size (implementation)
+  (:documentation "One character cell in real pixels, as (values WIDTH HEIGHT ASCENT).
+ASCENT is how far below the cell's top the text baseline sits, and may be NIL on its own.
+All three are NIL on a frontend that does not draw in pixels.
+Always pixels, unlike `cell-width' / `cell-height', which are 1 on a cell-based frontend.")
+  (:method (implementation)
+    (values nil nil nil)))
+
+(defgeneric lem-if:font-em-pixels (implementation)
+  (:documentation "Pixels one em of the editor font takes, or NIL when the frontend cannot say.
+In the same units as `cell-pixel-size'.
+The em is smaller than `cell-height', which is measured from the glyph bounding box.")
+  (:method (implementation) nil))
+
+(defgeneric lem-if:render-row (implementation view row)
+  (:documentation "Draw ROW, one screen row of VIEW, replacing whatever it held before.
+ROW is a `lem-core/display:row'. Its height, background and the position of every object on it were
+decided by `lem-core/display:layout-row', so a frontend only paints.
+Blank the row's full width, `row-top' down by ROW-HEIGHT, first."))
+
+(defgeneric lem-if:render-modeline-row (implementation view row default-attribute)
+  (:documentation "Draw ROW as VIEW's modeline, filled with DEFAULT-ATTRIBUTE's background.
+Like `render-row', except ROW was laid out with its top at Y 0, since only the frontend knows
+where on screen its modeline goes. One that draws it into the view moves it with
+`lem-core/display:translate-row'."))
+
+(defgeneric lem-if:object-width (implementation drawing-object)
+  (:documentation "Width DRAWING-OBJECT occupies, in the same units as `cell-width'.
+Defaults in src/display/physical-line.lisp: a text-object is `string-width' cells, counting a wide
+glyph as two, an image its `lem-core/display:image-draw-width'.
+Specialize this only for an object the frontend draws at some other size, as sdl2 does for its
+folder and emoji glyphs."))
+
+(defgeneric lem-if:object-height (implementation drawing-object)
+  (:documentation "Height DRAWING-OBJECT occupies, in the same units as `cell-height'.
+Defaults to one cell for every object but an image, which takes the pixel height it is drawn at
+(`lem-core/display:image-draw-height'). Specialize it as in `object-width'."))
+
+(defgeneric lem-if:object-ascent (implementation drawing-object)
+  (:documentation "How much of DRAWING-OBJECT sits above the text baseline, in the same units as
+`cell-height'.
+Everything on a row shares one baseline, so a row is as tall as the furthest anything reaches above
+it plus the furthest anything reaches below, which can exceed the tallest single object.
+Defaults to the cell ascent a frontend reports through `cell-pixel-size', or the object's bottom
+when it reports none, so one that does not know its baseline keeps its old layout exactly."))
+
+(defgeneric lem-if:image-natural-size (implementation image)
+  (:documentation "Fallback size for an image whose object requests no particular size.
+Returns (values WIDTH HEIGHT) in pixels, or NIL NIL if the frontend can't tell. IMAGE is the
+frontend's own loaded-image handle (an SDL surface, a path handed to a browser, ...), not the
+`lem-core/display:image-object' holding it.")
+  (:method (implementation image)
+    (values nil nil)))
 (defgeneric lem-if:clear-to-end-of-window (implementation view y))
 
 (defgeneric lem-if:js-eval (implementation view code &key wait)

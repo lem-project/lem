@@ -27,9 +27,12 @@
   (window-view-point window))
 
 (defun window-end-point (&optional (window (current-window)))
-  (let ((point (copy-point (window-start-point window) :temporary)))
-    (move-to-next-virtual-line point (1- (window-height* window)) window)
-    point))
+  (let* ((clipped (window-first-clipped-row window))
+         (point (or clipped (copy-point (buffer-end-point (window-buffer window)) :temporary))))
+    ;; clipped starts at the first not-fully-visible row, step back onto the last fully-visible one
+    (when clipped
+      (character-offset point -1))
+    (backward-line-wrap point window t)))
 
 (defun window-has-following-lines-p (&optional (window (current-window)))
   (let ((end-point (window-end-point window)))
@@ -91,13 +94,4 @@ The SCROLL-POSITION is influenced by the scrolloff option."
   t)
 
 (defun adjust-window-scroll ()
-  (let* ((window (current-window))
-         (window-height (window-height* window))
-         (cursor-y (window-cursor-y window))
-         (scroll-offset (scroll-offset window)))
-    (cond
-      ((< cursor-y scroll-offset)
-       (window-scroll window (- cursor-y scroll-offset)))
-      ((and (<= (- window-height scroll-offset) cursor-y)
-            (window-has-following-lines-p window))
-       (window-scroll window (1+ (- cursor-y (- window-height scroll-offset))))))))
+  (window-see (current-window) nil (scroll-offset)))

@@ -129,14 +129,6 @@ position is unknown or unchanged)."
             (line-end point))
   point)
 
-(defun visual-line-beginning (point)
-  "Move POINT to the start of its visual line. returns POINT."
-  (line-start point)
-  (loop :while (line-continuation-p point)
-        :do (line-offset point -1)
-            (line-start point))
-  point)
-
 (defun line-continuation-to-skip (point)
   (let ((overlay (line-continuation-p point)))
     (and overlay

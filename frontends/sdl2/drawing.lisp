@@ -65,102 +65,25 @@ Uses a sentinel key so it participates in the normal cache lifecycle
          "__folder_icon__" nil :folder surface)
         surface)))
 
-(defgeneric object-width (drawing-object display))
+(defmethod lem-if:image-natural-size ((implementation lem-sdl2/sdl2:sdl2) image)
+  (values (sdl2:surface-width image) (sdl2:surface-height image)))
 
-(defmethod object-width ((drawing-object void-object) display)
-  0)
-
-(defun text-cell-width (drawing-object display)
-  "Cell-aligned pixel width of a text-object: string-width × char-width.
-Mirrors lem-ncurses/drawing-object:object-width semantics (logical
-column width) so SDL2 text aligns on the character grid regardless of
-per-string SDL_ttf surface-width drift."
-  (* (lem-core:string-width (text-object-string drawing-object))
-     (display:display-char-width display)))
-
-(defmethod object-width ((drawing-object text-object) display)
-  (text-cell-width drawing-object display))
-
-(defmethod object-width ((drawing-object control-character-object) display)
-  (* 2 (display:display-char-width display)))
-
-(defmethod object-width ((drawing-object icon-object) display)
-  ;; Cell-aligned advance (typically 2 * char-width). The icon font's natural
-  ;; glyph surface is usually wider than this; draw-object scales it to fit.
-  (text-cell-width drawing-object display))
-
-(defmethod object-width ((drawing-object folder-object) display)
-  (* 2 (display:display-char-width display)))
-
-(defmethod object-width ((drawing-object emoji-object) display)
-  (* (display:display-char-width display) 2 (length (text-object-string drawing-object))))
-
-(defmethod object-width ((drawing-object eol-cursor-object) display)
-  0)
-
-(defmethod object-width ((drawing-object extend-to-eol-object) display)
-  0)
-
-(defmethod object-width ((drawing-object line-end-object) display)
-  (text-cell-width drawing-object display))
-
-(defmethod object-width ((drawing-object image-object) display)
-  (or (image-object-width drawing-object)
-      (sdl2:surface-width (image-object-image drawing-object))))
-
-
-(defgeneric object-height (drawing-object display))
-
-(defmethod object-height ((drawing-object void-object) display)
-  (display:display-char-height display))
-
-(defmethod object-height ((drawing-object text-object) display)
-  ;; Use the stable row cell-height (derived from font metrics at the
-  ;; display level) rather than the per-string SDL_ttf surface height.
-  ;; SDL_ttf can return slightly different surface heights for different
-  ;; strings (e.g. ones containing descenders like `p'/`g'/`y' versus
-  ;; ones without), which would otherwise leak into the background
-  ;; rectangle drawn by `draw-text-glyph-surface', producing the
-  ;; uneven-extent "padding around the problem letters" artefact at
-  ;; attribute boundaries on a highlighted row.  The natural surface
-  ;; height is still read inside `draw-text-glyph-surface' directly
-  ;; from the surface for baseline-anchored glyph blitting.
-  (display:display-char-height display))
-
-(defmethod object-height ((drawing-object icon-object) display)
-  (display:display-char-height display))
-
-(defmethod object-height ((drawing-object control-character-object) display)
-  (display:display-char-height display))
-
-(defmethod object-height ((drawing-object folder-object) display)
-  (display:display-char-height display))
-
-(defmethod object-height ((drawing-object emoji-object) display)
-  (display:display-char-height display))
-
-(defmethod object-height ((drawing-object eol-cursor-object) display)
-  (display:display-char-height display))
-
-(defmethod object-height ((drawing-object extend-to-eol-object) display)
-  (display:display-char-height display))
-
-(defmethod object-height ((drawing-object line-end-object) display)
-  (display:display-char-height display))
-
-(defmethod object-height ((drawing-object image-object) display)
-  (or (image-object-height drawing-object)
-      (sdl2:surface-height (image-object-image drawing-object))))
-
-(defmethod lem-if:object-width ((implementation lem-sdl2/sdl2:sdl2) drawing-object)
+(defmethod lem-if:object-width ((implementation lem-sdl2/sdl2:sdl2)
+                                (drawing-object folder-object))
   (display:with-display (display)
-    (object-width drawing-object display)))
+    (* 2 (display:display-char-width display))))
 
-(defmethod lem-if:object-height ((implementation lem-sdl2/sdl2:sdl2) drawing-object)
+(defmethod lem-if:object-width ((implementation lem-sdl2/sdl2:sdl2)
+                                (drawing-object emoji-object))
   (display:with-display (display)
-    (object-height drawing-object display)))
+    (* (display:display-char-width display) 2 (length (text-object-string drawing-object)))))
 
-(defmethod draw-object ((drawing-object void-object) x bottom-y display view)
+(defgeneric draw-object (drawing-object x top display view)
+  (:documentation "Draw DRAWING-OBJECT into VIEW with its top-left corner at (X, TOP).
+Returns the pixel width it occupied.
+`lem-core/display:layout-row' already chose TOP as the row's baseline minus this object's ascent."))
+
+(defmethod draw-object ((drawing-object void-object) x top display view)
   0)
 
 (defun draw-rect (display x y width height color)
@@ -177,10 +100,10 @@ per-string SDL_ttf surface-width drift."
     (:underline
      (draw-rect display x (+ y surface-height -1) surface-width 1 background))))
 
-(defun draw-text-glyph-surface (drawing-object x bottom-y display view cell-width
+(defun draw-text-glyph-surface (drawing-object x top display view cell-width
                                 &key clip (phase :both))
   "Draws DRAWING-OBJECT's cached SDL surface in a (CELL-WIDTH × cell-height) slot
-at (X, BOTTOM-Y). Cell-height is taken from the drawing-object's OBJECT-HEIGHT so
+at (X, TOP). Cell-height is taken from the drawing-object's OBJECT-HEIGHT so
 non-text surfaces (folder PNG, icon font, emoji font) get scaled to the editor's
 character row height instead of being placed at their natural pixel height.
 
@@ -208,18 +131,18 @@ is not erased by the next glyph's background fill."
   (let* ((surface (get-surface drawing-object display))
          (surface-width (sdl2:surface-width surface))
          (surface-height (sdl2:surface-height surface))
-         (cell-height (object-height drawing-object display))
+         (cell-height (object-height drawing-object))
          (attribute (text-object-attribute drawing-object))
          (background (lem-core:attribute-background-with-reverse attribute))
-         (y (- bottom-y cell-height))
+         (bottom-y (+ top cell-height))
          (draw-width (if clip surface-width (min surface-width cell-width)))
          (draw-height (min surface-height cell-height)))
     (when (member phase '(:bg :both))
       (cond ((and attribute (lem-core:cursor-attribute-p attribute))
-             (lem-sdl2/view:set-cursor-position view x y)
-             (draw-cursor display x y cell-width cell-height background))
+             (lem-sdl2/view:set-cursor-position view x top)
+             (draw-cursor display x top cell-width cell-height background))
             (t
-             (draw-rect display x y cell-width cell-height background))))
+             (draw-rect display x top cell-width cell-height background))))
     (when (member phase '(:glyph :both))
       (let ((texture (lem-sdl2/text-surface-cache:get-or-create-texture
                       (display:display-renderer display)
@@ -255,7 +178,7 @@ is not erased by the next glyph's background fill."
                                     :dest-rect dst-rect
                                     :flip (list :none)))))
           (t
-           (display:with-scratch-rect (dst-rect display x y draw-width draw-height)
+           (display:with-scratch-rect (dst-rect display x top draw-width draw-height)
              (sdl2:render-copy-ex (display:display-renderer display)
                                   texture
                                   :source-rect nil
@@ -266,47 +189,47 @@ is not erased by the next glyph's background fill."
                (lem:attribute-underline attribute))
       (display:render-line display
                            x
-                           (1- (+ y cell-height))
+                           (1- bottom-y)
                            (+ x cell-width)
-                           (1- (+ y cell-height))
+                           (1- bottom-y)
                            :color (let ((underline (lem:attribute-underline attribute)))
                                     (if (eq underline t)
                                         (lem-core:attribute-foreground-color attribute)
                                         (or (lem:parse-color underline)
                                             (lem-core:attribute-foreground-color attribute))))))))
 
-(defun text-object-letter-objects-and-widths (drawing-object display)
+(defun text-object-letter-objects-and-widths (drawing-object)
   "Return two parallel lists: per-character letter-objects and their cell
 widths, for the multi-character text run DRAWING-OBJECT."
   (let ((attribute (text-object-attribute drawing-object)))
     (loop :for c :across (text-object-string drawing-object)
           :for letter := (make-letter-object c attribute)
           :collect letter :into letters
-          :collect (object-width letter display) :into widths
+          :collect (object-width letter) :into widths
           :finally (return (values letters widths)))))
 
-(defun draw-text-object-phase (drawing-object x bottom-y display view phase)
+(defun draw-text-object-phase (drawing-object x top display view phase)
   "Render the text-object DRAWING-OBJECT for one of the two-pass phases
 (:BG or :GLYPH).  PHASE :BG paints backgrounds, cursors and underlines for
 every cell of the run; PHASE :GLYPH blits each glyph at its natural surface
 width so the rasterizer's right-edge anti-aliasing tail is preserved."
   (let ((string (text-object-string drawing-object)))
     (cond ((<= (length string) 1)
-           (draw-text-glyph-surface drawing-object x bottom-y display view
-                                    (object-width drawing-object display)
+           (draw-text-glyph-surface drawing-object x top display view
+                                    (object-width drawing-object)
                                     :clip t :phase phase))
           (t
            (multiple-value-bind (letter-objects letter-widths)
-               (text-object-letter-objects-and-widths drawing-object display)
+               (text-object-letter-objects-and-widths drawing-object)
              (loop :with current-x := x
                    :for letter-object :in letter-objects
                    :for letter-width :in letter-widths
-                   :do (draw-text-glyph-surface letter-object current-x bottom-y
+                   :do (draw-text-glyph-surface letter-object current-x top
                                                 display view letter-width
                                                 :clip t :phase phase)
                        (incf current-x letter-width)))))))
 
-(defmethod draw-object ((drawing-object text-object) x bottom-y display view)
+(defmethod draw-object ((drawing-object text-object) x top display view)
   ;; Render each character individually on the cell grid. SDL_ttf's blended
   ;; surface for a multi-character string has metrics that do not equal the
   ;; sum of its per-character metrics, so a glyph would otherwise land on a
@@ -317,81 +240,84 @@ width so the rasterizer's right-edge anti-aliasing tail is preserved."
   ;;
   ;; This per-text-object two-pass preserves the AA overhang within the run.
   ;; The cross-text-object equivalent (an adjacent text-object's :bg erasing
-  ;; the previous text-object's AA tail) is handled by `redraw-physical-line',
-  ;; which lifts the two-pass to span the entire physical line.
-  (let ((total-width (object-width drawing-object display)))
-    (draw-text-object-phase drawing-object x bottom-y display view :bg)
-    (draw-text-object-phase drawing-object x bottom-y display view :glyph)
+  ;; the previous text-object's AA tail) is handled by `draw-row-objects',
+  ;; which lifts the two-pass to span the entire row.
+  (let ((total-width (object-width drawing-object)))
+    (draw-text-object-phase drawing-object x top display view :bg)
+    (draw-text-object-phase drawing-object x top display view :glyph)
     total-width))
 
-(defmethod draw-object ((drawing-object icon-object) x bottom-y display view)
+(defmethod draw-object ((drawing-object icon-object) x top display view)
   ;; Icon font glyphs typically render much wider than the 2-cell column the
   ;; layout reserves for them; draw-text-glyph-surface scales them down to fit.
-  (let ((cell-width (object-width drawing-object display)))
-    (draw-text-glyph-surface drawing-object x bottom-y display view cell-width)
+  (let ((cell-width (object-width drawing-object)))
+    (draw-text-glyph-surface drawing-object x top display view cell-width)
     cell-width))
 
-(defmethod draw-object ((drawing-object folder-object) x bottom-y display view)
+(defmethod draw-object ((drawing-object folder-object) x top display view)
   ;; Folder PNG surface is much wider than 2 cells; render once and scale to fit.
   ;; Overrides the text-object per-character loop so the icon stays atomic.
-  (let ((cell-width (object-width drawing-object display)))
-    (draw-text-glyph-surface drawing-object x bottom-y display view cell-width)
+  (let ((cell-width (object-width drawing-object)))
+    (draw-text-glyph-surface drawing-object x top display view cell-width)
     cell-width))
 
-(defmethod draw-object ((drawing-object emoji-object) x bottom-y display view)
+(defmethod draw-object ((drawing-object emoji-object) x top display view)
   ;; Emoji strings may span multiple codepoints (base + variation selector,
   ;; ZWJ sequences, ...) that must be rendered as one composed glyph. Use the
   ;; single-surface path with cell-aligned scaling so we neither split the
   ;; sequence per-codepoint nor let an oversized emoji surface spill over.
-  (let ((cell-width (object-width drawing-object display)))
-    (draw-text-glyph-surface drawing-object x bottom-y display view cell-width)
+  (let ((cell-width (object-width drawing-object)))
+    (draw-text-glyph-surface drawing-object x top display view cell-width)
     cell-width))
 
-(defmethod draw-object ((drawing-object eol-cursor-object) x bottom-y display view)
+(defmethod draw-object ((drawing-object eol-cursor-object) x top display view)
   (display:set-render-color display (eol-cursor-object-color drawing-object))
-  (let ((y (- bottom-y (object-height drawing-object display))))
-    (lem-sdl2/view:set-cursor-position view x y)
-    (draw-cursor display
-                 x
-                 y
-                 (display:display-char-width display)
-                 (object-height drawing-object display)
-                 (eol-cursor-object-color drawing-object)))
-  (object-width drawing-object display))
+  (lem-sdl2/view:set-cursor-position view x top)
+  (draw-cursor display
+               x
+               top
+               (display:display-char-width display)
+               (object-height drawing-object)
+               (eol-cursor-object-color drawing-object))
+  (object-width drawing-object))
 
-(defmethod draw-object ((drawing-object extend-to-eol-object) x bottom-y display view)
-  (display:set-render-color display (extend-to-eol-object-color drawing-object))
-  (display:with-scratch-rect (rect display
-                              x
-                              (- bottom-y (display:display-char-height display))
-                              (- (lem-if:view-width (lem-core:implementation) view) x)
-                              (display:display-char-height display))
-    (sdl2:render-fill-rect (display:display-renderer display) rect))
-  (object-width drawing-object display))
-
-(defmethod draw-object ((drawing-object line-end-object) x bottom-y display view)
+(defmethod draw-object ((drawing-object line-end-object) x top display view)
   (call-next-method drawing-object
                     (+ x
                        (* (line-end-object-offset drawing-object)
                           (display:display-char-width display)))
-                    bottom-y
+                    top
                     display
                     view))
 
-(defmethod draw-object ((drawing-object image-object) x bottom-y display view)
-  (let* ((surface-width (object-width drawing-object display))
-         (surface-height (object-height drawing-object display))
-         (texture (sdl2:create-texture-from-surface (display:display-renderer display)
-                                                    (image-object-image drawing-object)))
-         (y (- bottom-y surface-height)))
-    (display:with-scratch-rect (dest-rect display x y surface-width surface-height)
-      (sdl2:render-copy-ex (display:display-renderer display)
-                           texture
-                           :source-rect nil
-                           :dest-rect dest-rect
-                           :flip (list :none)))
+(defmethod draw-object ((drawing-object image-object) x top display view)
+  (let* ((draw-width (max 1 (image-draw-width (lem-core:implementation) drawing-object)))
+         (visible-width (object-width drawing-object))
+         (surface-height (object-height drawing-object))
+         (surface (image-object-image drawing-object))
+         (texture (sdl2:create-texture-from-surface (display:display-renderer display) surface)))
+    (if (< visible-width draw-width)
+        ;; copy the leading fraction of the source into a dest that wide
+        (sdl2:with-rects ((dest-rect x top visible-width surface-height)
+                          (source-rect 0
+                                       0
+                                       (max 1 (round (* (sdl2:surface-width surface)
+                                                        visible-width)
+                                                     draw-width))
+                                       (sdl2:surface-height surface)))
+          (sdl2:render-copy-ex (display:display-renderer display)
+                               texture
+                               :source-rect source-rect
+                               :dest-rect dest-rect
+                               :flip (list :none)))
+        (display:with-scratch-rect (dest-rect display x top visible-width surface-height)
+          (sdl2:render-copy-ex (display:display-renderer display)
+                               texture
+                               :source-rect nil
+                               :dest-rect dest-rect
+                               :flip (list :none))))
     (sdl2:destroy-texture texture)
-    surface-width))
+    visible-width))
 
 (defun plain-text-object-p (object)
   "True when OBJECT is an instance of the base `text-object' class (and not
@@ -400,93 +326,85 @@ one of its specialised subclasses `icon-object', `folder-object', or
 rather than the row-wide two-pass)."
   (eq (class-of object) (find-class 'text-object)))
 
-(defun redraw-physical-line (display view x y objects height)
-  ;; Two-pass over the whole physical line: paint every plain text-object's
-  ;; backgrounds first, then blit every plain text-object's glyphs.  This
-  ;; preserves the 1-pixel right-edge AA tail at attribute boundaries (e.g.
-  ;; on the dashboard's highlighted row, where a `p' or `g' at the end of
-  ;; one attribute run would otherwise be eroded by the next text-object's
+(defun draw-row-objects (display view row)
+  ;; Two-pass over the whole row: paint every plain text-object's backgrounds
+  ;; first, then blit every plain text-object's glyphs.  This preserves the
+  ;; 1-pixel right-edge AA tail at attribute boundaries (e.g. on the
+  ;; dashboard's highlighted row, where a `p' or `g' at the end of one
+  ;; attribute run would otherwise be eroded by the next text-object's
   ;; full-width background fill).  Everything else (icon / folder / emoji
-  ;; text-object subclasses, images, eol-cursor, extend-to-eol) draws fully
-  ;; in the first pass via its own `draw-object' method — those don't have
-  ;; AA overhang to preserve and need their bespoke rendering (scale-to-fit
-  ;; for icon/folder/emoji surfaces, fill for extend-to-eol, etc.).
-  (let* ((bottom-y (+ y height))
-         (display-width (round (* (display:display-window-width display)
+  ;; text-object subclasses, images, eol-cursor) draws fully in the first pass
+  ;; via its own `draw-object' method — those don't have AA overhang to
+  ;; preserve and need their bespoke rendering (scale-to-fit for
+  ;; icon/folder/emoji surfaces, etc.).
+  (let* ((display-width (round (* (display:display-window-width display)
                                   (first (display:display-scale display)))))
-         (placed (loop :with current-x := x
-                       :for object :in objects
-                       :while (< current-x display-width)
-                       :collect (cons object current-x)
-                       :do (incf current-x (object-width object display)))))
-    (flet ((draw-text-pass (object obj-x phase)
-             ;; Honour the wrap-to-letters branch the old code used when a
-             ;; text-object would extend past the display width.
-             (cond ((< display-width
-                       (+ obj-x (object-width object display)))
-                    (loop :with current-x := obj-x
-                          :for c :across (text-object-string object)
-                          :while (< current-x display-width)
-                          :for letter := (make-letter-object
-                                          c (text-object-attribute object))
-                          :for letter-width := (object-width letter display)
-                          :do (draw-text-glyph-surface letter current-x bottom-y
-                                                       display view letter-width
-                                                       :clip t :phase phase)
-                              (incf current-x letter-width)))
-                   (t
-                    (draw-text-object-phase object obj-x bottom-y
-                                            display view phase)))))
+         (placements (remove-if (lambda (placement)
+                                  (<= display-width (placement-x placement)))
+                                (row-placements row))))
+    (flet ((draw-text-pass (placement phase)
+             (let* ((object (placement-object placement))
+                    (x (placement-x placement))
+                    (top (placement-top placement)))
+               (cond ((< display-width (+ x (object-width object)))
+                      ;; a run reaching past the edge is drawn letter by letter, as far as it fits.
+                      (loop :with current-x := x
+                            :for c :across (text-object-string object)
+                            :while (< current-x display-width)
+                            :for letter := (make-letter-object
+                                            c (text-object-attribute object))
+                            :for letter-width := (object-width letter)
+                            :do (draw-text-glyph-surface letter current-x top
+                                                         display view letter-width
+                                                         :clip t :phase phase)
+                                (incf current-x letter-width)))
+                     (t
+                      (draw-text-object-phase object x top display view phase))))))
       ;; Pass 1: plain-text backgrounds + everything else (subclassed text-
       ;; objects and non-text objects) in normal order.
-      (loop :for (object . obj-x) :in placed
-            :do (if (plain-text-object-p object)
-                    (draw-text-pass object obj-x :bg)
-                    (draw-object object obj-x bottom-y display view)))
+      (loop :for placement :in placements
+            :do (if (plain-text-object-p (placement-object placement))
+                    (draw-text-pass placement :bg)
+                    (draw-object (placement-object placement)
+                                 (placement-x placement)
+                                 (placement-top placement)
+                                 display
+                                 view)))
       ;; Pass 2: plain-text glyphs.
-      (loop :for (object . obj-x) :in placed
-            :when (plain-text-object-p object)
-              :do (draw-text-pass object obj-x :glyph)))))
+      (loop :for placement :in placements
+            :when (plain-text-object-p (placement-object placement))
+              :do (draw-text-pass placement :glyph)))))
 
-(defun redraw-physical-line-from-behind (display view objects)
-  (loop :with current-x := (lem-if:view-width (lem-core:implementation) view)
-        :and y := (lem-if:view-height (lem-core:implementation) view)
-        :for object :in objects
-        :do (decf current-x (object-width object display))
-            (draw-object object current-x y display view)))
-
-(defun fill-to-end-of-line (display view x y height &optional default-attribute)
-  (display:with-scratch-rect (rect display x y (- (lem-if:view-width (lem-core:implementation) view) x) height)
-    (display:set-render-color display
-                              (lem-core:attribute-background-color default-attribute))
+(defun fill-row (display view row x color)
+  "Paint COLOR from X to the right edge of VIEW, over ROW's full height."
+  (display:with-scratch-rect (rect display
+                              x
+                              (row-top row)
+                              (- (lem-if:view-width (lem-core:implementation) view) x)
+                              (row-height row))
+    (display:set-render-color display color)
     (sdl2:render-fill-rect (display:display-renderer display) rect)))
 
-(defmethod lem-if:render-line ((implementation lem-sdl2/sdl2:sdl2) view x y objects height)
-  (display:with-display (display)
-    (fill-to-end-of-line display view x y height)
-    (redraw-physical-line display view x y objects height)))
+(defun draw-row (display view row background)
+  "Blank ROW to BACKGROUND, paint whatever fill it carries, then draw everything placed on it.
+Both fills cover the row's full height, which may exceed a single text line's height when a
+tall object (e.g. an image) sits on the row."
+  (fill-row display view row 0 background)
+  (when (row-fill-color row)
+    (fill-row display view row (row-fill-x row) (row-fill-color row)))
+  (draw-row-objects display view row))
 
-(defmethod lem-if:render-line-on-modeline ((implementation lem-sdl2/sdl2:sdl2)
-                                           view
-                                           left-objects
-                                           right-objects
-                                           default-attribute
-                                           height)
+(defmethod lem-if:render-row ((implementation lem-sdl2/sdl2:sdl2) view row)
   (display:with-display (display)
-    (fill-to-end-of-line display
-                         view
-                         0
-                         (- (lem-if:view-height (lem-core:implementation) view) height)
-                         height
-                         default-attribute)
-    (redraw-physical-line display
-                          view
-                          0
-                          (- (lem-if:view-height (lem-core:implementation) view)
-                             (display:display-char-height display))
-                          left-objects
-                          height)
-    (redraw-physical-line-from-behind display view right-objects)))
+    (draw-row display view row (lem-core:attribute-background-color nil))))
+
+(defmethod lem-if:render-modeline-row ((implementation lem-sdl2/sdl2:sdl2) view row
+                                       default-attribute)
+  (display:with-display (display)
+    (draw-row display
+              view
+              (translate-row row (- (lem-if:view-height implementation view) (row-height row)))
+              (lem-core:attribute-background-color default-attribute))))
 
 (defmethod lem-if:clear-to-end-of-window ((implementation lem-sdl2/sdl2:sdl2) view y)
   (display:with-display (display)

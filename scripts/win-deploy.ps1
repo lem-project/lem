@@ -9,6 +9,9 @@
 # the image is dumped: editing PE resources of the finished executable
 # corrupts the appended Lisp core.
 #
+# Requires SBCL (winget install SBCL.SBCL), Quicklisp installed in
+# ~\quicklisp, and git on PATH.
+#
 # Usage: powershell -ExecutionPolicy Bypass -File scripts\win-deploy.ps1
 #        [-SkipBuild] [-Sign]
 
@@ -60,6 +63,51 @@ if ((Get-FileHash $asdfLisp -Algorithm SHA256).Hash -ne $asdfSha256) {
 }
 
 if (-not $SkipBuild) {
+    # --- Git dependencies (pinned by qlfile.lock) ----------------------------
+    # qlot does not build on Windows: its cache uses sb-posix:symlink and
+    # fcntl locking, which SBCL's sb-posix lacks there (qlot 1.8.2).  So
+    # check out the git sources of qlfile at their locked commits here;
+    # win-deploy.lisp puts build\windows\deps\ in front of Quicklisp in the
+    # ASDF source registry.  The ql/dist sources come from Quicklisp.
+    $depsDir = Join-Path $buildDir 'deps'
+    New-Item -ItemType Directory -Force $depsDir | Out-Null
+    $lock = Get-Content (Join-Path $root 'qlfile.lock') -Raw
+    $gitDeps = [regex]::Matches($lock,
+        ':remote-url "([^"]+)"\)\s*:version "git-([0-9a-f]+)"')
+    # qlfile.lock is parsed with a regex, so fail here, loudly, when it uses
+    # a source type or layout this script does not understand, instead of
+    # skipping dependencies and failing later with a missing ASDF system.
+    $classes = [regex]::Matches($lock, ':class qlot/source/[^:\s]+:(\S+)') |
+        ForEach-Object { $_.Groups[1].Value }
+    $unsupported = $classes |
+        Where-Object { $_ -notin 'source-git', 'source-ql', 'source-dist' } |
+        Sort-Object -Unique
+    if ($unsupported) {
+        throw "qlfile.lock has source types win-deploy.ps1 cannot fetch: $($unsupported -join ', ')"
+    }
+    $gitCount = @($classes | Where-Object { $_ -eq 'source-git' }).Count
+    if ($gitCount -eq 0 -or $gitDeps.Count -ne $gitCount) {
+        throw "Parsed $($gitDeps.Count) of $gitCount git sources in qlfile.lock; its format may have changed"
+    }
+    foreach ($dep in $gitDeps) {
+        $url = $dep.Groups[1].Value
+        $rev = $dep.Groups[2].Value
+        $name = [IO.Path]::GetFileNameWithoutExtension(($url -split '/')[-1])
+        $dir = Join-Path $depsDir $name
+        if (-not (Test-Path (Join-Path $dir '.git'))) {
+            git init -q $dir
+            if ($LASTEXITCODE -ne 0) { throw "git init failed for $name" }
+        }
+        $head = git -C $dir rev-parse -q --verify HEAD 2>$null
+        if ($head -ne $rev) {
+            Write-Host "Fetching $name ($rev)..."
+            git -C $dir fetch -q --depth 1 $url $rev
+            if ($LASTEXITCODE -ne 0) { throw "git fetch failed for $name" }
+            git -C $dir checkout -q --force FETCH_HEAD
+            if ($LASTEXITCODE -ne 0) { throw "git checkout failed for $name" }
+        }
+    }
+
     # --- SBCL runtime with icon/version resources ----------------------------
     $sbcl = Get-Command sbcl -ErrorAction SilentlyContinue
     if ($sbcl) { $sbclDir = Split-Path $sbcl.Source }

@@ -64,14 +64,31 @@ if ((Get-FileHash $asdfLisp -Algorithm SHA256).Hash -ne $asdfSha256) {
 
 if (-not $SkipBuild) {
     # --- Git dependencies (pinned by qlfile.lock) ----------------------------
-    # qlot does not work on Windows, so check out the git sources of qlfile
-    # at their locked commits; win-deploy.lisp puts build\windows\deps\ in
-    # front of Quicklisp in the ASDF source registry.
+    # qlot does not build on Windows: its cache uses sb-posix:symlink and
+    # fcntl locking, which SBCL's sb-posix lacks there (qlot 1.8.2).  So
+    # check out the git sources of qlfile at their locked commits here;
+    # win-deploy.lisp puts build\windows\deps\ in front of Quicklisp in the
+    # ASDF source registry.  The ql/dist sources come from Quicklisp.
     $depsDir = Join-Path $buildDir 'deps'
     New-Item -ItemType Directory -Force $depsDir | Out-Null
     $lock = Get-Content (Join-Path $root 'qlfile.lock') -Raw
     $gitDeps = [regex]::Matches($lock,
         ':remote-url "([^"]+)"\)\s*:version "git-([0-9a-f]+)"')
+    # qlfile.lock is parsed with a regex, so fail here, loudly, when it uses
+    # a source type or layout this script does not understand, instead of
+    # skipping dependencies and failing later with a missing ASDF system.
+    $classes = [regex]::Matches($lock, ':class qlot/source/[^:\s]+:(\S+)') |
+        ForEach-Object { $_.Groups[1].Value }
+    $unsupported = $classes |
+        Where-Object { $_ -notin 'source-git', 'source-ql', 'source-dist' } |
+        Sort-Object -Unique
+    if ($unsupported) {
+        throw "qlfile.lock has source types win-deploy.ps1 cannot fetch: $($unsupported -join ', ')"
+    }
+    $gitCount = @($classes | Where-Object { $_ -eq 'source-git' }).Count
+    if ($gitCount -eq 0 -or $gitDeps.Count -ne $gitCount) {
+        throw "Parsed $($gitDeps.Count) of $gitCount git sources in qlfile.lock; its format may have changed"
+    }
     foreach ($dep in $gitDeps) {
         $url = $dep.Groups[1].Value
         $rev = $dep.Groups[2].Value

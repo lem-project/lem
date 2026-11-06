@@ -63,6 +63,7 @@ a different dictionary per buffer.")
 
 (define-keys *spell-check-mode-keymap*
   ("M-$" 'spell-check-word)
+  ("M-a" 'spell-check-add-word)
   ("M-n" 'spell-check-next-error)
   ("M-p" 'spell-check-previous-error))
 

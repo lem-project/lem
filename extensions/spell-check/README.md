@@ -54,7 +54,7 @@ automatically for particular major modes:
 | `M-x spell-check-region` | Check only the active region; later rescans and corrections stay inside it |
 | `M-n` (`spell-check-next-error`) | Move to the next misspelled word |
 | `M-p` (`spell-check-previous-error`) | Move to the previous misspelled word |
-| `M-x spell-check-add-word` | Add the word at point to the personal dictionary |
+| `M-a` (`spell-check-add-word`) | Add the word at point to the personal dictionary |
 | `M-x spell-check-ignore-word` | Ignore the word for this session only |
 | `M-x spell-check-change-dictionary` | Choose the dictionary for this buffer |
 | `M-x spell-check-clear` | Remove the highlights until the next edit |

@@ -51,12 +51,19 @@ automatically for particular major modes:
 |---------------|-------------|
 | `M-$` (`spell-check-word`) | Check the word at point and prompt for a replacement |
 | `M-x spell-check-buffer` | Enable the mode if needed and check the whole buffer |
+| `M-x spell-check-region` | Check only the active region; later rescans and corrections stay inside it |
 | `M-x spell-check-next-error` | Move to the next misspelled word |
 | `M-x spell-check-previous-error` | Move to the previous misspelled word |
 | `M-x spell-check-add-word` | Add the word at point to the personal dictionary |
 | `M-x spell-check-ignore-word` | Ignore the word for this session only |
 | `M-x spell-check-change-dictionary` | Choose the dictionary for this buffer |
 | `M-x spell-check-clear` | Remove the highlights until the next edit |
+
+`spell-check-region` narrows all subsequent activity of the buffer's
+spell checker to the selected region: edits rescan the region,
+`M-$` only corrects words inside it, and `spell-check-next-error`
+navigates the region's misspellings. Run `spell-check-buffer` (or
+disable `spell-check-mode`) to remove the restriction.
 
 ## Configuration
 

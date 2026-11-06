@@ -3,6 +3,7 @@
   (:export
    :spell-check-mode
    :spell-check-buffer
+   :spell-check-region
    :spell-check-word
    :spell-check-next-error
    :spell-check-previous-error
@@ -39,6 +40,12 @@ a different dictionary per buffer.")
 
 (defvar *spell-check-available-dictionaries* nil
   "Cached list of language codes that Enchant can provide.")
+
+(defvar *spell-check-inhibit-initial-scan* nil
+  "When non-NIL, enabling `spell-check-mode' does not scan the buffer.")
+
+(defvar *spell-check-inhibit-after-change* nil
+  "When non-NIL, edits do not schedule a spell-check rescan.")
 
 ;;; Appearance
 
@@ -242,6 +249,36 @@ POSIX locales."
 (defun (setf spell-check-timer) (timer buffer)
   (setf (buffer-value buffer 'spell-check-timer) timer))
 
+(defun spell-check-region-bounds (buffer)
+  "Return BUFFER's spell-check region as a list of two points, or NIL."
+  (buffer-value buffer 'spell-check-region-bounds))
+
+(defun (setf spell-check-region-bounds) (bounds buffer)
+  (let ((old (spell-check-region-bounds buffer)))
+    (when old
+      (delete-point (first old))
+      (delete-point (second old))))
+  (setf (buffer-value buffer 'spell-check-region-bounds) bounds))
+
+(defun spell-check-set-region-bounds (buffer start end)
+  "Restrict spell checking in BUFFER to the region between START and END."
+  (setf (spell-check-region-bounds buffer)
+        (list (copy-point start :right-inserting)
+              (copy-point end :left-inserting))))
+
+(defun spell-check-clear-region-bounds (buffer)
+  "Remove BUFFER's spell-check region restriction."
+  (setf (spell-check-region-bounds buffer) nil))
+
+(defun spell-check-point-in-region-p (point buffer)
+  "Return T if POINT is inside BUFFER's spell-check region.
+Buffers without a region restriction are always considered to contain
+POINT."
+  (let ((bounds (spell-check-region-bounds buffer)))
+    (or (null bounds)
+        (and (not (point< point (first bounds)))
+             (point<= point (second bounds))))))
+
 (defun spell-check-clear-overlays (buffer)
   "Delete every overlay owned by spell checking in BUFFER."
   (dolist (overlay (spell-check-overlays buffer))
@@ -297,15 +334,17 @@ CACHE maps words to results for the current scan."
 
 ;;; Scanning
 
+(defun spell-check-min-word-length-for-buffer (buffer)
+  "Return the effective minimum word length for BUFFER."
+  (let ((configured (variable-value 'spell-check-min-word-length :default buffer)))
+    (if (and (integerp configured) (plusp configured))
+        configured
+        2)))
+
 (defun spell-check-scan-buffer (buffer dictionary)
   "Replace BUFFER's overlays with a fresh scan using DICTIONARY.
 Return the number of misspelled words."
-  (let* ((configured-min-length
-           (variable-value 'spell-check-min-word-length :default buffer))
-         (min-length (if (and (integerp configured-min-length)
-                              (plusp configured-min-length))
-                         configured-min-length
-                         2))
+  (let* ((min-length (spell-check-min-word-length-for-buffer buffer))
          (new-overlays '())
          (count 0)
          (cache (make-hash-table :test #'equal)))
@@ -332,6 +371,68 @@ Return the number of misspelled words."
           (delete-overlay overlay))
         (editor-error "Spell check failed: ~A" condition)))))
 
+(defun spell-check-overlaps-region-p (overlay start end)
+  "Return T if OVERLAY overlaps the region between START and END."
+  (and (point< (overlay-start overlay) end)
+       (point< start (overlay-end overlay))))
+
+(defun spell-check-scan-region (buffer start end dictionary &key restrict)
+  "Check the words between START and END in BUFFER using DICTIONARY.
+Existing spell-check overlays that overlap the region are replaced.
+When RESTRICT is true, overlays outside the region are deleted as well.
+Words that straddle a region boundary are checked as a whole and
+highlighted in full. Return the number of misspelled words."
+  (when (point< end start)
+    (rotatef start end))
+  (let* ((min-length (spell-check-min-word-length-for-buffer buffer))
+         (start-line (point-line start))
+         (end-line (point-line end))
+         (start-charpos (point-charpos start))
+         (end-charpos (point-charpos end))
+         (new-overlays '())
+         (count 0)
+         (cache (make-hash-table :test #'equal)))
+    (handler-case
+        (progn
+          (with-point ((line-point start :temporary))
+            (loop
+              (let* ((line (point-line line-point))
+                     (start-line-p (eq line start-line))
+                     (end-line-p (eq line end-line))
+                     (lower (if start-line-p start-charpos 0))
+                     (upper (if end-line-p end-charpos nil)))
+                (dolist (entry (parse-words (line-string line-point)))
+                  (destructuring-bind (word-start word-end word) entry
+                    (when (and (spell-checkable-word-p word min-length)
+                               (> word-end lower)
+                               (or (null upper) (< word-start upper))
+                               (spell-check-misspelled-p dictionary word cache))
+                      (push (spell-check-make-overlay line-point
+                                                      word-start
+                                                      word-end
+                                                      word)
+                            new-overlays)
+                      (incf count))))
+                (when end-line-p
+                  (return)))
+              (unless (line-offset line-point 1)
+                (return))))
+          (let ((remaining '()))
+            (dolist (overlay (spell-check-live-overlays buffer))
+              (if (or restrict
+                      (spell-check-overlaps-region-p overlay start end))
+                  (delete-overlay overlay)
+                  (push overlay remaining)))
+            (setf (spell-check-overlays buffer)
+                  (append (nreverse remaining) (nreverse new-overlays))
+                  (spell-check-scanned-tick buffer)
+                  (buffer-modified-tick buffer)))
+          count)
+      (error (condition)
+        (dolist (overlay new-overlays)
+          (delete-overlay overlay))
+        (editor-error "Spell check failed: ~A" condition)))))
+
 (defun spell-check-cancel-timer (buffer)
   "Cancel BUFFER's pending rescan timer, if any."
   (let ((timer (spell-check-timer buffer)))
@@ -352,13 +453,30 @@ Return the number of misspelled words."
   (spell-check-scan-buffer buffer
                            (spell-check-dictionary-for-buffer buffer)))
 
+(defun spell-check-rescan-region (buffer)
+  "Rescan BUFFER's active spell-check region.
+Return the number of misspelled words, or NIL if no region is active."
+  (let ((bounds (spell-check-region-bounds buffer)))
+    (when bounds
+      (destructuring-bind (start end) bounds
+        (spell-check-cancel-timer buffer)
+        (spell-check-scan-region buffer start end
+                                 (spell-check-dictionary-for-buffer buffer)
+                                 :restrict t)))))
+
+(defun spell-check-refresh (buffer)
+  "Rescan BUFFER's region if one is active, otherwise the whole buffer."
+  (if (spell-check-region-bounds buffer)
+      (spell-check-rescan-region buffer)
+      (spell-check-rescan-buffer buffer)))
+
 (defun spell-check-run-scheduled-scan (buffer)
   "Rescan BUFFER from its idle timer."
   (setf (spell-check-timer buffer) nil)
   (when (and (not (deleted-buffer-p buffer))
              (mode-active-p buffer 'spell-check-mode))
     (handler-case
-        (spell-check-rescan-buffer buffer)
+        (spell-check-refresh buffer)
       (error (condition)
         (message "Spell check failed: ~A" condition)))))
 
@@ -382,7 +500,7 @@ Return the number of misspelled words."
             (null (spell-check-scanned-tick buffer))
             (/= (buffer-modified-tick buffer)
                 (spell-check-scanned-tick buffer)))
-    (spell-check-rescan-buffer buffer))
+    (spell-check-refresh buffer))
   (spell-check-live-overlays buffer))
 
 ;;; Mode lifecycle
@@ -391,12 +509,14 @@ Return the number of misspelled words."
   "Schedule a rescan after the buffer is modified."
   (declare (ignore end old-length))
   (let ((buffer (point-buffer start)))
-    (when (mode-active-p buffer 'spell-check-mode)
+    (when (and (not *spell-check-inhibit-after-change*)
+               (mode-active-p buffer 'spell-check-mode))
       (spell-check-schedule-scan buffer))))
 
 (defun spell-check-on-kill-buffer (buffer)
   "Release spell-check resources before BUFFER is killed."
   (spell-check-cancel-timer buffer)
+  (spell-check-clear-region-bounds buffer)
   (spell-check-clear-overlays buffer))
 
 (defun spell-check-enable ()
@@ -409,7 +529,8 @@ Return the number of misspelled words."
                     'spell-check-after-change)
           (add-hook (variable-value 'kill-buffer-hook :buffer buffer)
                     'spell-check-on-kill-buffer)
-          (spell-check-rescan-buffer buffer))
+          (unless *spell-check-inhibit-initial-scan*
+            (spell-check-rescan-buffer buffer)))
       (error (condition)
         (ignore-errors (disable-minor-mode 'spell-check-mode))
         (editor-error "Cannot enable spell checking: ~A" condition)))))
@@ -422,18 +543,41 @@ Return the number of misspelled words."
     (remove-hook (variable-value 'kill-buffer-hook :buffer buffer)
                  'spell-check-on-kill-buffer)
     (spell-check-cancel-timer buffer)
+    (spell-check-clear-region-bounds buffer)
     (spell-check-clear-overlays buffer)
     (setf (spell-check-scanned-tick buffer) nil)))
 
 ;;; Commands
 
 (define-command spell-check-buffer () ()
-  "Check the spelling of the whole current buffer."
+  "Check the spelling of the whole current buffer.
+This also clears any region restriction set by `spell-check-region'."
   (let ((buffer (current-buffer)))
     (unless (mode-active-p buffer 'spell-check-mode)
       (enable-minor-mode 'spell-check-mode))
+    (spell-check-clear-region-bounds buffer)
     (let ((count (spell-check-rescan-buffer buffer)))
       (message "~D misspelled word~:P" count))))
+
+(define-command spell-check-region () ()
+  "Check the spelling of the active region.
+
+Only the region is scanned and highlighted, and subsequent rescans
+and corrections (M-$, `spell-check-next-error') stay within it. The
+restriction lasts until `spell-check-buffer' is called or
+`spell-check-mode' is disabled."
+  (check-marked)
+  (let* ((buffer (current-buffer))
+         (start (region-beginning buffer))
+         (end (region-end buffer)))
+    (unless (point< start end)
+      (editor-error "The region is empty"))
+    (unless (mode-active-p buffer 'spell-check-mode)
+      (let ((*spell-check-inhibit-initial-scan* t))
+        (enable-minor-mode 'spell-check-mode)))
+    (spell-check-set-region-bounds buffer start end)
+    (let ((count (spell-check-rescan-region buffer)))
+      (message "~D misspelled word~:P in region" count))))
 
 (defun spell-check-word-at-point (point)
   "Return the word at POINT and its offsets on the current line."
@@ -441,6 +585,15 @@ Return the number of misspelled words."
     (loop :for (start end word) :in (parse-words (line-string point))
           :when (<= start charpos end)
           :do (return (values word start end)))))
+
+(defun spell-check-rescan-line (buffer point)
+  "Rescan the line containing POINT in BUFFER."
+  (with-point ((start point :temporary)
+               (end point :temporary))
+    (line-start start)
+    (line-end end)
+    (spell-check-scan-region buffer start end
+                             (spell-check-dictionary-for-buffer buffer))))
 
 (defun spell-check-replace-word (dictionary word start end suggestions)
   "Prompt for a replacement for WORD and replace it in the buffer."
@@ -457,16 +610,21 @@ Return the number of misspelled words."
                                     (completion-strings input suggestions))
              :history-symbol 'spell-check-replacement)))
       (when (and replacement (plusp (length replacement)))
-        (delete-between-points start-point end-point)
-        (insert-string start-point replacement)
+        (let ((*spell-check-inhibit-after-change* t))
+          (delete-between-points start-point end-point)
+          (insert-string start-point replacement))
         (ignore-errors
           (enchant:dict-store-replacement dictionary word replacement))
         (when (mode-active-p buffer 'spell-check-mode)
-          (spell-check-rescan-buffer buffer))))))
+          (if (spell-check-region-bounds buffer)
+              (spell-check-rescan-region buffer)
+              (spell-check-rescan-line buffer start-point)))))))
 
 (define-command spell-check-word () ()
   "Check the word at point and offer spelling suggestions."
   (let ((buffer (current-buffer)))
+    (unless (spell-check-point-in-region-p (current-point) buffer)
+      (editor-error "Point is outside the spell-check region"))
     (multiple-value-bind (word start end)
         (spell-check-word-at-point (current-point))
       (unless word
@@ -571,7 +729,7 @@ Return the number of misspelled words."
         (spell-check-dictionary-for-language canonical)
         (setf (variable-value 'spell-check-language :buffer buffer) canonical)
         (when (mode-active-p buffer 'spell-check-mode)
-          (spell-check-rescan-buffer buffer))
+          (spell-check-refresh buffer))
         (message "Using dictionary ~A" canonical)))))
 
 (define-command spell-check-clear () ()

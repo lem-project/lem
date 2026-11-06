@@ -315,6 +315,7 @@
           frugal-uuid
           hunchentoot
           cl-template
+          enchant
         ];
 
         makeLemDesktopItem = { terminal }: pkgs.makeDesktopItem {
@@ -384,6 +385,7 @@
           nativeLibs =
             [
               pkgs.ncurses
+              pkgs.enchant
               pkgs.tree-sitter
               ts-wrapper
             ]
@@ -430,6 +432,7 @@
               SDL2
               SDL2_ttf
               SDL2_image
+              enchant
               tree-sitter
               ts-wrapper
             ])
@@ -481,6 +484,7 @@
               pkgs.gtk3
               pkgs.stdenv.cc.cc.lib
               c-webview
+              pkgs.enchant
               pkgs.tree-sitter
               ts-wrapper
               terminal-so
@@ -488,6 +492,7 @@
             else [
               pkgs.stdenv.cc.cc.lib
               c-webview
+              pkgs.enchant
               pkgs.tree-sitter
               ts-wrapper
             ];
@@ -569,6 +574,9 @@
               SDL2_ttf
               SDL2_image
 
+              # Spell checking
+              enchant
+
               # SSL/TLS support
               openssl
 
@@ -613,6 +621,7 @@
               pkgs.SDL2
               pkgs.SDL2_ttf
               pkgs.SDL2_image
+              pkgs.enchant
               pkgs.openssl
               pkgs.tree-sitter
               ts-wrapper

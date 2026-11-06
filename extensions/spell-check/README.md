@@ -52,8 +52,8 @@ automatically for particular major modes:
 | `M-$` (`spell-check-word`) | Check the word at point and prompt for a replacement |
 | `M-x spell-check-buffer` | Enable the mode if needed and check the whole buffer |
 | `M-x spell-check-region` | Check only the active region; later rescans and corrections stay inside it |
-| `M-x spell-check-next-error` | Move to the next misspelled word |
-| `M-x spell-check-previous-error` | Move to the previous misspelled word |
+| `M-n` (`spell-check-next-error`) | Move to the next misspelled word |
+| `M-p` (`spell-check-previous-error`) | Move to the previous misspelled word |
 | `M-x spell-check-add-word` | Add the word at point to the personal dictionary |
 | `M-x spell-check-ignore-word` | Ignore the word for this session only |
 | `M-x spell-check-change-dictionary` | Choose the dictionary for this buffer |

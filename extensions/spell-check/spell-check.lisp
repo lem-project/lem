@@ -599,19 +599,24 @@ restriction lasts until `spell-check-buffer' is called or
                              (spell-check-dictionary-for-buffer buffer))))
 
 (defun spell-check-replace-word (dictionary word start end suggestions)
-  "Prompt for a replacement for WORD and replace it in the buffer."
+  "Prompt for a replacement for WORD and replace it in the buffer.
+The completion list is opened immediately and shows every suggestion
+in the order returned by Enchant."
   (with-point ((start-point (current-point) :right-inserting)
                (end-point (current-point) :left-inserting))
     (line-offset start-point 0 start)
     (line-offset end-point 0 end)
     (let ((buffer (point-buffer start-point))
           (replacement
-            (prompt-for-string
-             (format nil "Replace ~S with: " word)
-             :initial-value (first suggestions)
-             :completion-function (lambda (input)
-                                    (completion-strings input suggestions))
-             :history-symbol 'spell-check-replacement)))
+            (let ((*automatic-tab-completion* t))
+              (prompt-for-string
+               (format nil "Replace ~S with: " word)
+               :completion-function
+               (lambda (input)
+                 (if (zerop (length input))
+                     suggestions
+                     (completion-strings input suggestions)))
+               :history-symbol 'spell-check-replacement))))
       (when (and replacement (plusp (length replacement)))
         (let ((*spell-check-inhibit-after-change* t))
           (delete-between-points start-point end-point)

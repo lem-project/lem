@@ -49,7 +49,7 @@ automatically for particular major modes:
 
 | Key / command | Description |
 |---------------|-------------|
-| `M-$` (`spell-check-word`) | Check the word at point and prompt for a replacement |
+| `M-$` (`spell-check-word`) | Check the word at point and prompt for a replacement, listing all suggestions |
 | `M-x spell-check-buffer` | Enable the mode if needed and check the whole buffer |
 | `M-x spell-check-region` | Check only the active region; later rescans and corrections stay inside it |
 | `M-n` (`spell-check-next-error`) | Move to the next misspelled word |

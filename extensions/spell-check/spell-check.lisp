@@ -64,8 +64,13 @@ a different dictionary per buffer.")
 (define-keys *spell-check-mode-keymap*
   ("M-$" 'spell-check-word)
   ("M-a" 'spell-check-add-word)
+  ("M-i" 'spell-check-ignore-word)
   ("M-n" 'spell-check-next-error)
-  ("M-p" 'spell-check-previous-error))
+  ("M-p" 'spell-check-previous-error)
+  ("M-r" 'spell-check-region)
+  ("M-s" 'spell-check-buffer)
+  ("C-c c" 'spell-check-clear)
+  ("C-c d" 'spell-check-change-dictionary))
 
 (setf (documentation 'spell-check-mode 'function)
       "Toggle buffer-local spell checking.

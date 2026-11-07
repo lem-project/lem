@@ -12,6 +12,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Install Enchant
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libenchant-2-dev
     - name: Install Roswell
       env:
         LISP: ${{ matrix.lisp }}

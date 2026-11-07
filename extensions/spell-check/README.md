@@ -37,8 +37,12 @@ loaded together with Lem. Enable it per buffer:
 (spell-check-mode t)
 ```
 
-or interactively with `M-x spell-check-mode`. To enable it
-automatically for particular major modes:
+or interactively with `M-x spell-check-mode`. While the mode is active,
+a transient popup at the bottom of the screen lists the key bindings
+described below. It appears when the mode is enabled, follows the
+current buffer, and disappears in buffers where the mode is off.
+
+To enable it automatically for particular major modes:
 
 ```lisp
 (add-hook *markdown-mode-hook*

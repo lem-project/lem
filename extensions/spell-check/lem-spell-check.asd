@@ -3,6 +3,7 @@
   :author "Lem Project"
   :license "MIT"
   :depends-on ("lem/core"
+               "lem-transient"
                "enchant")
   :serial t
   :components ((:file "spell-check")))

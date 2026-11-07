@@ -54,6 +54,27 @@ a different dictionary per buffer.")
 
 ;;; Minor mode
 
+(lem/transient:define-transient *spell-check-mode-keymap*
+  :description "Spell Check"
+  (:key "M-$" :suffix 'spell-check-word
+   :description "Correct word at point")
+  (:key "M-a" :suffix 'spell-check-add-word
+   :description "Add word to the personal dictionary")
+  (:key "M-i" :suffix 'spell-check-ignore-word
+   :description "Ignore word for this session")
+  (:key "M-n" :suffix 'spell-check-next-error
+   :description "Next misspelled word")
+  (:key "M-p" :suffix 'spell-check-previous-error
+   :description "Previous misspelled word")
+  (:key "M-r" :suffix 'spell-check-region
+   :description "Check the active region")
+  (:key "M-s" :suffix 'spell-check-buffer
+   :description "Check the whole buffer")
+  (:key "C-c c" :suffix 'spell-check-clear
+   :description "Clear highlights")
+  (:key "C-c d" :suffix 'spell-check-change-dictionary
+   :description "Change the dictionary"))
+
 (define-minor-mode spell-check-mode
     (:name "Spell"
      :description "Highlight misspelled words using Enchant"
@@ -61,16 +82,9 @@ a different dictionary per buffer.")
      :enable-hook 'spell-check-enable
      :disable-hook 'spell-check-disable))
 
-(define-keys *spell-check-mode-keymap*
-  ("M-$" 'spell-check-word)
-  ("M-a" 'spell-check-add-word)
-  ("M-i" 'spell-check-ignore-word)
-  ("M-n" 'spell-check-next-error)
-  ("M-p" 'spell-check-previous-error)
-  ("M-r" 'spell-check-region)
-  ("M-s" 'spell-check-buffer)
-  ("C-c c" 'spell-check-clear)
-  ("C-c d" 'spell-check-change-dictionary))
+(defmethod lem/transient:mode-transient-keymap ((mode spell-check-mode))
+  "Show `spell-check-mode' key bindings in a transient popup."
+  *spell-check-mode-keymap*)
 
 (setf (documentation 'spell-check-mode 'function)
       "Toggle buffer-local spell checking.

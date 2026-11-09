@@ -35,6 +35,12 @@ When NIL, the popup stays visible until the next message is shown.")
 (defun trans--empty-string-p (text)
   (string= "" (string-trim '(#\Space #\Tab #\Newline #\Return) text)))
 
+(defun trans--check-program ()
+  "Signal a user-facing error when the translate-shell executable is missing."
+  (unless (exist-program-p *trans-program*)
+    (editor-error "translate-shell not found: ~A. Install translate-shell or set `lem-trans:*trans-program*'."
+                  *trans-program*)))
+
 (defun trans--command-line (target)
   (append (list *trans-program*)
           *trans-extra-arguments*
@@ -92,6 +98,7 @@ ON-FINALIZE is called on the editor thread after success or failure."
 (defun trans--translate (text &key (on-success #'trans--show-result) on-finalize)
   (when (trans--empty-string-p text)
     (editor-error "No text to translate"))
+  (trans--check-program)
   (message-without-log "Translating...")
   (trans--translate-async
    text

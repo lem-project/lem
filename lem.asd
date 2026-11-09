@@ -317,6 +317,7 @@
                "lem-display-time-mode"
                "lem-spell-check"
                "lem-tramp"
+               "lem-trans"
                "lem-winner-mode"))
 
 (defsystem "lem"

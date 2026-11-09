@@ -4,4 +4,4 @@
                "bordeaux-threads"
                "str")
   :serial t
-  :components ((:file "main")))
+  :components ((:file "trans")))

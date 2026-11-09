@@ -33,7 +33,7 @@ When NIL, the popup stays visible until the next message is shown.")
   "Style plist used to display translation popups.")
 
 (defun trans--empty-string-p (text)
-  (string= "" (string-trim '(#\Space #\Tab #\Newline #\Return) text)))
+  (str:blankp text))
 
 (defun trans--check-program ()
   "Signal a user-facing error when the translate-shell executable is missing."
@@ -59,13 +59,12 @@ Signal an error when `trans` exits with a non-zero status."
                         :external-format :utf-8
                         :ignore-error-status t)
     (unless (zerop exit-code)
-      (let ((message (string-trim '(#\Space #\Tab #\Newline #\Return)
-                                  error-output)))
+      (let ((message (str:trim error-output)))
         (error "trans exited with code ~D~@[~A~]"
                exit-code
                (unless (string= message "")
                  (format nil ": ~A" message)))))
-    (string-right-trim '(#\Newline #\Return) output)))
+    (str:trim-right output)))
 
 (defun trans--translate-async (text command-line on-success &key on-finalize)
   "Translate TEXT with COMMAND-LINE in the background and call ON-SUCCESS on the editor thread.

@@ -11,7 +11,8 @@
            #:trans-translate-symbol
            #:trans-translate-string
            #:trans-set-target-language
-           #:trans-set-engine))
+           #:trans-set-engine
+           #:trans-help))
 (in-package #:lem-trans)
 
 (defvar *trans-program* "trans"
@@ -184,3 +185,42 @@ An empty input restores the default engine selection."
                                    :history-symbol 'trans-engine)))
     (setf *trans-engine* (unless (trans--empty-string-p engine)
                            engine))))
+
+(define-command trans-help () ()
+  "Show help for the trans commands and options."
+  (with-pop-up-typeout-window (s (make-buffer "*trans-help*") :erase t)
+    (format s "Translate text with translate-shell (`trans`).~&")
+    (format s "~%")
+    (format s "Requirements~&")
+    (format s "  Install translate-shell and make sure `trans` is on PATH.~&")
+    (format s "  If the executable has another name or path, set~&")
+    (format s "  `lem-trans:*trans-program*`.~&")
+    (format s "~%")
+    (format s "Commands~&")
+    (format s "  trans-translate-region    Translate the region. With a prefix~&")
+    (format s "                            argument, replace the region with the~&")
+    (format s "                            translation instead of showing it.~&")
+    (format s "  trans-translate-symbol    Translate the symbol at point.~&")
+    (format s "  trans-translate-string    Prompt for text and translate it.~&")
+    (format s "  trans-set-target-language Set the target language for this session.~&")
+    (format s "  trans-set-engine          Set the translation engine for this~&")
+    (format s "                            session. An empty input restores the~&")
+    (format s "                            default engine selection.~&")
+    (format s "  trans-help                Show this help.~&")
+    (format s "~%")
+    (format s "Options (set with setf, for example in init.lisp)~&")
+    (format s "  lem-trans:*trans-program*          Executable name or path.~&")
+    (format s "  lem-trans:*trans-target-language*  Target language code (default \"en\").~&")
+    (format s "  lem-trans:*trans-source-language*  Source language, or NIL to detect it.~&")
+    (format s "  lem-trans:*trans-engine*           Engine name, or NIL to let trans~&")
+    (format s "                                     choose its default engine.~&")
+    (format s "  lem-trans:*trans-extra-arguments*  Extra command line arguments.~&")
+    (format s "  lem-trans:*trans-popup-timeout*    Popup timeout in seconds, or NIL.~&")
+    (format s "  lem-trans:*trans-popup-style*      Popup style plist.~&")
+    (format s "~%")
+    (format s "  Run `trans -list-engines` to see the engines supported by your~&")
+    (format s "  translate-shell installation.~&")
+    (format s "~%")
+    (format s "Suggested key bindings~&")
+    (format s "  (define-key *global-keymap* \"C-c t\" 'lem-trans:trans-translate-region)~&")
+    (format s "  (define-key *global-keymap* \"C-c T\" 'lem-trans:trans-translate-symbol)~&")))

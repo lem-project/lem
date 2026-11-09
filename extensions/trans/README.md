@@ -29,6 +29,7 @@ needed.
 | `trans-translate-string` | Prompt for text and translate it. |
 | `trans-set-target-language` | Change the target language for this session. |
 | `trans-set-engine` | Change the translation engine for this session. |
+| `trans-help` | Show a summary of commands and options. |
 
 The default target language is English (`en`).
 

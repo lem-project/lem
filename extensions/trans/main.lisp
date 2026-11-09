@@ -3,13 +3,15 @@
   (:export #:*trans-program*
            #:*trans-target-language*
            #:*trans-source-language*
+           #:*trans-engine*
            #:*trans-extra-arguments*
            #:*trans-popup-timeout*
            #:*trans-popup-style*
            #:trans-translate-region
            #:trans-translate-symbol
            #:trans-translate-string
-           #:trans-set-target-language))
+           #:trans-set-target-language
+           #:trans-set-engine))
 (in-package #:lem-trans)
 
 (defvar *trans-program* "trans"
@@ -21,9 +23,13 @@
 (defvar *trans-source-language* nil
   "Source language code passed to `trans`, or NIL to let `trans` detect it.")
 
+(defvar *trans-engine* nil
+  "Default translation engine passed to `trans`, for example \"bing\".
+When NIL, `trans` chooses its default engine.")
+
 (defvar *trans-extra-arguments* '("-b" "-no-ansi" "-no-theme")
   "Command line arguments always passed to `trans`.
-Add engine or proxy options here, for example (\"-e\" \"bing\").")
+Add proxy or other options here, for example (\"-x\" \"127.0.0.1:7890\").")
 
 (defvar *trans-popup-timeout* 10
   "Seconds before a translation popup disappears.
@@ -44,6 +50,8 @@ When NIL, the popup stays visible until the next message is shown.")
 (defun trans--command-line (target)
   (append (list *trans-program*)
           *trans-extra-arguments*
+          (when *trans-engine*
+            (list "-e" *trans-engine*))
           (when *trans-source-language*
             (list "-s" *trans-source-language*))
           (list "-t" target)))
@@ -167,3 +175,12 @@ translation, the popup is shown instead of replacing text."
                                      :history-symbol 'trans-target-language)))
     (unless (trans--empty-string-p language)
       (setf *trans-target-language* language))))
+
+(define-command trans-set-engine () ()
+  "Set the translation engine used by the trans commands for this session.
+An empty input restores the default engine selection."
+  (let ((engine (prompt-for-string "Engine (empty for default): "
+                                   :initial-value (or *trans-engine* "")
+                                   :history-symbol 'trans-engine)))
+    (setf *trans-engine* (unless (trans--empty-string-p engine)
+                           engine))))

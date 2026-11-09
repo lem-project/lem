@@ -28,6 +28,7 @@ needed.
 | `trans-translate-symbol` | Translate the symbol at point. |
 | `trans-translate-string` | Prompt for text and translate it. |
 | `trans-set-target-language` | Change the target language for this session. |
+| `trans-set-engine` | Change the translation engine for this session. |
 
 The default target language is English (`en`).
 
@@ -40,7 +41,10 @@ The default target language is English (`en`).
 ;; Fix the source language instead of auto-detecting it.
 (setf lem-trans:*trans-source-language* "en")
 
-;; Pass extra options to trans (for example an engine or a proxy).
+;; Use a specific translation engine (google, bing, yandex, ...).
+(setf lem-trans:*trans-engine* "bing")
+
+;; Pass extra options to trans (for example a proxy).
 (setf lem-trans:*trans-extra-arguments*
       '("-b" "-no-ansi" "-no-theme" "-x" "127.0.0.1:7890"))
 

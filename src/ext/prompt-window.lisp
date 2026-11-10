@@ -483,10 +483,41 @@
                         :append (find-command-keybindings-in-keymap command keymap))
                   (find-command-keybindings-in-keymap command *global-keymap*))))
 
+(defconstant +max-command-summary-width+ 60
+  "Maximum display width of the command summary shown on M-x completion.")
+
+(defun command-docstring-summary (command)
+  "Return the first line of COMMAND's docstring, truncated for the completion popup.
+
+  Return NIL when COMMAND has no docstring."
+  (let* ((name (command-name command))
+         (doc (and (symbolp name) (documentation name 'function))))
+    (when doc
+      (let* ((newline (position #\Newline doc))
+             (summary (string-trim '(#\Space #\Tab #\Return)
+                                   (if newline
+                                       (subseq doc 0 newline)
+                                       doc))))
+        (when (plusp (length summary))
+          (if (<= (string-width summary) +max-command-summary-width+)
+              summary
+              (let ((end (wide-index summary (1- +max-command-summary-width+))))
+                (concatenate 'string (subseq summary 0 end) "…"))))))))
+
+(defun command-completion-detail (buffer command)
+  "Return the completion detail of COMMAND: its purpose followed by its keybindings."
+  (let ((summary (command-docstring-summary command))
+        (keybindings (collect-command-all-keybindings buffer command)))
+    (cond ((and summary (plusp (length keybindings)))
+           (format nil "~A  ~A" summary keybindings))
+          (summary summary)
+          (t keybindings))))
+
 (defun prompt-command-completion (string &key candidates)
   "Filter the list of commands from an input string and return a list of command completion items.
 
-  For each command, find and display its available keybindings for the current keymaps.
+  For each command, display a summary of its purpose and its available keybindings
+  for the current keymaps.
   Display CANDIDATES command names (list of strings) before the rest of all commands.
   The rest of commands are sorted by name."
   (flet ((collect-items (candidates)
@@ -496,7 +527,7 @@
                  :unless (null command)
                  :collect (lem/completion-mode:make-completion-item
                            :label name
-                           :detail (collect-command-all-keybindings
+                           :detail (command-completion-detail
                                     (current-buffer)
                                     command))))
 

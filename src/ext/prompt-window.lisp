@@ -8,6 +8,7 @@
   (:export :prompt-attribute
            :*prompt-completion-window-shape*
            :*automatic-tab-completion*
+           :*command-completion-detail-order*
            :current-prompt-window
            :find-command-keybindings-in-keymap))
 (in-package :lem/prompt-window)
@@ -505,13 +506,19 @@
                 (concatenate 'string (subseq summary 0 end) "…"))))))))
 
 (defun command-completion-detail (buffer command)
-  "Return the completion detail of COMMAND: its purpose followed by its keybindings."
+  "Return the completion detail of COMMAND.
+
+The order of the purpose summary and the keybindings is controlled by
+`*command-completion-detail-order*`."
   (let ((summary (command-docstring-summary command))
         (keybindings (collect-command-all-keybindings buffer command)))
-    (cond ((and summary (plusp (length keybindings)))
-           (format nil "~A  ~A" summary keybindings))
-          (summary summary)
-          (t keybindings))))
+    (format nil "~{~A~^  ~}"
+            (remove-if #'alexandria:emptyp
+                       (ecase *command-completion-detail-order*
+                         (:documentation-first
+                          (list summary keybindings))
+                         (:keybindings-first
+                          (list keybindings summary)))))))
 
 (defun prompt-command-completion (string &key candidates)
   "Filter the list of commands from an input string and return a list of command completion items.

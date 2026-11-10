@@ -262,6 +262,7 @@
    :*prompt-file-completion-function*
    :*prompt-command-completion-function*
    :*automatic-tab-completion*
+   :*command-completion-detail-order*
    :caller-of-prompt-window
    :prompt-active-p
    :active-prompt-window

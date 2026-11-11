@@ -488,21 +488,22 @@
   "Maximum display width of the command summary shown on M-x completion.")
 
 (defun command-docstring-summary (command)
-  "Return the first line of COMMAND's docstring, truncated for the completion popup.
+  "Return the first non-empty line of COMMAND's docstring, truncated for the completion popup.
 
   Return NIL when COMMAND has no docstring."
-  (let ((doc (command-documentation command)))
-    (when doc
-      (let* ((newline (position #\Newline doc))
-             (summary (string-trim '(#\Space #\Tab #\Return)
-                                   (if newline
-                                       (subseq doc 0 newline)
-                                       doc))))
-        (when (plusp (length summary))
-          (if (<= (string-width summary) +max-command-summary-width+)
-              summary
-              (let ((end (wide-index summary (1- +max-command-summary-width+))))
-                (concatenate 'string (subseq summary 0 end) "…"))))))))
+  (let* ((doc (command-documentation command))
+         (summary (and doc
+                       (string-trim '(#\Space #\Tab #\Newline #\Return) doc)))
+         (newline (and summary (position #\Newline summary)))
+         (summary (if newline
+                      (string-right-trim '(#\Space #\Tab #\Return)
+                                         (subseq summary 0 newline))
+                      summary)))
+    (when (and summary (plusp (length summary)))
+      (if (<= (string-width summary) +max-command-summary-width+)
+          summary
+          (let ((end (wide-index summary (1- +max-command-summary-width+))))
+            (concatenate 'string (subseq summary 0 end) "…"))))))
 
 (defun command-completion-detail (buffer command)
   "Return the completion detail of COMMAND.

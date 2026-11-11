@@ -14,11 +14,11 @@
   "When set to true, the completion list is opened instantly.
 When set to false, the completion list only opens when the user presses TAB")
 
-(defvar *command-completion-detail-order* :documentation-first
+(defvar *command-completion-detail-order* :keybindings-first
   "Order of the command purpose and keybindings on M-x completion.
 
-Can be :documentation-first, to show the command's docstring summary before
-its keybindings, or :keybindings-first, to show the keybindings first.")
+Can be :keybindings-first, to show the keybindings before the command's
+docstring summary, or :documentation-first, to show the summary first.")
 
 (defgeneric caller-of-prompt-window (prompt))
 (defgeneric prompt-active-p (prompt))

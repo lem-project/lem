@@ -137,6 +137,11 @@
       (error 'execute-condition :input input))))
 
 (defvar *prompt-completion-window-shape* :drop-curtain)
+(defvar *command-completion-detail-order* :keybindings-first
+  "Order of the command purpose and keybindings on M-x completion.
+
+Can be :keybindings-first, to show the keybindings before the command's
+docstring summary, or :documentation-first, to show the summary first.")
 (defvar *prompt-completion-window-gravity* :horizontally-adjacent-window)
 
 (defun open-prompt-completion ()

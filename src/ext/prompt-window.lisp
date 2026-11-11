@@ -491,8 +491,7 @@
   "Return the first line of COMMAND's docstring, truncated for the completion popup.
 
   Return NIL when COMMAND has no docstring."
-  (let* ((name (command-name command))
-         (doc (and (symbolp name) (documentation name 'function))))
+  (let ((doc (command-documentation command)))
     (when doc
       (let* ((newline (position #\Newline doc))
              (summary (string-trim '(#\Space #\Tab #\Return)

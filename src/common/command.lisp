@@ -2,6 +2,7 @@
   (:use :cl)
   (:export :primary-command
            :command-name
+           :command-documentation
            :command-source-location
            :command-equal
            :register-command-class
@@ -21,6 +22,9 @@
 (defclass primary-command ()
   ((name :initarg :name
          :reader command-name)
+   (documentation :initarg :documentation
+                  :initform nil
+                  :reader command-documentation)
    (source-location :initarg :source-location
                     :initform nil
                     :reader command-source-location)))

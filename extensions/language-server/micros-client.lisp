@@ -215,7 +215,9 @@
 
 (defun dispatch-message-loop (connection)
   (loop
-    (dispatch-waiting-messages connection)))
+    (let ((message (handler-case (read-message connection)
+                     (end-of-file () (return)))))
+      (dispatch-message connection message))))
 
 (defun connect-until-successful (hostname port)
   (loop :for second :in '(0.1 0.2 0.4 0.8 1.6 3.2 6.4)

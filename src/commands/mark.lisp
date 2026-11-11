@@ -15,10 +15,10 @@
 (define-command mark-set (p) (:universal-nil)
   "Sets a mark at the current cursor position."
   (if p
-      (move-point (current-point) (pop-buffer-point))
+      (move-point (current-point) (pop-cursor-mark-point (current-point)))
       (progn
         (set-cursor-mark (current-point) (current-point))
-        (when-real-cursor (message "Mark set")))))
+        (message "Mark set"))))
 
 (define-command exchange-point-mark () ()
   "Exchange the current cursor position with the marked position."

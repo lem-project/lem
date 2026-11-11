@@ -6,15 +6,21 @@
 
 ;;; multiple cursors
 (defun process-each-cursors (function)
-  (let ((buffer (current-buffer)))
-    (dolist (point (sort (copy-list (buffer-fake-cursors buffer)) #'point<))
-      (with-buffer-point (buffer point)
-        (with-current-killring (fake-cursor-killring point)
-          (handler-case
-              (save-continue-flags
-                (funcall function))
-            (move-cursor-error ())))))
-    (funcall function)))
+  "Call FUNCTION once for each fake cursor and then for the real cursor.
+
+Messages reported while FUNCTION runs are shown once; see
+`call-with-cursor-messages'."
+  (call-with-cursor-messages
+   (lambda ()
+     (let ((buffer (current-buffer)))
+       (dolist (point (sort (copy-list (buffer-fake-cursors buffer)) #'point<))
+         (with-buffer-point (buffer point)
+           (with-current-killring (fake-cursor-killring point)
+             (handler-case
+                 (save-continue-flags
+                   (call-as-fake-cursor-pass function))
+               (move-cursor-error ())))))
+       (funcall function)))))
 
 (defmacro do-each-cursors (() &body body)
   `(process-each-cursors (lambda () ,@body)))

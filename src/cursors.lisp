@@ -52,6 +52,11 @@
          :initform (make-instance 'mark)
          :reader fake-cursor-mark)))
 
+(defun fake-cursor-p (point)
+  "Return true if POINT is a fake cursor, i.e. a command is running for one
+of the extra cursors rather than the real one."
+  (typep point 'fake-cursor))
+
 (defmethod cursor-mark ((cursor cursor))
   (buffer-mark-object (point-buffer cursor)))
 
@@ -64,6 +69,17 @@
 
 (defmethod set-cursor-mark ((cursor fake-cursor) point)
   (mark-set-point (fake-cursor-mark cursor) point))
+
+(defmethod pop-cursor-mark-point ((cursor cursor))
+  "Return the point that CURSOR's previous mark was set at.
+
+The real cursor pops the buffer's mark ring.  A fake cursor has only its own
+mark, so it returns that mark's point."
+  (pop-buffer-point))
+
+(defmethod pop-cursor-mark-point ((cursor fake-cursor))
+  (or (mark-point (fake-cursor-mark cursor))
+      (editor-error "No mark set for this cursor")))
 
 (defmethod cursor-region-beginning ((cursor cursor))
   (point-min cursor (mark-point (cursor-mark cursor))))
@@ -126,6 +142,6 @@
 
 (defmacro when-real-cursor (&body body)
   "Execute BODY only if the current cursor is a real one (i.e. not a fake-cursor)."
-  `(unless (typep (current-point) 'fake-cursor)
+  `(unless (fake-cursor-p (current-point))
      ,@body))
 

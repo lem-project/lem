@@ -111,3 +111,90 @@
                      nil)
         (ok (positions-set-equal '((2 12) (3 10) (4 10))
                                  (all-positions buffer)))))))
+
+(defun count-logged-messages (text)
+  (let ((buffer (lem:get-buffer "*Messages*")))
+    (if buffer
+        (count text
+               (uiop:split-string (lem:buffer-text buffer) :separator '(#\Newline))
+               :test #'string=)
+        0)))
+
+(defun call-with-fake-cursors (command-class function)
+  "Execute COMMAND-CLASS in a buffer with two fake cursors, then call
+FUNCTION with the buffer while the buffer and *Messages* are still live."
+  (lem-fake-interface:with-fake-interface ()
+    (lem/common/timer:with-timer-manager (make-instance 'lem/common/timer:timer-manager)
+      (with-testing-buffer (buffer (make-text-buffer (lines "abc" "def" "ghi")))
+        (lem:switch-to-buffer buffer)
+        (make-testing-fake-cursors (lem:buffer-point buffer) 2)
+        (lem:execute (lem:buffer-major-mode buffer)
+                     (make-instance command-class)
+                     nil)
+        (funcall function buffer)))))
+
+(deftest multiple-cursors-message-once
+  (testing "mark-set marks every cursor but reports once"
+    (call-with-fake-cursors
+     'lem:mark-set
+     (lambda (buffer)
+       (ok (every (lambda (cursor)
+                    (lem:mark-active-p (lem-core:cursor-mark cursor)))
+                  (lem-core:buffer-cursors buffer)))
+       (ok (= 1 (count-logged-messages "Mark set"))))))
+  (testing "yank-pop without a preceding yank reports once"
+    (call-with-fake-cursors
+     'lem:yank-pop
+     (lambda (buffer)
+       (declare (ignore buffer))
+       (ok (= 1 (count-logged-messages "Previous command was not a yank")))))))
+
+(defun call-in-buffer-with-fake-cursors (function)
+  "Call FUNCTION with a buffer that has the real cursor and two fake cursors."
+  (lem-fake-interface:with-fake-interface ()
+    (lem/common/timer:with-timer-manager (make-instance 'lem/common/timer:timer-manager)
+      (with-testing-buffer (buffer (make-text-buffer (lines "abc" "def" "ghi")))
+        (lem:switch-to-buffer buffer)
+        (make-testing-fake-cursors (lem:buffer-point buffer) 2)
+        (funcall function buffer)))))
+
+(deftest multiple-cursors-message-from-fake-cursors-only
+  (testing "a message that only fake cursors report is still reported once"
+    (call-in-buffer-with-fake-cursors
+     (lambda (buffer)
+       (declare (ignore buffer))
+       (lem:process-each-cursors
+        (lambda ()
+          (when (lem:fake-cursor-p (lem:current-point))
+            (lem:message "Only a fake cursor"))))
+       (ok (= 1 (count-logged-messages "Only a fake cursor"))))))
+  (testing "a message reported from another buffer is still reported once"
+    (call-in-buffer-with-fake-cursors
+     (lambda (buffer)
+       (declare (ignore buffer))
+       (let ((other (lem:make-buffer "message-once other buffer")))
+         (unwind-protect
+              (lem:process-each-cursors
+               (lambda ()
+                 (lem:with-current-buffer other
+                   (lem:message "From another buffer"))))
+           (lem:delete-buffer other)))
+       (ok (= 1 (count-logged-messages "From another buffer"))))))
+  (testing "a message outside a multiple-cursor command is reported"
+    (call-in-buffer-with-fake-cursors
+     (lambda (buffer)
+       (declare (ignore buffer))
+       (lem:message "Outside")
+       (ok (= 1 (count-logged-messages "Outside")))))))
+
+(deftest multiple-cursors-mark-set-with-prefix
+  (testing "C-u mark-set moves each fake cursor to its own mark"
+    (call-in-buffer-with-fake-cursors
+     (lambda (buffer)
+       (let ((command (make-instance 'lem:mark-set))
+             (mode (lem:buffer-major-mode buffer)))
+         (lem:execute mode command nil)
+         (lem:execute mode (make-instance 'lem:forward-char) nil)
+         (lem:execute mode command 4)
+         (ok (every (lambda (cursor) (= 0 (lem:point-charpos cursor)))
+                    (lem-core:buffer-cursors buffer))))))))

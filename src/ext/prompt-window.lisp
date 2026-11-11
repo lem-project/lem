@@ -492,12 +492,17 @@ docstring summary, or :documentation-first, to show the summary first.")
 (defconstant +max-command-summary-width+ 60
   "Maximum display width of the command summary shown on M-x completion.")
 
-(defun command-docstring-summary (command)
-  "Return the first non-empty line of COMMAND's docstring, truncated for the completion popup.
+(defvar *command-docstring-summary-cache* (make-hash-table :test 'eq)
+  "Cache of command names to their summarized docstrings.
 
-  Return NIL when COMMAND has no docstring."
-  (let* ((doc (command-documentation command))
-         (summary (and doc
+Each value is a cons of the documentation string the summary was computed
+from and the summary itself, so redefining a command invalidates its entry.")
+
+(defun compute-command-docstring-summary (doc)
+  "Return the first non-empty line of DOC, truncated for the completion popup.
+
+  Return NIL when DOC is NIL or empty."
+  (let* ((summary (and doc
                        (string-trim '(#\Space #\Tab #\Newline #\Return) doc)))
          (newline (and summary (position #\Newline summary)))
          (summary (if newline
@@ -509,6 +514,21 @@ docstring summary, or :documentation-first, to show the summary first.")
           summary
           (let ((end (wide-index summary (1- +max-command-summary-width+))))
             (concatenate 'string (subseq summary 0 end) "…"))))))
+
+(defun command-docstring-summary (command)
+  "Return the first non-empty line of COMMAND's docstring, truncated for the completion popup.
+
+  Return NIL when COMMAND has no docstring. The result is cached per command
+  name and recomputed only when the docstring changes."
+  (let* ((doc (command-documentation command))
+         (name (command-name command))
+         (cached (gethash name *command-docstring-summary-cache*)))
+    (if (and cached (eq (car cached) doc))
+        (cdr cached)
+        (let ((summary (compute-command-docstring-summary doc)))
+          (setf (gethash name *command-docstring-summary-cache*)
+                (cons doc summary))
+          summary))))
 
 (defun command-completion-detail (buffer command)
   "Return the completion detail of COMMAND.
@@ -531,35 +551,24 @@ The order of the purpose summary and the keybindings is controlled by
   For each command, display a summary of its purpose and its available keybindings
   for the current keymaps.
   Display CANDIDATES command names (list of strings) before the rest of all commands.
-  The rest of commands are sorted by name."
-  (flet ((collect-items (candidates)
-           (loop :for name :in candidates
-                 :for command := (find-command name)
-                 ;; avoid commands created in a REPL session but now non-existent.
-                 :unless (null command)
-                 :collect (lem/completion-mode:make-completion-item
-                           :label name
-                           :detail (command-completion-detail
-                                    (current-buffer)
-                                    command))))
-
-         (filter-items (items)
-           (if (find #\- string)
-               (completion-hyphen string
-                                  items
-                                  :key #'lem/completion-mode:completion-item-label)
-               (completion string
-                           items
-                           :key #'lem/completion-mode:completion-item-label))))
-
-    (let* ((all-items (collect-items (sort (all-command-names) #'string<)))
-           (candidate-items (collect-items candidates))
-           (items (remove-duplicates
-                   (append candidate-items all-items)
-                   :test #'equal
-                   :key #'lem/completion-mode:completion-item-label
-                   :from-end t)))
-      (filter-items items))))
+  The rest of commands are sorted by name.
+  The completion detail is computed only for the commands matching STRING."
+  (let* ((names (remove-duplicates
+                 (append candidates (sort (all-command-names) #'string<))
+                 :test #'equal
+                 :from-end t))
+         (matched-names (if (find #\- string)
+                            (completion-hyphen string names)
+                            (completion string names))))
+    (loop :for name :in matched-names
+          :for command := (find-command name)
+          ;; avoid commands created in a REPL session but now non-existent.
+          :unless (null command)
+          :collect (lem/completion-mode:make-completion-item
+                    :label name
+                    :detail (command-completion-detail
+                             (current-buffer)
+                             command)))))
 
 (setf *prompt-file-completion-function* 'prompt-file-completion)
 (setf *prompt-buffer-completion-function* 'prompt-buffer-completion)

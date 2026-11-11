@@ -74,8 +74,11 @@
   (start-server (make-instance 'stdio-server)))
 
 (defun run-backend-internal (deny-port)
-  (let ((hostname (config :backend-hostname))
-        (port (config :backend-port)))
+  (let ((hostname (or (uiop:getenv "CL_LSP_BACKEND_HOST")
+                      (config :backend-hostname)))
+        (port (or (ignore-errors
+                    (parse-integer (uiop:getenv "CL_LSP_BACKEND_PORT")))
+                  (config :backend-port))))
     (if (and hostname port)
         (micros/client:connect hostname port)
         (micros/client:start-server-and-connect deny-port))))

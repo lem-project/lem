@@ -51,6 +51,7 @@
 (define-key *directory-mode-keymap* "D" 'directory-mode-delete-files)
 (define-key *directory-mode-keymap* "C" 'directory-mode-copy-files)
 (define-key *directory-mode-keymap* "R" 'directory-mode-rename-files)
+(define-key *directory-mode-keymap* "&" 'directory-mode-do-async-shell-command)
 (define-key *directory-mode-keymap* "r" 'directory-mode-rename-file)
 (define-key *directory-mode-keymap* "s" 'directory-mode-sort-files)
 (define-key *directory-mode-keymap* "S" *directory-mode-sort-keymap*)

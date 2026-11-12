@@ -141,6 +141,7 @@
    :attribute-dim
    :attribute-link
    :get-attribute-cache
+   :clear-all-attribute-cache
    :define-attribute
    :cursor
    :region

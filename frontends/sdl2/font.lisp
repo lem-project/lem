@@ -14,6 +14,7 @@
            :font-char-height
            :font-ascent
            :font-descent
+           :font-box-drawing-band
            :save-font-size
            :make-font-config
            :font-config-size
@@ -51,7 +52,11 @@
   ;; every blit.  ASCENT is positive (pixels above baseline), DESCENT is
   ;; negative (pixels below baseline) per SDL_ttf convention.
   ascent
-  descent)
+  descent
+  ;; (TOP . BOTTOM) surface rows covered by U+2502 in the latin fonts, or
+  ;; NIL; see box-drawing-band.
+  latin-normal-box-band
+  latin-bold-box-band)
 
 (defun save-font-size (font-config &optional (ratio 1))
   (setf (lem:config :sdl2-font-size)
@@ -118,6 +123,26 @@
     (sdl2:free-surface surface)
     (list width height)))
 
+(defun box-drawing-band (ttf-font)
+  "Return (TOP . BOTTOM), the rows of a rendered glyph surface that U+2502
+(BOX DRAWINGS LIGHT VERTICAL) covers in TTF-FONT, or NIL if the font lacks
+it.  Fonts draw box-drawing glyphs within their own ascent/descent, which is
+slightly shorter than Lem's row, so stretching this band to the cell height
+makes vertical lines meet across rows, as in a terminal."
+  (when (/= 0 (sdl2-ffi.functions:ttf-glyph-is-provided32 ttf-font #x2502))
+    (cffi:with-foreign-objects ((minx :int) (maxx :int) (miny :int) (maxy :int) (advance :int))
+      (when (zerop (sdl2-ffi.functions:ttf-glyph-metrics32 ttf-font #x2502
+                                                           minx maxx miny maxy advance))
+        (let ((ascent (sdl2-ffi.functions:ttf-font-ascent ttf-font)))
+          (cons (- ascent (cffi:mem-ref maxy :int))
+                (- ascent (cffi:mem-ref miny :int))))))))
+
+(defun font-box-drawing-band (font bold)
+  "Return the box-drawing band of FONT's bold or regular latin font."
+  (if bold
+      (font-latin-bold-box-band font)
+      (font-latin-normal-box-band font)))
+
 (defun open-font (&optional font-config)
   (let* ((font-config (or font-config (make-font-config)))
          (latin-normal-font (sdl2-ttf:open-font (font-config-latin-normal-file font-config)
@@ -143,7 +168,9 @@
                  :char-width char-width
                  :char-height char-height
                  :ascent (sdl2-ffi.functions:ttf-font-ascent latin-normal-font)
-                 :descent (sdl2-ffi.functions:ttf-font-descent latin-normal-font)))))
+                 :descent (sdl2-ffi.functions:ttf-font-descent latin-normal-font)
+                 :latin-normal-box-band (box-drawing-band latin-normal-font)
+                 :latin-bold-box-band (box-drawing-band latin-bold-font)))))
 
 (defun close-font (font)
   (sdl2-ttf:close-font (font-latin-normal-font font))

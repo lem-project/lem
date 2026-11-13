@@ -244,16 +244,34 @@ is not erased by the next glyph's background fill."
            ;; allowed to land in the next cell column; the preceding
            ;; phase :bg sweep ensures the next cell's background does not
            ;; erase it.
-           (let* ((ascent (display:display-font-ascent display))
-                  (descent (display:display-font-descent display))
-                  (glyph-y (- bottom-y ascent (abs descent))))
-             (display:with-scratch-rect (dst-rect display x glyph-y
-                                                  surface-width surface-height)
-               (sdl2:render-copy-ex (display:display-renderer display)
-                                    texture
-                                    :source-rect nil
-                                    :dest-rect dst-rect
-                                    :flip (list :none)))))
+           (let* ((string (text-object-string drawing-object))
+                  (band (and (= 1 (length string))
+                             (null (lem-core:attribute-font attribute))
+                             (display:display-box-drawing-band
+                              display
+                              (char string 0)
+                              (and attribute (lem:attribute-bold attribute))))))
+             (if band
+                 ;; Box drawing: stretch the rows the font uses for these
+                 ;; glyphs to the full cell height so lines meet across rows.
+                 (sdl2:with-rects ((src-rect 0 (car band)
+                                             surface-width (- (cdr band) (car band))))
+                   (display:with-scratch-rect (dst-rect display x y surface-width cell-height)
+                     (sdl2:render-copy-ex (display:display-renderer display)
+                                          texture
+                                          :source-rect src-rect
+                                          :dest-rect dst-rect
+                                          :flip (list :none))))
+                 (let* ((ascent (display:display-font-ascent display))
+                        (descent (display:display-font-descent display))
+                        (glyph-y (- bottom-y ascent (abs descent))))
+                   (display:with-scratch-rect (dst-rect display x glyph-y
+                                                        surface-width surface-height)
+                     (sdl2:render-copy-ex (display:display-renderer display)
+                                          texture
+                                          :source-rect nil
+                                          :dest-rect dst-rect
+                                          :flip (list :none)))))))
           (t
            (display:with-scratch-rect (dst-rect display x y draw-width draw-height)
              (sdl2:render-copy-ex (display:display-renderer display)

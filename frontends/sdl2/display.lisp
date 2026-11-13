@@ -303,15 +303,18 @@ monitor with a different backing scale (Retina \u2194 standard DPI).
 Unlike `notify-required-redisplay' this runs the DPI adaptation
 unconditionally, since the event can arrive without a redisplay having
 been requested.  The frame-scoped half is skipped when there is no
-current frame: SDL also fires `:size-changed' when the window is
-mapped, and the event loop can pump that before the editor thread has
-run `setup-first-frame'.
+current frame, or the frame has no window tree yet: SDL also fires
+`:size-changed' when the window is mapped, and the event loop can pump
+that before the editor thread has run `setup-first-frame'.  The frame
+is created before its window tree, so checking the frame alone is not
+enough: `refresh-all-view-textures' would walk a NIL tree.
 
 `update-texture' grabs the display mutex non-recursively, so it must
 be called outside the `with-renderer' block (matching the `:resized'
 event handler pattern in `on-windowevent')."
   (update-texture display)
-  (when (lem:current-frame)
+  (when (and (lem:current-frame)
+             (lem:frame-window-tree (lem:current-frame)))
     (with-renderer (display)
       #+darwin
       (adapt-high-dpi-display-scale display)

@@ -22,6 +22,8 @@
    :close-font
    :font-ascent
    :font-descent
+   :font-has-glyph-p
+   :glyph-metrics
    :render-text-blended
    :render-text-solid
    ;; textures
@@ -279,6 +281,28 @@ surface has been destroyed."
 (defun font-descent (font)
   "Return FONT's descent in pixels (negative, per SDL_ttf)."
   (sdl3-ttf:get-font-descent font))
+
+(defun font-has-glyph-p (font character)
+  "Return true if FONT provides a glyph for CHARACTER."
+  (sdl3-ttf:font-has-glyph font (char-code character)))
+
+(cffi:defcfun ("TTF_GetGlyphMetrics" %get-glyph-metrics) :bool
+  (font :pointer)
+  (ch :uint32)
+  (minx (:pointer :int))
+  (maxx (:pointer :int))
+  (miny (:pointer :int))
+  (maxy (:pointer :int))
+  (advance (:pointer :int)))
+
+(defun glyph-metrics (font character)
+  "Return CHARACTER's metrics in FONT as values MINX MAXX MINY MAXY ADVANCE
+(pixels; Y up from the baseline), or NIL if the font lacks the glyph."
+  (cffi:with-foreign-objects ((minx :int) (maxx :int) (miny :int) (maxy :int) (advance :int))
+    (when (%get-glyph-metrics font (char-code character) minx maxx miny maxy advance)
+      (values (cffi:mem-ref minx :int) (cffi:mem-ref maxx :int)
+              (cffi:mem-ref miny :int) (cffi:mem-ref maxy :int)
+              (cffi:mem-ref advance :int)))))
 
 (defun render-text-blended (font string red green blue)
   "Render STRING with FONT in the given opaque color, anti-aliased.

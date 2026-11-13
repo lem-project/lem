@@ -14,3 +14,4 @@ git webview https://github.com/lem-project/webview.git
 git named-readtables https://github.com/melisgl/named-readtables.git
 git lem-extension-manager https://github.com/lem-project/lem-extension-manager.git
 git tree-sitter-cl https://github.com/lem-project/tree-sitter-cl.git
+git cl-sdl3 https://github.com/aiffc/cl-sdl3.git

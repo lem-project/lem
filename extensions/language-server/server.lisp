@@ -74,6 +74,13 @@
   (start-server (make-instance 'stdio-server)))
 
 (defun run-backend-internal (deny-port)
+  "Return a connection to a micros backend.
+
+Connect to the backend at CL_LSP_BACKEND_HOST and CL_LSP_BACKEND_PORT when
+the port is set, which lets an installation without Roswell use a backend
+that is already running. The host falls back to the :backend-hostname
+setting and the port to :backend-port. Without a port, start a new backend
+through Roswell on DENY-PORT."
   (let ((hostname (or (uiop:getenv "CL_LSP_BACKEND_HOST")
                       (config :backend-hostname)))
         (port (or (ignore-errors

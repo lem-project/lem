@@ -66,3 +66,7 @@
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/tree-sitter-cl.git")
   :version "git-bfc3471b165856a20c3379f538a00ec256785a44"))
+("cl-sdl3" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/aiffc/cl-sdl3.git")
+  :version "git-47c90b54715aba23752b70d382a3eb310172cd34"))

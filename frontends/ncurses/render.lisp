@@ -7,10 +7,16 @@
 (in-package :lem-ncurses/render)
 
 (defun print-string (scrwin x y string attribute)
-  (let ((attr (lem-ncurses/attribute:attribute-to-bits attribute)))
-    (charms/ll:wattron scrwin attr)
+  (multiple-value-bind (attrs pair)
+      (lem-ncurses/attribute:attribute-to-attr-and-pair attribute)
+    ;; One wattr_set call applies the pair and the attributes together
+    ;; (the pair travels as a short argument, so pair numbers above 255
+    ;; are fine — the reason the pair is not OR'd into the attribute
+    ;; bits). The closing wattr_set resets both at once; the previous
+    ;; state never needs to be OR'd off piecewise.
+    (lem-ncurses/attribute:%wattr-set scrwin attrs pair (cffi:null-pointer))
     (charms/ll:mvwaddstr scrwin y x string)
-    (charms/ll:wattroff scrwin attr)))
+    (lem-ncurses/attribute:%wattr-set scrwin charms/ll:a_normal 0 (cffi:null-pointer))))
 
 (defgeneric draw-object (object x y view scrwin))
 

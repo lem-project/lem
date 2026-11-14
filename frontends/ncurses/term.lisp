@@ -537,11 +537,12 @@ whose entries are only valid for the palette built here."
 (defun %allocate-exact-color (palette color)
   "Redefine the next free grid slot (16+) in PALETTE to COLOR's exact RGB
 via init_color (OSC 4) and return the slot index, or nil when no slot is
-available or the redefinition failed. Slots already handed out to another
-color (by exact match, allocation, or quantization — see USED-SLOTS) are
-skipped: redefining one would silently change the color of every cell
-that resolved to it. A failed attempt does not burn the slot: the caller
-falls back to nearest-match quantization."
+available, init_color fails, or the readback mismatched. Slots already
+handed out to another color (by exact match, allocation, or quantization
+— see USED-SLOTS) are skipped: redefining one would silently change the
+color of every cell that resolved to it. A failed init_color call (ERR:
+no OSC 4 emitted, ncurses' color table untouched) does not burn the
+slot: the caller falls back to nearest-match quantization."
   (let ((colors (palette-colors palette)))
     (when (%allocate-exact-color-preconditions-p palette)
       (let* ((used (palette-used-slots palette))
@@ -563,18 +564,39 @@ falls back to nearest-match quantization."
             (when ok
               ;; ncurses accepts the call optimistically (OK does not prove the
               ;; terminal honored OSC 4), but the readback still guards against
-              ;; curses-level failures such as channel clamping in :short. On a
-              ;; mismatch the slot is skipped (not burned) and get-color-rgb
-              ;; falls through to Lab quantization.
+              ;; curses-level failures such as channel clamping in :short. A
+              ;; mismatch still CONSUMES the slot: init_color already emitted
+              ;; OSC 4 with the value ncurses stored, so the slot's
+              ;; terminal-side meaning changed even though it is not exact.
+              ;; Mark it used and advance next-redefine-slot past it —
+              ;; %reset-redefined-colors (which resets 16 through
+              ;; next-redefine-slot - 1) then restores it on exit, and later
+              ;; colors never retry a deterministically-failing slot. Record
+              ;; what the slot actually holds (ncurses' stored value) so
+              ;; exact matching and quantization see the truth; the caller
+              ;; gets nil and quantization recovers the color, typically
+              ;; resolving right back to this slot.
               (cffi:with-foreign-objects ((r :short) (g :short) (b :short))
-                (when (and (zerop (charms/ll:color-content slot r g b))
+                (let ((read-back (zerop (charms/ll:color-content slot r g b))))
+                  (if (and read-back
                            (= want-r (cffi:mem-ref r :short))
                            (= want-g (cffi:mem-ref g :short))
                            (= want-b (cffi:mem-ref b :short)))
-                  (setf (aref colors slot) color)
-                  (setf (aref used slot) 1)
-                  (setf (palette-next-redefine-slot palette) (1+ slot))
-                  slot)))))))))
+                      (progn
+                        (setf (aref colors slot) color)
+                        (setf (aref used slot) 1)
+                        (setf (palette-next-redefine-slot palette) (1+ slot))
+                        slot)
+                      (progn
+                        (when read-back
+                          (setf (aref colors slot)
+                                (lem:make-color
+                                 (round (* (cffi:mem-ref r :short) 255/1000))
+                                 (round (* (cffi:mem-ref g :short) 255/1000))
+                                 (round (* (cffi:mem-ref b :short) 255/1000)))))
+                        (setf (aref used slot) 1)
+                        (setf (palette-next-redefine-slot palette) (1+ slot))
+                        nil)))))))))))
 
 (defun %reset-redefined-colors ()
   "Restore the palette slots lem redefined via OSC 4 (slots 16 and up)
@@ -604,56 +626,37 @@ buffer them into the screen state."
 (cffi:defcfun ("fputs" %fputs) :int (s :string) (fp :pointer))
 (cffi:defcfun ("fflush" %fflush) :int (fp :pointer))
 
-;; Coordinated palette reset when the OSC-4 allocator runs dry. Slots
-;; are handed out monotonically for the whole session (see
-;; update-background-color), so every slot number ever returned by
-;; get-color-rgb stays meaningful — until the allocator is exhausted
-;; (after many theme loads, ~20 slots per theme against 240 grid
-;; slots). At that point the reset must be done all together, never
-;; piecemeal: restoring the terminal slots (OSC 104) and rebuilding the
-;; palette also invalidates every cached reference to a slot number —
-;; pair definitions (init-pair keyed on slot numbers), the ncurses
-;; attribute cache (attrs . pair), the color-name memo table and the
-;; per-window drawing caches. Dropping any of those leaves stale
-;; references pointing at slots whose terminal-side meaning changed,
-;; which is exactly the dark-on-dark clobber this file's update-* fixes
-;; removed. Mirrors the guards of %allocate-exact-color so palettes
-;; that can never allocate (8/16-color, redefinition disabled) do not
-;; reset pointlessly on every miss.
+;; Guards of %allocate-exact-color: palettes that can never allocate
+;; (8/16-color terminals, redefinition disabled) must not even scan.
 (defun %allocate-exact-color-preconditions-p (palette)
   (and *enable-palette-redefinition*
        *can-change-color*
        (>= (length (palette-colors palette)) 256)))
 
-(defun %allocator-exhausted-p (palette)
-  "T when the OSC-4 allocator has no free slot left. An empty scan
-range (next-redefine-slot already past the palette end) counts as
-exhausted: that is the state after every slot has been handed out, and
-without the reset here every future color would silently degrade to
-quantization."
-  (and (%allocate-exact-color-preconditions-p palette)
-       (loop :for i :from (palette-next-redefine-slot palette)
-             :below (length (palette-colors palette))
-             :never (zerop (aref (palette-used-slots palette) i)))))
-
-(defun %reset-color-state ()
-  (when *palette*
-    (%reset-redefined-colors)
-    (clrhash *color-pair-table*)
-    (setf *pair-counter* 0)
-    (clrhash *color-index-cache*)
-    (lem:clear-all-attribute-cache)
-    (lem:clear-screens-of-window-list)
-    (init-colors (length (palette-colors *palette*)))))
+;; When the allocator runs dry (after many theme loads, ~20 slots per
+;; theme against 240 grid slots), get-color-rgb degrades to Lab
+;; quantization instead of resetting the palette. A reset from inside a
+;; color lookup is not safe: it hands terminal slots back (OSC 104) and
+;; rebuilds the palette while earlier lookups of the same frame already
+;; hold slot numbers — the pending pair then binds a stale slot, and the
+;; cache invalidations (pair table, attribute cache, window screens)
+;; land mid-redisplay, forcing a full redraw and repeating for every
+;; further miss. Slots are handed out monotonically for the whole
+;; session (see update-background-color), so every slot number ever
+;; returned stays meaningful; the fallback only loses exactness for
+;; colors that no longer fit, and the terminal-side palette is restored
+;; on exit via %reset-redefined-colors (term-finalize).
 
 (defun get-color-rgb (color-1)
   "Resolve COLOR-1 (a lem:color) to a terminal color number: packed
 24-bit RGB in direct-color mode; otherwise an exact palette slot if one
 exists, a freshly redefined slot (OSC 4) if possible, and nearest-match
 quantization (CIE76 in CIELAB) as a last resort. When the OSC-4
-allocator has run dry, the palette is fully reset first (see
-%reset-color-state) so exact allocation resumes instead of degrading
-this and all future colors to quantization."
+allocator has run dry (no free slot left), this and all future colors
+degrade to quantization rather than resetting the palette: a reset
+invalidates slot numbers that earlier lookups of the same redisplay
+already hold (see the comment above
+%allocate-exact-color-preconditions-p)."
   (when *direct-color*
     ;; Direct color: the color number is the exact packed RGB.
     (return-from get-color-rgb (rgb-to-packed color-1)))
@@ -661,8 +664,6 @@ this and all future colors to quantization."
   ;; %mark-slot-used): exact grid matches and quantized targets too, so
   ;; that a later OSC 4 allocation can never redefine a slot other
   ;; colors already resolve to.
-  (when (%allocator-exhausted-p *palette*)
-    (%reset-color-state))
   (or (let ((slot (%exact-slot *palette* color-1)))
         (when slot (%mark-slot-used *palette* slot))
         slot)
@@ -687,15 +688,22 @@ this and all future colors to quantization."
 
 (defun get-color-1 (string)
   "Memoized version of parse-color + get-color-rgb for a color NAME
-string. The cache key is (string . parsed-rgb), not the string alone:
+string. The cache key is (string . packed-rgb), not the string alone:
 palette slots are handed out monotonically (update-foreground-color /
 update-background-color no longer reset the allocator), so an entry
 stays valid as long as the name resolves to the same RGB — but two
-themes may reuse one name (e.g. \"red\") for different values, and the
-RGB component makes such a switch a cache miss instead of a stale hit."
+themes may reuse one name (say red) for different values, and the
+RGB component makes such a switch a cache miss instead of a stale hit.
+The RGB is packed into an integer rather than keyed on the lem:color
+struct: EQUAL on structures is identity, and every theme load re-parses
+its colors into fresh structs (clear-parse-color-cache), so struct keys
+from earlier themes could never be hit again and the table would grow
+across theme switches. With the packed RGB, an entry survives theme
+loads as long as the name's RGB is unchanged, and the table only grows
+with distinct (name, RGB) pairs actually seen."
   (let ((color (lem:parse-color string)))
     (when color
-      (let ((key (cons string color)))
+      (let ((key (cons string (rgb-to-packed color))))
         (multiple-value-bind (cached foundp) (gethash key *color-index-cache*)
           (if foundp
               cached
@@ -708,17 +716,44 @@ RGB component makes such a switch a cache miss instead of a stale hit."
         (values color t)
         (values 0 nil))))
 
+;; The pair number travels through %wattr-set's :short argument (see
+;; attribute.lisp), so it must stay within signed-short range. ncurses
+;; caps COLOR_PAIRS at 32767 for its own short-based pairs, but that
+;; cap is not a contract across builds — min it into the allocation
+;; guard so the counter can never outgrow what the FFI can carry.
+(alexandria:define-constant +max-pair-number+ 32767 :test #'=)
+
 (defun init-pair (pair-color)
-  (incf *pair-counter*)
-  (if *direct-color*
-      (%init-extended-pair *pair-counter* (car pair-color) (cdr pair-color))
-      (charms/ll:init-pair *pair-counter* (car pair-color) (cdr pair-color)))
   ;; Store the raw pair number, not COLOR_PAIR(n): the A_COLOR field of
   ;; OR'd attribute bits is only 8 bits wide, so a pair number above 255
   ;; (common in direct-color mode, where every distinct RGB combination
   ;; gets a pair) would spill into other attribute bits. Callers apply
-  ;; the pair through wcolor-set, which takes the full short range.
-  (setf (gethash pair-color *color-pair-table*) *pair-counter*))
+  ;; the pair through wattr_set (%wattr-set), whose pair argument is a
+  ;; short taking the full range.
+  ;; The allocation call is checked: OK does not fail in practice, but
+  ;; caching the number after an ERR would leave the pair table pointing
+  ;; at a pair ncurses never allocated, and every cell using it would
+  ;; render undefined colors. On ERR the counter is not burned (the
+  ;; allocation failed) and pair 0 (the default) is cached for this
+  ;; combination, matching the exhausted-pairs fallback below.
+  (if (< *pair-counter* (min *color-pairs* +max-pair-number+))
+      (let ((ok (progn
+                  (incf *pair-counter*)
+                  (if *direct-color*
+                      (zerop (%init-extended-pair *pair-counter*
+                                                  (car pair-color)
+                                                  (cdr pair-color)))
+                      (zerop (charms/ll:init-pair *pair-counter*
+                                                  (car pair-color)
+                                                  (cdr pair-color)))))))
+        (setf (gethash pair-color *color-pair-table*)
+              (if ok *pair-counter* 0))
+        (unless ok
+          (decf *pair-counter*)))
+      ;; Bound exhausted: cache the default pair without touching the
+      ;; counter (it must stay at the cap; a rollback here would let the
+      ;; next call re-allocate an already-assigned pair number).
+      (setf (gethash pair-color *color-pair-table*) 0)))
 
 (defun get-color-pair (fg-color-name bg-color-name)
   (multiple-value-bind (default-fg default-bg)
@@ -886,7 +921,14 @@ resolution), it returns black: the terminal default background."
   ;; all themes seen, not by theme loads.
   (unless (eq *last-direct-color* *direct-color*)
     (clrhash *color-pair-table*)
-    (setf *pair-counter* 0))
+    (setf *pair-counter* 0)
+    ;; The counter reset reuses pair numbers from 1 for different
+    ;; fg/bg combinations. Anonymous attribute instances (overlays,
+    ;; make-attribute results) keep cached (attrs . pair) values that
+    ;; clear-all-attribute-cache cannot reach; bump the generation so
+    ;; they miss and recompute instead of rendering another
+    ;; combination's colors (search highlights and similar).
+    (lem:invalidate-all-attribute-caches))
   (setf *last-direct-color* *direct-color*)
   (init-colors charms/ll:*colors*)
   (set-default-color nil nil)

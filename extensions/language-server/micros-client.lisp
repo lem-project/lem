@@ -213,6 +213,11 @@
         :for message := (read-message connection)
         :do (dispatch-message connection message)))
 
+;; Read one message at a time, blocking until it arrives, instead of looping
+;; on dispatch-waiting-messages. message-waiting-p polls the socket with a zero
+;; timeout, so on an idle connection it returns immediately and the loop would
+;; spin and keep a core at 100%. read-message blocks until the server sends
+;; something, and signals end-of-file when the connection is closed.
 (defun dispatch-message-loop (connection)
   (loop
     (let ((message (handler-case (read-message connection)

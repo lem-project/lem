@@ -736,25 +736,28 @@ with distinct (name, RGB) pairs actually seen."
   ;; render undefined colors. On ERR the counter is not burned (the
   ;; allocation failed) and pair 0 (the default) is cached for this
   ;; combination, matching the exhausted-pairs fallback below.
+  ;; The allocated number is RETURNED (not just cached): get-color-pair
+  ;; passes this value through to attribute resolution, so a nil here
+  ;; would flow into wattr_set's short argument as a type error.
   (if (< *pair-counter* (min *color-pairs* +max-pair-number+))
-      (let ((ok (progn
-                  (incf *pair-counter*)
-                  (if *direct-color*
-                      (zerop (%init-extended-pair *pair-counter*
-                                                  (car pair-color)
-                                                  (cdr pair-color)))
-                      (zerop (charms/ll:init-pair *pair-counter*
-                                                  (car pair-color)
-                                                  (cdr pair-color)))))))
-        (setf (gethash pair-color *color-pair-table*)
-              (if ok *pair-counter* 0))
+      (let* ((ok (progn
+                   (incf *pair-counter*)
+                   (if *direct-color*
+                       (zerop (%init-extended-pair *pair-counter*
+                                                   (car pair-color)
+                                                   (cdr pair-color)))
+                       (zerop (charms/ll:init-pair *pair-counter*
+                                                   (car pair-color)
+                                                   (cdr pair-color)))))
+             (stored (if ok *pair-counter* 0)))
+        (setf (gethash pair-color *color-pair-table*) stored)
         (unless ok
-          (decf *pair-counter*)))
+          (decf *pair-counter*))
+        stored)
       ;; Bound exhausted: cache the default pair without touching the
       ;; counter (it must stay at the cap; a rollback here would let the
       ;; next call re-allocate an already-assigned pair number).
       (setf (gethash pair-color *color-pair-table*) 0)))
-
 (defun get-color-pair (fg-color-name bg-color-name)
   (multiple-value-bind (default-fg default-bg)
       ;; Direct color: the default pair cannot carry packed RGB (see

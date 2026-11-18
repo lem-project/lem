@@ -6,6 +6,7 @@
            :view-border
            :view-scrwin
            :view-modeline-scrwin
+           :ensure-window-background
            :view-x
            :view-y
            :view-width
@@ -37,11 +38,36 @@
    (height :initarg :height :accessor view-height)
    (last-print-cursor-x :initform 0 :accessor view-last-print-cursor-x)
    (last-print-cursor-y :initform 0 :accessor view-last-print-cursor-y)
+   ;; Generation of the window background last applied to SCRWIN (see
+   ;; ensure-window-background). -1 = none applied yet: a fresh window's
+   ;; cells carry pair 0, so its first fill syncs the background. In
+   ;; non-direct mode the synced pair is 0 — identical to newwin's
+   ;; default — so the sync is a no-op there.
+   (background-generation :initform -1 :accessor view-background-generation)
    (cursor-invisible-p :initarg :cursor-invisible :reader view-cursor-invisible-p)))
 
 (defun set-last-print-cursor (view x y)
   (setf (view-last-print-cursor-x view) x
         (view-last-print-cursor-y view) y))
+
+(defun ensure-window-background (view)
+  "Keep VIEW's window background in sync with the theme (see
+lem-ncurses/term:window-background): cleared regions
+(wclrtoeol/wclrtobot) fill with the pair it hands out — the theme
+background pair in direct-color mode (where pair 0 is pinned to the
+terminal default), pair 0 otherwise (a no-op against newwin's default
+in non-direct mode, but it keeps the protocol mode-uniform, so a
+hypothetical direct->non-direct re-init would reset stale direct-mode
+backgrounds too). Views notice changes via the generation counter
+because the frontend keeps no registry of live windows; new windows
+start at generation -1, so their first fill picks the current theme
+up."
+  (multiple-value-bind (generation pair)
+      (lem-ncurses/term:window-background)
+    (when (/= (view-background-generation view) generation)
+      (lem-ncurses/term:set-window-background
+       (view-scrwin view) charms/ll:a_normal pair)
+      (setf (view-background-generation view) generation))))
 
 (deftype border-shape ()
   '(member nil :drop-curtain :left-border))
@@ -93,6 +119,12 @@
                                                 :size border
                                                 :shape border-shape)))))
                    :scrwin (newwin height width y x)
+                   ;; The modeline window deliberately gets no
+                   ;; set-window-background: render-line-on-modeline
+                   ;; paints it with an explicit full-width
+                   ;; print-string every frame, and nothing ever
+                   ;; wclrtoeol's it (unlike scrwin, whose cleared
+                   ;; regions need the theme background pair).
                    :modeline-scrwin (when modeline (newwin 1 width (+ y height) x))
                    :x x
                    :y y

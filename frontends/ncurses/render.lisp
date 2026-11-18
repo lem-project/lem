@@ -74,6 +74,10 @@
             (draw-object object current-x y view scrwin)))
 
 (defun clear-line (view x y)
+  ;; Sync the window background first so the wclrtoeol fill carries the
+  ;; theme background pair in direct-color mode (see
+  ;; ensure-window-background; a no-op in non-direct mode).
+  (lem-ncurses/view:ensure-window-background view)
   (charms/ll:wmove (lem-ncurses/view:view-scrwin view) y x)
   (charms/ll:wclrtoeol (lem-ncurses/view:view-scrwin view)))
 
@@ -105,5 +109,9 @@
 (defun clear-to-end-of-window (view y)
   (let ((win (lem-ncurses/view:view-scrwin view)))
     (when (< y (lem-ncurses/view:view-height view))
+      ;; Sync the window background first so the wclrtobot fill carries
+      ;; the theme background pair in direct-color mode (see
+      ;; ensure-window-background).
+      (lem-ncurses/view:ensure-window-background view)
       (charms/ll:wmove win y 0)
       (charms/ll:wclrtobot win))))

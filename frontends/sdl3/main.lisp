@@ -30,10 +30,12 @@
                 ((eql button event:+button-x1+) :button-4))))
     (when button
       (let ((char-x (display:scaled-char-width display x))
-            (char-y (display:scaled-char-height display y)))
+            (char-y (display:scaled-char-height display y))
+            (pixel-x (display:scaled-pixel-x display x))
+            (pixel-y (display:scaled-pixel-y display y)))
         (lem:send-event
          (lambda ()
-           (lem:receive-mouse-button-down char-x char-y x y button
+           (lem:receive-mouse-button-down char-x char-y pixel-x pixel-y button
                                           clicks)))))))
 
 (defun on-mouse-button-up (display button x y)
@@ -44,10 +46,12 @@
                 ((eql button event:+button-middle+) :button-2)
                 ((eql button event:+button-x1+) :button-4)))
         (char-x (display:scaled-char-width display x))
-        (char-y (display:scaled-char-height display y)))
+        (char-y (display:scaled-char-height display y))
+        (pixel-x (display:scaled-pixel-x display x))
+        (pixel-y (display:scaled-pixel-y display y)))
     (lem:send-event
      (lambda ()
-       (lem:receive-mouse-button-up char-x char-y x y button)))))
+       (lem:receive-mouse-button-up char-x char-y pixel-x pixel-y button)))))
 
 (defun on-mouse-motion (display x y state)
   (show-cursor)
@@ -55,19 +59,23 @@
                     :button-1
                     nil)))
     (let ((char-x (display:scaled-char-width display x))
-          (char-y (display:scaled-char-height display y)))
+          (char-y (display:scaled-char-height display y))
+          (pixel-x (display:scaled-pixel-x display x))
+          (pixel-y (display:scaled-pixel-y display y)))
       (lem:send-event
        (lambda ()
-         (lem:receive-mouse-motion char-x char-y x y button))))))
+         (lem:receive-mouse-motion char-x char-y pixel-x pixel-y button))))))
 
 (defun on-mouse-wheel (display wheel-x wheel-y)
   (show-cursor)
   (multiple-value-bind (x y) (mouse-position)
     (let ((char-x (display:scaled-char-width display x))
-          (char-y (display:scaled-char-height display y)))
+          (char-y (display:scaled-char-height display y))
+          (pixel-x (display:scaled-pixel-x display x))
+          (pixel-y (display:scaled-pixel-y display y)))
       (lem:send-event
        (lambda ()
-         (lem:receive-mouse-wheel char-x char-y x y wheel-x wheel-y)
+         (lem:receive-mouse-wheel char-x char-y pixel-x pixel-y wheel-x wheel-y)
          (when (= 0 (lem:event-queue-length))
            (lem:redraw-display)))))))
 
@@ -402,6 +410,40 @@ nothing. Can be called from any thread."
     (display:with-display (display)
       (display:with-renderer (display)
         (view:move-position view x y)))))
+
+(defmethod lem-if:make-view-with-pixels ((implementation sdl3) window x y width height
+                                         pixel-x pixel-y pixel-width pixel-height
+                                         use-modeline)
+  "Create a view at cell X, Y of WIDTH by HEIGHT cells, placed and sized by
+the PIXEL- arguments where they are not NIL."
+  (with-debug ("lem-if:make-view-with-pixels" window x y width height
+               pixel-x pixel-y pixel-width pixel-height use-modeline)
+    (display:with-display (display)
+      (display:with-renderer (display)
+        (view:create-view display window x y width height use-modeline
+                          :pixel-x pixel-x
+                          :pixel-y pixel-y
+                          :pixel-width pixel-width
+                          :pixel-height pixel-height)))))
+
+(defmethod lem-if:set-view-pos-pixels ((implementation sdl3) view x y pixel-x pixel-y)
+  "Move VIEW to cell X, Y, at PIXEL-X, PIXEL-Y where they are not NIL."
+  (with-debug ("lem-if:set-view-pos-pixels" view x y pixel-x pixel-y)
+    (display:with-display (display)
+      (display:with-renderer (display)
+        (view:move-position view x y pixel-x pixel-y)))))
+
+(defmethod lem-if:set-view-size-pixels ((implementation sdl3) view width height
+                                        pixel-width pixel-height)
+  "Resize VIEW to PIXEL-WIDTH by PIXEL-HEIGHT where they are not NIL,
+keeping its cell size."
+  ;; WIDTH and HEIGHT are the window's cell size, modeline row included, as
+  ;; floating-window-set-pixel-size passes them; the view already has it.
+  (declare (ignore width height))
+  (with-debug ("lem-if:set-view-size-pixels" view pixel-width pixel-height)
+    (display:with-display (display)
+      (display:with-renderer (display)
+        (view:resize-pixels view display pixel-width pixel-height)))))
 
 (defmethod lem-if:redraw-view-before ((implementation sdl3) view)
   (with-debug ("lem-if:redraw-view-before" view)

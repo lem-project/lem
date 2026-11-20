@@ -268,10 +268,10 @@
     (t
      (unless (window-scroll window n)
        (buffer-end (window-view-point window))
-       (backward-line-wrap (window-view-point window)
-                           window t))
+       (visual-line-beginning (window-view-point window)))
      (with-current-window window
-       (next-line (- (window-offset-view window)))))))
+       (loop :while (point< (current-point) (window-view-point window))
+             :do (next-line 1))))))
 
 (define-command scroll-up (n &optional (window (current-window))) (:universal)
   "Scroll up."
@@ -283,7 +283,9 @@
      (unless (window-scroll window (- n))
        (buffer-start (window-view-point window)))
      (with-current-window window
-       (previous-line (window-offset-view window))))))
+       (let ((clipped (window-first-clipped-row window)))
+         (loop :while (and clipped (point<= clipped (current-point)))
+               :do (previous-line 1)))))))
 
 (define-next-window-command lem-core/commands/file:find-file (:new-file "Find File Other Window: ") "Open a file in another window. Split the screen vertically if needed.")
 (define-next-window-command lem-core/commands/file:read-file (:new-file "READ File Other Window: ") "Read a file in another window.")

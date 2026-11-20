@@ -1,5 +1,119 @@
 (in-package :lem-core)
 
+(defun visual-line-beginning (point)
+  "Move POINT to the start of its visual line. returns POINT."
+  (line-start point)
+  (loop :while (line-continuation-p point)
+        :do (line-offset point -1))
+  point)
+
+(defun next-visual-line-beginning (point)
+  "Move POINT to the start of the next visual line. returns POINT, or NIL without moving it."
+  (with-point ((p point))
+    (loop (unless (line-offset p 1)
+            (return nil))
+          (unless (line-continuation-p p)
+            (return (move-point point p))))))
+
+(defun previous-visual-line-beginning (point)
+  "Move POINT, a visual line start, to the start of the one before. returns POINT, or NIL."
+  (and (line-offset point -1)
+       (visual-line-beginning point)))
+
+(defun point-row-extent (rows offset)
+  "Vertical span of the row containing OFFSET, as (values TOP BOTTOM).
+ROWS is one visual line as (START . HEIGHT) pairs from `logical-line-rows'.
+START is the buffer offset where the row's text begins, or NIL for a virtual-only row.
+OFFSET is a character offset from the start of the line.
+TOP and BOTTOM are measured down from the top of the visual line.
+the row is the last one starting at or before OFFSET. virtual-only rows never contain OFFSET,
+except the first row."
+  (let ((y 0)
+        (top 0)
+        (bottom 0))
+    (loop :for (start . height) :in rows
+          :for first := t :then nil
+          :do (when (or first (and start (<= start offset)))
+                (setf top y
+                      bottom (+ y height)))
+              (incf y height))
+    (values top bottom)))
+
+(defun window-point-row-extent (window point)
+  "Vertical span of POINT's row from the top of WINDOW's view, as (values TOP BOTTOM).
+TOP and BOTTOM are measured down from the view's first row.
+returns NIL when POINT is above the view. When POINT is past the bottom of the view, returns equal
+TOP and BOTTOM past the view's height instead of the exact span."
+  (let ((height (window-view-height window)))
+    (with-point ((p (window-view-point window))
+                 (line point))
+      (visual-line-beginning p)
+      (visual-line-beginning line)
+      (when (point<= p line)
+        (loop :with y := 0
+              :until (point= p line)
+              :do (incf y (reduce #'+ (visual-line-rows window p) :key #'cdr))
+                  (when (or (< height y)
+                            (not (next-visual-line-beginning p)))
+                    (return (values y y)))
+              :finally (multiple-value-bind (top bottom)
+                           (point-row-extent (visual-line-rows window p) (count-characters p point))
+                         (return (values (+ y top) (+ y bottom)))))))))
+
+(defun window-first-clipped-row (window)
+  "Point to the start of the first partly (in)visible row at the bottom of WINDOW.
+returns NIL when all text from the top of the view to the end of the buffer is fully visible (which
+happens when the cursor is close to the end of the buffer).
+the top row is never treated as clipped. rows with only virtual text are skipped, as they have
+no buffer position."
+  (let ((height (window-view-height window))
+        (p (copy-point (window-view-point window) :temporary)))
+    (visual-line-beginning p)
+    (loop :with y := 0
+          :and clipped := nil
+          :do (loop :for (start . row-height) :in (visual-line-rows window p)
+                    :do (when (and (plusp y) (< height (+ y row-height)))
+                          (setf clipped t))
+                        (incf y row-height)
+                        ;; a row of only virtual text holds no cursor, the clipped row is the next
+                        ;; with text
+                        (when (and clipped start)
+                          (return-from window-first-clipped-row (character-offset p start))))
+              (unless (next-visual-line-beginning p)
+                (return nil))
+              (when clipped
+                (return p)))))
+
+(defun move-back-visual-lines (window point continue-p)
+  "Move POINT up by visual lines while CONTINUE-P allows it.
+POINT must start at a visual line start and is moved in place.
+before each step, CONTINUE-P is called with the distance moved so far and the height of the line
+above. step only while it returns true.
+returns POINT."
+  (with-point ((p point))
+    (loop :with distance := 0
+          :while (previous-visual-line-beginning p)
+          :do (let ((height (reduce #'+ (visual-line-rows window p) :key #'cdr)))
+                (unless (funcall continue-p distance height)
+                  (return))
+                (incf distance height)
+                (move-point point p))))
+  point)
+
+(defun height-below (window line height cap)
+  "Add the heights of the visual lines after LINE to HEIGHT, stopping at CAP."
+  (with-point ((p line))
+    (loop :while (and (< height cap)
+                      (next-visual-line-beginning p))
+          :do (incf height (reduce #'+ (visual-line-rows window p) :key #'cdr))))
+  (min height cap))
+
+(defun set-window-view-start (window point)
+  (unless (point= point (window-view-point window))
+    (move-point (window-view-point window) point)
+    (need-to-redraw window)
+    (run-hooks *window-scroll-functions* window)))
+
 (defun window-recenter (window &key line from-bottom)
   "Recenter WINDOW to the given LINE number.
 LINE must be NIL or a positive number.
@@ -8,18 +122,22 @@ Otherwise, recenter to the nth LINE (starting at 0), counted from the top.
 If FROM-BOTTOM is T, start counting from the bottom."
   (check-type line (or null integer))
   (check-type from-bottom boolean)
-  (setq line (cond ((null line)
-                    (floor (window-height-without-modeline window) 2))
-                   (from-bottom
-                    (- (window-height-without-modeline window) line 1))
-                   (t line)))
-  (unless (= line (window-cursor-y window))
-    (line-start
-     (move-point (window-view-point window)
-                 (window-buffer-point window)))
-    (let ((n (- (window-cursor-y window) line)))
-      (window-scroll window n)
-      n)))
+  (let* ((row-height (text-row-height))
+         (rows (floor (window-view-height window) row-height))
+         (target (* row-height
+                    (cond ((null line) (floor rows 2))
+                          (from-bottom (- rows line 1))
+                          (t line))))
+         (point (window-buffer-point window)))
+    (with-point ((view point))
+      (visual-line-beginning view)
+      (let ((row-top (point-row-extent (visual-line-rows window view)
+                                       (count-characters view point))))
+        (move-back-visual-lines window
+                                view
+                                (lambda (distance height)
+                                  (<= (+ distance height row-top) target))))
+      (set-window-view-start window view))))
 
 (defun window-recenter-top-bottom (window)
   "In first call recenter WINDOW to the middle line.
@@ -63,13 +181,6 @@ next line because it is at the end of width."
     (declare (ignore next))
     x))
 
-(defun cursor-goto-next-line-p (point window)
-  "Check if the cursor goes to next line because it is at the end of width."
-  (multiple-value-bind (x next)
-      (%calc-window-cursor-x point window)
-    (declare (ignore x))
-    next))
-
 (defun map-wrapping-line (window string fn)
   (let ((tab-size (variable-value 'tab-width :default (window-buffer window))))
     (loop :with start := 0
@@ -79,69 +190,32 @@ next line because it is at the end of width."
           :do (funcall fn i)
               (setq start i))))
 
-(defun window-wrapping-offset (window start-point end-point)
-  (unless (variable-value 'line-wrap :default (window-buffer window))
-    (return-from window-wrapping-offset 0))
-  (let ((offset 0))
-    (labels ((inc (arg)
-               (declare (ignore arg))
-               (incf offset)))
-      (map-region start-point
-                  end-point
-                  (lambda (string lastp)
-                    (declare (ignore lastp))
-                    (map-wrapping-line window
-                                       string
-                                       #'inc)))
-      offset)))
+(defun visual-lines-height (window from to)
+  "Total height of the visual lines from FROM up to, but not including, TO."
+  (with-point ((p from))
+    (loop :with height := 0
+          :until (point= p to)
+          :do (incf height (reduce #'+ (visual-line-rows window p) :key #'cdr))
+              (unless (next-visual-line-beginning p)
+                (return height))
+          :finally (return height))))
 
-(defun count-hidden-lines (start-point end-point)
-  "Number of hidden buffer lines between START-POINT and END-POINT."
-  (when (point< end-point start-point)
-    (rotatef start-point end-point))
-  (with-point ((p start-point)
-               (goal end-point))
-    (line-start p)
-    (line-start goal)
-    (loop :with count := 0
-          :until (same-line-p p goal)
-          :do (unless (line-offset p 1)
-                (return count))
-              (when (line-continuation-p p)
-                (incf count))
-          :finally (return count))))
-
-(defun window-cursor-y-not-wrapping (window)
-  "Number of screen rows between the view point and the cursor.
-excludes lines hidden by overlays with :invisible property because those lines dont occupy any
-vertical space."
-  (let ((view-point (window-view-point window))
-        (buffer-point (window-buffer-point window)))
-    (- (count-lines buffer-point view-point)
-       (count-hidden-lines view-point buffer-point))))
-
+;; TODO: we sum the heights of the rows above the cursor and floor the total to whole text rows, so
+;; callers can add it to cell coordinates. this is lossy for pixel-based client. we should
+;; be returning the exact height instead.
 (defun window-cursor-y (window)
-  (if (point< (window-buffer-point window)
-              (window-view-point window))
-      ;; return minus number
-      (- (+ (window-cursor-y-not-wrapping window)
-            (window-wrapping-offset window
-                                    (backward-line-wrap
-                                     (copy-point (window-buffer-point window)
-                                                 :temporary)
-                                     window t)
-                                    (window-view-point window))
-            (if (cursor-goto-next-line-p (window-view-point window) window)
-                1 0)))
-      ;; return zero or plus number
-      (+ (window-cursor-y-not-wrapping window)
-         (window-wrapping-offset window
-                                 (window-view-point window)
-                                 (window-buffer-point window))
-         (if (and (point< (window-view-point window)
-                          (window-buffer-point window))
-                  (cursor-goto-next-line-p (window-buffer-point window) window))
-             1 0))))
+  "Distance from the top of WINDOW's view down to the cursor's row, in text row heights.
+negative when the cursor is above the view."
+  (let ((point (window-buffer-point window)))
+    (with-point ((view (window-view-point window))
+                 (line point))
+      (visual-line-beginning view)
+      (visual-line-beginning line)
+      (let ((top (point-row-extent (visual-line-rows window line) (count-characters line point))))
+        (floor (if (point<= view line)
+                   (+ (visual-lines-height window view line) top)
+                   (- top (visual-lines-height window line view)))
+               (text-row-height))))))
 
 (defun forward-line-wrap (point window)
   (assert (eq (point-buffer point) (window-buffer window)))
@@ -313,26 +387,12 @@ vertical space."
           (character-offset point 1)
       :finally (return t))))
 
-(defun window-scroll-down (window)
-  (move-to-next-virtual-line (window-view-point window) 1 window))
-
-(defun window-scroll-up (window)
-  (move-to-previous-virtual-line (window-view-point window) 1 window))
-
-(defun window-scroll-down-n (window n)
-  (move-to-next-virtual-line (window-view-point window) n window))
-
-(defun window-scroll-up-n (window n)
-  (move-to-previous-virtual-line (window-view-point window) n window))
-
 (defun window-scroll (window n)
-  (need-to-redraw window)
-  (prog1 (if *use-new-vertical-move-function*
-             (if (plusp n)
-                 (window-scroll-down-n window n)
-                 (window-scroll-up-n window (- n)))
-             (dotimes (_ (abs n))
-               (if (plusp n)
-                   (window-scroll-down window)
-                   (window-scroll-up window))))
-    (run-hooks *window-scroll-functions* window)))
+  "Move WINDOW's view N visual lines down, up when N is negative. returns true when it moved all N."
+  (with-point ((view (window-view-point window)))
+    (visual-line-beginning view)
+    (prog1 (loop :repeat (abs n)
+                 :always (if (plusp n)
+                             (next-visual-line-beginning view)
+                             (previous-visual-line-beginning view)))
+      (set-window-view-start window view))))

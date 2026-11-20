@@ -16,8 +16,8 @@
            :set-view-pos
            :redraw-view-after
            :redraw-display-after
-           :render-line
-           :render-line-on-modeline
+           :render-row
+           :render-modeline-row
            :clear-to-end-of-window
            :update-display
            :set-last-print-cursor))

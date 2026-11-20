@@ -22,6 +22,10 @@
 (defconstant +display-width+ 100)
 (defconstant +display-height+ 40)
 
+(defvar *live-resize-redraw-timeout* 0.1
+  "Seconds a live-resize step waits for the editor thread to redraw at the
+window's new size before showing the last frame unscaled instead.")
+
 (defvar *smooth-scroll* t
   "When true, the mouse wheel and trackpad scroll a window with a modeline
 by pixels, including fractions of a line, instead of by whole lines.")
@@ -57,22 +61,30 @@ are scrolled by lem-core; the rest is the view's scroll offset."
     (setf (view:view-scroll-anchor view) (view-point-anchor window))))
 
 (defun scrolled-char-y (display char-x char-y pixel-y)
-  "Return CHAR-Y, the cell row under the pointer at PIXEL-Y, corrected for
-the scroll offset of the window there: its body is drawn that many pixels
-higher than its cells."
+  "Return the cell row under the pointer at PIXEL-Y, for a window with a
+modeline drawn as view:render-view-texture-to-display draws it: its body
+shifted up by the scroll offset, and its modeline at the bottom edge of the
+view, which can be past its last cell.  CHAR-X and CHAR-Y are the cell
+position SDL's coordinates give; other windows keep CHAR-Y."
   (let ((window (lem:focus-window-position (lem:current-frame) char-x char-y)))
     (if (null window)
         char-y
-        (let ((view (lem:window-view window))
-              (last-body-row (+ (lem:window-y window) (lem:window-height window) -2)))
-          (if (and (typep view 'view:view)
-                   (view:view-use-modeline view)
-                   (plusp (view:view-scroll-offset view))
-                   (<= char-y last-body-row))
-              (min (floor (+ pixel-y (view:view-scroll-offset view))
-                          (display:display-char-height display))
-                   last-body-row)
-              char-y)))))
+        (let ((view (lem:window-view window)))
+          (if (not (and (typep view 'view:view) (view:view-use-modeline view)))
+              char-y
+              (destructuring-bind (view-y body-height)
+                  (ffi:in-main-thread ()
+                    (list (nth-value 1 (view:view-pixel-rect view display))
+                          (view:view-body-height view display)))
+                (let ((char-height (display:display-char-height display))
+                      (window-y (lem:window-y window))
+                      (body-rows (1- (lem:window-height window))))
+                  (if (< pixel-y (+ view-y body-height))
+                      (+ window-y
+                         (min (floor (+ (- pixel-y view-y) (view:view-scroll-offset view))
+                                     char-height)
+                              (1- body-rows)))
+                      (+ window-y body-rows)))))))))
 
 (defun on-mouse-button-down (display button x y clicks)
   (show-cursor)
@@ -252,6 +264,104 @@ single :windowevent; SDL3 gives each its own event type."
        (on-window-event display type)
        nil))))
 
+(defun present-texture-unscaled (display)
+  "Show DISPLAY's texture as it is, at 1:1 in the window's top-left corner
+on the background colour, rather than letting the window server stretch the
+last frame to the window's new size."
+  (let* ((renderer (display:display-renderer display))
+         (texture (display:display-texture display))
+         (previous (ffi:get-render-target renderer)))
+    (multiple-value-bind (width height) (ffi:texture-size texture)
+      (ffi:set-render-target renderer nil)
+      (display:set-render-color display (display:display-background-color display))
+      (ffi:render-clear renderer)
+      (ffi:with-frect (rect 0 0 width height)
+        (ffi:render-texture renderer texture rect rect))
+      (display:update-display display)
+      (ffi:set-render-target renderer previous))))
+
+(defun request-editor-redraw (display)
+  "Ask the editor thread to remake DISPLAY's texture at the window's size and
+lay out and redraw the editor there, and return a semaphore it signals when
+it is done.  The texture is remade only when the editor gets to the request,
+so the last frame stays whole until then."
+  (let ((done (bt2:make-semaphore :name "lem-sdl3 live resize")))
+    (lem:send-event
+     (lambda ()
+       (unwind-protect
+            (progn
+              (ffi:in-main-thread () (display:update-texture display))
+              (lem:update-on-display-resized))
+         (bt2:signal-semaphore done))))
+    done))
+
+(defun wait-for-editor-redraw (done timeout)
+  "Run the main-thread tasks the editor thread queues while it redraws, until
+it signals DONE, and return true; or return NIL after TIMEOUT seconds."
+  (loop :with deadline := (+ (get-internal-real-time)
+                             (* timeout internal-time-units-per-second))
+        :do (ffi:run-pending-main-thread-tasks)
+            (when (bt2:wait-on-semaphore done :timeout 0.001)
+              (return t))
+        :while (< (get-internal-real-time) deadline)
+        :finally (return nil)))
+
+(defun redraw-with-editor (display)
+  "Have the editor thread redraw DISPLAY at the window's size, running the
+drawing it asks of this, the main thread, until it is done; or, if that takes
+longer than *live-resize-redraw-timeout*, show the last frame unscaled.  A
+request still running from an earlier step is waited for, and if the window
+has changed size again since, the editor is asked once more."
+  (ffi:call-with-main-thread-tasks-drained
+   (lambda ()
+     (loop :with deadline := (+ (get-internal-real-time)
+                                (* *live-resize-redraw-timeout*
+                                   internal-time-units-per-second))
+           :for request := (or (display:display-live-resize-request display)
+                               (setf (display:display-live-resize-request display)
+                                     (request-editor-redraw display)))
+           :do (unless (wait-for-editor-redraw
+                        request
+                        (max 0 (/ (- deadline (get-internal-real-time))
+                                  internal-time-units-per-second)))
+                 (present-texture-unscaled display)
+                 (return))
+               (setf (display:display-live-resize-request display) nil)
+           :while (display:texture-size-stale-p display)))))
+
+(defun redraw-during-live-resize (display)
+  "Redraw DISPLAY at the window's new size from inside the platform's resize
+loop or animation, where the event loop cannot run.  The editor thread lays
+out and redraws, as after any resize, while this thread runs the drawing it
+asks for (see redraw-with-editor).  When the editor is waiting for this
+thread, because the resize came from an editor command, it cannot, and the
+last frame is shown unscaled instead."
+  (handler-case
+      (ffi:with-float-traps-masked
+        (if (ffi:running-main-thread-task-p)
+            (present-texture-unscaled display)
+            (redraw-with-editor display)))
+    ;; This runs in a C callback: an error must not unwind through it.
+    (error (condition)
+      (log:error "Redraw during live resize failed: ~A" condition))))
+
+(cffi:defcallback live-resize-watch :bool ((userdata :pointer) (event :pointer))
+  ;; While the user drags a window edge, and while macOS animates a zoom or
+  ;; maximize, the platform runs its own loop and SDL_WaitEvent does not
+  ;; return until it ends, so the window server stretches the last frame to
+  ;; the window's changing size.  SDL reports each step with
+  ;; SDL_EVENT_WINDOW_EXPOSED (data1 = 1 for a drag, 0 for an animation) and
+  ;; lets an event watch redraw then; the watch redraws whenever the window's
+  ;; pixel size has changed since the texture was made.  Watches run on the
+  ;; thread that adds the event, so only the main thread's events are handled.
+  (declare (ignore userdata))
+  (when (and (= (event:event-type event) event:+window-exposed+)
+             (sdl3:is-main-thread)
+             (display:current-display)
+             (display:texture-size-stale-p (display:current-display)))
+    (redraw-during-live-resize (display:current-display)))
+  t)
+
 (defun event-loop (display)
   (event:with-event (event)
     (loop :while (event:wait-event event)
@@ -306,7 +416,11 @@ single :windowevent; SDL3 gives each its own event type."
                          (display:adapt-high-dpi-font-size display)
                          (ffi:start-text-input window)
                          (funcall function)
-                         (event-loop display)))
+                         (ffi:add-event-watch (cffi:callback live-resize-watch)
+                                              (cffi:null-pointer))
+                         (unwind-protect (event-loop display)
+                           (ffi:remove-event-watch (cffi:callback live-resize-watch)
+                                                   (cffi:null-pointer)))))
                   (when text-shaper
                     (lem-sdl3/text-shaping:destroy-text-shaper text-shaper))
                   (lem-sdl3/text-engine:destroy-text-engine text-engine)

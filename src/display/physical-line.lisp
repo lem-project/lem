@@ -90,8 +90,10 @@
            (text-object-within-cursor-p drawing-object-2))))
 
 (defmethod drawing-object-equal ((drawing-object-1 eol-cursor-object) (drawing-object-2 eol-cursor-object))
-  (equal (eol-cursor-object-color drawing-object-1)
-         (eol-cursor-object-color drawing-object-2)))
+  (and (equal (eol-cursor-object-color drawing-object-1)
+              (eol-cursor-object-color drawing-object-2))
+       (eq (not (null (eol-cursor-object-true-cursor-p drawing-object-1)))
+           (not (null (eol-cursor-object-true-cursor-p drawing-object-2))))))
 
 (defmethod drawing-object-equal ((drawing-object-1 extend-to-eol-object) (drawing-object-2 extend-to-eol-object))
   (equal (extend-to-eol-object-color drawing-object-1)
@@ -103,9 +105,9 @@
               (line-end-object-offset drawing-object-2))))
 
 (defmethod drawing-object-equal ((drawing-object-1 image-object) (drawing-object-2 image-object))
-  (and (eq (image-object-image drawing-object-1) (image-object-image drawing-object-1))
-       (equal (image-object-width drawing-object-1) (image-object-width drawing-object-1))
-       (equal (image-object-height drawing-object-1) (image-object-height drawing-object-1))))
+  (and (eq (image-object-image drawing-object-1) (image-object-image drawing-object-2))
+       (equal (image-object-width drawing-object-1) (image-object-width drawing-object-2))
+       (equal (image-object-height drawing-object-1) (image-object-height drawing-object-2))))
 
 
 (defgeneric drawing-object-mergable-p (drawing-object-1 drawing-object-2))
@@ -125,8 +127,10 @@
            (text-object-within-cursor-p drawing-object-2))))
 
 (defmethod drawing-object-mergable-p ((drawing-object-1 eol-cursor-object) (drawing-object-2 eol-cursor-object))
-  (equal (eol-cursor-object-color drawing-object-1)
-         (eol-cursor-object-color drawing-object-2)))
+  (and (equal (eol-cursor-object-color drawing-object-1)
+              (eol-cursor-object-color drawing-object-2))
+       (eq (not (null (eol-cursor-object-true-cursor-p drawing-object-1)))
+           (not (null (eol-cursor-object-true-cursor-p drawing-object-2))))))
 
 (defmethod drawing-object-mergable-p ((drawing-object-1 extend-to-eol-object) (drawing-object-2 extend-to-eol-object))
   (equal (extend-to-eol-object-color drawing-object-1)
@@ -138,9 +142,9 @@
               (line-end-object-offset drawing-object-2))))
 
 (defmethod drawing-object-mergable-p ((drawing-object-1 image-object) (drawing-object-2 image-object))
-  (and (eq (image-object-image drawing-object-1) (image-object-image drawing-object-1))
-       (equal (image-object-width drawing-object-1) (image-object-width drawing-object-1))
-       (equal (image-object-height drawing-object-1) (image-object-height drawing-object-1))))
+  (and (eq (image-object-image drawing-object-1) (image-object-image drawing-object-2))
+       (equal (image-object-width drawing-object-1) (image-object-width drawing-object-2))
+       (equal (image-object-height drawing-object-1) (image-object-height drawing-object-2))))
 
 
 (defgeneric drawing-object-merge (drawing-object-1 drawing-object-2))
@@ -288,10 +292,10 @@
 (defun create-drawing-objects (logical-line)
   (multiple-value-bind (items line-end-item)
       (compute-items-from-logical-line logical-line)
-    (append (loop :for item :in items
-                  :append (create-drawing-object item))
-            (when line-end-item
-              (create-drawing-object line-end-item)))))
+    (nconc (loop :for item :in items
+                  :nconc (create-drawing-object item))
+           (when line-end-item
+             (create-drawing-object line-end-item)))))
 
 (defun make-letter-object (character attribute)
   (make-object-with-type (string character)

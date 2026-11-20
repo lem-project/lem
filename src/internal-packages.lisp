@@ -333,6 +333,7 @@
    :split-window-horizontally
    :split-window-sensibly
    :get-next-window
+   :get-previous-window
    :delete-window
    :get-buffer-windows
    :other-buffer
@@ -358,6 +359,7 @@
    :floating-window-set-pixel-size
    :floating-window-pixel-bounds
    :attached-window-p
+   :get-previous-window
    :attach-buffer
    :update-on-display-resized
    :covered-with-floating-window-p

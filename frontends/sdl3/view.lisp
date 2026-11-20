@@ -32,7 +32,13 @@
    :view-body-height
    :view-scroll-offset
    :view-scroll-anchor
+   :view-scroll-remaining
+   :view-scroll-samples
+   :view-momentum-velocity
+   :scroll-velocity
+   :next-momentum-velocity
    :add-scroll-delta
+   :next-scroll-step
    :view-use-modeline
    :view-texture
    :sync-texture))
@@ -99,6 +105,21 @@ its cell height.")
     :accessor view-scroll-offset
     :documentation "How many pixels, less than a line, the body is scrolled
 past the line lem-core has at the top (see add-scroll-delta).")
+   (scroll-remaining
+    :initform 0
+    :accessor view-scroll-remaining
+    :documentation "Pixels a scroll animation has still to move the body,
+positive toward the end of the buffer.")
+   (scroll-samples
+    :initform '()
+    :accessor view-scroll-samples
+    :documentation "Recent trackpad scrolls of the body as (MILLISECONDS .
+PIXELS), newest first, for its velocity (see scroll-velocity).")
+   (momentum-velocity
+    :initform 0
+    :accessor view-momentum-velocity
+    :documentation "Pixels per millisecond the body glides after a trackpad
+flick, when the platform does not supply momentum itself.")
    (scroll-anchor
     :initform nil
     :accessor view-scroll-anchor
@@ -200,6 +221,34 @@ changes with the display's size and cell size."
                  (multiple-value-call #'cons (view-texture-size view display)))
     (replace-texture view display)
     t))
+
+(defun scroll-velocity (samples now window)
+  "Return the velocity, in pixels per millisecond, of SAMPLES, scrolls as
+(MILLISECONDS . PIXELS) newest first, over the WINDOW milliseconds before
+NOW; 0 without at least two samples in it."
+  (let ((recent (remove-if (lambda (sample) (< (car sample) (- now window))) samples)))
+    ;; The oldest sample marks when the span starts; its own pixels moved
+    ;; before it.
+    (if (< (length recent) 2)
+        0
+        (/ (reduce #'+ (butlast recent) :key #'cdr)
+           (max 8 (- (car (first recent)) (car (car (last recent)))))))))
+
+(defun next-momentum-velocity (velocity friction minimum)
+  "Return VELOCITY after one frame of FRICTION (the share it keeps), or 0
+once that is below MINIMUM pixels per millisecond."
+  (let ((next (* velocity friction)))
+    (if (< (abs next) minimum) 0 next)))
+
+(defun next-scroll-step (remaining easing)
+  "Return the whole pixels a scroll animation with REMAINING pixels to go
+moves in its next frame: EASING of what remains, so it slows as it settles,
+but at least a pixel and at most what remains."
+  (if (zerop remaining)
+      0
+      (* (signum remaining)
+         (round (min (abs remaining)
+                     (max 1 (* easing (abs remaining))))))))
 
 (defun add-scroll-delta (view pixels line-height)
   "Scroll VIEW's body by PIXELS (positive moves the text up) and return how

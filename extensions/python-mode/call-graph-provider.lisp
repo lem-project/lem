@@ -399,8 +399,11 @@ Returns:
 (defun register-python-provider ()
   "Register the Python provider with the global registry.
 
-Called both at load time and via after-init-hook to handle cases
-where tree-sitter grammars become available after initial load."
+Called via after-init-hook, never at load time: creating the provider
+dlopens the grammar and allocates a TSParser, and those C pointers are
+only valid in the process that created them. Running this while an
+executable is being built would save dead pointers into the image (see
+the REGISTER-PYTHON-PROVIDER hook at the end of this file)."
   (when (ts:tree-sitter-available-p)
     (handler-case
         (let ((provider (make-python-provider)))
@@ -411,8 +414,9 @@ where tree-sitter grammars become available after initial load."
       (error (e)
         (warn "Failed to register Python provider: ~A" e)))))
 
-;; Try to register on load (may fail if grammars not yet available)
-(register-python-provider)
-
-;; Also register after Lem init (grammars should be available by then)
+;; Register after Lem init only. Doing it at load time means doing it during
+;; `save-lisp-and-die' as well, which bakes the build process's tree-sitter
+;; pointers into the executable; the next start then calls
+;; ts_parser_set_language with a freed address and SBCL reports a CORRUPTION
+;; WARNING from inside libtree-sitter.
 (lem:add-hook lem:*after-init-hook* 'register-python-provider)

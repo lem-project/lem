@@ -85,6 +85,7 @@
                (:file "interface")
                (:file "attribute")
                (:file "display-cache")
-               (:file "visual-line"))
+               (:file "visual-line")
+               (:file "wrapped-lines"))
   :perform (test-op (o c)
                     (symbol-call :rove :run c)))

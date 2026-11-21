@@ -40,9 +40,8 @@
   "Perform completion on ELEMENTS matching NAME. Returns matching elements,
    optionally sorted by RANK function."
   (labels ((apply-key (elt) (if key (funcall key elt) elt))
-           (test-with-separator (elt)
+           (test-with-separator (parts1 elt)
              (let* ((elt (apply-key elt))
-                    (parts1 (explode-string name separator))
                     (parts2 (explode-string elt separator)))
                (and (<= (length parts1) (length parts2))
                     (loop :for p1 :in parts1
@@ -51,10 +50,12 @@
            (test-without-separator (elt)
              (funcall test name (apply-key elt))))
     (let ((filtered-elements
-            (remove-if-not (if separator
-                               #'test-with-separator
-                               #'test-without-separator)
-                           elements)))
+            (remove-if-not
+             (if separator
+                 (let ((parts1 (explode-string name separator)))
+                   (lambda (elt) (test-with-separator parts1 elt)))
+                 #'test-without-separator)
+             elements)))
       (if rank
           (sort filtered-elements #'< :key (lambda (elt) (funcall rank name (apply-key elt))))
           filtered-elements))))

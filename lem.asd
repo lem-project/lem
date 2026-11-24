@@ -301,6 +301,7 @@
                "lem-lua-mode"
                #-os-windows "lem-terminal"
                "lem-legit"
+               "lem-mpd"
                "lem-tutor"
                "lem-dashboard"
                "lem-dockerfile-mode"

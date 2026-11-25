@@ -50,6 +50,7 @@
   ;; reexport lem/common/command.lisp
   (:export
    :primary-command
+   :command-documentation
    :make-command-table
    :add-command
    :remove-command

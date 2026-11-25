@@ -153,7 +153,8 @@ Other argument descriptors are available (old-style char in parenthesis):
                           (second elt)
                           (string-downcase name)))
           (mode-name (second (assoc :mode options)))
-          (initargs (rest (assoc :initargs options))))
+          (initargs (rest (assoc :initargs options)))
+          (docstring (and body (stringp (first body)) (first body))))
 
       (check-type command-name string)
       (check-type mode-name (or null symbol))
@@ -177,6 +178,7 @@ Other argument descriptors are available (old-style char in parenthesis):
              (:default-initargs
               :source-location #+sbcl (sb-c:source-location) #-sbcl nil
               :name ',name
+              :documentation ,docstring
               ,@initargs))
 
            (defmethod execute (mode (,command ,class-name) ,universal-argument)

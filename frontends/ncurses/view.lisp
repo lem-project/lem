@@ -6,6 +6,7 @@
            :view-border
            :view-scrwin
            :view-modeline-scrwin
+           :ensure-window-background
            :view-x
            :view-y
            :view-width
@@ -37,11 +38,36 @@
    (height :initarg :height :accessor view-height)
    (last-print-cursor-x :initform 0 :accessor view-last-print-cursor-x)
    (last-print-cursor-y :initform 0 :accessor view-last-print-cursor-y)
+   ;; Generation of the window background last applied to SCRWIN (see
+   ;; ensure-window-background). -1 = none applied yet: a fresh window's
+   ;; cells carry pair 0, so its first fill syncs the background. In
+   ;; non-direct mode the synced pair is 0 — identical to newwin's
+   ;; default — so the sync is a no-op there.
+   (background-generation :initform -1 :accessor view-background-generation)
    (cursor-invisible-p :initarg :cursor-invisible :reader view-cursor-invisible-p)))
 
 (defun set-last-print-cursor (view x y)
   (setf (view-last-print-cursor-x view) x
         (view-last-print-cursor-y view) y))
+
+(defun ensure-window-background (view)
+  "Keep VIEW's window background in sync with the theme (see
+lem-ncurses/term:window-background): cleared regions
+(wclrtoeol/wclrtobot) fill with the pair it hands out — the theme
+background pair in direct-color mode (where pair 0 is pinned to the
+terminal default), pair 0 otherwise (a no-op against newwin's default
+in non-direct mode, but it keeps the protocol mode-uniform, so a
+hypothetical direct->non-direct re-init would reset stale direct-mode
+backgrounds too). Views notice changes via the generation counter
+because the frontend keeps no registry of live windows; new windows
+start at generation -1, so their first fill picks the current theme
+up."
+  (multiple-value-bind (generation pair)
+      (lem-ncurses/term:window-background)
+    (when (/= (view-background-generation view) generation)
+      (lem-ncurses/term:set-window-background
+       (view-scrwin view) charms/ll:a_normal pair)
+      (setf (view-background-generation view) generation))))
 
 (deftype border-shape ()
   '(member nil :drop-curtain :left-border))
@@ -93,6 +119,12 @@
                                                 :size border
                                                 :shape border-shape)))))
                    :scrwin (newwin height width y x)
+                   ;; The modeline window deliberately gets no
+                   ;; set-window-background: render-line-on-modeline
+                   ;; paints it with an explicit full-width
+                   ;; print-string every frame, and nothing ever
+                   ;; wclrtoeol's it (unlike scrwin, whose cleared
+                   ;; regions need the theme background pair).
                    :modeline-scrwin (when modeline (newwin 1 width (+ y height) x))
                    :x x
                    :y y
@@ -149,45 +181,47 @@
 (defun draw-border (border)
   (let ((win (border-win border))
         (h (1- (border-height border)))
-        (w (1- (border-width border)))
-        (attr (lem-ncurses/attribute:attribute-to-bits (border-attribute))))
-    (charms/ll:wattron win attr)
-    (flet ((drop-curtain ()
-             (charms/ll:mvwaddstr win 0 0 (border-vertical-and-right))
-             (charms/ll:mvwaddstr win 0 w (border-vertical-and-left))
-             (charms/ll:mvwaddstr win h 0 (border-up-and-right))
-             (charms/ll:mvwaddstr win h w (border-up-and-left))
-             (loop :for x :from 1 :below w
-                   :do (charms/ll:mvwaddstr win 0 x (border-horizontal))
-                       (charms/ll:mvwaddstr win (1- (border-height border)) x (border-horizontal)))
-             (loop :for y :from 1 :below h
-                   :do (charms/ll:mvwaddstr win y 0 (border-vertical))
-                       (charms/ll:mvwaddstr win y w (border-vertical))))
-           (left-border ()
-             (loop :for y :from 0 :to h
-                   :do (charms/ll:mvwaddstr win y 0 (border-vertical))))
-           (normal ()
-             (charms/ll:mvwaddstr win 0 0 (border-down-and-right))
-             (charms/ll:mvwaddstr win 0 w (border-down-and-left))
-             (charms/ll:mvwaddstr win h 0 (border-up-and-right))
-             (charms/ll:mvwaddstr win h w (border-up-and-left))
-             (loop :for x :from 1 :below w
-                   :do (charms/ll:mvwaddstr win
-                                            0
-                                            x
-                                            (border-horizontal))
-                       (charms/ll:mvwaddstr win
-                                            (1- (border-height border))
-                                            x
-                                            (border-horizontal)))
-             (loop :for y :from 1 :below h
-                   :do (charms/ll:mvwaddstr win y 0 (border-vertical))
-                       (charms/ll:mvwaddstr win y w (border-vertical)))))
-      (case (border-shape border)
-        (:drop-curtain (drop-curtain))
-        (:left-border (left-border))
-        (otherwise (normal))))
-    (charms/ll:attroff attr)
+        (w (1- (border-width border))))
+    (multiple-value-bind (attrs pair)
+        (lem-ncurses/attribute:attribute-to-attr-and-pair (border-attribute))
+      ;; wattr_set applies pair + attrs in one call (see print-string)
+      ;; and the closing call resets both.
+      (lem-ncurses/attribute:%wattr-set win attrs pair (cffi:null-pointer))
+      (flet ((border-char-at (y x char)
+               (charms/ll:mvwaddstr win y x char))
+             (border-row (y)
+               (loop :for x :from 1 :below w
+                     :do (border-char-at y x (border-horizontal))))
+             (border-column (x)
+               (loop :for y :from 1 :below h
+                     :do (border-char-at y x (border-vertical))))
+             (drop-curtain ()
+               (border-char-at 0 0 (border-vertical-and-right))
+               (border-char-at 0 w (border-vertical-and-left))
+               (border-char-at h 0 (border-up-and-right))
+               (border-char-at h w (border-up-and-left))
+               (border-row 0)
+               (border-row (1- (border-height border)))
+               (border-column 0)
+               (border-column w))
+             (left-border ()
+               (loop :for y :from 0 :to h
+                     :do (border-char-at y 0 (border-vertical))))
+             (normal ()
+               (border-char-at 0 0 (border-down-and-right))
+               (border-char-at 0 w (border-down-and-left))
+               (border-char-at h 0 (border-up-and-right))
+               (border-char-at h w (border-up-and-left))
+               (border-row 0)
+               (border-row (1- (border-height border)))
+               (border-column 0)
+               (border-column w)))
+        (case (border-shape border)
+          (:drop-curtain (drop-curtain))
+          (:left-border (left-border))
+          (otherwise (normal))))
+      (lem-ncurses/attribute:%wattr-set
+       win charms/ll:a_normal 0 (cffi:null-pointer)))
     (charms/ll:wnoutrefresh win)))
 
 (defvar *display-cache* (make-hash-table :test 'equal))
@@ -205,8 +239,12 @@
 (defun redraw-view-after (view)
   (alexandria:when-let (border (view-border view))
     (draw-border border))
-  (let ((attr (lem-ncurses/attribute:attribute-to-bits 'modeline-inactive)))
-    (charms/ll:attron attr)
+  (multiple-value-bind (attrs pair)
+      (lem-ncurses/attribute:attribute-to-attr-and-pair 'modeline-inactive)
+    ;; wattr_set: pair + attrs in one call; the closing call resets
+    ;; stdscr to the default pair with no attributes.
+    (lem-ncurses/attribute:%wattr-set
+     charms/ll:*stdscr* attrs pair (cffi:null-pointer))
     (when (and (eq :tile (view-type view))
                (< 0 (view-x view)))
       (charms/ll:move (view-y view) (1- (view-x view)))
@@ -225,7 +263,8 @@
             :do (print-yx (+ (view-y view) (view-height view))
                           (+ (view-x view) x)
                           (border-horizontal))))
-    (charms/ll:attroff attr)
+    (lem-ncurses/attribute:%wattr-set
+     charms/ll:*stdscr* charms/ll:a_normal 0 (cffi:null-pointer))
     (charms/ll:wnoutrefresh charms/ll:*stdscr*))
   (when (view-modeline-scrwin view)
     (charms/ll:wnoutrefresh (view-modeline-scrwin view)))

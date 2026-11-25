@@ -2,6 +2,18 @@
 
 (defvar *attributes* '())
 
+;; Generation counter for the per-instance attribute caches. A
+;; frontend bumps it via invalidate-all-attribute-caches when its
+;; cached values become invalid wholesale — e.g. the ncurses pair
+;; counter resets and pair numbers are reused for other color
+;; combinations. clear-all-attribute-cache cannot serve that purpose:
+;; it only reaches named attributes (the %attribute-value properties in
+;; *attributes*), while anonymous attribute instances (overlays,
+;; make-attribute results) keep their per-instance cache. Entries
+;; record the generation they were computed in, so a bump turns every
+;; cache hit into a miss and the value is recomputed.
+(defvar *attribute-cache-generation* 0)
+
 (defgeneric attribute-link (attribute)
   (:documentation "The URL ATTRIBUTE's text links to, or NIL. Not drawn by
 itself: a frontend that can make the text a hyperlink does, and others
@@ -214,23 +226,29 @@ every attribute from its definition." slot-name)
   ;; cached results.
   (lem/common/color:clear-parse-color-cache))
 
+(defun invalidate-all-attribute-caches ()
+  "Make every cached attribute value — named or anonymous — miss on its
+next lookup, by bumping *attribute-cache-generation*."
+  (incf *attribute-cache-generation*))
+
 (defun get-attribute-cache (attribute &rest args &key background)
   (declare (ignore background))
-  (if (null (attribute-cache attribute))
-      nil
-      (cdr (assoc args
-                  (attribute-cache attribute)
-                  :test #'equal))))
+  (let ((elt (assoc args
+                    (attribute-cache attribute)
+                    :test #'equal)))
+    (when (and elt
+               (= (cadr elt) *attribute-cache-generation*))
+      (cddr elt))))
 
 (defun (setf get-attribute-cache) (value attribute &rest args &key background)
   (declare (ignore background))
   (alexandria:if-let ((elt (assoc args
                                   (attribute-cache attribute)
                                   :test #'equal)))
-    (setf (cdr elt) value)
+    (setf (cdr elt) (cons *attribute-cache-generation* value))
     (setf (attribute-cache attribute)
           (acons args
-                 value
+                 (cons *attribute-cache-generation* value)
                  (attribute-cache attribute))))
   value)
 

@@ -1435,7 +1435,6 @@ export class Editor {
         overlay.style.height = this.option.fontHeight + 'px';
         overlay.style.backgroundColor = cursorColor;
         overlay.style.font = this.option.font;
-        overlay.style.paddingTop = textOffsetY + 'px';
         overlay.textContent = cursorText || '';
         overlay.style.color = cursorFg;
         break;

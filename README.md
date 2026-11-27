@@ -33,7 +33,8 @@ Or run Lem temporarily (no install):
     $ nix run github:lem-project/lem#lem-sdl2
 
 Use the overlay when you already have a flake-based NixOS/home-manager config and
-want `pkgs.lem-ncurses` (and `apps.lem-ncurses`) available from your `nixpkgs` set.
+want `pkgs.lem-ncurses` (as well as `pkgs.lem-webview` and `pkgs.lem-sdl2`)
+available from your `nixpkgs` set.
 You can also consume `lem` as an overlay in `flake.nix`:
 
     {
@@ -47,7 +48,7 @@ You can also consume `lem` as an overlay in `flake.nix`:
           system = "x86_64-linux";
           modules = [
             { nixpkgs.overlays = [ lem.overlays.default ]; }
-            { environment.systemPackages = [ pkgs.lem-ncurses ]; }
+            ({ pkgs, ... }: { environment.systemPackages = [ pkgs.lem-ncurses ]; })
           ];
         };
       };
